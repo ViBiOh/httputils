@@ -2,6 +2,7 @@ package httputils
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,6 +35,11 @@ func addAuthorization(request *http.Request, authorization string) {
 	if authorization != `` {
 		request.Header.Add(`Authorization`, authorization)
 	}
+}
+
+// GetBasicAuth generates Basic Auth for given username and password
+func GetBasicAuth(username string, password string) string {
+	return `Basic ` + base64.StdEncoding.EncodeToString([]byte(username+`:`+password))
 }
 
 // ReadBody return content of a body request (defined as a ReadCloser)
