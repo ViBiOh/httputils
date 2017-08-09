@@ -5,8 +5,8 @@ deps:
 	go get -u github.com/golang/lint/golint
 
 fmt:
-	goimports -w *.go
-	gofmt -s -w *.go
+	goimports -w **/*.go *.go
+	gofmt -s -w **/*.go *.go
 
 lint:
 	golint ./...
@@ -16,4 +16,4 @@ tst:
 	script/coverage
 
 build:
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo **/*.go
