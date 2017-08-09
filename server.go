@@ -28,16 +28,22 @@ func httpGracefulClose(server *http.Server) error {
 	return nil
 }
 
-func gracefulClose(server *http.Server, callback func() error) {
+func gracefulClose(server *http.Server, callback func() error) int {
+	exitCode := 0
+
 	if err := httpGracefulClose(server); err != nil {
 		log.Print(err)
+		exitCode = 1
 	}
 
 	if callback != nil {
 		if err := callback(); err != nil {
 			log.Print(err)
+			exitCode = 1
 		}
 	}
+
+	return exitCode
 }
 
 // ServerGracefulClose gracefully close net/http server
@@ -48,5 +54,5 @@ func ServerGracefulClose(server *http.Server, callback func() error) {
 	<-signals
 	log.Printf(`SIGTERM received`)
 
-	gracefulClose(server, callback)
+	os.Exit(gracefulClose(server, callback))
 }

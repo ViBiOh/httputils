@@ -93,12 +93,14 @@ func TestGracefulClose(t *testing.T) {
 		server   *http.Server
 		wait     bool
 		callback func() error
+		want     int
 	}{
 		{
 			``,
 			nil,
 			false,
 			nil,
+			0,
 		},
 		{
 			`http://localhost:8100`,
@@ -112,6 +114,7 @@ func TestGracefulClose(t *testing.T) {
 			func() error {
 				return nil
 			},
+			0,
 		},
 		{
 			`http://localhost:8101`,
@@ -126,6 +129,7 @@ func TestGracefulClose(t *testing.T) {
 			},
 			true,
 			nil,
+			1,
 		},
 		{
 			``,
@@ -134,6 +138,7 @@ func TestGracefulClose(t *testing.T) {
 			func() error {
 				return fmt.Errorf(`Error while shutting down`)
 			},
+			1,
 		},
 	}
 
@@ -147,6 +152,9 @@ func TestGracefulClose(t *testing.T) {
 			go GetBody(test.url+`/long`, ``)
 			time.Sleep(time.Second)
 		}
-		gracefulClose(test.server, test.callback)
+
+		if result := gracefulClose(test.server, test.callback); result != test.want {
+			t.Errorf(`gracefulClose(%v, %v) = %v, want %v`, test.server, test.callback, result, test.want)
+		}
 	}
 }
