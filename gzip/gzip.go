@@ -13,22 +13,22 @@ import (
 var ignoreFile = regexp.MustCompile(`.png$`)
 var acceptGzip = regexp.MustCompile(`^(?:gzip|\*)(?:;q=(?:1.*?|0\.[1-9][0-9]*))?$`)
 
-type gzipMiddleware struct {
+type middleware struct {
 	http.ResponseWriter
 	gzw *gzip.Writer
 }
 
-func (m *gzipMiddleware) WriteHeader(status int) {
+func (m *middleware) WriteHeader(status int) {
 	m.ResponseWriter.Header().Add(`Vary`, `Accept-Encoding`)
 	m.ResponseWriter.Header().Set(`Content-Encoding`, `gzip`)
 	m.ResponseWriter.Header().Del(`Content-Length`)
 }
 
-func (m *gzipMiddleware) Write(b []byte) (int, error) {
+func (m *middleware) Write(b []byte) (int, error) {
 	return m.gzw.Write(b)
 }
 
-func (m *gzipMiddleware) Flush() {
+func (m *middleware) Flush() {
 	m.gzw.Flush()
 
 	if flusher, ok := m.ResponseWriter.(http.Flusher); ok {
@@ -36,23 +36,24 @@ func (m *gzipMiddleware) Flush() {
 	}
 }
 
-func (m *gzipMiddleware) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+func (m *middleware) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if hijacker, ok := m.ResponseWriter.(http.Hijacker); ok {
 		return hijacker.Hijack()
 	}
 	return nil, nil, fmt.Errorf(`http.Hijacker not available`)
 }
 
-type gzipHandler struct {
+// Handler for net/http package allowing compression
+type Handler struct {
 	h http.Handler
 }
 
-func (handler gzipHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if acceptEncodingGzip(r) && !ignoreFile.MatchString(r.URL.Path) {
 		gzipWriter := gzip.NewWriter(w)
 		defer gzipWriter.Close()
 
-		handler.h.ServeHTTP(&gzipMiddleware{w, gzipWriter}, r)
+		handler.h.ServeHTTP(&middleware{w, gzipWriter}, r)
 	} else {
 		handler.h.ServeHTTP(w, r)
 	}
