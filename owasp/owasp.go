@@ -5,15 +5,15 @@ import (
 	"net/http"
 )
 
-type middleware struct {
-	http.ResponseWriter
-	path string
-}
-
 var (
 	csp  = flag.String(`csp`, `default-src 'self'`, `Content-Security-Policy`)
 	hsts = flag.Bool(`hsts`, true, `Indicate Strict Transport Security`)
 )
+
+type middleware struct {
+	http.ResponseWriter
+	path string
+}
 
 func (m *middleware) WriteHeader(status int) {
 	if status == http.StatusOK || status == http.StatusMovedPermanently {
@@ -23,6 +23,8 @@ func (m *middleware) WriteHeader(status int) {
 			m.Header().Add(`Cache-Control`, `max-age=864000`)
 		}
 	}
+
+	m.ResponseWriter.WriteHeader(status)
 }
 
 // Handler for net/http package allowing owasp header
