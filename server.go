@@ -2,6 +2,7 @@ package httputils
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -10,9 +11,9 @@ import (
 	"time"
 )
 
-func serverGracefulClose(server *http.Server) {
+func httpGracefulClose(server *http.Server) error {
 	if server == nil {
-		return
+		return nil
 	}
 
 	log.Print(`Shutting down http server`)
@@ -21,21 +22,31 @@ func serverGracefulClose(server *http.Server) {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
+		return fmt.Errorf(`Error while shutting down http server: %v`, err)
+	}
+
+	return nil
+}
+
+func gracefulClose(server *http.Server, callback func() error) {
+	if err := httpGracefulClose(server); err != nil {
 		log.Print(err)
+	}
+
+	if callback != nil {
+		if err := callback(); err != nil {
+			log.Print(err)
+		}
 	}
 }
 
 // ServerGracefulClose gracefully close net/http server
-func ServerGracefulClose(server *http.Server, callback func()) {
+func ServerGracefulClose(server *http.Server, callback func() error) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM)
 
 	<-signals
-
 	log.Printf(`SIGTERM received`)
 
-	serverGracefulClose(server)
-	if callback != nil {
-		callback()
-	}
+	gracefulClose(server, callback)
 }
