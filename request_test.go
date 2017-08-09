@@ -11,6 +11,12 @@ import (
 	"testing"
 )
 
+type postStruct struct {
+	id     string
+	Active bool
+	Amount float64
+}
+
 func TestDoAndRead(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == `/bad` {
@@ -190,6 +196,55 @@ func TestGetBody(t *testing.T) {
 
 		if failed {
 			t.Errorf(`GetBody(%v, '') = (%s, %v), want (%s, %v)`, test.url, result, err, test.want, test.wantErr)
+		}
+	}
+}
+
+func TestPostJSONBody(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `Hello, test`)
+	}))
+	defer testServer.Close()
+
+	var tests = []struct {
+		url     string
+		body    *postStruct
+		want    string
+		wantErr error
+	}{
+		{
+			``,
+			nil,
+			``,
+			fmt.Errorf(`Error while sending data: Post : unsupported protocol scheme ""`),
+		},
+		{
+			testServer.URL,
+			&postStruct{},
+			`Hello, test`,
+			nil,
+		},
+	}
+
+	var failed bool
+
+	for _, test := range tests {
+		result, err := PostJSONBody(test.url, test.body, ``)
+
+		failed = false
+
+		if err == nil && test.wantErr != nil {
+			failed = true
+		} else if err != nil && test.wantErr == nil {
+			failed = true
+		} else if err != nil && err.Error() != test.wantErr.Error() {
+			failed = true
+		} else if string(result) != test.want {
+			failed = true
+		}
+
+		if failed {
+			t.Errorf(`PostJSONBody(%v, %v, '') = (%s, %v), want (%s, %v)`, test.url, test.body, result, err, test.want, test.wantErr)
 		}
 	}
 }
