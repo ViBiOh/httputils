@@ -59,7 +59,7 @@ func acceptEncodingGzip(r *http.Request) bool {
 
 // Handler for net/http package allowing compression
 type Handler struct {
-	http.Handler
+	Handler http.Handler
 }
 
 func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

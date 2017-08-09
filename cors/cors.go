@@ -13,7 +13,7 @@ var (
 
 // Handler for net/http package allowing cors header
 type Handler struct {
-	http.Handler
+	Handler http.Handler
 }
 
 func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
