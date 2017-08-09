@@ -12,6 +12,10 @@ type testStruct struct {
 	Amount float64
 }
 
+func testFn() string {
+	return `toto`
+}
+
 func TestResponseJSON(t *testing.T) {
 	var tests = []struct {
 		obj        interface{}
@@ -36,6 +40,13 @@ func TestResponseJSON(t *testing.T) {
 			`{"Active":true,"Amount":12.34}`,
 			200,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+		},
+		{
+			testFn,
+			`Error while marshalling JSON response: json: unsupported type: func() string
+`,
+			500,
+			nil,
 		},
 	}
 
