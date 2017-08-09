@@ -42,9 +42,9 @@ func (m *middleware) WriteHeader(status int) {
 
 // Handler for net/http package allowing owasp header
 type Handler struct {
-	h http.Handler
+	H http.Handler
 }
 
 func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	handler.h.ServeHTTP(&middleware{w, r.URL.Path}, r)
+	handler.H.ServeHTTP(&middleware{w, r.URL.Path}, r)
 }
