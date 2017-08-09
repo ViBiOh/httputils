@@ -19,9 +19,9 @@ type middleware struct {
 }
 
 func (m *middleware) WriteHeader(status int) {
-	m.ResponseWriter.Header().Add(`Vary`, `Accept-Encoding`)
-	m.ResponseWriter.Header().Set(`Content-Encoding`, `gzip`)
-	m.ResponseWriter.Header().Del(`Content-Length`)
+	m.Header().Add(`Vary`, `Accept-Encoding`)
+	m.Header().Set(`Content-Encoding`, `gzip`)
+	m.Header().Del(`Content-Length`)
 
 	m.ResponseWriter.WriteHeader(status)
 }
@@ -59,7 +59,7 @@ func acceptEncodingGzip(r *http.Request) bool {
 
 // Handler for net/http package allowing compression
 type Handler struct {
-	H http.Handler
+	http.Handler
 }
 
 func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -67,8 +67,8 @@ func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		gzipWriter := gzip.NewWriter(w)
 		defer gzipWriter.Close()
 
-		handler.H.ServeHTTP(&middleware{w, gzipWriter}, r)
+		handler.Handler.ServeHTTP(&middleware{w, gzipWriter}, r)
 	} else {
-		handler.H.ServeHTTP(w, r)
+		handler.Handler.ServeHTTP(w, r)
 	}
 }
