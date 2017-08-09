@@ -43,6 +43,18 @@ func (m *middleware) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return nil, nil, fmt.Errorf(`http.Hijacker not available`)
 }
 
+func acceptEncodingGzip(r *http.Request) bool {
+	header := r.Header.Get(`Accept-Encoding`)
+
+	for _, headerEncoding := range strings.Split(header, `,`) {
+		if acceptGzip.MatchString(headerEncoding) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Handler for net/http package allowing compression
 type Handler struct {
 	h http.Handler
@@ -57,16 +69,4 @@ func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		handler.h.ServeHTTP(w, r)
 	}
-}
-
-func acceptEncodingGzip(r *http.Request) bool {
-	header := r.Header.Get(`Accept-Encoding`)
-
-	for _, headerEncoding := range strings.Split(header, `,`) {
-		if acceptGzip.MatchString(headerEncoding) {
-			return true
-		}
-	}
-
-	return false
 }

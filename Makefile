@@ -16,4 +16,6 @@ tst:
 	script/coverage
 
 build:
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo **/*.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo owasp/owasp.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo gzip/gzip.go
