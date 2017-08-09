@@ -22,6 +22,8 @@ func (m *middleware) WriteHeader(status int) {
 	m.ResponseWriter.Header().Add(`Vary`, `Accept-Encoding`)
 	m.ResponseWriter.Header().Set(`Content-Encoding`, `gzip`)
 	m.ResponseWriter.Header().Del(`Content-Length`)
+
+	m.ResponseWriter.WriteHeader(status)
 }
 
 func (m *middleware) Write(b []byte) (int, error) {
