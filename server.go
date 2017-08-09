@@ -10,6 +10,21 @@ import (
 	"time"
 )
 
+func serverGracefulClose(server *http.Server) {
+	if server == nil {
+		return
+	}
+
+	log.Print(`Shutting down http server`)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Print(err)
+	}
+}
+
 // ServerGracefulClose gracefully close net/http server
 func ServerGracefulClose(server *http.Server, callback func()) {
 	signals := make(chan os.Signal, 1)
@@ -19,17 +34,7 @@ func ServerGracefulClose(server *http.Server, callback func()) {
 
 	log.Printf(`SIGTERM received`)
 
-	if server != nil {
-		log.Print(`Shutting down http server`)
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		if err := server.Shutdown(ctx); err != nil {
-			log.Print(err)
-		}
-	}
-
+	serverGracefulClose(server)
 	if callback != nil {
 		callback()
 	}
