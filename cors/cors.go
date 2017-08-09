@@ -1,4 +1,4 @@
-package owasp
+package cors
 
 import (
 	"flag"
