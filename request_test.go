@@ -171,6 +171,11 @@ func TestGetBody(t *testing.T) {
 		wantErr error
 	}{
 		{
+			`://fail`,
+			``,
+			fmt.Errorf(`Error while creating request: parse ://fail: missing protocol scheme`),
+		},
+		{
 			testServer.URL,
 			`Hello, test`,
 			nil,
@@ -208,10 +213,22 @@ func TestPostJSONBody(t *testing.T) {
 
 	var tests = []struct {
 		url     string
-		body    *postStruct
+		body    interface{}
 		want    string
 		wantErr error
 	}{
+		{
+			``,
+			testFn,
+			``,
+			fmt.Errorf(`Error while marshalling body: json: unsupported type: func() string`),
+		},
+		{
+			`://fail`,
+			nil,
+			``,
+			fmt.Errorf(`Error while creating request: parse ://fail: missing protocol scheme`),
+		},
 		{
 			``,
 			nil,
