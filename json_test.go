@@ -73,7 +73,7 @@ func TestResponseArrayJSON(t *testing.T) {
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 		},
 		{
-			[]testStruct{testStruct{id: `Test`}, testStruct{id: `Test`, Active: true, Amount: 12.34}},
+			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
 			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}]}`,
 			200,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},

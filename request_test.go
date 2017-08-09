@@ -11,6 +11,65 @@ import (
 	"testing"
 )
 
+func TestDoAndRead(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == `/bad` {
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			fmt.Fprint(w, `Hello, test`)
+		}
+	}))
+	defer testServer.Close()
+
+	emptyRequest, _ := http.NewRequest(`GET`, ``, nil)
+	bad, _ := http.NewRequest(`GET`, testServer.URL+`/bad`, nil)
+	test, _ := http.NewRequest(`GET`, testServer.URL, nil)
+
+	var tests = []struct {
+		request *http.Request
+		want    string
+		wantErr error
+	}{
+		{
+			emptyRequest,
+			``,
+			fmt.Errorf(`Error while sending data: Get : unsupported protocol scheme ""`),
+		},
+		{
+			bad,
+			``,
+			fmt.Errorf(`Error status 400: `),
+		},
+		{
+			test,
+			`Hello, test`,
+			nil,
+		},
+	}
+
+	var failed bool
+
+	for _, test := range tests {
+		result, err := doAndRead(test.request)
+
+		failed = false
+
+		if err == nil && test.wantErr != nil {
+			failed = true
+		} else if err != nil && test.wantErr == nil {
+			failed = true
+		} else if err != nil && err.Error() != test.wantErr.Error() {
+			failed = true
+		} else if string(result) != test.want {
+			failed = true
+		}
+
+		if failed {
+			t.Errorf(`doAndRead(%v) = (%v, %v), want (%v, %v)`, test.request, string(result), err, test.want, test.wantErr)
+		}
+	}
+}
+
 func TestAddAuthorization(t *testing.T) {
 	var tests = []struct {
 		authorization string
@@ -96,7 +155,7 @@ func TestReadBody(t *testing.T) {
 
 func TestGetBody(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, `Hello, test`)
+		fmt.Fprint(w, `Hello, test`)
 	}))
 	defer testServer.Close()
 
@@ -107,8 +166,7 @@ func TestGetBody(t *testing.T) {
 	}{
 		{
 			testServer.URL,
-			`Hello, test
-`,
+			`Hello, test`,
 			nil,
 		},
 	}
