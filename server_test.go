@@ -154,7 +154,7 @@ func TestGracefulClose(t *testing.T) {
 		}
 
 		if result := gracefulClose(test.server, test.callback); result != test.want {
-			t.Errorf(`gracefulClose(%v, %v) = %v, want %v`, test.server, test.callback, result, test.want)
+			t.Errorf(`gracefulClose(%v) = %v, want %v`, test.server, result, test.want)
 		}
 	}
 }
