@@ -37,7 +37,7 @@ func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(`Referrer-Policy`, `strict-origin-when-cross-origin`)
 	w.Header().Add(`X-Frame-Options`, `deny`)
 	w.Header().Add(`X-Content-Type-Options`, `nosniff`)
-	w.Header().Add(`X-XSS-Protection`, `1; mode=block`)
+	w.Header().Add(`X-Xss-Protection`, `1; mode=block`)
 	w.Header().Add(`X-Permitted-Cross-Domain-Policies`, `none`)
 
 	if *hsts {
