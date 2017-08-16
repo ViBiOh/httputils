@@ -3,6 +3,8 @@ default: deps fmt lint tst build
 deps:
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/golang/lint/golint
+	go get -u github.com/prometheus/client_golang/prometheus
+	go get -u github.com/prometheus/client_golang/prometheus/promhttp
 
 fmt:
 	goimports -w **/*.go *.go
@@ -20,3 +22,4 @@ build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo owasp/owasp.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo gzip/gzip.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo cors/cors.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo prometheus/prometheus.go
