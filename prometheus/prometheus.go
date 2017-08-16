@@ -7,20 +7,20 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func getPrometheusHandlers(next http.Handler) (http.HandlerFunc, http.Handler) {
+func getPrometheusHandlers(prefix string, next http.Handler) (http.HandlerFunc, http.Handler) {
 	requestsTotal := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "requests_total",
-			Help: "Total number of HTTP requests made.",
+			Name: prefix + `_requests_total`,
+			Help: `Total number of HTTP requests made.`,
 		},
-		[]string{"method", "code"},
+		[]string{`method`, `code`},
 	)
 
 	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:        "request_duration_seconds",
-		Help:        "A histogram of latencies for requests.",
+		Name:        prefix + `_request_duration_seconds`,
+		Help:        `A histogram of latencies for requests.`,
 		Buckets:     []float64{.25, .5, 1, 2.5, 5, 10},
-		ConstLabels: prometheus.Labels{"handler": "push"},
+		ConstLabels: prometheus.Labels{`handler`: `push`},
 	},
 		[]string{"method"},
 	)
@@ -33,8 +33,8 @@ func getPrometheusHandlers(next http.Handler) (http.HandlerFunc, http.Handler) {
 }
 
 // NewPrometheusHandler wraps given handler into prometheus tooling and expose `/metrics` endpoints
-func NewPrometheusHandler(next http.Handler) http.Handler {
-	handler, metrics := getPrometheusHandlers(next)
+func NewPrometheusHandler(prefix string, next http.Handler) http.Handler {
+	handler, metrics := getPrometheusHandlers(prefix, next)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == `/metrics` {
