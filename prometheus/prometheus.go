@@ -10,7 +10,7 @@ import (
 
 func goroutinesHandler(gauge prometheus.Gauge, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gauge.Set(float64(runtime.NumGoroutine))
+		gauge.Set(float64(runtime.NumGoroutine()))
 		next.ServeHTTP(w, r)
 	})
 }
