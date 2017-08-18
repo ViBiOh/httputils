@@ -2,10 +2,18 @@ package prometheus
 
 import (
 	"net/http"
+	"runtime"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+func goroutinesHandler(gauge prometheus.Gauge, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gauge.Set(runtime.NumGoroutine)
+		next.ServeHTTP(w, r)
+	})
+}
 
 func getPrometheusHandlers(prefix string, next http.Handler) (http.HandlerFunc, http.Handler) {
 	requestsTotal := prometheus.NewCounterVec(
@@ -25,11 +33,17 @@ func getPrometheusHandlers(prefix string, next http.Handler) (http.HandlerFunc, 
 		[]string{"method"},
 	)
 
+	goroutines := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: prefix + `_goroutines`,
+		Help: "Number of current goroutines.",
+	})
+
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(requestsTotal)
 	registry.MustRegister(duration)
+	registry.MustRegister(goroutines)
 
-	return promhttp.InstrumentHandlerCounter(requestsTotal, promhttp.InstrumentHandlerDuration(duration, next)), promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
+	return promhttp.InstrumentHandlerCounter(requestsTotal, promhttp.InstrumentHandlerDuration(duration, next)), goroutinesHandler(goroutines, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 }
 
 // NewPrometheusHandler wraps given handler into prometheus tooling and expose `/metrics` endpoints
