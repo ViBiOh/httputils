@@ -30,12 +30,12 @@ func getPrometheusHandlers(prefix string, next http.Handler) (http.HandlerFunc, 
 		Buckets:     []float64{.25, .5, 1, 2.5, 5, 10},
 		ConstLabels: prometheus.Labels{`handler`: `push`},
 	},
-		[]string{"method"},
+		[]string{`method`},
 	)
 
 	goroutines := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: prefix + `_goroutines`,
-		Help: "Number of current goroutines.",
+		Help: `Number of current goroutines.`,
 	})
 
 	registry := prometheus.NewRegistry()
