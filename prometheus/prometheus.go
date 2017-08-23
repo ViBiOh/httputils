@@ -1,13 +1,21 @@
 package prometheus
 
 import (
-	"log"
+	"flag"
 	"net/http"
+	"regexp"
 	"runtime"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+var (
+	metricsPath = flag.String(`prometheusMetricsPath`, `/metrics`, `Prometheus - Allowed regex IP to call metrics endpoint`)
+	metricsIps  = flag.String(`prometheusMetricsIP`, `*`, `Prometheus - Allowed regex IP to call metrics endpoint`)
+)
+
+var metricsIpsRegex *regexp.Regexp
 
 func goroutinesHandler(gauge prometheus.Gauge, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -51,12 +59,17 @@ func getPrometheusHandlers(prefix string, next http.Handler) (http.HandlerFunc, 
 func NewPrometheusHandler(prefix string, next http.Handler) http.Handler {
 	handler, metrics := getPrometheusHandlers(prefix, next)
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf(`RemoteAddr: %s`, r.RemoteAddr)
-		log.Printf(`Host: %s`, r.Host)
+	if metricsIpsRegex == nil {
+		metricsIpsRegex = regexp.MustCompile(*metricsIps)
+	}
 
-		if r.URL.Path == `/metrics` {
-			metrics.ServeHTTP(w, r)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == *metricsPath {
+			if metricsIpsRegex.MatchString(r.RemoteAddr) {
+				metrics.ServeHTTP(w, r)
+			} else {
+				w.WriteHeader(http.StatusForbidden)
+			}
 		} else {
 			handler.ServeHTTP(w, r)
 		}
