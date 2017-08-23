@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"log"
 	"net/http"
 	"runtime"
 
@@ -51,6 +52,9 @@ func NewPrometheusHandler(prefix string, next http.Handler) http.Handler {
 	handler, metrics := getPrometheusHandlers(prefix, next)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf(`RemoteAddr: %s`, r.RemoteAddr)
+		log.Printf(`Host: %s`, r.Host)
+
 		if r.URL.Path == `/metrics` {
 			metrics.ServeHTTP(w, r)
 		} else {
