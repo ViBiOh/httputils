@@ -12,7 +12,7 @@ import (
 
 var (
 	metricsPath = flag.String(`prometheusMetricsPath`, `/metrics`, `Prometheus - Allowed regex IP to call metrics endpoint`)
-	metricsIps  = flag.String(`prometheusMetricsIP`, `*`, `Prometheus - Allowed regex IP to call metrics endpoint`)
+	metricsIps  = flag.String(`prometheusMetricsIP`, `.*`, `Prometheus - Allowed regex IP to call metrics endpoint`)
 )
 
 var metricsIpsRegex *regexp.Regexp
