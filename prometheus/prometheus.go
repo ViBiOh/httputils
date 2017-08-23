@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	metricsPath = flag.String(`prometheusMetricsPath`, `/metrics`, `Prometheus - Allowed regex IP to call metrics endpoint`)
-	metricsIps  = flag.String(`prometheusMetricsIP`, `.*`, `Prometheus - Allowed regex IP to call metrics endpoint`)
+	metricsPath = flag.String(`prometheusMetricsPath`, `/metrics`, `Prometheus - Metrics endpoint path`)
+	metricsHost = flag.String(`prometheusMetricsRemoteHost`, `.*`, `Prometheus - Regex of allowed hosts to call metrics endpoint`)
 )
 
-var metricsIpsRegex *regexp.Regexp
+var metricsHostRegex *regexp.Regexp
 
 func goroutinesHandler(gauge prometheus.Gauge, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -59,13 +59,13 @@ func getPrometheusHandlers(prefix string, next http.Handler) (http.HandlerFunc, 
 func NewPrometheusHandler(prefix string, next http.Handler) http.Handler {
 	handler, metrics := getPrometheusHandlers(prefix, next)
 
-	if metricsIpsRegex == nil {
-		metricsIpsRegex = regexp.MustCompile(*metricsIps)
+	if metricsHostRegex == nil {
+		metricsHostRegex = regexp.MustCompile(*metricsHost)
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == *metricsPath {
-			if metricsIpsRegex.MatchString(r.RemoteAddr) {
+			if metricsHostRegex.MatchString(r.Host) {
 				metrics.ServeHTTP(w, r)
 			} else {
 				w.WriteHeader(http.StatusForbidden)
