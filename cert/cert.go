@@ -4,22 +4,55 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
 	"math/big"
 	"net"
-	"os"
+	"net/http"
 	"time"
 )
 
-func pemBlockForKey(ecdsaKey *ecdsa.PrivateKey) (*pem.Block, error) {
-	key, err := x509.MarshalECPrivateKey(ecdsaKey)
+// tcpKeepAliveListener sets TCP keep-alive timeouts on accepted
+// connections. It's used by ListenAndServe and ListenAndServeTLS so
+// dead TCP connections (e.g. closing laptop mid-download) eventually
+// go away.
+// from https://golang.org/src/net/http/server.go
+type tcpKeepAliveListener struct {
+	*net.TCPListener
+}
+
+func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
+	tc, err := ln.AcceptTCP()
 	if err != nil {
-		return nil, fmt.Errorf(`Error while marshalling private key: %v`, err)
+		return
 	}
-	return &pem.Block{Type: "EC PRIVATE KEY", Bytes: key}, nil
+	tc.SetKeepAlive(true)
+	tc.SetKeepAlivePeriod(3 * time.Minute)
+	return tc, nil
+}
+
+func strSliceContains(slice []string, search string) bool {
+	for _, value := range slice {
+		if value == search {
+			return true
+		}
+	}
+
+	return false
+}
+
+// clneTLSConfig returns a shallow clone of cfg, or a new zero tls.Config if
+// cfg is nil. This is safe to call even if cfg is in active use by a TLS
+// client or server.
+// from https://golang.org/src/net/http/transport.go
+func cloneTLSConfig(cfg *tls.Config) *tls.Config {
+	if cfg == nil {
+		return &tls.Config{}
+	}
+	return cfg.Clone()
 }
 
 func getLocalIps() ([]net.IP, error) {
@@ -40,16 +73,48 @@ func getLocalIps() ([]net.IP, error) {
 	return ips, nil
 }
 
+// ListenAndServeTLS with provided bytes of cert instead of file
+// Largely inspired by https://golang.org/src/net/http/server.go
+func ListenAndServeTLS(server *http.Server, certPEMBlock []byte, keyPEMBlock []byte) error {
+	addr := server.Addr
+	if addr == `` {
+		addr = `:https`
+	}
+
+	config := cloneTLSConfig(server.TLSConfig)
+	if !strSliceContains(config.NextProtos, "http/1.1") {
+		config.NextProtos = append(config.NextProtos, "http/1.1")
+	}
+
+	config.Certificates = make([]tls.Certificate, 1)
+	certificate, err := tls.X509KeyPair(certPEMBlock, keyPEMBlock)
+	if err != nil {
+		return fmt.Errorf(`Error while getting x509 KeyPair: %v`, err)
+	}
+	config.Certificates[0] = certificate
+
+	listener, err := net.Listen(`tcp`, addr)
+	if err != nil {
+		return fmt.Errorf(`Error while listening: %v`, err)
+	}
+
+	tlsListener := tls.NewListener(
+		tcpKeepAliveListener{listener.(*net.TCPListener)},
+		config,
+	)
+	return server.Serve(tlsListener)
+}
+
 // GenerateCert self signed with CA for use with TLS
-func GenerateCert(organization string, hosts []string) error {
+func GenerateCert(organization string, hosts []string) ([]byte, []byte, error) {
 	ecdsaKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		return fmt.Errorf(`Error while generating cert key: %v`, err)
+		return nil, nil, fmt.Errorf(`Error while generating cert key: %v`, err)
 	}
 
 	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
 	if err != nil {
-		return fmt.Errorf(`Error while generating serial number: %v`, err)
+		return nil, nil, fmt.Errorf(`Error while generating serial number: %v`, err)
 	}
 
 	startDate := time.Now()
@@ -79,7 +144,7 @@ func GenerateCert(organization string, hosts []string) error {
 
 	ips, err := getLocalIps()
 	if err != nil {
-		return fmt.Errorf(`Error while getting locals ips: %v`, err)
+		return nil, nil, fmt.Errorf(`Error while getting locals ips: %v`, err)
 	}
 
 	for _, ip := range ips {
@@ -88,29 +153,13 @@ func GenerateCert(organization string, hosts []string) error {
 
 	der, err := x509.CreateCertificate(rand.Reader, &template, &template, &ecdsaKey.PublicKey, ecdsaKey)
 	if err != nil {
-		return fmt.Errorf(`Error while creating certificate: %v`, err)
+		return nil, nil, fmt.Errorf(`Error while creating certificate: %v`, err)
 	}
 
-	certFile, err := os.Create(`cert.pem`)
+	key, err := x509.MarshalECPrivateKey(ecdsaKey)
 	if err != nil {
-		return fmt.Errorf(`Error while creating certificate file: %v`, err)
-	}
-	defer certFile.Close()
-
-	pem.Encode(certFile, &pem.Block{Type: `CERTIFICATE`, Bytes: der})
-
-	keyFile, err := os.OpenFile(`key.pem`, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		return fmt.Errorf(`Error while creating key file: %v`, err)
-	}
-	defer keyFile.Close()
-
-	pemBlock, err := pemBlockForKey(ecdsaKey)
-	if err != nil {
-		return fmt.Errorf(`Error while getting pem block for key: %v`, err)
+		return nil, nil, fmt.Errorf(`Error while marshalling private key: %v`, err)
 	}
 
-	pem.Encode(keyFile, pemBlock)
-
-	return nil
+	return pem.EncodeToMemory(&pem.Block{Type: `CERTIFICATE`, Bytes: der}), pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: key}), nil
 }
