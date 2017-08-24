@@ -54,19 +54,19 @@ func TestHttpGracefulClose(t *testing.T) {
 			go test.server.ListenAndServe()
 			defer test.server.Close()
 
-			if _, err := GetBody(test.url, ``); err != nil {
+			if _, err := GetBody(test.url, ``, false); err != nil {
 				t.Errorf(`httpGracefulClose(%v), unable to fetch started server: %v`, test.server, err)
 			}
 		}
 
 		if test.wait {
-			go GetBody(test.url+`/long`, ``)
+			go GetBody(test.url+`/long`, ``, false)
 			time.Sleep(time.Second)
 		}
 		err := httpGracefulClose(test.server)
 
 		if test.server != nil {
-			if _, err := GetBody(test.url, ``); err == nil {
+			if _, err := GetBody(test.url, ``, false); err == nil {
 				t.Errorf(`httpGracefulClose(%v), still able to fetch data`, test.server)
 			}
 		}
@@ -149,7 +149,7 @@ func TestGracefulClose(t *testing.T) {
 		}
 
 		if test.wait {
-			go GetBody(test.url+`/long`, ``)
+			go GetBody(test.url+`/long`, ``, false)
 			time.Sleep(time.Second)
 		}
 

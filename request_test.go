@@ -56,7 +56,7 @@ func TestDoAndRead(t *testing.T) {
 	var failed bool
 
 	for _, test := range tests {
-		result, err := doAndRead(test.request)
+		result, err := doAndRead(test.request, false)
 
 		failed = false
 
@@ -185,7 +185,7 @@ func TestGetBody(t *testing.T) {
 	var failed bool
 
 	for _, test := range tests {
-		result, err := GetBody(test.url, ``)
+		result, err := GetBody(test.url, ``, false)
 
 		failed = false
 
@@ -246,7 +246,7 @@ func TestPostJSONBody(t *testing.T) {
 	var failed bool
 
 	for _, test := range tests {
-		result, err := PostJSONBody(test.url, test.body, ``)
+		result, err := PostJSONBody(test.url, test.body, ``, false)
 
 		failed = false
 
