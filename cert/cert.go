@@ -42,27 +42,6 @@ func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 	return tc, nil
 }
 
-func strSliceContains(slice []string, search string) bool {
-	for _, value := range slice {
-		if value == search {
-			return true
-		}
-	}
-
-	return false
-}
-
-// clneTLSConfig returns a shallow clone of cfg, or a new zero tls.Config if
-// cfg is nil. This is safe to call even if cfg is in active use by a TLS
-// client or server.
-// from https://golang.org/src/net/http/transport.go
-func cloneTLSConfig(cfg *tls.Config) *tls.Config {
-	if cfg == nil {
-		return &tls.Config{}
-	}
-	return cfg.Clone()
-}
-
 func getLocalIps() ([]net.IP, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
@@ -79,6 +58,16 @@ func getLocalIps() ([]net.IP, error) {
 		}
 	}
 	return ips, nil
+}
+
+func strSliceContains(slice []string, search string) bool {
+	for _, value := range slice {
+		if value == search {
+			return true
+		}
+	}
+
+	return false
 }
 
 // ListenAndServeTLS with provided certFile flag or self-signed generated certificate
@@ -98,9 +87,9 @@ func ListenAndServeTLS(server *http.Server) error {
 		addr = `:https`
 	}
 
-	config := cloneTLSConfig(server.TLSConfig)
-	if !strSliceContains(config.NextProtos, "http/1.1") {
-		config.NextProtos = append(config.NextProtos, "http/1.1")
+	config := &tls.Config{}
+	if !strSliceContains(config.NextProtos, `http/1.1`) {
+		config.NextProtos = append(config.NextProtos, `http/1.1`)
 	}
 
 	config.Certificates = make([]tls.Certificate, 1)
@@ -178,5 +167,5 @@ func GenerateCert(organization string, hosts []string) ([]byte, []byte, error) {
 		return nil, nil, fmt.Errorf(`Error while marshalling private key: %v`, err)
 	}
 
-	return pem.EncodeToMemory(&pem.Block{Type: `CERTIFICATE`, Bytes: der}), pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: key}), nil
+	return pem.EncodeToMemory(&pem.Block{Type: `CERTIFICATE`, Bytes: der}), pem.EncodeToMemory(&pem.Block{Type: `EC PRIVATE KEY`, Bytes: key}), nil
 }
