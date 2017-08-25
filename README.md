@@ -4,7 +4,6 @@
 
 Golang HTTP Utils func
 
-
 ## Grafana / Prometheus
 
 If you use Grafana dashboard upon Prometheus metrics, you should be interested with [dashboard I've made](https://grafana.com/dashboards/3004/)

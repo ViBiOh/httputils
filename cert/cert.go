@@ -8,11 +8,19 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"flag"
 	"fmt"
 	"math/big"
 	"net"
 	"net/http"
+	"strings"
 	"time"
+)
+
+var (
+	tlsCertFile = flag.String(`tlscert`, ``, `TLS PEM Certificate file`)
+	tlsKeyFile  = flag.String(`tlskey`, ``, `TLS PEM Key file`)
+	tlsHosts    = flag.String(`tlshosts`, `localhost`, `TLS Self-signed certificate hosts, comma separated`)
 )
 
 // tcpKeepAliveListener sets TCP keep-alive timeouts on accepted
@@ -73,9 +81,18 @@ func getLocalIps() ([]net.IP, error) {
 	return ips, nil
 }
 
-// ListenAndServeTLS with provided bytes of cert instead of file
+// ListenAndServeTLS with provided certFile flag or self-signed generated certificate
 // Largely inspired by https://golang.org/src/net/http/server.go
-func ListenAndServeTLS(server *http.Server, certPEMBlock []byte, keyPEMBlock []byte) error {
+func ListenAndServeTLS(server *http.Server) error {
+	if *tlsCertFile != `` {
+		return server.ListenAndServeTLS(*tlsCertFile, *tlsKeyFile)
+	}
+
+	certPEMBlock, keyPEMBlock, err := GenerateCert(`ViBiOh`, strings.Split(*tlsHosts, `,`))
+	if err != nil {
+		return fmt.Errorf(`Error while generating certificate: %v`, err)
+	}
+
 	addr := server.Addr
 	if addr == `` {
 		addr = `:https`
