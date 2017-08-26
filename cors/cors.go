@@ -8,7 +8,7 @@ import (
 var (
 	origin  = flag.String(`corsOrigin`, `*`, `Access-Control-Allow-Origin`)
 	headers = flag.String(`corsHeaders`, `Content-Type`, `Access-Control-Allow-Headers`)
-	methods = flag.String(`corsMethods`, `GET`, `Access-Control-Allow-Methods`)
+	methods = flag.String(`corsMethods`, http.MethodGet, `Access-Control-Allow-Methods`)
 )
 
 // Handler for net/http package allowing cors header

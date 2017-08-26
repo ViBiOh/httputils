@@ -65,7 +65,7 @@ func ReadBody(body io.ReadCloser) ([]byte, error) {
 
 // GetBody return body of given URL or error if something goes wrong
 func GetBody(url string, authorization string, skipTLSVerify bool) ([]byte, error) {
-	request, err := http.NewRequest(`GET`, url, nil)
+	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf(`Error while creating request: %v`, err)
 	}
@@ -82,7 +82,7 @@ func PostJSONBody(url string, body interface{}, authorization string, skipTLSVer
 		return nil, fmt.Errorf(`Error while marshalling body: %v`, err)
 	}
 
-	request, err := http.NewRequest(`POST`, url, bytes.NewBuffer(jsonBody))
+	request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return nil, fmt.Errorf(`Error while creating request: %v`, err)
 	}

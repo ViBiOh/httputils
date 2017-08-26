@@ -12,7 +12,7 @@ func TestServeHTTP(t *testing.T) {
 		want map[string]string
 	}{
 		{
-			map[string]string{`Access-Control-Allow-Origin`: `*`, `Access-Control-Allow-Headers`: `Content-Type`, `Access-Control-Allow-Methods`: `GET`},
+			map[string]string{`Access-Control-Allow-Origin`: `*`, `Access-Control-Allow-Headers`: `Content-Type`, `Access-Control-Allow-Methods`: http.MethodGet},
 		},
 	}
 

@@ -80,7 +80,7 @@ func TestServeHTTP(t *testing.T) {
 
 	for _, test := range tests {
 		request := httptest.NewRecorder()
-		Handler{Handler: http.HandlerFunc(test.handlerFunc)}.ServeHTTP(request, httptest.NewRequest(`GET`, `http://localhost`+test.path, nil))
+		Handler{Handler: http.HandlerFunc(test.handlerFunc)}.ServeHTTP(request, httptest.NewRequest(http.MethodGet, `http://localhost`+test.path, nil))
 
 		for key, value := range test.want {
 			if result, ok := request.Result().Header[key]; !ok || (ok && strings.Join(result, ``) != value) {

@@ -27,9 +27,9 @@ func TestDoAndRead(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	emptyRequest, _ := http.NewRequest(`GET`, ``, nil)
-	bad, _ := http.NewRequest(`GET`, testServer.URL+`/bad`, nil)
-	test, _ := http.NewRequest(`GET`, testServer.URL, nil)
+	emptyRequest, _ := http.NewRequest(http.MethodGet, ``, nil)
+	bad, _ := http.NewRequest(http.MethodGet, testServer.URL+`/bad`, nil)
+	test, _ := http.NewRequest(http.MethodGet, testServer.URL, nil)
 
 	var tests = []struct {
 		request *http.Request
@@ -89,7 +89,7 @@ func TestAddAuthorization(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		request := httptest.NewRequest(`GET`, `http://localhost`, nil)
+		request := httptest.NewRequest(http.MethodGet, `http://localhost`, nil)
 		addAuthorization(request, test.authorization)
 
 		if result := strings.Join(request.Header[`Authorization`], ``); result != test.authorization {
