@@ -32,22 +32,32 @@ func TestDoAndRead(t *testing.T) {
 	test, _ := http.NewRequest(http.MethodGet, testServer.URL, nil)
 
 	var tests = []struct {
-		request *http.Request
-		want    string
-		wantErr error
+		request       *http.Request
+		skipTLSVerify bool
+		want          string
+		wantErr       error
 	}{
 		{
 			emptyRequest,
+			false,
 			``,
 			fmt.Errorf(`Error while sending data: Get : unsupported protocol scheme ""`),
 		},
 		{
 			bad,
+			false,
 			``,
 			fmt.Errorf(`Error status 400: `),
 		},
 		{
 			test,
+			false,
+			`Hello, test`,
+			nil,
+		},
+		{
+			test,
+			true,
 			`Hello, test`,
 			nil,
 		},
@@ -56,7 +66,7 @@ func TestDoAndRead(t *testing.T) {
 	var failed bool
 
 	for _, test := range tests {
-		result, err := doAndRead(test.request, false)
+		result, err := doAndRead(test.request, test.skipTLSVerify)
 
 		failed = false
 
