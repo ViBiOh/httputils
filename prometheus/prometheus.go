@@ -3,7 +3,6 @@ package prometheus
 import (
 	"flag"
 	"net/http"
-	"regexp"
 	"runtime"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -12,10 +11,8 @@ import (
 
 var (
 	metricsPath = flag.String(`prometheusMetricsPath`, `/metrics`, `Prometheus - Metrics endpoint path`)
-	metricsHost = flag.String(`prometheusMetricsRemoteHost`, `.*`, `Prometheus - Regex of allowed hosts to call metrics endpoint`)
+	metricsHost = flag.String(`prometheusMetricsHost`, `localhost`, `Prometheus - Allowed hostname to call metrics endpoint`)
 )
-
-var metricsHostRegex *regexp.Regexp
 
 func goroutinesHandler(gauge prometheus.Gauge, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -59,13 +56,9 @@ func getPrometheusHandlers(prefix string, next http.Handler) (http.HandlerFunc, 
 func NewPrometheusHandler(prefix string, next http.Handler) http.Handler {
 	handler, metrics := getPrometheusHandlers(prefix, next)
 
-	if metricsHostRegex == nil {
-		metricsHostRegex = regexp.MustCompile(*metricsHost)
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == *metricsPath {
-			if metricsHostRegex.MatchString(r.Host) {
+			if r.Host == *metricsHost {
 				metrics.ServeHTTP(w, r)
 			} else {
 				w.WriteHeader(http.StatusForbidden)
