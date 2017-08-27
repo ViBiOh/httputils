@@ -10,7 +10,8 @@ import (
 	"strings"
 )
 
-var ignoreFile = regexp.MustCompile(`.png$`)
+const pngFile = `.png`
+
 var acceptGzip = regexp.MustCompile(`^(?:gzip|\*)(?:;q=(?:1.*?|0\.[1-9][0-9]*))?$`)
 
 type middleware struct {
@@ -63,7 +64,7 @@ type Handler struct {
 }
 
 func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if acceptEncodingGzip(r) && !ignoreFile.MatchString(r.URL.Path) {
+	if acceptEncodingGzip(r) && !strings.HasSuffix(r.URL.Path, pngFile) {
 		gzipWriter := gzip.NewWriter(w)
 		defer gzipWriter.Close()
 
