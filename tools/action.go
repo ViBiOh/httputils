@@ -1,12 +1,18 @@
 package tools
 
+import (
+	"sync"
+)
+
 // Error contains ID in error and error desc
 type Error struct {
 	Input []byte
 	Err   error
 }
 
-func doAction(inputs <-chan []byte, action func([]byte) (interface{}, error), results chan<- interface{}, errors chan<- *Error) {
+func doAction(wg *sync.WaitGroup, inputs <-chan []byte, action func([]byte) (interface{}, error), results chan<- interface{}, errors chan<- *Error) {
+	defer wg.Done()
+
 	for input := range inputs {
 		if result, err := action(input); err == nil {
 			results <- result
@@ -22,9 +28,18 @@ func ConcurrentAction(maxConcurrent int, action func([]byte) (interface{}, error
 	results := make(chan interface{}, maxConcurrent)
 	errors := make(chan *Error, maxConcurrent)
 
+	var wg sync.WaitGroup
+
 	for i := 0; i < maxConcurrent; i++ {
-		go doAction(inputs, action, results, errors)
+		wg.Add(1)
+		go doAction(&wg, inputs, action, results, errors)
 	}
+
+	go func() {
+		wg.Wait()
+		close(results)
+		close(errors)
+	}()
 
 	return inputs, results, errors
 }
