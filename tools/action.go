@@ -6,25 +6,25 @@ import (
 
 // Error contains ID in error and error desc
 type Error struct {
-	Input []byte
+	Input interface{}
 	Err   error
 }
 
-func doAction(wg *sync.WaitGroup, inputs <-chan []byte, action func([]byte) (interface{}, error), results chan<- interface{}, errors chan<- *Error) {
+func doAction(wg *sync.WaitGroup, inputs <-chan interface{}, action func(interface{}) (interface{}, error), results chan<- interface{}, errors chan<- *Error) {
 	defer wg.Done()
 
 	for input := range inputs {
 		if result, err := action(input); err == nil {
 			results <- result
 		} else {
-			errors <- &Error{input, err}
+			errors <- &Error{Input: input, Err: err}
 		}
 	}
 }
 
 // ConcurrentAction create a pool of goroutines for executing action with concurrency limits
-func ConcurrentAction(maxConcurrent int, action func([]byte) (interface{}, error)) (chan<- []byte, <-chan interface{}, <-chan *Error) {
-	inputs := make(chan []byte, maxConcurrent)
+func ConcurrentAction(maxConcurrent int, action func(interface{}) (interface{}, error)) (chan<- interface{}, <-chan interface{}, <-chan *Error) {
+	inputs := make(chan interface{}, maxConcurrent)
 	results := make(chan interface{}, maxConcurrent)
 	errors := make(chan *Error, maxConcurrent)
 
