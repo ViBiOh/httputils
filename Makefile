@@ -24,3 +24,5 @@ build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo cors/cors.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo prometheus/prometheus.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo cert/cert.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/action.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/map.go
