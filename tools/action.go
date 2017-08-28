@@ -2,7 +2,7 @@ package tools
 
 // Error contains ID in error and error desc
 type Error struct {
-	input []byte
+	Input []byte
 	Err   error
 }
 
