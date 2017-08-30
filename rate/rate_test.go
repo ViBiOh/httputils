@@ -110,14 +110,17 @@ func TestServeHTTP(t *testing.T) {
 	}
 
 	var tests = []struct {
+		request  *http.Request
 		userRate map[string]*rateLimit
 		want     int
 	}{
 		{
+			request,
 			map[string]*rateLimit{},
 			http.StatusOK,
 		},
 		{
+			request,
 			map[string]*rateLimit{
 				`localhost`: {
 					ip:    `localhost`,
@@ -125,6 +128,16 @@ func TestServeHTTP(t *testing.T) {
 				},
 			},
 			http.StatusTooManyRequests,
+		},
+		{
+			httptest.NewRequest(http.MethodGet, `/rate_limits`, nil),
+			map[string]*rateLimit{
+				`localhost`: {
+					ip:    `localhost`,
+					calls: calls,
+				},
+			},
+			http.StatusOK,
 		},
 	}
 
@@ -134,7 +147,7 @@ func TestServeHTTP(t *testing.T) {
 		response := httptest.NewRecorder()
 		Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-		})}.ServeHTTP(response, request)
+		})}.ServeHTTP(response, test.request)
 
 		if result := response.Result().StatusCode; result != test.want {
 			t.Errorf(`ServeHTTP() = (%v) want %v, with userRate = %v`, result, test.want, test.userRate)

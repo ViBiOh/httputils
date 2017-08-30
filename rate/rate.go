@@ -4,6 +4,8 @@ import (
 	"flag"
 	"net/http"
 	"time"
+
+	"github.com/ViBiOh/httputils"
 )
 
 var (
@@ -44,6 +46,11 @@ type Handler struct {
 }
 
 func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet && r.URL.Path == `/rate_limits` {
+		httputils.ResponseJSON(w, userRate)
+		return
+	}
+
 	if !checkRate(r) {
 		w.WriteHeader(http.StatusTooManyRequests)
 		return
