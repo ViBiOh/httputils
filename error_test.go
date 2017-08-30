@@ -8,7 +8,7 @@ import (
 )
 
 func TestBadRequest(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 		err  error
 		want string
 	}{
@@ -19,22 +19,22 @@ func TestBadRequest(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		BadRequest(writer, test.err)
+		BadRequest(writer, testCase.err)
 
 		if result := writer.Result().StatusCode; result != http.StatusBadRequest {
-			t.Errorf(`badRequest(%v) = %v, want %v`, test.err, result, http.StatusBadRequest)
+			t.Errorf(`badRequest(%v) = %v, want %v`, testCase.err, result, http.StatusBadRequest)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != string(test.want) {
-			t.Errorf(`badRequest(%v) = %v, want %v`, test.err, string(result), string(test.want))
+		if result, _ := ReadBody(writer.Result().Body); string(result) != string(testCase.want) {
+			t.Errorf(`badRequest(%v) = %v, want %v`, testCase.err, string(result), string(testCase.want))
 		}
 	}
 }
 
 func TestUnauthorized(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 		err  error
 		want string
 	}{
@@ -45,27 +45,27 @@ func TestUnauthorized(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		Unauthorized(writer, test.err)
+		Unauthorized(writer, testCase.err)
 
 		if result := writer.Result().StatusCode; result != http.StatusUnauthorized {
-			t.Errorf(`badRequest(%v) = %v, want %v`, test.err, result, http.StatusUnauthorized)
+			t.Errorf(`badRequest(%v) = %v, want %v`, testCase.err, result, http.StatusUnauthorized)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != string(test.want) {
-			t.Errorf(`unauthorized(%v) = %v, want %v`, test.err, string(result), string(test.want))
+		if result, _ := ReadBody(writer.Result().Body); string(result) != string(testCase.want) {
+			t.Errorf(`unauthorized(%v) = %v, want %v`, testCase.err, string(result), string(testCase.want))
 		}
 	}
 }
 
 func TestForbidden(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 	}{
 		{},
 	}
 
-	for range tests {
+	for range cases {
 		writer := httptest.NewRecorder()
 		Forbidden(writer)
 
@@ -76,7 +76,7 @@ func TestForbidden(t *testing.T) {
 }
 
 func TestErrorHandler(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 		err  error
 		want string
 	}{
@@ -87,12 +87,12 @@ func TestErrorHandler(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		InternalServer(writer, test.err)
+		InternalServer(writer, testCase.err)
 
 		if result := writer.Result().StatusCode; result != http.StatusInternalServerError {
-			t.Errorf(`errorHandler(%v) = %v, want %v`, test.err, result, http.StatusInternalServerError)
+			t.Errorf(`errorHandler(%v) = %v, want %v`, testCase.err, result, http.StatusInternalServerError)
 		}
 	}
 }

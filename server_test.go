@@ -8,7 +8,7 @@ import (
 )
 
 func TestHttpGracefulClose(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 		url     string
 		server  *http.Server
 		wait    bool
@@ -49,46 +49,46 @@ func TestHttpGracefulClose(t *testing.T) {
 
 	var failed bool
 
-	for _, test := range tests {
-		if test.server != nil {
-			go test.server.ListenAndServe()
-			defer test.server.Close()
+	for _, testCase := range cases {
+		if testCase.server != nil {
+			go testCase.server.ListenAndServe()
+			defer testCase.server.Close()
 
-			if _, err := GetBody(test.url, ``, false); err != nil {
-				t.Errorf(`httpGracefulClose(%v), unable to fetch started server: %v`, test.server, err)
+			if _, err := GetBody(testCase.url, ``, false); err != nil {
+				t.Errorf(`httpGracefulClose(%v), unable to fetch started server: %v`, testCase.server, err)
 			}
 		}
 
-		if test.wait {
-			go GetBody(test.url+`/long`, ``, false)
+		if testCase.wait {
+			go GetBody(testCase.url+`/long`, ``, false)
 			time.Sleep(time.Second)
 		}
-		err := httpGracefulClose(test.server)
+		err := httpGracefulClose(testCase.server)
 
-		if test.server != nil {
-			if _, err := GetBody(test.url, ``, false); err == nil {
-				t.Errorf(`httpGracefulClose(%v), still able to fetch data`, test.server)
+		if testCase.server != nil {
+			if _, err := GetBody(testCase.url, ``, false); err == nil {
+				t.Errorf(`httpGracefulClose(%v), still able to fetch data`, testCase.server)
 			}
 		}
 
 		failed = false
 
-		if err == nil && test.wantErr != nil {
+		if err == nil && testCase.wantErr != nil {
 			failed = true
-		} else if err != nil && test.wantErr == nil {
+		} else if err != nil && testCase.wantErr == nil {
 			failed = true
-		} else if err != nil && err.Error() != test.wantErr.Error() {
+		} else if err != nil && err.Error() != testCase.wantErr.Error() {
 			failed = true
 		}
 
 		if failed {
-			t.Errorf(`httpGracefulClose(%v) = %v, want %v`, test.server, err, test.wantErr)
+			t.Errorf(`httpGracefulClose(%v) = %v, want %v`, testCase.server, err, testCase.wantErr)
 		}
 	}
 }
 
 func TestGracefulClose(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 		url      string
 		server   *http.Server
 		wait     bool
@@ -142,19 +142,19 @@ func TestGracefulClose(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		if test.server != nil {
-			go test.server.ListenAndServe()
-			defer test.server.Close()
+	for _, testCase := range cases {
+		if testCase.server != nil {
+			go testCase.server.ListenAndServe()
+			defer testCase.server.Close()
 		}
 
-		if test.wait {
-			go GetBody(test.url+`/long`, ``, false)
+		if testCase.wait {
+			go GetBody(testCase.url+`/long`, ``, false)
 			time.Sleep(time.Second)
 		}
 
-		if result := gracefulClose(test.server, test.callback); result != test.want {
-			t.Errorf(`gracefulClose(%v) = %v, want %v`, test.server, result, test.want)
+		if result := gracefulClose(testCase.server, testCase.callback); result != testCase.want {
+			t.Errorf(`gracefulClose(%v) = %v, want %v`, testCase.server, result, testCase.want)
 		}
 	}
 }

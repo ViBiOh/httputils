@@ -17,7 +17,7 @@ func testFn() string {
 }
 
 func TestResponseJSON(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 		obj        interface{}
 		want       string
 		wantStatus int
@@ -50,28 +50,28 @@ func TestResponseJSON(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		ResponseJSON(writer, test.obj)
+		ResponseJSON(writer, testCase.obj)
 
-		if result := writer.Result().StatusCode; result != test.wantStatus {
-			t.Errorf(`ResponseJSON(%v) = %v, want %v`, test.obj, result, test.wantStatus)
+		if result := writer.Result().StatusCode; result != testCase.wantStatus {
+			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, result, testCase.wantStatus)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != test.want {
-			t.Errorf(`ResponseJSON(%v) = %v, want %v`, test.obj, string(result), test.want)
+		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, string(result), testCase.want)
 		}
 
-		for key, value := range test.wantHeader {
+		for key, value := range testCase.wantHeader {
 			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, ``) != value {
-				t.Errorf(`ResponseJSON(%v).Header[%s] = %v, want %v`, test.obj, key, strings.Join(result, ``), value)
+				t.Errorf(`ResponseJSON(%v).Header[%s] = %v, want %v`, testCase.obj, key, strings.Join(result, ``), value)
 			}
 		}
 	}
 }
 
 func BenchmarkResponseJSON(b *testing.B) {
-	var test = struct {
+	var testCase = struct {
 		obj        interface{}
 		want       string
 		wantStatus int
@@ -85,26 +85,26 @@ func BenchmarkResponseJSON(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		writer := httptest.NewRecorder()
-		ResponseJSON(writer, test.obj)
+		ResponseJSON(writer, testCase.obj)
 
-		if result := writer.Result().StatusCode; result != test.wantStatus {
-			b.Errorf(`ResponseJSON(%v) = %v, want %v`, test.obj, result, test.wantStatus)
+		if result := writer.Result().StatusCode; result != testCase.wantStatus {
+			b.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, result, testCase.wantStatus)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != test.want {
-			b.Errorf(`ResponseJSON(%v) = %v, want %v`, test.obj, string(result), test.want)
+		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+			b.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, string(result), testCase.want)
 		}
 
-		for key, value := range test.wantHeader {
+		for key, value := range testCase.wantHeader {
 			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, ``) != value {
-				b.Errorf(`ResponseJSON(%v).Header[%s] = %v, want %v`, test.obj, key, strings.Join(result, ``), value)
+				b.Errorf(`ResponseJSON(%v).Header[%s] = %v, want %v`, testCase.obj, key, strings.Join(result, ``), value)
 			}
 		}
 	}
 }
 
 func TestResponseArrayJSON(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 		obj        interface{}
 		want       string
 		wantStatus int
@@ -124,21 +124,21 @@ func TestResponseArrayJSON(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		ResponseArrayJSON(writer, test.obj)
+		ResponseArrayJSON(writer, testCase.obj)
 
-		if result := writer.Result().StatusCode; result != test.wantStatus {
-			t.Errorf(`ResponseJSON(%v) = %v, want %v`, test.obj, result, test.wantStatus)
+		if result := writer.Result().StatusCode; result != testCase.wantStatus {
+			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, result, testCase.wantStatus)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != test.want {
-			t.Errorf(`ResponseJSON(%v) = %v, want %v`, test.obj, string(result), test.want)
+		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, string(result), testCase.want)
 		}
 
-		for key, value := range test.wantHeader {
+		for key, value := range testCase.wantHeader {
 			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, ``) != value {
-				t.Errorf(`ResponseJSON(%v).Header[%s] = %v, want %v`, test.obj, key, strings.Join(result, ``), value)
+				t.Errorf(`ResponseJSON(%v).Header[%s] = %v, want %v`, testCase.obj, key, strings.Join(result, ``), value)
 			}
 		}
 	}

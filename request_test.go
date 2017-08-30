@@ -31,7 +31,7 @@ func TestDoAndRead(t *testing.T) {
 	bad, _ := http.NewRequest(http.MethodGet, testServer.URL+`/bad`, nil)
 	test, _ := http.NewRequest(http.MethodGet, testServer.URL, nil)
 
-	var tests = []struct {
+	var cases = []struct {
 		request       *http.Request
 		skipTLSVerify bool
 		want          string
@@ -65,29 +65,29 @@ func TestDoAndRead(t *testing.T) {
 
 	var failed bool
 
-	for _, test := range tests {
-		result, err := doAndRead(test.request, test.skipTLSVerify)
+	for _, testCase := range cases {
+		result, err := doAndRead(testCase.request, testCase.skipTLSVerify)
 
 		failed = false
 
-		if err == nil && test.wantErr != nil {
+		if err == nil && testCase.wantErr != nil {
 			failed = true
-		} else if err != nil && test.wantErr == nil {
+		} else if err != nil && testCase.wantErr == nil {
 			failed = true
-		} else if err != nil && err.Error() != test.wantErr.Error() {
+		} else if err != nil && err.Error() != testCase.wantErr.Error() {
 			failed = true
-		} else if string(result) != test.want {
+		} else if string(result) != testCase.want {
 			failed = true
 		}
 
 		if failed {
-			t.Errorf(`doAndRead(%v) = (%v, %v), want (%v, %v)`, test.request, string(result), err, test.want, test.wantErr)
+			t.Errorf(`doAndRead(%v) = (%v, %v), want (%v, %v)`, testCase.request, string(result), err, testCase.want, testCase.wantErr)
 		}
 	}
 }
 
 func TestAddAuthorization(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 		authorization string
 	}{
 		{
@@ -98,18 +98,18 @@ func TestAddAuthorization(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testCase := range cases {
 		request := httptest.NewRequest(http.MethodGet, `http://localhost`, nil)
-		addAuthorization(request, test.authorization)
+		addAuthorization(request, testCase.authorization)
 
-		if result := strings.Join(request.Header[`Authorization`], ``); result != test.authorization {
-			t.Errorf(`addAuthorization(%v) = %v, want %v`, test.authorization, result, test.authorization)
+		if result := strings.Join(request.Header[`Authorization`], ``); result != testCase.authorization {
+			t.Errorf(`addAuthorization(%v) = %v, want %v`, testCase.authorization, result, testCase.authorization)
 		}
 	}
 }
 
 func TestGetBasicAuth(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 		username string
 		password string
 		want     string
@@ -126,15 +126,15 @@ func TestGetBasicAuth(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		if result := GetBasicAuth(test.username, test.password); result != test.want {
-			t.Errorf(`GetBasicAuth(%v, %v) = %v, want %v`, test.username, test.password, result, test.want)
+	for _, testCase := range cases {
+		if result := GetBasicAuth(testCase.username, testCase.password); result != testCase.want {
+			t.Errorf(`GetBasicAuth(%v, %v) = %v, want %v`, testCase.username, testCase.password, result, testCase.want)
 		}
 	}
 }
 
 func TestReadBody(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 		body    io.ReadCloser
 		want    string
 		wantErr error
@@ -148,23 +148,23 @@ func TestReadBody(t *testing.T) {
 
 	var failed bool
 
-	for _, test := range tests {
-		result, err := ReadBody(test.body)
+	for _, testCase := range cases {
+		result, err := ReadBody(testCase.body)
 
 		failed = false
 
-		if err == nil && test.wantErr != nil {
+		if err == nil && testCase.wantErr != nil {
 			failed = true
-		} else if err != nil && test.wantErr == nil {
+		} else if err != nil && testCase.wantErr == nil {
 			failed = true
-		} else if err != nil && err.Error() != test.wantErr.Error() {
+		} else if err != nil && err.Error() != testCase.wantErr.Error() {
 			failed = true
-		} else if string(result) != test.want {
+		} else if string(result) != testCase.want {
 			failed = true
 		}
 
 		if failed {
-			t.Errorf(`ReadBody(%v) = (%v, %v), want (%v, %v)`, test.body, result, err, test.want, test.wantErr)
+			t.Errorf(`ReadBody(%v) = (%v, %v), want (%v, %v)`, testCase.body, result, err, testCase.want, testCase.wantErr)
 		}
 	}
 }
@@ -175,7 +175,7 @@ func TestGetBody(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	var tests = []struct {
+	var cases = []struct {
 		url     string
 		want    string
 		wantErr error
@@ -194,23 +194,23 @@ func TestGetBody(t *testing.T) {
 
 	var failed bool
 
-	for _, test := range tests {
-		result, err := GetBody(test.url, ``, false)
+	for _, testCase := range cases {
+		result, err := GetBody(testCase.url, ``, false)
 
 		failed = false
 
-		if err == nil && test.wantErr != nil {
+		if err == nil && testCase.wantErr != nil {
 			failed = true
-		} else if err != nil && test.wantErr == nil {
+		} else if err != nil && testCase.wantErr == nil {
 			failed = true
-		} else if err != nil && err.Error() != test.wantErr.Error() {
+		} else if err != nil && err.Error() != testCase.wantErr.Error() {
 			failed = true
-		} else if string(result) != test.want {
+		} else if string(result) != testCase.want {
 			failed = true
 		}
 
 		if failed {
-			t.Errorf(`GetBody(%v, '') = (%s, %v), want (%s, %v)`, test.url, result, err, test.want, test.wantErr)
+			t.Errorf(`GetBody(%v, '') = (%s, %v), want (%s, %v)`, testCase.url, result, err, testCase.want, testCase.wantErr)
 		}
 	}
 }
@@ -221,7 +221,7 @@ func TestPostJSONBody(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	var tests = []struct {
+	var cases = []struct {
 		url     string
 		body    interface{}
 		want    string
@@ -255,23 +255,23 @@ func TestPostJSONBody(t *testing.T) {
 
 	var failed bool
 
-	for _, test := range tests {
-		result, err := PostJSONBody(test.url, test.body, ``, false)
+	for _, testCase := range cases {
+		result, err := PostJSONBody(testCase.url, testCase.body, ``, false)
 
 		failed = false
 
-		if err == nil && test.wantErr != nil {
+		if err == nil && testCase.wantErr != nil {
 			failed = true
-		} else if err != nil && test.wantErr == nil {
+		} else if err != nil && testCase.wantErr == nil {
 			failed = true
-		} else if err != nil && err.Error() != test.wantErr.Error() {
+		} else if err != nil && err.Error() != testCase.wantErr.Error() {
 			failed = true
-		} else if string(result) != test.want {
+		} else if string(result) != testCase.want {
 			failed = true
 		}
 
 		if failed {
-			t.Errorf(`PostJSONBody(%v, %v, '') = (%s, %v), want (%s, %v)`, test.url, test.body, result, err, test.want, test.wantErr)
+			t.Errorf(`PostJSONBody(%v, %v, '') = (%s, %v), want (%s, %v)`, testCase.url, testCase.body, result, err, testCase.want, testCase.wantErr)
 		}
 	}
 }

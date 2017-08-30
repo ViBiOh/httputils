@@ -16,7 +16,7 @@ func TestCheckRate(t *testing.T) {
 		calls[i] = time.Now()
 	}
 
-	var tests = []struct {
+	var cases = []struct {
 		userRate map[string]*rateLimit
 		want     bool
 	}{
@@ -60,11 +60,11 @@ func TestCheckRate(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		userRate = test.userRate
+	for _, testCase := range cases {
+		userRate = testCase.userRate
 
-		if result := checkRate(request); result != test.want {
-			t.Errorf(`checkRate(%v) = (%v), want (%v)`, test.userRate, result, test.want)
+		if result := checkRate(request); result != testCase.want {
+			t.Errorf(`checkRate(%v) = (%v), want (%v)`, testCase.userRate, result, testCase.want)
 		}
 	}
 }
@@ -78,7 +78,7 @@ func BenchmarkCheckRate(b *testing.B) {
 		calls[i] = time.Now()
 	}
 
-	var test = struct {
+	var testCase = struct {
 		userRate map[string]*rateLimit
 		want     bool
 	}{
@@ -92,10 +92,10 @@ func BenchmarkCheckRate(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		userRate = test.userRate
+		userRate = testCase.userRate
 
-		if result := checkRate(request); result != test.want {
-			b.Errorf(`checkRate(%v) = (%v), want (%v)`, test.userRate, result, test.want)
+		if result := checkRate(request); result != testCase.want {
+			b.Errorf(`checkRate(%v) = (%v), want (%v)`, testCase.userRate, result, testCase.want)
 		}
 	}
 }
@@ -109,7 +109,7 @@ func TestServeHTTP(t *testing.T) {
 		calls[i] = time.Now()
 	}
 
-	var tests = []struct {
+	var cases = []struct {
 		request  *http.Request
 		userRate map[string]*rateLimit
 		want     int
@@ -141,16 +141,16 @@ func TestServeHTTP(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		userRate = test.userRate
+	for _, testCase := range cases {
+		userRate = testCase.userRate
 
 		response := httptest.NewRecorder()
 		Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-		})}.ServeHTTP(response, test.request)
+		})}.ServeHTTP(response, testCase.request)
 
-		if result := response.Result().StatusCode; result != test.want {
-			t.Errorf(`ServeHTTP() = (%v) want %v, with userRate = %v`, result, test.want, test.userRate)
+		if result := response.Result().StatusCode; result != testCase.want {
+			t.Errorf(`ServeHTTP() = (%v) want %v, with userRate = %v`, result, testCase.want, testCase.userRate)
 		}
 	}
 }

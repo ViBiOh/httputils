@@ -8,7 +8,7 @@ import (
 )
 
 func TestServeHTTP(t *testing.T) {
-	var tests = []struct {
+	var cases = []struct {
 		path        string
 		handlerFunc func(w http.ResponseWriter, r *http.Request)
 		want        map[string]string
@@ -61,7 +61,7 @@ func TestServeHTTP(t *testing.T) {
 			},
 		},
 		{
-			`/test.html`,
+			`/testCase.html`,
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},
@@ -78,11 +78,11 @@ func TestServeHTTP(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testCase := range cases {
 		request := httptest.NewRecorder()
-		Handler{Handler: http.HandlerFunc(test.handlerFunc)}.ServeHTTP(request, httptest.NewRequest(http.MethodGet, `http://localhost`+test.path, nil))
+		Handler{Handler: http.HandlerFunc(testCase.handlerFunc)}.ServeHTTP(request, httptest.NewRequest(http.MethodGet, `http://localhost`+testCase.path, nil))
 
-		for key, value := range test.want {
+		for key, value := range testCase.want {
 			if result, ok := request.Result().Header[key]; !ok || (ok && strings.Join(result, ``) != value) {
 				t.Errorf(`ServeHTTP() = [%v] = %v, want %v`, key, strings.Join(result, ``), value)
 			}
