@@ -88,6 +88,7 @@ func ListenAndServeTLS(server *http.Server) error {
 	}
 
 	config := &tls.Config{}
+	config.NextProtos = append(config.NextProtos, `h2`)
 	if !strSliceContains(config.NextProtos, `http/1.1`) {
 		config.NextProtos = append(config.NextProtos, `http/1.1`)
 	}
