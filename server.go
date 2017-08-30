@@ -47,12 +47,16 @@ func gracefulClose(server *http.Server, callback func() error) int {
 }
 
 // ServerGracefulClose gracefully close net/http server
-func ServerGracefulClose(server *http.Server, callback func() error) {
+func ServerGracefulClose(server *http.Server, serveError <-chan error, callback func() error) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM)
 
-	<-signals
-	log.Printf(`SIGTERM received`)
+	select {
+	case err := <-serveError:
+		log.Print(err)
+	case <-signals:
+		log.Print(`SIGTERM received`)
+	}
 
 	os.Exit(gracefulClose(server, callback))
 }
