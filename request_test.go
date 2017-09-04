@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
@@ -86,28 +85,6 @@ func TestDoAndRead(t *testing.T) {
 	}
 }
 
-func TestAddAuthorization(t *testing.T) {
-	var cases = []struct {
-		authorization string
-	}{
-		{
-			``,
-		},
-		{
-			`admin`,
-		},
-	}
-
-	for _, testCase := range cases {
-		request := httptest.NewRequest(http.MethodGet, `http://localhost`, nil)
-		addAuthorization(request, testCase.authorization)
-
-		if result := strings.Join(request.Header[`Authorization`], ``); result != testCase.authorization {
-			t.Errorf(`addAuthorization(%v) = %v, want %v`, testCase.authorization, result, testCase.authorization)
-		}
-	}
-}
-
 func TestGetBasicAuth(t *testing.T) {
 	var cases = []struct {
 		username string
@@ -177,16 +154,19 @@ func TestGetBody(t *testing.T) {
 
 	var cases = []struct {
 		url     string
+		headers map[string]string
 		want    string
 		wantErr error
 	}{
 		{
 			`://fail`,
+			nil,
 			``,
 			fmt.Errorf(`Error while creating request: parse ://fail: missing protocol scheme`),
 		},
 		{
 			testServer.URL,
+			map[string]string{`Authorization`: `admin:password`},
 			`Hello, test`,
 			nil,
 		},
@@ -195,7 +175,7 @@ func TestGetBody(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := GetBody(testCase.url, ``, false)
+		result, err := GetBody(testCase.url, testCase.headers, false)
 
 		failed = false
 
@@ -224,17 +204,20 @@ func TestPostJSONBody(t *testing.T) {
 	var cases = []struct {
 		url     string
 		body    interface{}
+		headers map[string]string
 		want    string
 		wantErr error
 	}{
 		{
 			``,
 			testFn,
+			nil,
 			``,
 			fmt.Errorf(`Error while marshalling body: json: unsupported type: func() string`),
 		},
 		{
 			`://fail`,
+			nil,
 			nil,
 			``,
 			fmt.Errorf(`Error while creating request: parse ://fail: missing protocol scheme`),
@@ -242,12 +225,14 @@ func TestPostJSONBody(t *testing.T) {
 		{
 			``,
 			nil,
+			nil,
 			``,
 			fmt.Errorf(`Error while sending data: Post : unsupported protocol scheme ""`),
 		},
 		{
 			testServer.URL,
 			&postStruct{},
+			map[string]string{`Authorization`: `admin:password`},
 			`Hello, test`,
 			nil,
 		},
@@ -256,7 +241,7 @@ func TestPostJSONBody(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := PostJSONBody(testCase.url, testCase.body, ``, false)
+		result, err := PostJSONBody(testCase.url, testCase.body, testCase.headers, false)
 
 		failed = false
 

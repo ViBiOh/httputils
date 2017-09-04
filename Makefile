@@ -1,4 +1,4 @@
-default: deps fmt lint tst build
+default: deps format lint tst build
 
 deps:
 	go get -u golang.org/x/tools/cmd/goimports
@@ -6,7 +6,7 @@ deps:
 	go get -u github.com/prometheus/client_golang/prometheus
 	go get -u github.com/prometheus/client_golang/prometheus/promhttp
 
-fmt:
+format:
 	goimports -w **/*.go *.go
 	gofmt -s -w **/*.go *.go
 

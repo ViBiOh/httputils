@@ -12,10 +12,12 @@ import (
 	"time"
 )
 
-var httpClient = http.Client{Timeout: 30 * time.Second}
+const clientTimeout = 30 * time.Second
+
+var httpClient = http.Client{Timeout: clientTimeout}
 
 var httpClientSkipTLS = http.Client{
-	Timeout: 30 * time.Second,
+	Timeout: clientTimeout,
 	Transport: &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -46,12 +48,6 @@ func doAndRead(request *http.Request, skipTLSVerify bool) ([]byte, error) {
 	return responseBody, nil
 }
 
-func addAuthorization(request *http.Request, authorization string) {
-	if authorization != `` {
-		request.Header.Add(`Authorization`, authorization)
-	}
-}
-
 // GetBasicAuth generates Basic Auth for given username and password
 func GetBasicAuth(username string, password string) string {
 	return `Basic ` + base64.StdEncoding.EncodeToString([]byte(username+`:`+password))
@@ -64,19 +60,21 @@ func ReadBody(body io.ReadCloser) ([]byte, error) {
 }
 
 // GetBody return body of given URL or error if something goes wrong
-func GetBody(url string, authorization string, skipTLSVerify bool) ([]byte, error) {
+func GetBody(url string, headers map[string]string, skipTLSVerify bool) ([]byte, error) {
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf(`Error while creating request: %v`, err)
 	}
 
-	addAuthorization(request, authorization)
+	for key, value := range headers {
+		request.Header.Add(key, value)
+	}
 
 	return doAndRead(request, skipTLSVerify)
 }
 
 // PostJSONBody post given interface to URL with optional credential supplied
-func PostJSONBody(url string, body interface{}, authorization string, skipTLSVerify bool) ([]byte, error) {
+func PostJSONBody(url string, body interface{}, headers map[string]string, skipTLSVerify bool) ([]byte, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf(`Error while marshalling body: %v`, err)
@@ -87,7 +85,10 @@ func PostJSONBody(url string, body interface{}, authorization string, skipTLSVer
 		return nil, fmt.Errorf(`Error while creating request: %v`, err)
 	}
 
-	addAuthorization(request, authorization)
+	for key, value := range headers {
+		request.Header.Add(key, value)
+	}
+
 	request.Header.Add(`Content-Type`, `application/json`)
 
 	return doAndRead(request, skipTLSVerify)
