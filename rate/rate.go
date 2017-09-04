@@ -11,9 +11,9 @@ import (
 const reverseProxyHeader = `X-Forwarded-For`
 
 var (
-	ipRateDelay = flag.Duration(`rateDelay`, time.Second*60, `Rate IP delay`)
-	ipRateCount = flag.Int(`rateCount`, 60, `Rate IP count`)
-	ipReverseProxy = flag.Bool(`rateReverseProxy`, false, `Rate behind reverse proxy (use of X-Forwarded-For Header instead of RemoteAddr)`)
+	ipRateDelay    = flag.Duration(`rateDelay`, time.Second*60, `Rate IP delay`)
+	ipRateCount    = flag.Int(`rateCount`, 60, `Rate IP count`)
+	ipReverseProxy = flag.Bool(`rateReverseProxy`, false, `Rate behind reverse proxy (use of 'X-Forwarded-For' Header instead of RemoteAddr)`)
 )
 
 type rateLimit struct {

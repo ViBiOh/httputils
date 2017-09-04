@@ -9,6 +9,7 @@ import (
 
 func TestCheckRate(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)
+	request.Header.Add(reverseProxyHeader, `real-ip`)
 	request.RemoteAddr = `localhost`
 
 	calls := make([]time.Time, *ipRateCount)
@@ -17,11 +18,13 @@ func TestCheckRate(t *testing.T) {
 	}
 
 	var cases = []struct {
-		userRate map[string]*rateLimit
-		want     bool
+		userRate       map[string]*rateLimit
+		ipReverseProxy bool
+		want           bool
 	}{
 		{
 			map[string]*rateLimit{},
+			false,
 			true,
 		},
 		{
@@ -33,6 +36,7 @@ func TestCheckRate(t *testing.T) {
 					},
 				},
 			},
+			false,
 			true,
 		},
 		{
@@ -47,6 +51,7 @@ func TestCheckRate(t *testing.T) {
 					},
 				},
 			},
+			false,
 			true,
 		},
 		{
@@ -57,10 +62,22 @@ func TestCheckRate(t *testing.T) {
 				},
 			},
 			false,
+			false,
+		},
+		{
+			map[string]*rateLimit{
+				`real-ip`: {
+					ip:    `real-ip`,
+					calls: calls,
+				},
+			},
+			true,
+			false,
 		},
 	}
 
 	for _, testCase := range cases {
+		ipReverseProxy = &testCase.ipReverseProxy
 		userRate = testCase.userRate
 
 		if result := checkRate(request); result != testCase.want {
@@ -71,6 +88,7 @@ func TestCheckRate(t *testing.T) {
 
 func BenchmarkCheckRate(b *testing.B) {
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)
+	request.Header.Add(reverseProxyHeader, `localhost`)
 	request.RemoteAddr = `localhost`
 
 	calls := make([]time.Time, *ipRateCount)
@@ -102,6 +120,7 @@ func BenchmarkCheckRate(b *testing.B) {
 
 func TestServeHTTP(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)
+	request.Header.Add(reverseProxyHeader, `localhost`)
 	request.RemoteAddr = `localhost`
 
 	calls := make([]time.Time, *ipRateCount)
