@@ -25,7 +25,7 @@ var userRate = make(map[string]*rateLimit, 0)
 
 func checkRate(r *http.Request) bool {
 	ip := r.RemoteAddr
-	if ipReverseProxy {
+	if *ipReverseProxy {
 		ip = r.Header.Get(reverseProxyHeader)
 	}
 	rate, ok := userRate[ip]
