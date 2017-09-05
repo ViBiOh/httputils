@@ -14,7 +14,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "4.4.1"
+      "version": "4.4.3"
     },
     {
       "type": "panel",
@@ -119,6 +119,7 @@
           ],
           "thresholds": "",
           "title": "Requests",
+          "transparent": true,
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -186,7 +187,8 @@
           "tableColumn": "",
           "targets": [
             {
-              "expr": "avg(rate(http_request_duration_seconds_sum{job=\"[[app]]\"}[5m]) / rate(http_request_duration_seconds_count{job=\"[[app]]\"}[5m]))",
+              "expr":
+                "avg(rate(http_request_duration_seconds_sum{job=\"[[app]]\"}[5m]) / rate(http_request_duration_seconds_count{job=\"[[app]]\"}[5m]))",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -197,6 +199,7 @@
           ],
           "thresholds": "1,2",
           "title": "Response time (s)",
+          "transparent": true,
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -264,7 +267,8 @@
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(rate(http_requests_total{code=~\"^[4|5]..$\",job=\"[[app]]\"}[5m]))",
+              "expr":
+                "sum(rate(http_requests_total{code=~\"^[4|5]..$\",job=\"[[app]]\"}[5m]))",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "",
@@ -274,6 +278,7 @@
           ],
           "thresholds": "5,30",
           "title": "Errors",
+          "transparent": true,
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -353,6 +358,7 @@
           ],
           "thresholds": "10,50",
           "title": "GoRoutines",
+          "transparent": true,
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -430,16 +436,14 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "transparent": false,
+          "transparent": true,
           "type": "graph",
           "xaxis": {
             "buckets": null,
             "mode": "time",
             "name": null,
             "show": true,
-            "values": [
-              "total"
-            ]
+            "values": ["total"]
           },
           "yaxes": [
             {
@@ -493,7 +497,8 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(http_requests_total{code=~\"^[4|5]..$\"}[5m])) by (job)",
+              "expr":
+                "sum(rate(http_requests_total{code=~\"^[4|5]..$\"}[5m])) by (job)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -512,6 +517,7 @@
             "sort": 0,
             "value_type": "individual"
           },
+          "transparent": true,
           "type": "graph",
           "xaxis": {
             "buckets": null,
@@ -583,7 +589,8 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "avg(rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])) by (job)",
+              "expr":
+                "avg(rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])) by (job)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -602,6 +609,7 @@
             "sort": 0,
             "value_type": "individual"
           },
+          "transparent": true,
           "type": "graph",
           "xaxis": {
             "buckets": null,
@@ -680,6 +688,7 @@
             "sort": 0,
             "value_type": "individual"
           },
+          "transparent": true,
           "type": "graph",
           "xaxis": {
             "buckets": null,
@@ -760,19 +769,9 @@
       "2h",
       "1d"
     ],
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ]
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "",
   "title": "net/http Monitoring",
-  "version": 5
+  "version": 6
 }
