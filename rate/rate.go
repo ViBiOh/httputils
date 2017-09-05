@@ -8,7 +8,7 @@ import (
 	"github.com/ViBiOh/httputils"
 )
 
-const reverseProxyHeader = `X-Forwarded-For`
+const forwardedForHeader = `X-Forwarded-For`
 
 var (
 	ipRateDelay = flag.Duration(`rateDelay`, time.Second*60, `Rate IP delay`)
@@ -22,7 +22,7 @@ type rateLimit struct {
 var userRate = make(map[string]*rateLimit, 0)
 
 func checkRate(r *http.Request) bool {
-	ip := r.Header.Get(reverseProxyHeader)
+	ip := r.Header.Get(forwardedForHeader)
 	if ip == `` {
 		ip = r.RemoteAddr
 	}
