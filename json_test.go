@@ -83,23 +83,10 @@ func BenchmarkResponseJSON(b *testing.B) {
 		map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 	}
 
+	writer := httptest.NewRecorder()
+
 	for i := 0; i < b.N; i++ {
-		writer := httptest.NewRecorder()
 		ResponseJSON(writer, testCase.obj)
-
-		if result := writer.Result().StatusCode; result != testCase.wantStatus {
-			b.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, result, testCase.wantStatus)
-		}
-
-		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
-			b.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, string(result), testCase.want)
-		}
-
-		for key, value := range testCase.wantHeader {
-			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, ``) != value {
-				b.Errorf(`ResponseJSON(%v).Header[%s] = %v, want %v`, testCase.obj, key, strings.Join(result, ``), value)
-			}
-		}
 	}
 }
 
