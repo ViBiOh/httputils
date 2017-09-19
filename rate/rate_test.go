@@ -7,27 +7,40 @@ import (
 	"time"
 )
 
-func TestCheckRate(t *testing.T) {
-	calls := make([]time.Time, *ipRateLimit)
-	for i := 0; i < *ipRateLimit; i++ {
-		calls[i] = time.Now()
+func generateCalls() []*rateLimit {
+	current := time.Now().Add(*ipRateDelay * -2).Unix()
+	countPerSecond := *ipRateLimit / int(*ipRateDelay/time.Second) * 2
+
+	rateLimits := make([]*rateLimit, 0)
+	for i := 0; i < int(*ipRateDelay/time.Second*2); i++ {
+		rateLimits = append(rateLimits, &rateLimit{
+			unix:  current,
+			Count: countPerSecond,
+		})
+
+		current++
 	}
 
+	return rateLimits
+}
+
+func TestCheckRate(t *testing.T) {
 	var cases = []struct {
-		userRate        map[string]*rateLimit
+		userRate        map[string][]*rateLimit
 		forwardedHeader string
 		want            bool
 	}{
 		{
-			map[string]*rateLimit{},
+			map[string][]*rateLimit{},
 			``,
 			true,
 		},
 		{
-			map[string]*rateLimit{
+			map[string][]*rateLimit{
 				`localhost`: {
-					calls: []time.Time{
-						time.Now(),
+					{
+						unix:  time.Now().Unix(),
+						Count: 1,
 					},
 				},
 			},
@@ -35,35 +48,22 @@ func TestCheckRate(t *testing.T) {
 			true,
 		},
 		{
-			map[string]*rateLimit{
+			map[string][]*rateLimit{
 				`localhost`: {
-					calls: []time.Time{
-						time.Now().Add(-180 * time.Second),
-						time.Now().Add(-90 * time.Second),
-						time.Now().Add(-60 * time.Second),
-						time.Now().Add(-30 * time.Second),
+					{
+						unix:  time.Now().Unix(),
+						Count: *ipRateLimit,
 					},
-				},
-			},
-			``,
-			true,
-		},
-		{
-			map[string]*rateLimit{
-				`localhost`: {
-					calls: calls,
 				},
 			},
 			``,
 			false,
 		},
 		{
-			map[string]*rateLimit{
-				`real-ip`: {
-					calls: calls,
-				},
+			map[string][]*rateLimit{
+				`localhost`: generateCalls(),
 			},
-			`real-ip`,
+			``,
 			false,
 		},
 	}
@@ -85,19 +85,12 @@ func BenchmarkCheckRate(b *testing.B) {
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)
 	request.RemoteAddr = `localhost`
 
-	calls := make([]time.Time, *ipRateLimit)
-	for i := 0; i < *ipRateLimit; i++ {
-		calls[i] = time.Now()
-	}
-
 	var testCase = struct {
-		userRate map[string]*rateLimit
+		userRate map[string][]*rateLimit
 		want     bool
 	}{
-		map[string]*rateLimit{
-			`localhost`: {
-				calls: calls,
-			},
+		map[string][]*rateLimit{
+			`localhost`: generateCalls(),
 		},
 		false,
 	}
@@ -122,28 +115,29 @@ func TestServeHTTP(t *testing.T) {
 
 	var cases = []struct {
 		request  *http.Request
-		userRate map[string]*rateLimit
+		userRate map[string][]*rateLimit
 		want     int
 	}{
 		{
 			request,
-			map[string]*rateLimit{},
+			map[string][]*rateLimit{},
 			http.StatusOK,
 		},
 		{
 			request,
-			map[string]*rateLimit{
-				`localhost`: {
-					calls: calls,
-				},
+			map[string][]*rateLimit{
+				`localhost`: generateCalls(),
 			},
 			http.StatusTooManyRequests,
 		},
 		{
 			httptest.NewRequest(http.MethodGet, `/rate_limits`, nil),
-			map[string]*rateLimit{
+			map[string][]*rateLimit{
 				`localhost`: {
-					calls: calls,
+					{
+						unix:  time.Now().Unix(),
+						Count: *ipRateLimit + 10,
+					},
 				},
 			},
 			http.StatusOK,

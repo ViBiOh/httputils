@@ -16,34 +16,55 @@ var (
 )
 
 type rateLimit struct {
-	calls []time.Time
-	Count int `json:"count"`
+	unix  int64
+	Count int
 }
 
-var userRate = make(map[string]*rateLimit, 0)
+var userRate = make(map[string][]*rateLimit, 0)
 
-func checkRate(r *http.Request) bool {
-	ip := r.Header.Get(forwardedForHeader)
+func getIP(r *http.Request) (ip string) {
+	ip = r.Header.Get(forwardedForHeader)
 	if ip == `` {
 		ip = r.RemoteAddr
 	}
+
+	return
+}
+
+func getRateLimits(r *http.Request) []*rateLimit {
+	ip := getIP(r)
 	rate, ok := userRate[ip]
 
 	if !ok {
-		rate = &rateLimit{make([]time.Time, 0), 0}
+		rate = make([]*rateLimit, 0)
 		userRate[ip] = rate
 	}
 
-	now := time.Now()
-	nowMinusDelay := now.Add(*ipRateDelay * -1)
+	return rate
+}
 
-	rate.calls = append(rate.calls, now)
-	for len(rate.calls) > 0 && rate.calls[0].Before(nowMinusDelay) {
-		rate.calls = rate.calls[1:]
+func checkRate(r *http.Request) bool {
+	rateLimits := getRateLimits(r)
+
+	now := time.Now()
+	nowSecond := now.Unix()
+	nowMinusDelaySecond := now.Add(*ipRateDelay * -1).Unix()
+
+	total := 0
+
+	for _, rateLimit := range rateLimits {
+		if rateLimit.unix < nowMinusDelaySecond {
+			rateLimits = rateLimits[1:]
+		} else {
+			if rateLimit.unix == nowSecond {
+				rateLimit.Count++
+			}
+
+			total = total + rateLimit.Count
+		}
 	}
 
-	rate.Count = len(rate.calls)
-	return rate.Count < *ipRateLimit
+	return total < *ipRateLimit
 }
 
 // Handler that check rate limit
