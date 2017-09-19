@@ -8,8 +8,8 @@ import (
 )
 
 func TestCheckRate(t *testing.T) {
-	calls := make([]time.Time, *ipRateCount)
-	for i := 0; i < *ipRateCount; i++ {
+	calls := make([]time.Time, *ipRateLimit)
+	for i := 0; i < *ipRateLimit; i++ {
 		calls[i] = time.Now()
 	}
 
@@ -85,8 +85,8 @@ func BenchmarkCheckRate(b *testing.B) {
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)
 	request.RemoteAddr = `localhost`
 
-	calls := make([]time.Time, *ipRateCount)
-	for i := 0; i < *ipRateCount; i++ {
+	calls := make([]time.Time, *ipRateLimit)
+	for i := 0; i < *ipRateLimit; i++ {
 		calls[i] = time.Now()
 	}
 
@@ -115,8 +115,8 @@ func TestServeHTTP(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)
 	request.Header.Add(forwardedForHeader, `localhost`)
 
-	calls := make([]time.Time, *ipRateCount)
-	for i := 0; i < *ipRateCount; i++ {
+	calls := make([]time.Time, *ipRateLimit)
+	for i := 0; i < *ipRateLimit; i++ {
 		calls[i] = time.Now()
 	}
 

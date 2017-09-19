@@ -12,7 +12,7 @@ const forwardedForHeader = `X-Forwarded-For`
 
 var (
 	ipRateDelay = flag.Duration(`rateDelay`, time.Second*60, `Rate IP delay`)
-	ipRateCount = flag.Int(`rateCount`, 5000, `Rate IP count`)
+	ipRateLimit = flag.Int(`rateCount`, 5000, `Rate IP limit`)
 )
 
 type rateLimit struct {
@@ -41,9 +41,9 @@ func checkRate(r *http.Request) bool {
 	for len(rate.calls) > 0 && rate.calls[0].Before(nowMinusDelay) {
 		rate.calls = rate.calls[1:]
 	}
-	rate.Count = len(rate.calls)
 
-	return len(rate.calls) < *ipRateCount
+	rate.Count = len(rate.calls)
+	return rate.Count < *ipRateLimit
 }
 
 // Handler that check rate limit
