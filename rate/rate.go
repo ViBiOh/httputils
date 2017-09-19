@@ -51,6 +51,7 @@ func checkRate(r *http.Request) bool {
 	nowMinusDelaySecond := now.Add(*ipRateDelay * -1).Unix()
 
 	total := 0
+	inserted := false
 
 	for _, rateLimit := range rateLimits {
 		if rateLimit.unix < nowMinusDelaySecond {
@@ -58,10 +59,16 @@ func checkRate(r *http.Request) bool {
 		} else {
 			if rateLimit.unix == nowSecond {
 				rateLimit.count++
+				inserted = true
 			}
 
 			total = total + rateLimit.count
 		}
+	}
+
+	if !inserted {
+		rateLimits = append(rateLimits, &rateLimit{nowSecond, 1})
+		total++
 	}
 
 	return total < *ipRateLimit
