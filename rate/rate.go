@@ -16,7 +16,8 @@ var (
 )
 
 type rateLimit struct {
-	Calls []time.Time `json:"calls"`
+	calls []time.Time
+	Count int `json:"count"`
 }
 
 var userRate = make(map[string]*rateLimit, 0)
@@ -29,19 +30,20 @@ func checkRate(r *http.Request) bool {
 	rate, ok := userRate[ip]
 
 	if !ok {
-		rate = &rateLimit{make([]time.Time, 0)}
+		rate = &rateLimit{make([]time.Time, 0), 0}
 		userRate[ip] = rate
 	}
 
 	now := time.Now()
 	nowMinusDelay := now.Add(*ipRateDelay * -1)
 
-	rate.Calls = append(rate.Calls, now)
-	for len(rate.Calls) > 0 && rate.Calls[0].Before(nowMinusDelay) {
-		rate.Calls = rate.Calls[1:]
+	rate.calls = append(rate.calls, now)
+	for len(rate.calls) > 0 && rate.calls[0].Before(nowMinusDelay) {
+		rate.calls = rate.calls[1:]
 	}
+	rate.Count = len(rate.calls)
 
-	return len(rate.Calls) < *ipRateCount
+	return len(rate.calls) < *ipRateCount
 }
 
 // Handler that check rate limit

@@ -26,7 +26,7 @@ func TestCheckRate(t *testing.T) {
 		{
 			map[string]*rateLimit{
 				`localhost`: {
-					Calls: []time.Time{
+					calls: []time.Time{
 						time.Now(),
 					},
 				},
@@ -37,7 +37,7 @@ func TestCheckRate(t *testing.T) {
 		{
 			map[string]*rateLimit{
 				`localhost`: {
-					Calls: []time.Time{
+					calls: []time.Time{
 						time.Now().Add(-180 * time.Second),
 						time.Now().Add(-90 * time.Second),
 						time.Now().Add(-60 * time.Second),
@@ -51,7 +51,7 @@ func TestCheckRate(t *testing.T) {
 		{
 			map[string]*rateLimit{
 				`localhost`: {
-					Calls: calls,
+					calls: calls,
 				},
 			},
 			``,
@@ -60,7 +60,7 @@ func TestCheckRate(t *testing.T) {
 		{
 			map[string]*rateLimit{
 				`real-ip`: {
-					Calls: calls,
+					calls: calls,
 				},
 			},
 			`real-ip`,
@@ -96,7 +96,7 @@ func BenchmarkCheckRate(b *testing.B) {
 	}{
 		map[string]*rateLimit{
 			`localhost`: {
-				Calls: calls,
+				calls: calls,
 			},
 		},
 		false,
@@ -134,7 +134,7 @@ func TestServeHTTP(t *testing.T) {
 			request,
 			map[string]*rateLimit{
 				`localhost`: {
-					Calls: calls,
+					calls: calls,
 				},
 			},
 			http.StatusTooManyRequests,
@@ -143,7 +143,7 @@ func TestServeHTTP(t *testing.T) {
 			httptest.NewRequest(http.MethodGet, `/rate_limits`, nil),
 			map[string]*rateLimit{
 				`localhost`: {
-					Calls: calls,
+					calls: calls,
 				},
 			},
 			http.StatusOK,
