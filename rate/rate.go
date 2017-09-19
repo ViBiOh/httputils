@@ -12,7 +12,7 @@ const forwardedForHeader = `X-Forwarded-For`
 
 var (
 	ipRateDelay = flag.Duration(`rateDelay`, time.Second*60, `Rate IP delay`)
-	ipRateCount = flag.Int(`rateCount`, 60, `Rate IP count`)
+	ipRateCount = flag.Int(`rateCount`, 300, `Rate IP count`)
 )
 
 type rateLimit struct {
