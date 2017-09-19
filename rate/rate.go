@@ -17,7 +17,7 @@ var (
 
 type rateLimit struct {
 	unix  int64
-	Count int
+	count int
 }
 
 var userRate = make(map[string][]*rateLimit, 0)
@@ -57,10 +57,10 @@ func checkRate(r *http.Request) bool {
 			rateLimits = rateLimits[1:]
 		} else {
 			if rateLimit.unix == nowSecond {
-				rateLimit.Count++
+				rateLimit.count++
 			}
 
-			total = total + rateLimit.Count
+			total = total + rateLimit.count
 		}
 	}
 
@@ -74,7 +74,19 @@ type Handler struct {
 
 func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet && r.URL.Path == `/rate_limits` {
-		httputils.ResponseJSON(w, userRate)
+		output := map[string]int{}
+		var count int
+
+		for key, value := range userRate {
+			count = 0
+			for _, rateLimit := range value {
+				count = count + rateLimit.count
+			}
+
+			output[key] = count
+		}
+
+		httputils.ResponseJSON(w, output)
 		return
 	}
 

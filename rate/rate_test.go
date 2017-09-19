@@ -15,7 +15,7 @@ func generateCalls() []*rateLimit {
 	for i := 0; i < int(*ipRateDelay/time.Second*2); i++ {
 		rateLimits = append(rateLimits, &rateLimit{
 			unix:  current,
-			Count: countPerSecond,
+			count: countPerSecond,
 		})
 
 		current++
@@ -40,7 +40,7 @@ func TestCheckRate(t *testing.T) {
 				`localhost`: {
 					{
 						unix:  time.Now().Unix(),
-						Count: 1,
+						count: 1,
 					},
 				},
 			},
@@ -52,7 +52,7 @@ func TestCheckRate(t *testing.T) {
 				`localhost`: {
 					{
 						unix:  time.Now().Unix(),
-						Count: *ipRateLimit,
+						count: *ipRateLimit,
 					},
 				},
 			},
@@ -136,7 +136,7 @@ func TestServeHTTP(t *testing.T) {
 				`localhost`: {
 					{
 						unix:  time.Now().Unix(),
-						Count: *ipRateLimit + 10,
+						count: *ipRateLimit + 10,
 					},
 				},
 			},
