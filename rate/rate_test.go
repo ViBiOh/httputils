@@ -3,6 +3,7 @@ package rate
 import (
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 )
@@ -73,7 +74,10 @@ func TestCheckRate(t *testing.T) {
 		request.RemoteAddr = `localhost`
 		request.Header.Add(forwardedForHeader, testCase.forwardedHeader)
 
-		userRate = testCase.userRate
+		userRate = sync.Map{}
+		for key, value := range testCase.userRate {
+			userRate.Store(key, value)
+		}
 
 		if result := checkRate(request); result != testCase.want {
 			t.Errorf(`checkRate(%v) = (%v), want (%v)`, testCase.userRate, result, testCase.want)
@@ -95,9 +99,12 @@ func BenchmarkCheckRate(b *testing.B) {
 		false,
 	}
 
-	for i := 0; i < b.N; i++ {
-		userRate = testCase.userRate
+	userRate = sync.Map{}
+	for key, value := range testCase.userRate {
+		userRate.Store(key, value)
+	}
 
+	for i := 0; i < b.N; i++ {
 		if result := checkRate(request); result != testCase.want {
 			b.Errorf(`checkRate(%v) = (%v), want (%v)`, testCase.userRate, result, testCase.want)
 		}
@@ -145,7 +152,10 @@ func TestServeHTTP(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		userRate = testCase.userRate
+		userRate = sync.Map{}
+		for key, value := range testCase.userRate {
+			userRate.Store(key, value)
+		}
 
 		response := httptest.NewRecorder()
 		Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

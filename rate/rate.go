@@ -21,8 +21,7 @@ type rateLimit struct {
 	count int
 }
 
-var userRate = make(map[string][]*rateLimit, 0)
-var userRateMutex sync.RWMutex
+var userRate = sync.Map{}
 
 func getIP(r *http.Request) (ip string) {
 	ip = r.Header.Get(forwardedForHeader)
@@ -40,13 +39,13 @@ func getUnix() (int64, int64) {
 
 func getRateLimits(r *http.Request) (string, []*rateLimit) {
 	ip := getIP(r)
-	rate, ok := userRate[ip]
+	rate, ok := userRate.Load(ip)
 
 	if !ok {
 		return ip, make([]*rateLimit, 0)
 	}
 
-	return ip, rate
+	return ip, rate.([]*rateLimit)
 }
 
 func cleanRateLimits(rateLimits []*rateLimit, nowMinusDelaySecond int64) []*rateLimit {
@@ -58,19 +57,18 @@ func cleanRateLimits(rateLimits []*rateLimit, nowMinusDelaySecond int64) []*rate
 }
 
 func cleanUserRate() {
-	userRateMutex.Lock()
-	defer userRateMutex.Unlock()
-
 	_, nowMinusDelay := getUnix()
 
-	for key, value := range userRate {
-		rateLimits := cleanRateLimits(value, nowMinusDelay)
+	userRate.Range(func(key, value interface{}) bool {
+		rateLimits := cleanRateLimits(value.([]*rateLimit), nowMinusDelay)
 		if len(rateLimits) == 0 {
-			delete(userRate, key)
+			userRate.Delete(key)
 		} else {
-			userRate[key] = rateLimits
+			userRate.Store(key, rateLimits)
 		}
-	}
+
+		return true
+	})
 }
 
 func sumRateLimitsCount(rateLimits []*rateLimit) (count int) {
@@ -82,7 +80,6 @@ func sumRateLimitsCount(rateLimits []*rateLimit) (count int) {
 }
 
 func checkRate(r *http.Request) bool {
-	userRateMutex.Lock()
 	ip, rateLimits := getRateLimits(r)
 	now, nowMinusDelay := getUnix()
 
@@ -96,8 +93,7 @@ func checkRate(r *http.Request) bool {
 	}
 	sum := sumRateLimitsCount(rateLimits)
 
-	userRate[ip] = rateLimits
-	userRateMutex.Unlock()
+	userRate.Store(ip, rateLimits)
 
 	return sum < *ipRateLimit
 }
@@ -112,9 +108,10 @@ func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		cleanUserRate()
 
 		output := map[string]int{}
-		for key, value := range userRate {
-			output[key] = sumRateLimitsCount(value)
-		}
+		userRate.Range(func(key, value interface{}) bool {
+			output[key.(string)] = sumRateLimitsCount(value.([]*rateLimit))
+			return true
+		})
 
 		httputils.ResponseJSON(w, output)
 		return
