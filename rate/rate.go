@@ -3,6 +3,7 @@ package rate
 import (
 	"flag"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/ViBiOh/httputils"
@@ -21,6 +22,7 @@ type rateLimit struct {
 }
 
 var userRate = make(map[string][]*rateLimit, 0)
+var userRateMutex sync.RWMutex
 
 func getIP(r *http.Request) (ip string) {
 	ip = r.Header.Get(forwardedForHeader)
@@ -56,6 +58,9 @@ func cleanRateLimits(rateLimits []*rateLimit, nowMinusDelaySecond int64) []*rate
 }
 
 func cleanUserRate() {
+	userRateMutex.Lock()
+	defer userRateMutex.Unlock()
+
 	_, nowMinusDelay := getUnix()
 
 	for key, value := range userRate {
@@ -77,6 +82,7 @@ func sumRateLimitsCount(rateLimits []*rateLimit) (count int) {
 }
 
 func checkRate(r *http.Request) bool {
+	userRateMutex.Lock()
 	ip, rateLimits := getRateLimits(r)
 	now, nowMinusDelay := getUnix()
 
@@ -91,6 +97,8 @@ func checkRate(r *http.Request) bool {
 	sum := sumRateLimitsCount(rateLimits)
 
 	userRate[ip] = rateLimits
+	userRateMutex.Unlock()
+
 	return sum < *ipRateLimit
 }
 
