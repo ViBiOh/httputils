@@ -3,6 +3,7 @@ package rate
 import (
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -23,6 +24,13 @@ func generateCalls() []*rateLimit {
 	}
 
 	return rateLimits
+}
+
+func loadUserRate(toLoad map[string][]*rateLimit) {
+	userRate = sync.Map{}
+	for key, value := range toLoad {
+		userRate.Store(key, value)
+	}
 }
 
 func TestGetIP(t *testing.T) {
@@ -50,6 +58,72 @@ func TestGetIP(t *testing.T) {
 	for _, testCase := range cases {
 		if result := getIP(testCase.r); result != testCase.want {
 			t.Errorf(`getIP(%v) = %v, want %v`, testCase.r, result, testCase.want)
+		}
+	}
+}
+
+func TestGetRateLimits(t *testing.T) {
+	var cases = []struct {
+		userRate       map[string][]*rateLimit
+		want           string
+		wantRateLimits []*rateLimit
+	}{
+		{
+			nil,
+			`localhost`,
+			[]*rateLimit{},
+		},
+		{
+			map[string][]*rateLimit{`localhost`: {{1000, 0}}},
+			`localhost`,
+			[]*rateLimit{{1000, 0}},
+		},
+	}
+
+	for _, testCase := range cases {
+		request := httptest.NewRequest(http.MethodGet, `/`, nil)
+		request.RemoteAddr = `localhost`
+
+		loadUserRate(testCase.userRate)
+
+		result, rateLimits := getRateLimits(request)
+
+		if result != testCase.want {
+			t.Errorf(`getRateLimits() = %v, want %v`, result, testCase.want)
+		}
+
+		if !reflect.DeepEqual(rateLimits, testCase.wantRateLimits) {
+			t.Errorf(`getRateLimits() = %v, want %v`, rateLimits, testCase.wantRateLimits)
+		}
+	}
+}
+
+func TestCleanRateLimits(t *testing.T) {
+	var cases = []struct {
+		rateLimits          []*rateLimit
+		nowMinusDelaySecond int64
+		want                []*rateLimit
+	}{
+		{
+			nil,
+			0,
+			nil,
+		},
+		{
+			[]*rateLimit{{1000, 0}},
+			800,
+			[]*rateLimit{{1000, 0}},
+		},
+		{
+			[]*rateLimit{{1000, 0}},
+			1200,
+			[]*rateLimit{},
+		},
+	}
+
+	for _, testCase := range cases {
+		if result := cleanRateLimits(testCase.rateLimits, testCase.nowMinusDelaySecond); !reflect.DeepEqual(result, testCase.want) {
+			t.Errorf(`cleanRateLimits(%v, %v) = %v, want %v`, testCase.rateLimits, testCase.nowMinusDelaySecond, result, testCase.want)
 		}
 	}
 }
@@ -103,10 +177,7 @@ func TestCheckRate(t *testing.T) {
 		request.RemoteAddr = `localhost`
 		request.Header.Add(forwardedForHeader, testCase.forwardedHeader)
 
-		userRate = sync.Map{}
-		for key, value := range testCase.userRate {
-			userRate.Store(key, value)
-		}
+		loadUserRate(testCase.userRate)
 
 		if result := checkRate(request); result != testCase.want {
 			t.Errorf(`checkRate(%v) = (%v), want (%v)`, testCase.userRate, result, testCase.want)
@@ -128,10 +199,7 @@ func BenchmarkCheckRate(b *testing.B) {
 		false,
 	}
 
-	userRate = sync.Map{}
-	for key, value := range testCase.userRate {
-		userRate.Store(key, value)
-	}
+	loadUserRate(testCase.userRate)
 
 	for i := 0; i < b.N; i++ {
 		if result := checkRate(request); result != testCase.want {
@@ -181,10 +249,7 @@ func TestServeHTTP(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		userRate = sync.Map{}
-		for key, value := range testCase.userRate {
-			userRate.Store(key, value)
-		}
+		loadUserRate(testCase.userRate)
 
 		response := httptest.NewRecorder()
 		Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
