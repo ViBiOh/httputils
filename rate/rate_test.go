@@ -128,6 +128,43 @@ func TestCleanRateLimits(t *testing.T) {
 	}
 }
 
+func TestCleanUserRate(t *testing.T) {
+	now, nowMinusDelay := getUnix()
+
+	var cases = []struct {
+		userRate map[string][]*rateLimit
+		want     map[string][]*rateLimit
+	}{
+		{
+			nil,
+			map[string][]*rateLimit{},
+		},
+		{
+			map[string][]*rateLimit{`localhost`: {{now, 0}}},
+			map[string][]*rateLimit{`localhost`: {{now, 0}}},
+		},
+		{
+			map[string][]*rateLimit{`localhost`: {{now, 0}}, `proxy`: {{nowMinusDelay - 10, 0}}},
+			map[string][]*rateLimit{`localhost`: {{now, 0}}},
+		},
+	}
+
+	for _, testCase := range cases {
+		loadUserRate(testCase.userRate)
+		cleanUserRate()
+
+		result := make(map[string][]*rateLimit, 0)
+		userRate.Range(func(key, value interface{}) bool {
+			result[key.(string)] = value.([]*rateLimit)
+			return true
+		})
+
+		if !reflect.DeepEqual(result, testCase.want) {
+			t.Errorf(`cleanUserRate() = %v, want %v`, result, testCase.want)
+		}
+	}
+}
+
 func TestCheckRate(t *testing.T) {
 	var cases = []struct {
 		userRate        map[string][]*rateLimit
