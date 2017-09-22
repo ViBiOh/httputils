@@ -25,6 +25,35 @@ func generateCalls() []*rateLimit {
 	return rateLimits
 }
 
+func TestGetIP(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, `/`, nil)
+	request.RemoteAddr = `localhost`
+
+	requestWithProxy := httptest.NewRequest(http.MethodGet, `/`, nil)
+	requestWithProxy.RemoteAddr = `localhost`
+	requestWithProxy.Header.Add(forwardedForHeader, `proxy`)
+
+	var cases = []struct {
+		r    *http.Request
+		want string
+	}{
+		{
+			request,
+			`localhost`,
+		},
+		{
+			requestWithProxy,
+			`proxy`,
+		},
+	}
+
+	for _, testCase := range cases {
+		if result := getIP(testCase.r); result != testCase.want {
+			t.Errorf(`getIP(%v) = %v, want %v`, testCase.r, result, testCase.want)
+		}
+	}
+}
+
 func TestCheckRate(t *testing.T) {
 	var cases = []struct {
 		userRate        map[string][]*rateLimit
