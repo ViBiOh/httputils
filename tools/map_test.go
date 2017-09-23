@@ -43,6 +43,7 @@ func TestGet(t *testing.T) {
 		}
 	}
 }
+
 func BenchmarkGet(b *testing.B) {
 	var testCase = struct {
 		entries map[string]interface{}
@@ -58,7 +59,7 @@ func BenchmarkGet(b *testing.B) {
 	defer concurrentMap.Close()
 
 	for i := 0; i < b.N; i++ {
-		if result := concurrentMap.Get(`one`); result != testCase.want {
+		if result := concurrentMap.Get(testCase.key); result != testCase.want {
 			b.Errorf(`Get(%v) = (%v), want (%v)`, testCase.key, result, testCase.want)
 		}
 	}
@@ -82,6 +83,23 @@ func TestPush(t *testing.T) {
 		if result := concurrentMap.Get(`one`); testCase.content != result {
 			t.Errorf(`Push(%v) = %v, want %v`, testCase.content, result, testCase.content)
 		}
+	}
+}
+
+func BenchmarkPush(b *testing.B) {
+	var testCase = struct {
+		key   string
+		value interface{}
+	}{
+		`one`,
+		entries[`one`],
+	}
+
+	concurrentMap := CreateConcurrentMap(5, 2)
+	defer concurrentMap.Close()
+
+	for i := 0; i < b.N; i++ {
+		concurrentMap.Push(testCase.key, testCase.value)
 	}
 }
 
@@ -113,6 +131,21 @@ func TestRemove(t *testing.T) {
 		if result := concurrentMap.Get(testCase.key); (testCase.want && result == initial) || (!testCase.want && result != initial) {
 			t.Errorf(`Remove(%v) = %v, want %v`, testCase.key, result, initial)
 		}
+	}
+}
+
+func BenchmarkRemove(b *testing.B) {
+	var testCase = struct {
+		key string
+	}{
+		`one`,
+	}
+
+	concurrentMap := CreateConcurrentMap(5, 2)
+	defer concurrentMap.Close()
+
+	for i := 0; i < b.N; i++ {
+		concurrentMap.Remove(testCase.key)
 	}
 }
 
