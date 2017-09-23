@@ -56,21 +56,26 @@ func CreateConcurrentMap(contentSize int, channelSize int) *ConcurrentMap {
 
 	go func() {
 		for request := range concurrentMap.req {
-			if request.action == `get` {
+			switch request.action {
+			case `get`:
 				if entry, ok := concurrentMap.content[request.key]; ok {
 					request.ioContent <- entry
 				}
 				close(request.ioContent)
-			} else if request.action == `list` {
+				break
+			case `list`:
 				for _, entry := range concurrentMap.content {
 					request.ioContent <- entry
 				}
 				close(request.ioContent)
-			} else if request.action == `push` {
+				break
+			case `push`:
 				concurrentMap.content[request.key] = request.content
-			} else if request.action == `remove` {
+				break
+			case `remove`:
 				delete(concurrentMap.content, request.key)
-			} else if request.action == `stop` {
+				break
+			case `stop`:
 				close(request.ioContent)
 				return
 			}
