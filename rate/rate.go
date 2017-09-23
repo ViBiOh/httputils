@@ -16,12 +16,12 @@ var (
 	ipRateLimit = flag.Int(`rateCount`, 5000, `Rate IP limit`)
 )
 
-type rateLimit struct {
+type rate struct {
 	unix  int64
 	count int
 }
 
-var userRate = sync.Map{}
+var ipRate = sync.Map{}
 
 func getIP(r *http.Request) (ip string) {
 	ip = r.Header.Get(forwardedForHeader)
@@ -37,63 +37,65 @@ func getUnix() (int64, int64) {
 	return ts.Unix(), ts.Add(*ipRateDelay * -1).Unix()
 }
 
-func getRateLimits(r *http.Request) (string, []*rateLimit) {
+func getRates(r *http.Request) (string, []*rate) {
 	ip := getIP(r)
-	rate, ok := userRate.Load(ip)
+	rates, ok := ipRate.Load(ip)
 
 	if !ok {
-		return ip, make([]*rateLimit, 0)
+		return ip, make([]*rate, 0)
 	}
 
-	return ip, rate.([]*rateLimit)
+	return ip, rates.([]*rate)
 }
 
-func cleanRateLimits(rateLimits []*rateLimit, nowMinusDelaySecond int64) []*rateLimit {
-	for len(rateLimits) > 0 && rateLimits[0].unix < nowMinusDelaySecond {
-		rateLimits = rateLimits[1:]
+func cleanRates(rates []*rate, nowMinusDelaySecond int64) []*rate {
+	for len(rates) > 0 && rates[0].unix < nowMinusDelaySecond {
+		rates = rates[1:]
 	}
 
-	return rateLimits
+	return rates
 }
 
-func cleanUserRate() {
+func cleanIPRate() {
 	_, nowMinusDelay := getUnix()
 
-	userRate.Range(func(key, value interface{}) bool {
-		rateLimits := cleanRateLimits(value.([]*rateLimit), nowMinusDelay)
-		if len(rateLimits) == 0 {
-			userRate.Delete(key)
+	ipRate.Range(func(ip, rates interface{}) bool {
+		cleanedRates := cleanRates(rates.([]*rate), nowMinusDelay)
+		if len(cleanedRates) == 0 {
+			ipRate.Delete(ip)
 		} else {
-			userRate.Store(key, rateLimits)
+			ipRate.Store(ip, cleanedRates)
 		}
 
 		return true
 	})
 }
 
-func sumRateLimitsCount(rateLimits []*rateLimit) (count int) {
-	for _, rateLimit := range rateLimits {
-		count = count + rateLimit.count
+func sumRates(rates []*rate) int {
+	sum := 0
+
+	for i := 0; i < len(rates) && sum < *ipRateLimit; i++ {
+		sum = sum + rates[i].count
 	}
 
-	return
+	return sum
 }
 
 func checkRate(r *http.Request) bool {
-	ip, rateLimits := getRateLimits(r)
+	ip, rates := getRates(r)
 	now, nowMinusDelay := getUnix()
 
-	rateLimits = cleanRateLimits(rateLimits, nowMinusDelay)
-	lastIndex := len(rateLimits) - 1
+	rates = cleanRates(rates, nowMinusDelay)
+	lastIndex := len(rates) - 1
 
-	if lastIndex >= 0 && rateLimits[lastIndex].unix == now {
-		rateLimits[lastIndex].count++
+	if lastIndex >= 0 && rates[lastIndex].unix == now {
+		rates[lastIndex].count++
 	} else {
-		rateLimits = append(rateLimits, &rateLimit{now, 1})
+		rates = append(rates, &rate{now, 1})
 	}
-	sum := sumRateLimitsCount(rateLimits)
+	sum := sumRates(rates)
 
-	userRate.Store(ip, rateLimits)
+	ipRate.Store(ip, rates)
 
 	return sum < *ipRateLimit
 }
@@ -105,11 +107,11 @@ type Handler struct {
 
 func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet && r.URL.Path == `/rate_limits` {
-		cleanUserRate()
+		cleanIPRate()
 
 		output := map[string]int{}
-		userRate.Range(func(key, value interface{}) bool {
-			output[key.(string)] = sumRateLimitsCount(value.([]*rateLimit))
+		ipRate.Range(func(ip, rates interface{}) bool {
+			output[ip.(string)] = sumRates(rates.([]*rate))
 			return true
 		})
 
