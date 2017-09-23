@@ -10,18 +10,29 @@ import (
 )
 
 const forwardedForHeader = `X-Forwarded-For`
+const ipRateDelay = time.Second * 60
 
 var (
-	ipRateDelay = flag.Duration(`rateDelay`, time.Second*60, `Rate IP delay`)
 	ipRateLimit = flag.Int(`rateCount`, 5000, `Rate IP limit`)
 )
 
-type rate struct {
-	unix  int64
-	count int
-}
+var ipRate = make(map[string]int)
+var ipRateMutex sync.RWMutex
 
-var ipRate = sync.Map{}
+func init() {
+	go func() {
+		ticker := time.NewTicker(ipRateDelay)
+
+		for {
+			select {
+			case <-ticker.C:
+				ipRateMutex.Lock()
+				ipRate = make(map[string]int)
+				ipRateMutex.Unlock()
+			}
+		}
+	}()
+}
 
 func getIP(r *http.Request) (ip string) {
 	ip = r.Header.Get(forwardedForHeader)
@@ -32,72 +43,20 @@ func getIP(r *http.Request) (ip string) {
 	return
 }
 
-func getUnix() (int64, int64) {
-	ts := time.Now()
-	return ts.Unix(), ts.Add(*ipRateDelay * -1).Unix()
-}
-
-func getRates(r *http.Request) (string, []*rate) {
-	ip := getIP(r)
-	rates, ok := ipRate.Load(ip)
-
-	if !ok {
-		return ip, make([]*rate, 0)
-	}
-
-	return ip, rates.([]*rate)
-}
-
-func cleanRates(rates []*rate, nowMinusDelaySecond int64) []*rate {
-	for len(rates) > 0 && rates[0].unix < nowMinusDelaySecond {
-		rates = rates[1:]
-	}
-
-	return rates
-}
-
-func cleanIPRate() {
-	_, nowMinusDelay := getUnix()
-
-	ipRate.Range(func(ip, rates interface{}) bool {
-		cleanedRates := cleanRates(rates.([]*rate), nowMinusDelay)
-		if len(cleanedRates) == 0 {
-			ipRate.Delete(ip)
-		} else {
-			ipRate.Store(ip, cleanedRates)
-		}
-
-		return true
-	})
-}
-
-func sumRates(rates []*rate) int {
-	sum := 0
-
-	for i := 0; i < len(rates) && sum < *ipRateLimit; i++ {
-		sum = sum + rates[i].count
-	}
-
-	return sum
-}
-
 func checkRate(r *http.Request) bool {
-	ip, rates := getRates(r)
-	now, nowMinusDelay := getUnix()
+	ip := getIP(r)
 
-	rates = cleanRates(rates, nowMinusDelay)
-	lastIndex := len(rates) - 1
+	ipRateMutex.Lock()
+	defer ipRateMutex.Unlock()
 
-	if lastIndex >= 0 && rates[lastIndex].unix == now {
-		rates[lastIndex].count++
-	} else {
-		rates = append(rates, &rate{now, 1})
+	rate, ok := ipRate[ip]
+	if ok {
+		ipRate[ip]++
+		return rate+1 < *ipRateLimit
 	}
-	sum := sumRates(rates)
 
-	ipRate.Store(ip, rates)
-
-	return sum < *ipRateLimit
+	ipRate[ip] = 1
+	return true
 }
 
 // Handler that check rate limit
@@ -107,15 +66,10 @@ type Handler struct {
 
 func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet && r.URL.Path == `/rate_limits` {
-		cleanIPRate()
+		ipRateMutex.RLock()
+		defer ipRateMutex.RUnlock()
 
-		output := map[string]int{}
-		ipRate.Range(func(ip, rates interface{}) bool {
-			output[ip.(string)] = sumRates(rates.([]*rate))
-			return true
-		})
-
-		httputils.ResponseJSON(w, output)
+		httputils.ResponseJSON(w, ipRate)
 		return
 	}
 
