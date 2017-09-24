@@ -48,20 +48,16 @@ func BenchmarkGet(b *testing.B) {
 	var testCase = struct {
 		entries map[string]interface{}
 		key     string
-		want    interface{}
 	}{
 		entries,
 		`one`,
-		entries[`one`],
 	}
 
 	concurrentMap := initConccurentMapWithValues(testCase.entries)
 	defer concurrentMap.Close()
 
 	for i := 0; i < b.N; i++ {
-		if result := concurrentMap.Get(testCase.key); result != testCase.want {
-			b.Errorf(`Get(%v) = (%v), want (%v)`, testCase.key, result, testCase.want)
-		}
+		concurrentMap.Get(testCase.key)
 	}
 }
 

@@ -72,15 +72,9 @@ func TestResponseJSON(t *testing.T) {
 
 func BenchmarkResponseJSON(b *testing.B) {
 	var testCase = struct {
-		obj        interface{}
-		want       string
-		wantStatus int
-		wantHeader map[string]string
+		obj interface{}
 	}{
 		testStruct{id: `Test`},
-		`{"Active":false,"Amount":0}`,
-		200,
-		map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 	}
 
 	writer := httptest.NewRecorder()

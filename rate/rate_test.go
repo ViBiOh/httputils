@@ -76,9 +76,7 @@ func BenchmarkCheckRate(b *testing.B) {
 	request.RemoteAddr = `localhost`
 
 	for i := 0; i < b.N; i++ {
-		if result := checkRate(request); result != (ipRate[`localhost`] < *ipRateLimit) {
-			b.Errorf(`checkRate() = (%v), want (%v)`, result, ipRate[`localhost`] < *ipRateLimit)
-		}
+		checkRate(request)
 	}
 }
 

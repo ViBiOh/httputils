@@ -89,3 +89,16 @@ func TestServeHTTP(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkServeHTTP(b *testing.B) {
+	handler := Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusMovedPermanently)
+	})}
+
+	request := httptest.NewRequest(http.MethodGet, `/`, nil)
+	writer := httptest.NewRecorder()
+
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(writer, request)
+	}
+}

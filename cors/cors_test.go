@@ -31,24 +31,13 @@ func TestServeHTTP(t *testing.T) {
 }
 
 func BenchmarkServeHTTP(b *testing.B) {
-	var testCase = struct {
-		want map[string]string
-	}{
-		map[string]string{`Access-Control-Allow-Origin`: `*`, `Access-Control-Allow-Headers`: `Content-Type`, `Access-Control-Allow-Methods`: http.MethodGet},
-	}
-
-	request := httptest.NewRecorder()
 	handler := Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})}
 
-	for i := 0; i < b.N; i++ {
-		handler.ServeHTTP(request, nil)
+	writer := httptest.NewRecorder()
 
-		for key, value := range testCase.want {
-			if result, ok := request.Result().Header[key]; !ok || (ok && strings.Join(result, ``) != value) {
-				b.Errorf(`ServeHTTP() = [%v] = %v, want %v`, key, result, value)
-			}
-		}
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(writer, nil)
 	}
 }
