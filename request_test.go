@@ -40,7 +40,7 @@ func TestDoAndRead(t *testing.T) {
 			emptyRequest,
 			false,
 			``,
-			fmt.Errorf(`Error while sending data: Get : unsupported protocol scheme ""`),
+			fmt.Errorf(`Error while processing request: Get : unsupported protocol scheme ""`),
 		},
 		{
 			bad,
@@ -227,7 +227,7 @@ func TestPostJSONBody(t *testing.T) {
 			nil,
 			nil,
 			``,
-			fmt.Errorf(`Error while sending data: Post : unsupported protocol scheme ""`),
+			fmt.Errorf(`Error while processing request: Post : unsupported protocol scheme ""`),
 		},
 		{
 			testServer.URL,

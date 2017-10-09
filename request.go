@@ -32,15 +32,17 @@ func doAndRead(request *http.Request, skipTLSVerify bool) ([]byte, error) {
 	}
 
 	response, err := client.Do(request)
-	if err != nil {
-		return nil, fmt.Errorf(`Error while sending data: %v`, err)
+	if response != nil {
+		defer response.Body.Close()
 	}
-	responseBody, err := ReadBody(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf(`Error while processing request: %v`, err)
+	}
 
+	responseBody, err := ReadBody(response.Body)
 	if response.StatusCode >= http.StatusBadRequest {
 		return nil, fmt.Errorf(`Error status %d: %s`, response.StatusCode, responseBody)
 	}
-
 	if err != nil {
 		return nil, fmt.Errorf(`Error while reading body: %v`, err)
 	}
@@ -88,7 +90,6 @@ func PostJSONBody(url string, body interface{}, headers map[string]string, skipT
 	for key, value := range headers {
 		request.Header.Add(key, value)
 	}
-
 	request.Header.Add(`Content-Type`, `application/json`)
 
 	return doAndRead(request, skipTLSVerify)
