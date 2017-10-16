@@ -18,9 +18,9 @@ func TestServeHTTP(t *testing.T) {
 
 	for _, testCase := range cases {
 		request := httptest.NewRecorder()
-		Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-		})}.ServeHTTP(request, nil)
+		})).ServeHTTP(request, nil)
 
 		for key, value := range testCase.want {
 			if result, ok := request.Result().Header[key]; !ok || (ok && strings.Join(result, ``) != value) {
@@ -31,9 +31,9 @@ func TestServeHTTP(t *testing.T) {
 }
 
 func BenchmarkServeHTTP(b *testing.B) {
-	handler := Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-	})}
+	}))
 
 	writer := httptest.NewRecorder()
 

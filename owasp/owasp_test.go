@@ -80,7 +80,7 @@ func TestServeHTTP(t *testing.T) {
 
 	for _, testCase := range cases {
 		request := httptest.NewRecorder()
-		Handler{Handler: http.HandlerFunc(testCase.handlerFunc)}.ServeHTTP(request, httptest.NewRequest(http.MethodGet, `http://localhost`+testCase.path, nil))
+		Handler(http.HandlerFunc(testCase.handlerFunc)).ServeHTTP(request, httptest.NewRequest(http.MethodGet, `http://localhost`+testCase.path, nil))
 
 		for key, value := range testCase.want {
 			if result, ok := request.Result().Header[key]; !ok || (ok && strings.Join(result, ``) != value) {
@@ -91,9 +91,9 @@ func TestServeHTTP(t *testing.T) {
 }
 
 func BenchmarkServeHTTP(b *testing.B) {
-	handler := Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMovedPermanently)
-	})}
+	}))
 
 	request := httptest.NewRequest(http.MethodGet, `/`, nil)
 	writer := httptest.NewRecorder()

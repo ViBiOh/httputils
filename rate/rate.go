@@ -54,23 +54,21 @@ func checkRate(r *http.Request) bool {
 }
 
 // Handler that check rate limit
-type Handler struct {
-	Handler http.Handler
-}
+func Handler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !checkRate(r) {
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
 
-func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !checkRate(r) {
-		w.WriteHeader(http.StatusTooManyRequests)
-		return
-	}
+		if r.Method == http.MethodGet && r.URL.Path == `/rate_limits` {
+			ipRateMutex.RLock()
+			defer ipRateMutex.RUnlock()
 
-	if r.Method == http.MethodGet && r.URL.Path == `/rate_limits` {
-		ipRateMutex.RLock()
-		defer ipRateMutex.RUnlock()
+			httputils.ResponseJSON(w, http.StatusOK, ipRate)
+			return
+		}
 
-		httputils.ResponseJSON(w, http.StatusOK, ipRate)
-		return
-	}
-
-	handler.Handler.ServeHTTP(w, r)
+		next.ServeHTTP(w, r)
+	})
 }

@@ -12,14 +12,12 @@ var (
 )
 
 // Handler for net/http package allowing cors header
-type Handler struct {
-	Handler http.Handler
-}
+func Handler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(`Access-Control-Allow-Origin`, *origin)
+		w.Header().Add(`Access-Control-Allow-Headers`, *headers)
+		w.Header().Add(`Access-Control-Allow-Methods`, *methods)
 
-func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add(`Access-Control-Allow-Origin`, *origin)
-	w.Header().Add(`Access-Control-Allow-Headers`, *headers)
-	w.Header().Add(`Access-Control-Allow-Methods`, *methods)
-
-	handler.Handler.ServeHTTP(w, r)
+		next.ServeHTTP(w, r)
+	})
 }

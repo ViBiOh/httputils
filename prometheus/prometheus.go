@@ -52,8 +52,8 @@ func getPrometheusHandlers(prefix string, next http.Handler) (http.HandlerFunc, 
 	return promhttp.InstrumentHandlerCounter(requestsTotal, promhttp.InstrumentHandlerDuration(duration, next)), goroutinesHandler(goroutines, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 }
 
-// NewPrometheusHandler wraps given handler into prometheus tooling and expose `/metrics` endpoints
-func NewPrometheusHandler(prefix string, next http.Handler) http.Handler {
+// Handler wraps given handler into prometheus tooling and expose `/metrics` endpoints
+func Handler(prefix string, next http.Handler) http.Handler {
 	handler, metrics := getPrometheusHandlers(prefix, next)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

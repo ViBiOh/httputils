@@ -119,9 +119,9 @@ func TestServeHTTP(t *testing.T) {
 		ipRate = testCase.ipRate
 
 		response := httptest.NewRecorder()
-		Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-		})}.ServeHTTP(response, testCase.request)
+		})).ServeHTTP(response, testCase.request)
 
 		if result := response.Result().StatusCode; result != testCase.want {
 			t.Errorf(`ServeHTTP() = (%v) want %v, with ipRate = %v`, result, testCase.want, testCase.ipRate)
