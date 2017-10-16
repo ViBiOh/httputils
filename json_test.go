@@ -1,6 +1,7 @@
 package httputils
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -26,19 +27,19 @@ func TestResponseJSON(t *testing.T) {
 		{
 			nil,
 			`null`,
-			200,
+			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 		},
 		{
 			testStruct{id: `Test`},
 			`{"Active":false,"Amount":0}`,
-			200,
+			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 		},
 		{
 			testStruct{id: `Test`, Active: true, Amount: 12.34},
 			`{"Active":true,"Amount":12.34}`,
-			200,
+			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 		},
 		{
@@ -52,7 +53,7 @@ func TestResponseJSON(t *testing.T) {
 
 	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		ResponseJSON(writer, testCase.obj)
+		ResponseJSON(writer, http.StatusOK, testCase.obj)
 
 		if result := writer.Result().StatusCode; result != testCase.wantStatus {
 			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, result, testCase.wantStatus)
@@ -80,7 +81,7 @@ func BenchmarkResponseJSON(b *testing.B) {
 	writer := httptest.NewRecorder()
 
 	for i := 0; i < b.N; i++ {
-		ResponseJSON(writer, testCase.obj)
+		ResponseJSON(writer, http.StatusOK, testCase.obj)
 	}
 }
 
@@ -94,20 +95,20 @@ func TestResponseArrayJSON(t *testing.T) {
 		{
 			nil,
 			`{"results":null}`,
-			200,
+			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 		},
 		{
 			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
 			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}]}`,
-			200,
+			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 		},
 	}
 
 	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		ResponseArrayJSON(writer, testCase.obj)
+		ResponseArrayJSON(writer, http.StatusOK, testCase.obj)
 
 		if result := writer.Result().StatusCode; result != testCase.wantStatus {
 			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, result, testCase.wantStatus)

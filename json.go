@@ -11,10 +11,11 @@ type results struct {
 }
 
 // ResponseJSON write marshalled obj to http.ResponseWriter with correct header
-func ResponseJSON(w http.ResponseWriter, obj interface{}) {
+func ResponseJSON(w http.ResponseWriter, status int, obj interface{}) {
 	if objJSON, err := json.Marshal(obj); err == nil {
 		w.Header().Add(`Content-Type`, `application/json`)
 		w.Header().Add(`Cache-Control`, `no-cache`)
+		w.WriteHeader(status)
 		w.Write(objJSON)
 	} else {
 		InternalServer(w, fmt.Errorf(`Error while marshalling JSON response: %v`, err))
@@ -22,6 +23,6 @@ func ResponseJSON(w http.ResponseWriter, obj interface{}) {
 }
 
 // ResponseArrayJSON write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func ResponseArrayJSON(w http.ResponseWriter, array interface{}) {
-	ResponseJSON(w, results{array})
+func ResponseArrayJSON(w http.ResponseWriter, status int, array interface{}) {
+	ResponseJSON(w, status, results{array})
 }

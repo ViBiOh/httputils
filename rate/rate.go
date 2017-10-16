@@ -68,7 +68,7 @@ func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ipRateMutex.RLock()
 		defer ipRateMutex.RUnlock()
 
-		httputils.ResponseJSON(w, ipRate)
+		httputils.ResponseJSON(w, http.StatusOK, ipRate)
 		return
 	}
 
