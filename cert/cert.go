@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"flag"
 	"fmt"
+	"log"
 	"math/big"
 	"net"
 	"net/http"
@@ -74,6 +75,7 @@ func strSliceContains(slice []string, search string) bool {
 // Largely inspired by https://golang.org/src/net/http/server.go
 func ListenAndServeTLS(server *http.Server) error {
 	if *tlsCertFile != `` {
+		log.Printf(`Using provided certificate %s`, *tlsCertFile)
 		return server.ListenAndServeTLS(*tlsCertFile, *tlsKeyFile)
 	}
 
