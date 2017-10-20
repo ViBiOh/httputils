@@ -1,10 +1,11 @@
 default: deps format lint tst build
 
 deps:
-	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/golang/lint/golint
+	go get -u github.com/lib/pq
 	go get -u github.com/prometheus/client_golang/prometheus
 	go get -u github.com/prometheus/client_golang/prometheus/promhttp
+	go get -u golang.org/x/tools/cmd/goimports
 
 format:
 	goimports -w **/*.go *.go
@@ -29,3 +30,4 @@ build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/action.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/map.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo rate/rate.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo db/db.go
