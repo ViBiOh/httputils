@@ -30,3 +30,44 @@ func GetDB(dbHost, dbPort, dbUser, dbPass, dbName string) (*sql.DB, error) {
 func Ping(db *sql.DB) bool {
 	return db != nil && db.Ping() == nil
 }
+
+// GetTx return given transaction if not nil or create a new one
+func GetTx(db *sql.DB, label string, tx *sql.Tx) (*sql.Tx, error) {
+	if tx == nil {
+		usedTx, err := db.Begin()
+
+		if err != nil {
+			return nil, fmt.Errorf(`Error while getting transaction for %s: %v`, label, err)
+		}
+		return usedTx, nil
+	}
+
+	return tx, nil
+}
+
+// EndTx ends transaction according error without shadowing given error
+func EndTx(label string, tx *sql.Tx, err error) error {
+	if err != nil {
+		if endErr := tx.Rollback(); endErr != nil {
+			return fmt.Errorf(`%v, and also error while rolling back transaction for %s: %v`, err, label, endErr)
+		}
+	} else if endErr := tx.Commit(); endErr != nil {
+		return fmt.Errorf(`Error while committing transaction for %s: %v`, label, endErr)
+	}
+
+	return nil
+}
+
+// RowsClose closes rows without shadowing error
+func RowsClose(label string, rows *sql.Rows, err error) error {
+	if endErr := rows.Close(); endErr != nil {
+		endErr = fmt.Errorf(`Error while closing rows for %s: %v`, label, endErr)
+
+		if err == nil {
+			return endErr
+		}
+		return fmt.Errorf(`%v, and also %v`, err, endErr)
+	}
+
+	return err
+}
