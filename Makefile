@@ -1,4 +1,4 @@
-default: deps format lint tst build
+default: deps format lint tst bench build
 
 deps:
 	go get -u github.com/golang/lint/golint
