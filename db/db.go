@@ -2,19 +2,38 @@ package db
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 
 	// Not referenced but needed for database/sql
 	_ "github.com/lib/pq"
 )
 
+const defaultPrefix = `db`
+
+// Flags add flags for given prefix
+func Flags(prefix string) map[string]*string {
+	if prefix == `` {
+		prefix = defaultPrefix
+	}
+
+	return map[string]*string{
+		`host`: flag.String(prefix+`Host`, ``, `Database Host`),
+		`port`: flag.String(prefix+`Port`, `5432`, `Database Port`),
+		`user`: flag.String(prefix+`User`, ``, `Database User`),
+		`pass`: flag.String(prefix+`Pass`, ``, `Database Pass`),
+		`name`: flag.String(prefix+`Name`, ``, `Database Name`),
+	}
+}
+
 // GetDB start DB connection
-func GetDB(dbHost, dbPort, dbUser, dbPass, dbName string) (*sql.DB, error) {
-	if dbHost == `` {
+func GetDB(config map[string]*string) (*sql.DB, error) {
+	var host = config[`host`]
+	if *host == `` {
 		return nil, nil
 	}
 
-	db, err := sql.Open(`postgres`, fmt.Sprintf(`host=%s port=%s user=%s password=%s dbname=%s sslmode=disable`, dbHost, dbPort, dbUser, dbPass, dbName))
+	db, err := sql.Open(`postgres`, fmt.Sprintf(`host=%s port=%s user=%s password=%s dbname=%s sslmode=disable`, *host, *config[`port`], *config[`user`], *config[`pass`], *config[`name`]))
 	if err != nil {
 		return nil, fmt.Errorf(`Error while opening database connection: %v`, err)
 	}
