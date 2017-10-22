@@ -125,7 +125,7 @@ func TestResponseArrayJSON(t *testing.T) {
 		}
 	}
 }
-func Test_ResponsPaginatedJSON(t *testing.T) {
+func Test_ResponsePaginatedJSON(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		obj        interface{}
@@ -146,19 +146,19 @@ func Test_ResponsPaginatedJSON(t *testing.T) {
 
 	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		ResponsPaginatedJSON(writer, http.StatusOK, testCase.total, testCase.obj)
+		ResponsePaginatedJSON(writer, http.StatusOK, testCase.total, testCase.obj)
 
 		if result := writer.Result().StatusCode; result != testCase.wantStatus {
-			t.Errorf(`%s\ResponsPaginatedJSON(%v, %v) = %v, want %v`, testCase.intention, testCase.total, testCase.obj, result, testCase.wantStatus)
+			t.Errorf(`%s\ResponsePaginatedJSON(%v, %v) = %v, want %v`, testCase.intention, testCase.total, testCase.obj, result, testCase.wantStatus)
 		}
 
 		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
-			t.Errorf(`%s\ResponsPaginatedJSON(%v, %v) = %v, want %v`, testCase.intention, testCase.total, testCase.obj, string(result), testCase.want)
+			t.Errorf(`%s\ResponsePaginatedJSON(%v, %v) = %v, want %v`, testCase.intention, testCase.total, testCase.obj, string(result), testCase.want)
 		}
 
 		for key, value := range testCase.wantHeader {
 			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, ``) != value {
-				t.Errorf(`%s\ResponsPaginatedJSON(%v, %v).Header[%s] = %v, want %v`, testCase.intention, testCase.total, testCase.obj, key, strings.Join(result, ``), value)
+				t.Errorf(`%s\ResponsePaginatedJSON(%v, %v).Header[%s] = %v, want %v`, testCase.intention, testCase.total, testCase.obj, key, strings.Join(result, ``), value)
 			}
 		}
 	}

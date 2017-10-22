@@ -32,7 +32,7 @@ func ResponseArrayJSON(w http.ResponseWriter, status int, array interface{}) {
 	ResponseJSON(w, status, results{array})
 }
 
-// ResponsPaginatedJSON write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func ResponsPaginatedJSON(w http.ResponseWriter, status int, total int64, array interface{}) {
+// ResponssPaginatedJSON write marshalled obj wrapped into an object to http.ResponseWriter with correct header
+func ResponssPaginatedJSON(w http.ResponseWriter, status int, total int64, array interface{}) {
 	ResponseJSON(w, status, pagination{Results: array, Total: total})
 }
