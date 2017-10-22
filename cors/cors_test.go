@@ -11,12 +11,12 @@ func Test_Flags(t *testing.T) {
 	var cases = []struct {
 		intention string
 		prefix    string
-		want      map[string]*string
+		want      map[string]interface{}
 	}{
 		{
 			`default prefix`,
 			``,
-			map[string]*string{
+			map[string]interface{}{
 				`origin`:      nil,
 				`headers`:     nil,
 				`methods`:     nil,
@@ -27,7 +27,7 @@ func Test_Flags(t *testing.T) {
 		{
 			`given prefix`,
 			`test`,
-			map[string]*string{
+			map[string]interface{}{
 				`origin`:      nil,
 				`headers`:     nil,
 				`methods`:     nil,
@@ -49,11 +49,11 @@ func Test_ServeHTTP(t *testing.T) {
 	var headers = `Content-Type,Authorization`
 	var methods = `GET,POST`
 	var exposes = `X-Total-Count`
-	var credentials = `true`
+	var credentials = true
 
 	var cases = []struct {
 		intention string
-		config    map[string]*string
+		config    map[string]interface{}
 		want      map[string]string
 	}{
 		{
@@ -63,7 +63,7 @@ func Test_ServeHTTP(t *testing.T) {
 		},
 		{
 			`given values`,
-			map[string]*string{
+			map[string]interface{}{
 				`origin`:      &origin,
 				`headers`:     &headers,
 				`methods`:     &methods,
