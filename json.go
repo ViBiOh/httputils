@@ -21,7 +21,7 @@ type pagination struct {
 
 // IsPretty determine if pretty is defined in query params
 func IsPretty(rawQuery string) (pretty bool) {
-	if params, err := url.ParseQuery(rawQuery); err != nil {
+	if params, err := url.ParseQuery(rawQuery); err == nil {
 		if _, ok := params[`pretty`]; ok {
 			pretty = true
 		}
