@@ -16,8 +16,8 @@ func Flags(prefix string) map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		`csp`:  flag.String(prefix+`csp`, defaultCsp, `Content-Security-Policy`),
-		`hsts`: flag.Bool(prefix+`hsts`, defaultHsts, `Indicate Strict Transport Security`),
+		`csp`:  flag.String(prefix+`Csp`, defaultCsp, `Content-Security-Policy`),
+		`hsts`: flag.Bool(prefix+`Hsts`, defaultHsts, `Indicate Strict Transport Security`),
 	}
 }
 
