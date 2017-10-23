@@ -9,12 +9,21 @@ import (
 	"github.com/ViBiOh/httputils"
 )
 
+const defaultPrefix = `rate`
+const defaultLimit = 5000
 const forwardedForHeader = `X-Forwarded-For`
 const ipRateDelay = time.Second * 60
 
-var (
-	ipRateLimit = flag.Int(`rateCount`, 5000, `Rate IP limit`)
-)
+// Flags add flags for given prefix
+func Flags(prefix string) map[string]interface{} {
+	if prefix == `` {
+		prefix = defaultPrefix
+	}
+
+	return map[string]interface{}{
+		`limit`: flag.Int(prefix+`Count`, defaultLimit, `Rate IP limit`),
+	}
+}
 
 var ipRate = make(map[string]int)
 var ipRateMutex sync.RWMutex
@@ -43,20 +52,31 @@ func getIP(r *http.Request) (ip string) {
 	return
 }
 
-func checkRate(r *http.Request) bool {
+func checkRate(r *http.Request, limit int) bool {
 	ip := getIP(r)
 
 	ipRateMutex.Lock()
 	defer ipRateMutex.Unlock()
 	ipRate[ip]++
 
-	return ipRate[ip] < *ipRateLimit
+	return ipRate[ip] < limit
 }
 
 // Handler that check rate limit
-func Handler(next http.Handler) http.Handler {
+func Handler(config map[string]interface{}, next http.Handler) http.Handler {
+	var (
+		limit = defaultLimit
+	)
+
+	var given interface{}
+	var ok bool
+
+	if given, ok = config[`limit`]; ok {
+		limit = *(given.(*int))
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !checkRate(r) {
+		if !checkRate(r, limit) {
 			w.WriteHeader(http.StatusTooManyRequests)
 			return
 		}

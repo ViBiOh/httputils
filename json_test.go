@@ -17,6 +17,41 @@ func testFn() string {
 	return `toto`
 }
 
+func Test_IsPretty(t *testing.T) {
+	var cases = []struct {
+		intention string
+		query     string
+		want      bool
+	}{
+		{
+			`should work with empty param`,
+			``,
+			false,
+		},
+		{
+			`should work with pretty param`,
+			`&&`,
+			false,
+		},
+		{
+			`should work with pretty param`,
+			`pretty`,
+			true,
+		},
+		{
+			`should work with pretty param`,
+			`test=1&pretty`,
+			true,
+		},
+	}
+
+	for _, testCase := range cases {
+		if result := IsPretty(testCase.query); result != testCase.want {
+			t.Errorf("%v\nIsPretty(%v) = %v, want %v", testCase.intention, testCase.query, result, testCase.want)
+		}
+	}
+}
+
 func TestResponseJSON(t *testing.T) {
 	var cases = []struct {
 		obj        interface{}

@@ -7,6 +7,35 @@ import (
 	"time"
 )
 
+func Test_Flags(t *testing.T) {
+	var cases = []struct {
+		intention string
+		prefix    string
+		want      map[string]interface{}
+	}{
+		{
+			`default prefix`,
+			``,
+			map[string]interface{}{
+				`limit`: nil,
+			},
+		},
+		{
+			`given prefix`,
+			`test`,
+			map[string]interface{}{
+				`limit`: nil,
+			},
+		},
+	}
+
+	for _, testCase := range cases {
+		if result := Flags(testCase.prefix); len(result) != len(testCase.want) {
+			t.Errorf("%v\nFlags(%v) = %v, want %v", testCase.intention, testCase.prefix, result, testCase.want)
+		}
+	}
+}
+
 func TestGetIP(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, `/`, nil)
 	request.RemoteAddr = `localhost`
@@ -53,7 +82,7 @@ func TestCheckRate(t *testing.T) {
 		},
 		{
 			map[string]int{
-				`localhost`: *ipRateLimit,
+				`localhost`: defaultLimit,
 			},
 			false,
 		},
@@ -65,7 +94,7 @@ func TestCheckRate(t *testing.T) {
 
 		ipRate = testCase.ipRate
 
-		if result := checkRate(request); result != testCase.want {
+		if result := checkRate(request, defaultLimit); result != testCase.want {
 			t.Errorf(`checkRate(%v) = (%v), want (%v)`, testCase.ipRate, result, testCase.want)
 		}
 	}
@@ -76,40 +105,48 @@ func BenchmarkCheckRate(b *testing.B) {
 	request.RemoteAddr = `localhost`
 
 	for i := 0; i < b.N; i++ {
-		checkRate(request)
+		checkRate(request, defaultLimit)
 	}
 }
 
 func TestServeHTTP(t *testing.T) {
+	limit := 20
+
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)
 	request.Header.Add(forwardedForHeader, `localhost`)
 
-	calls := make([]time.Time, *ipRateLimit)
-	for i := 0; i < *ipRateLimit; i++ {
+	calls := make([]time.Time, defaultLimit)
+	for i := 0; i < defaultLimit; i++ {
 		calls[i] = time.Now()
 	}
 
 	var cases = []struct {
 		request *http.Request
+		config  map[string]interface{}
 		ipRate  map[string]int
 		want    int
 	}{
 		{
 			request,
+			nil,
 			map[string]int{},
 			http.StatusOK,
 		},
 		{
 			request,
+			map[string]interface{}{
+				`limit`: &limit,
+			},
 			map[string]int{
-				`localhost`: *ipRateLimit,
+				`localhost`: limit,
 			},
 			http.StatusTooManyRequests,
 		},
 		{
 			httptest.NewRequest(http.MethodGet, `/rate_limits`, nil),
+			nil,
 			map[string]int{
-				`localhost`: *ipRateLimit - 1,
+				`localhost`: defaultLimit - 1,
 			},
 			http.StatusOK,
 		},
@@ -119,7 +156,7 @@ func TestServeHTTP(t *testing.T) {
 		ipRate = testCase.ipRate
 
 		response := httptest.NewRecorder()
-		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		Handler(testCase.config, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		})).ServeHTTP(response, testCase.request)
 

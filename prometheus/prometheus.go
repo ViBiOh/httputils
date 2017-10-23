@@ -9,10 +9,23 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-var (
-	metricsPath = flag.String(`prometheusMetricsPath`, `/metrics`, `Prometheus - Metrics endpoint path`)
-	metricsHost = flag.String(`prometheusMetricsHost`, `localhost`, `Prometheus - Allowed hostname to call metrics endpoint`)
-)
+const defaultPrefix = `prometheus`
+const defaultPrefixMetrics = `prometheus`
+const defaultPath = `/metrics`
+const defaultHost = `localhost`
+
+// Flags add flags for given prefix
+func Flags(prefix string) map[string]interface{} {
+	if prefix == `` {
+		prefix = defaultPrefix
+	}
+
+	return map[string]interface{}{
+		`prefix`: flag.String(defaultPrefix+`Prefix`, defaultPrefixMetrics, `Prometheus - Metrics prefix`),
+		`path`:   flag.String(defaultPrefix+`MetricsPath`, defaultPath, `Prometheus - Metrics endpoint path`),
+		`host`:   flag.String(defaultPrefix+`MetricsHost`, defaultHost, `Prometheus - Allowed hostname to call metrics endpoint`),
+	}
+}
 
 func goroutinesHandler(gauge prometheus.Gauge, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -53,12 +66,31 @@ func getPrometheusHandlers(prefix string, next http.Handler) (http.HandlerFunc, 
 }
 
 // Handler wraps given handler into prometheus tooling and expose `/metrics` endpoints
-func Handler(prefix string, next http.Handler) http.Handler {
+func Handler(config map[string]interface{}, next http.Handler) http.Handler {
+	var (
+		prefix = defaultPrefixMetrics
+		path   = defaultPath
+		host   = defaultHost
+	)
+
+	var given interface{}
+	var ok bool
+
+	if given, ok = config[`prefix`]; ok {
+		prefix = *(given.(*string))
+	}
+	if given, ok = config[`path`]; ok {
+		path = *(given.(*string))
+	}
+	if given, ok = config[`host`]; ok {
+		host = *(given.(*string))
+	}
+
 	handler, metrics := getPrometheusHandlers(prefix, next)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == *metricsPath {
-			if r.Host == *metricsHost {
+		if r.URL.Path == path {
+			if r.Host == host {
 				metrics.ServeHTTP(w, r)
 			} else {
 				w.WriteHeader(http.StatusForbidden)

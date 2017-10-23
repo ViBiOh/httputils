@@ -7,14 +7,50 @@ import (
 	"testing"
 )
 
+func Test_Flags(t *testing.T) {
+	var cases = []struct {
+		intention string
+		prefix    string
+		want      map[string]interface{}
+	}{
+		{
+			`default prefix`,
+			``,
+			map[string]interface{}{
+				`csp`:  nil,
+				`hsts`: nil,
+			},
+		},
+		{
+			`given prefix`,
+			`test`,
+			map[string]interface{}{
+				`csp`:  nil,
+				`hsts`: nil,
+			},
+		},
+	}
+
+	for _, testCase := range cases {
+		if result := Flags(testCase.prefix); len(result) != len(testCase.want) {
+			t.Errorf("%v\nFlags(%v) = %v, want %v", testCase.intention, testCase.prefix, result, testCase.want)
+		}
+	}
+}
+
 func TestServeHTTP(t *testing.T) {
+	hsts := false
+	csp := `default-src 'self'; script-src 'self' 'unsafe-inline'`
+
 	var cases = []struct {
 		path        string
+		config      map[string]interface{}
 		handlerFunc func(w http.ResponseWriter, r *http.Request)
 		want        map[string]string
 	}{
 		{
 			`/`,
+			nil,
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},
@@ -31,6 +67,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			`/`,
+			nil,
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusMovedPermanently)
 			},
@@ -47,6 +84,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			`/`,
+			nil,
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
 			},
@@ -62,17 +100,20 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			`/testCase.html`,
+			map[string]interface{}{
+				`csp`:  &csp,
+				`hsts`: &hsts,
+			},
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},
 			map[string]string{
-				`Content-Security-Policy`:           `default-src 'self'`,
+				`Content-Security-Policy`:           `default-src 'self'; script-src 'self' 'unsafe-inline'`,
 				`Referrer-Policy`:                   `strict-origin-when-cross-origin`,
 				`X-Frame-Options`:                   `deny`,
 				`X-Content-Type-Options`:            `nosniff`,
 				`X-Xss-Protection`:                  `1; mode=block`,
 				`X-Permitted-Cross-Domain-Policies`: `none`,
-				`Strict-Transport-Security`:         `max-age=5184000`,
 				`Cache-Control`:                     `max-age=864000`,
 			},
 		},
@@ -80,7 +121,7 @@ func TestServeHTTP(t *testing.T) {
 
 	for _, testCase := range cases {
 		request := httptest.NewRecorder()
-		Handler(http.HandlerFunc(testCase.handlerFunc)).ServeHTTP(request, httptest.NewRequest(http.MethodGet, `http://localhost`+testCase.path, nil))
+		Handler(testCase.config, http.HandlerFunc(testCase.handlerFunc)).ServeHTTP(request, httptest.NewRequest(http.MethodGet, `http://localhost`+testCase.path, nil))
 
 		for key, value := range testCase.want {
 			if result, ok := request.Result().Header[key]; !ok || (ok && strings.Join(result, ``) != value) {
@@ -91,7 +132,7 @@ func TestServeHTTP(t *testing.T) {
 }
 
 func BenchmarkServeHTTP(b *testing.B) {
-	handler := Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := Handler(nil, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMovedPermanently)
 	}))
 
