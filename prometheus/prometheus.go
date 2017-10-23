@@ -16,14 +16,10 @@ const defaultHost = `localhost`
 
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
-	if prefix == `` {
-		prefix = defaultPrefix
-	}
-
 	return map[string]interface{}{
-		`prefix`: flag.String(tools.ToCamel(defaultPrefix+`Prefix`), defaultPrefix, `Prometheus prefix`),
-		`path`:   flag.String(tools.ToCamel(defaultPrefix+`MetricsPath`), defaultPath, `Prometheus metrics endpoint path`),
-		`host`:   flag.String(tools.ToCamel(defaultPrefix+`MetricsHost`), defaultHost, `Prometheus allowed hostname to call metrics endpoint`),
+		`prefix`: flag.String(tools.ToCamel(prefix+`Prefix`), defaultPrefix, `Prometheus prefix`),
+		`path`:   flag.String(tools.ToCamel(prefix+`MetricsPath`), defaultPath, `Prometheus metrics endpoint path`),
+		`host`:   flag.String(tools.ToCamel(prefix+`MetricsHost`), defaultHost, `Prometheus allowed hostname to call metrics endpoint`),
 	}
 }
 
