@@ -65,7 +65,7 @@ func Handler(next http.Handler) http.Handler {
 			ipRateMutex.RLock()
 			defer ipRateMutex.RUnlock()
 
-			httputils.ResponseJSON(w, http.StatusOK, ipRate)
+			httputils.ResponseJSON(w, http.StatusOK, ipRate, httputils.IsPretty(r.URL.RawQuery))
 			return
 		}
 

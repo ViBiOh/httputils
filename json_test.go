@@ -20,30 +20,38 @@ func testFn() string {
 func TestResponseJSON(t *testing.T) {
 	var cases = []struct {
 		obj        interface{}
+		pretty     bool
 		want       string
 		wantStatus int
 		wantHeader map[string]string
 	}{
 		{
 			nil,
+			false,
 			`null`,
 			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 		},
 		{
 			testStruct{id: `Test`},
+			false,
 			`{"Active":false,"Amount":0}`,
 			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 		},
 		{
 			testStruct{id: `Test`, Active: true, Amount: 12.34},
-			`{"Active":true,"Amount":12.34}`,
+			true,
+			`{
+  "Active": true,
+  "Amount": 12.34
+}`,
 			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 		},
 		{
 			testFn,
+			false,
 			`Error while marshalling JSON response: json: unsupported type: func() string
 `,
 			500,
@@ -53,7 +61,7 @@ func TestResponseJSON(t *testing.T) {
 
 	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		ResponseJSON(writer, http.StatusOK, testCase.obj)
+		ResponseJSON(writer, http.StatusOK, testCase.obj, testCase.pretty)
 
 		if result := writer.Result().StatusCode; result != testCase.wantStatus {
 			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, result, testCase.wantStatus)
@@ -81,7 +89,7 @@ func BenchmarkResponseJSON(b *testing.B) {
 	writer := httptest.NewRecorder()
 
 	for i := 0; i < b.N; i++ {
-		ResponseJSON(writer, http.StatusOK, testCase.obj)
+		ResponseJSON(writer, http.StatusOK, testCase.obj, false)
 	}
 }
 
@@ -108,7 +116,7 @@ func TestResponseArrayJSON(t *testing.T) {
 
 	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		ResponseArrayJSON(writer, http.StatusOK, testCase.obj)
+		ResponseArrayJSON(writer, http.StatusOK, testCase.obj, false)
 
 		if result := writer.Result().StatusCode; result != testCase.wantStatus {
 			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, result, testCase.wantStatus)
@@ -171,7 +179,7 @@ func Test_ResponsePaginatedJSON(t *testing.T) {
 
 	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		ResponsePaginatedJSON(writer, http.StatusOK, testCase.page, testCase.pageSize, testCase.total, testCase.obj)
+		ResponsePaginatedJSON(writer, http.StatusOK, testCase.page, testCase.pageSize, testCase.total, testCase.obj, false)
 
 		if result := writer.Result().StatusCode; result != testCase.wantStatus {
 			t.Errorf(`%s\ResponsePaginatedJSON(%v, %v) = %v, want %v`, testCase.intention, testCase.total, testCase.obj, result, testCase.wantStatus)
