@@ -125,20 +125,45 @@ func TestResponseArrayJSON(t *testing.T) {
 		}
 	}
 }
+
 func Test_ResponsePaginatedJSON(t *testing.T) {
 	var cases = []struct {
 		intention  string
-		obj        interface{}
+		page       int64
+		pageSize   int64
 		total      int64
+		obj        interface{}
 		want       string
 		wantStatus int
 		wantHeader map[string]string
 	}{
 		{
 			`should work with given params`,
-			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
 			1,
-			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"total":1}`,
+			2,
+			2,
+			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
+			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":2,"pageCount":1,"total":2}`,
+			http.StatusOK,
+			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+		},
+		{
+			`should calcul page count when pageSize match total`,
+			1,
+			10,
+			40,
+			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
+			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":10,"pageCount":4,"total":40}`,
+			http.StatusOK,
+			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+		},
+		{
+			`should calcul page count when pageSize don't match total`,
+			1,
+			10,
+			45,
+			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
+			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":10,"pageCount":5,"total":45}`,
 			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
 		},
@@ -146,7 +171,7 @@ func Test_ResponsePaginatedJSON(t *testing.T) {
 
 	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		ResponsePaginatedJSON(writer, http.StatusOK, testCase.total, testCase.obj)
+		ResponsePaginatedJSON(writer, http.StatusOK, testCase.page, testCase.pageSize, testCase.total, testCase.obj)
 
 		if result := writer.Result().StatusCode; result != testCase.wantStatus {
 			t.Errorf(`%s\ResponsePaginatedJSON(%v, %v) = %v, want %v`, testCase.intention, testCase.total, testCase.obj, result, testCase.wantStatus)
