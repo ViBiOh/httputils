@@ -10,7 +10,7 @@ import (
 )
 
 const defaultPrefix = `prometheus`
-const defaultPrefixMetrics = `prometheus`
+const defaultPrefixMetrics = `http`
 const defaultPath = `/metrics`
 const defaultHost = `localhost`
 
@@ -21,9 +21,9 @@ func Flags(prefix string) map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		`prefix`: flag.String(defaultPrefix+`Prefix`, defaultPrefixMetrics, `Prometheus - Metrics prefix`),
-		`path`:   flag.String(defaultPrefix+`MetricsPath`, defaultPath, `Prometheus - Metrics endpoint path`),
-		`host`:   flag.String(defaultPrefix+`MetricsHost`, defaultHost, `Prometheus - Allowed hostname to call metrics endpoint`),
+		`prefix`: flag.String(defaultPrefix+`Prefix`, defaultPrefixMetrics, `Prometheus prefix`),
+		`path`:   flag.String(defaultPrefix+`MetricsPath`, defaultPath, `Prometheus metrics endpoint path`),
+		`host`:   flag.String(defaultPrefix+`MetricsHost`, defaultHost, `Prometheus allowed hostname to call metrics endpoint`),
 	}
 }
 
