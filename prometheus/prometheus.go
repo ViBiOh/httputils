@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"runtime"
 
+	"github.com/ViBiOh/httputils/tools"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-const defaultPrefix = `prometheus`
-const defaultPrefixMetrics = `http`
+const defaultPrefix = `http`
 const defaultPath = `/metrics`
 const defaultHost = `localhost`
 
@@ -21,9 +21,9 @@ func Flags(prefix string) map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		`prefix`: flag.String(defaultPrefix+`Prefix`, defaultPrefixMetrics, `Prometheus prefix`),
-		`path`:   flag.String(defaultPrefix+`MetricsPath`, defaultPath, `Prometheus metrics endpoint path`),
-		`host`:   flag.String(defaultPrefix+`MetricsHost`, defaultHost, `Prometheus allowed hostname to call metrics endpoint`),
+		`prefix`: flag.String(tools.ToCamel(defaultPrefix+`Prefix`), defaultPrefix, `Prometheus prefix`),
+		`path`:   flag.String(tools.ToCamel(defaultPrefix+`MetricsPath`), defaultPath, `Prometheus metrics endpoint path`),
+		`host`:   flag.String(tools.ToCamel(defaultPrefix+`MetricsHost`), defaultHost, `Prometheus allowed hostname to call metrics endpoint`),
 	}
 }
 
@@ -68,7 +68,7 @@ func getPrometheusHandlers(prefix string, next http.Handler) (http.HandlerFunc, 
 // Handler wraps given handler into prometheus tooling and expose `/metrics` endpoints
 func Handler(config map[string]interface{}, next http.Handler) http.Handler {
 	var (
-		prefix = defaultPrefixMetrics
+		prefix = defaultPrefix
 		path   = defaultPath
 		host   = defaultHost
 	)

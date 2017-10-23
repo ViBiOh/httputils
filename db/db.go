@@ -5,24 +5,20 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/ViBiOh/httputils/tools"
+
 	// Not referenced but needed for database/sql
 	_ "github.com/lib/pq"
 )
 
-const defaultPrefix = `db`
-
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]*string {
-	if prefix == `` {
-		prefix = defaultPrefix
-	}
-
 	return map[string]*string{
-		`host`: flag.String(prefix+`Host`, ``, `Database Host`),
-		`port`: flag.String(prefix+`Port`, `5432`, `Database Port`),
-		`user`: flag.String(prefix+`User`, ``, `Database User`),
-		`pass`: flag.String(prefix+`Pass`, ``, `Database Pass`),
-		`name`: flag.String(prefix+`Name`, ``, `Database Name`),
+		`host`: flag.String(tools.ToCamel(prefix+`Host`), ``, `Database Host`),
+		`port`: flag.String(tools.ToCamel(prefix+`Port`), `5432`, `Database Port`),
+		`user`: flag.String(tools.ToCamel(prefix+`User`), ``, `Database User`),
+		`pass`: flag.String(tools.ToCamel(prefix+`Pass`), ``, `Database Pass`),
+		`name`: flag.String(tools.ToCamel(prefix+`Name`), ``, `Database Name`),
 	}
 }
 

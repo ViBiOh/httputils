@@ -7,21 +7,17 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils"
+	"github.com/ViBiOh/httputils/tools"
 )
 
-const defaultPrefix = `rate`
 const defaultLimit = 5000
 const forwardedForHeader = `X-Forwarded-For`
 const ipRateDelay = time.Second * 60
 
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
-	if prefix == `` {
-		prefix = defaultPrefix
-	}
-
 	return map[string]interface{}{
-		`limit`: flag.Int(prefix+`Count`, defaultLimit, `Rate IP limit`),
+		`limit`: flag.Int(tools.ToCamel(prefix+`Count`), defaultLimit, `Rate IP limit`),
 	}
 }
 

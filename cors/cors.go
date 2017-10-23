@@ -4,9 +4,10 @@ import (
 	"flag"
 	"net/http"
 	"strconv"
+
+	"github.com/ViBiOh/httputils/tools"
 )
 
-const defaultPrefix = `cors`
 const defaultOrigin = `*`
 const defaultHeaders = `Content-Type`
 const defaultMethods = http.MethodGet
@@ -15,16 +16,12 @@ const defaultCredentials = false
 
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
-	if prefix == `` {
-		prefix = defaultPrefix
-	}
-
 	return map[string]interface{}{
-		`origin`:      flag.String(prefix+`Origin`, defaultOrigin, `Access-Control-Allow-Origin`),
-		`headers`:     flag.String(prefix+`Headers`, defaultHeaders, `Access-Control-Allow-Headers`),
-		`methods`:     flag.String(prefix+`Methods`, defaultMethods, `Access-Control-Allow-Methods`),
-		`exposes`:     flag.String(prefix+`Expose`, defaultExposes, `Access-Control-Expose-Headers`),
-		`credentials`: flag.Bool(prefix+`Credentials`, defaultCredentials, `Access-Control-Allow-Credentials`),
+		`origin`:      flag.String(tools.ToCamel(prefix+`Origin`), defaultOrigin, `Access-Control-Allow-Origin`),
+		`headers`:     flag.String(tools.ToCamel(prefix+`Headers`), defaultHeaders, `Access-Control-Allow-Headers`),
+		`methods`:     flag.String(tools.ToCamel(prefix+`Methods`), defaultMethods, `Access-Control-Allow-Methods`),
+		`exposes`:     flag.String(tools.ToCamel(prefix+`Expose`), defaultExposes, `Access-Control-Expose-Headers`),
+		`credentials`: flag.Bool(tools.ToCamel(prefix+`Credentials`), defaultCredentials, `Access-Control-Allow-Credentials`),
 	}
 }
 
