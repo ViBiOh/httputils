@@ -29,6 +29,6 @@ build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo cert/cert.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/action.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/map.go
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/string.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/strings.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo rate/rate.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo db/db.go
