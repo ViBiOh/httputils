@@ -36,7 +36,7 @@ func Test_Flags(t *testing.T) {
 	}
 }
 
-func TestGetIP(t *testing.T) {
+func Test_GetIP(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, `/`, nil)
 	request.RemoteAddr = `localhost`
 
@@ -59,13 +59,13 @@ func TestGetIP(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		if result := getIP(testCase.r); result != testCase.want {
-			t.Errorf(`getIP(%v) = %v, want %v`, testCase.r, result, testCase.want)
+		if result := GetIP(testCase.r); result != testCase.want {
+			t.Errorf(`GetIP(%v) = %v, want %v`, testCase.r, result, testCase.want)
 		}
 	}
 }
 
-func TestCheckRate(t *testing.T) {
+func Test_checkRate(t *testing.T) {
 	var cases = []struct {
 		ipRate map[string]int
 		want   bool
@@ -100,7 +100,7 @@ func TestCheckRate(t *testing.T) {
 	}
 }
 
-func BenchmarkCheckRate(b *testing.B) {
+func Benchmark_checkRate(b *testing.B) {
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)
 	request.RemoteAddr = `localhost`
 
@@ -109,7 +109,7 @@ func BenchmarkCheckRate(b *testing.B) {
 	}
 }
 
-func TestServeHTTP(t *testing.T) {
+func Test_ServeHTTP(t *testing.T) {
 	limit := 20
 
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)

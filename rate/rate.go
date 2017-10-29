@@ -39,7 +39,8 @@ func init() {
 	}()
 }
 
-func getIP(r *http.Request) (ip string) {
+// GetIP give remote IP
+func GetIP(r *http.Request) (ip string) {
 	ip = r.Header.Get(forwardedForHeader)
 	if ip == `` {
 		ip = r.RemoteAddr
@@ -49,7 +50,7 @@ func getIP(r *http.Request) (ip string) {
 }
 
 func checkRate(r *http.Request, limit int) bool {
-	ip := getIP(r)
+	ip := GetIP(r)
 
 	ipRateMutex.Lock()
 	defer ipRateMutex.Unlock()
