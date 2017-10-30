@@ -14,11 +14,11 @@ import (
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]*string {
 	return map[string]*string{
-		`host`: flag.String(tools.ToCamel(prefix+`Host`), ``, `Database Host`),
-		`port`: flag.String(tools.ToCamel(prefix+`Port`), `5432`, `Database Port`),
-		`user`: flag.String(tools.ToCamel(prefix+`User`), ``, `Database User`),
-		`pass`: flag.String(tools.ToCamel(prefix+`Pass`), ``, `Database Pass`),
-		`name`: flag.String(tools.ToCamel(prefix+`Name`), ``, `Database Name`),
+		`host`: flag.String(tools.ToCamel(prefix+`Host`), ``, `[database] Host`),
+		`port`: flag.String(tools.ToCamel(prefix+`Port`), `5432`, `[database] Port`),
+		`user`: flag.String(tools.ToCamel(prefix+`User`), ``, `[database] User`),
+		`pass`: flag.String(tools.ToCamel(prefix+`Pass`), ``, `[database] Pass`),
+		`name`: flag.String(tools.ToCamel(prefix+`Name`), ``, `[database] Name`),
 	}
 }
 

@@ -17,11 +17,11 @@ const defaultCredentials = false
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
-		`origin`:      flag.String(tools.ToCamel(prefix+`Origin`), defaultOrigin, `Access-Control-Allow-Origin`),
-		`headers`:     flag.String(tools.ToCamel(prefix+`Headers`), defaultHeaders, `Access-Control-Allow-Headers`),
-		`methods`:     flag.String(tools.ToCamel(prefix+`Methods`), defaultMethods, `Access-Control-Allow-Methods`),
-		`exposes`:     flag.String(tools.ToCamel(prefix+`Expose`), defaultExposes, `Access-Control-Expose-Headers`),
-		`credentials`: flag.Bool(tools.ToCamel(prefix+`Credentials`), defaultCredentials, `Access-Control-Allow-Credentials`),
+		`origin`:      flag.String(tools.ToCamel(prefix+`Origin`), defaultOrigin, `[cors] Access-Control-Allow-Origin`),
+		`headers`:     flag.String(tools.ToCamel(prefix+`Headers`), defaultHeaders, `[cors] Access-Control-Allow-Headers`),
+		`methods`:     flag.String(tools.ToCamel(prefix+`Methods`), defaultMethods, `[cors] Access-Control-Allow-Methods`),
+		`exposes`:     flag.String(tools.ToCamel(prefix+`Expose`), defaultExposes, `[cors] Access-Control-Expose-Headers`),
+		`credentials`: flag.Bool(tools.ToCamel(prefix+`Credentials`), defaultCredentials, `[cors] Access-Control-Allow-Credentials`),
 	}
 }
 

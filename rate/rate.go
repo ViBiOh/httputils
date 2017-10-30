@@ -17,7 +17,7 @@ const ipRateDelay = time.Second * 60
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
-		`limit`: flag.Int(tools.ToCamel(prefix+`Count`), defaultLimit, `Rate IP limit`),
+		`limit`: flag.Int(tools.ToCamel(prefix+`Count`), defaultLimit, `[rate] IP limit`),
 	}
 }
 

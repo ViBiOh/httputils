@@ -13,8 +13,8 @@ const defaultHsts = true
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
-		`csp`:  flag.String(tools.ToCamel(prefix+`Csp`), defaultCsp, `Content-Security-Policy`),
-		`hsts`: flag.Bool(tools.ToCamel(prefix+`Hsts`), defaultHsts, `Indicate Strict Transport Security`),
+		`csp`:  flag.String(tools.ToCamel(prefix+`Csp`), defaultCsp, `[owasp] Content-Security-Policy`),
+		`hsts`: flag.Bool(tools.ToCamel(prefix+`Hsts`), defaultHsts, `[owasp] Indicate Strict Transport Security`),
 	}
 }
 
