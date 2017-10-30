@@ -23,12 +23,13 @@ bench:
 
 build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo owasp/owasp.go
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo cors/cors.go
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo prometheus/prometheus.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo cert/cert.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo cors/cors.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo db/db.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo owasp/owasp.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo prometheus/prometheus.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo rate/rate.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/action.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/map.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/strings.go
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo rate/rate.go
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo db/db.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo writer/writer.go
