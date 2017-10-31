@@ -35,7 +35,7 @@ func GetDB(config map[string]*string) (*sql.DB, error) {
 	}
 
 	if err = db.Ping(); err != nil {
-		return nil, fmt.Errorf(`Error while pinging database: %v`, err)
+		return db, fmt.Errorf(`Error while pinging database: %v`, err)
 	}
 
 	return db, nil
