@@ -22,8 +22,8 @@ func Forbidden(w http.ResponseWriter) {
 	http.Error(w, ``, http.StatusForbidden)
 }
 
-// InternalServer logs error and sets InternalServer status
-func InternalServer(w http.ResponseWriter, err error) {
+// InternalServerError logs error and sets InternalServerError status
+func InternalServerError(w http.ResponseWriter, err error) {
 	log.Printf(`HTTP/500 %v`, err)
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }

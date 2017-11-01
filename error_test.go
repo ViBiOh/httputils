@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestBadRequest(t *testing.T) {
+func Test_BadRequest(t *testing.T) {
 	var cases = []struct {
 		err  error
 		want string
@@ -33,7 +33,7 @@ func TestBadRequest(t *testing.T) {
 	}
 }
 
-func TestUnauthorized(t *testing.T) {
+func Test_Unauthorized(t *testing.T) {
 	var cases = []struct {
 		err  error
 		want string
@@ -59,7 +59,7 @@ func TestUnauthorized(t *testing.T) {
 	}
 }
 
-func TestForbidden(t *testing.T) {
+func Test_Forbidden(t *testing.T) {
 	var cases = []struct {
 	}{
 		{},
@@ -75,7 +75,7 @@ func TestForbidden(t *testing.T) {
 	}
 }
 
-func TestErrorHandler(t *testing.T) {
+func Test_InternalServerError(t *testing.T) {
 	var cases = []struct {
 		err  error
 		want string
@@ -89,7 +89,7 @@ func TestErrorHandler(t *testing.T) {
 
 	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		InternalServer(writer, testCase.err)
+		InternalServerError(writer, testCase.err)
 
 		if result := writer.Result().StatusCode; result != http.StatusInternalServerError {
 			t.Errorf(`errorHandler(%v) = %v, want %v`, testCase.err, result, http.StatusInternalServerError)

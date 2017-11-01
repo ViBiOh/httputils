@@ -47,7 +47,7 @@ func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty boo
 		w.WriteHeader(status)
 		w.Write(objJSON)
 	} else {
-		InternalServer(w, fmt.Errorf(`Error while marshalling JSON response: %v`, err))
+		InternalServerError(w, fmt.Errorf(`Error while marshalling JSON response: %v`, err))
 	}
 }
 
