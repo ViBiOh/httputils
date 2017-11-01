@@ -24,12 +24,7 @@ func Flags(prefix string) map[string]*string {
 
 // GetDB start DB connection
 func GetDB(config map[string]*string) (*sql.DB, error) {
-	var host = config[`host`]
-	if *host == `` {
-		return nil, nil
-	}
-
-	db, err := sql.Open(`postgres`, fmt.Sprintf(`host=%s port=%s user=%s password=%s dbname=%s sslmode=disable`, *host, *config[`port`], *config[`user`], *config[`pass`], *config[`name`]))
+	db, err := sql.Open(`postgres`, fmt.Sprintf(`host=%s port=%s user=%s password=%s dbname=%s sslmode=disable`, *config[`host`], *config[`port`], *config[`user`], *config[`pass`], *config[`name`]))
 	if err != nil {
 		return nil, fmt.Errorf(`Error while opening database connection: %v`, err)
 	}
