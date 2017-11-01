@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"log"
 
 	"github.com/ViBiOh/httputils/tools"
 
@@ -57,6 +58,8 @@ func GetTx(db *sql.DB, label string, tx *sql.Tx) (*sql.Tx, error) {
 
 // EndTx ends transaction according error without shadowing given error
 func EndTx(label string, tx *sql.Tx, err error) error {
+	log.Printf(`entry in with %v`, err)
+
 	if err != nil {
 		if endErr := tx.Rollback(); endErr != nil {
 			return fmt.Errorf(`%v, and also error while rolling back transaction for %s: %v`, err, label, endErr)
@@ -65,7 +68,8 @@ func EndTx(label string, tx *sql.Tx, err error) error {
 		return fmt.Errorf(`Error while committing transaction for %s: %v`, label, endErr)
 	}
 
-	return nil
+	log.Printf(`getting out there %v`, err)
+	return err
 }
 
 // RowsClose closes rows without shadowing error
