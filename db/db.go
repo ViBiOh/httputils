@@ -2,8 +2,11 @@ package db
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"flag"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/ViBiOh/httputils/tools"
 
