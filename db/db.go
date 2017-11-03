@@ -11,6 +11,19 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// WhereInInt64 wrapper for assigning `IN ($n)` in WHERE clause
+type WhereInInt64 []int64
+
+// Value implements the driver.Valuer interface.
+func (a WhereInInt64) Value() (driver.Value, error) {
+	ints := make([]string, len(a))
+	for i, v := range a {
+		ints[i] = strconv.FormatInt(v, 10)
+	}
+
+	return strings.Join(ints, ","), nil
+}
+
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]*string {
 	return map[string]*string{
