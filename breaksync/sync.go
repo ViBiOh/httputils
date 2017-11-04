@@ -1,7 +1,10 @@
 package breaksync
 
+import "fmt"
+
 const finalValue = "\uffff"
 
+// Synchronization in a break/sync algorithm
 type Synchronization struct {
 	currentKey string
 	nextKey    string
@@ -9,6 +12,23 @@ type Synchronization struct {
 
 	sources  []*Source
 	ruptures []*Rupture
+}
+
+// NewSynchronization creates and initializes Synchronization
+func NewSynchronization(sources []*Source, ruptures []*Rupture) *Synchronization {
+	return &Synchronization{sources: sources, ruptures: ruptures, end: false}
+}
+
+func (s *Synchronization) read() error {
+	for _, source := range s.sources {
+		if source.synchronized && (source.readRupture == nil || source.readRupture.last) {
+			if _, err := source.read(); err != nil {
+				return fmt.Errorf(`Error while reading source: %v`, err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *Synchronization) computeKeys() {
@@ -28,6 +48,12 @@ func (s *Synchronization) computeKeys() {
 	s.end = s.nextKey == finalValue
 }
 
+func (s *Synchronization) computeSynchro() {
+	for _, source := range s.sources {
+		source.computeSynchro(s.nextKey)
+	}
+}
+
 func (s *Synchronization) computeRuptures() {
 	init := false
 
@@ -39,5 +65,20 @@ func (s *Synchronization) computeRuptures() {
 func (s *Synchronization) computeSynchros() {
 	for _, source := range s.sources {
 		source.computeSynchro(s.currentKey)
+	}
+}
+
+// Run start break/sync algorithm
+func (s *Synchronization) Run(business func(*Synchronization)) {
+	s.read()
+	s.computeKeys()
+
+	for !s.end {
+		s.read()
+		s.computeSynchro()
+		s.computeKeys()
+		s.computeRuptures()
+
+		business(s)
 	}
 }

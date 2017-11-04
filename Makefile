@@ -33,3 +33,4 @@ build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/map.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo tools/strings.go
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo writer/writer.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo breaksync/*.go
