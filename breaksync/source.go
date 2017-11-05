@@ -1,5 +1,10 @@
 package breaksync
 
+import (
+	"fmt"
+	"strconv"
+)
+
 // Source of data in a break/sync algorithm
 type Source struct {
 	synchronized bool
@@ -7,7 +12,7 @@ type Source struct {
 	keyer        func(interface{}) string
 	readRupture  *Rupture
 
-	current    interface{}
+	Current    interface{}
 	currentKey string
 	next       interface{}
 	nextKey    string
@@ -18,12 +23,17 @@ func NewSource(reader func() (interface{}, error), keyer func(interface{}) strin
 	return &Source{synchronized: true, reader: reader, keyer: keyer, readRupture: readRupture}
 }
 
+// SourceBasicKeyer basic keyer for string conversion
+func SourceBasicKeyer(e interface{}) string {
+	return fmt.Sprintf(`%v`, e)
+}
+
 func (s *Source) computeSynchro(key string) {
-	s.synchronized = key == s.currentKey
+	s.synchronized = fmt.Sprintf(`%.`+strconv.Itoa(len(s.currentKey))+`s`, key) == s.currentKey
 }
 
 func (s *Source) read() (interface{}, error) {
-	s.current = s.next
+	s.Current = s.next
 	s.currentKey = s.nextKey
 
 	next, err := s.reader()

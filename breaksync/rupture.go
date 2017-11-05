@@ -2,14 +2,15 @@ package breaksync
 
 // Rupture in a break/sync algorithm
 type Rupture struct {
+	name    string
 	first   bool
 	last    bool
 	extract func(string) string
 }
 
-// NewSource creates and initialize Rupture
-func NewRupture(extract func(string) string) *Rupture {
-	return &Rupture{first: false, last: true, extract: extract}
+// NewRupture creates and initialize Rupture
+func NewRupture(name string, extract func(string) string) *Rupture {
+	return &Rupture{first: false, last: true, name: name, extract: extract}
 }
 
 // RuptureExtractSimple is a basic extracter that return input
