@@ -62,7 +62,7 @@ func GetDB(config map[string]*string) (*sql.DB, error) {
 	}
 
 	if err = db.Ping(); err != nil {
-		return db, fmt.Errorf(`Error while pinging database: %v`, err)
+		return db, fmt.Errorf(`Error while connecting to database: %v`, err)
 	}
 
 	return db, nil
@@ -74,12 +74,12 @@ func Ping(db *sql.DB) bool {
 }
 
 // GetTx return given transaction if not nil or create a new one
-func GetTx(db *sql.DB, label string, tx *sql.Tx) (*sql.Tx, error) {
+func GetTx(db *sql.DB, tx *sql.Tx) (*sql.Tx, error) {
 	if tx == nil {
 		usedTx, err := db.Begin()
 
 		if err != nil {
-			return nil, fmt.Errorf(`Error while getting transaction for %s: %v`, label, err)
+			return nil, fmt.Errorf(`Error while starting transaction: %v`, err)
 		}
 		return usedTx, nil
 	}
@@ -88,27 +88,27 @@ func GetTx(db *sql.DB, label string, tx *sql.Tx) (*sql.Tx, error) {
 }
 
 // EndTx ends transaction according error without shadowing given error
-func EndTx(label string, tx *sql.Tx, err error) error {
+func EndTx(tx *sql.Tx, err error) error {
 	if err != nil {
 		if endErr := tx.Rollback(); endErr != nil {
-			return fmt.Errorf(`%v, and also error while rolling back transaction for %s: %v`, err, label, endErr)
+			return fmt.Errorf(`%v, and also, Error while rolling back transaction: %v`, err, endErr)
 		}
 	} else if endErr := tx.Commit(); endErr != nil {
-		return fmt.Errorf(`Error while committing transaction for %s: %v`, label, endErr)
+		return fmt.Errorf(`Error while committing transaction: %v`, endErr)
 	}
 
 	return err
 }
 
 // RowsClose closes rows without shadowing error
-func RowsClose(label string, rows *sql.Rows, err error) error {
+func RowsClose(rows *sql.Rows, err error) error {
 	if endErr := rows.Close(); endErr != nil {
-		endErr = fmt.Errorf(`Error while closing rows for %s: %v`, label, endErr)
+		endErr = fmt.Errorf(`Error while closing rows: %v`, endErr)
 
 		if err == nil {
 			return endErr
 		}
-		return fmt.Errorf(`%v, and also %v`, err, endErr)
+		return fmt.Errorf(`%v, and also, %v`, err, endErr)
 	}
 
 	return err
