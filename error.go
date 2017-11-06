@@ -19,7 +19,12 @@ func Unauthorized(w http.ResponseWriter, err error) {
 
 // Forbidden sets Forbidden status
 func Forbidden(w http.ResponseWriter) {
-	http.Error(w, ``, http.StatusForbidden)
+	http.Error(w, `⛔️`, http.StatusForbidden)
+}
+
+// NotFound sets NotFound status
+func NotFound(w http.ResponseWriter) {
+	http.Error(w, `¯\_(ツ)_/¯`, http.StatusNotFound)
 }
 
 // InternalServerError logs error and sets InternalServerError status

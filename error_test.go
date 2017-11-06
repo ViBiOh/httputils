@@ -1,7 +1,7 @@
 package httputils
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,13 +9,17 @@ import (
 
 func Test_BadRequest(t *testing.T) {
 	var cases = []struct {
-		err  error
-		want string
+		intention  string
+		err        error
+		want       string
+		wantStatus int
 	}{
 		{
-			fmt.Errorf(`BadRequest`),
+			`should set body and status`,
+			errors.New(`BadRequest`),
 			`BadRequest
 `,
+			http.StatusBadRequest,
 		},
 	}
 
@@ -23,25 +27,29 @@ func Test_BadRequest(t *testing.T) {
 		writer := httptest.NewRecorder()
 		BadRequest(writer, testCase.err)
 
-		if result := writer.Result().StatusCode; result != http.StatusBadRequest {
-			t.Errorf(`badRequest(%v) = %v, want %v`, testCase.err, result, http.StatusBadRequest)
+		if result := writer.Code; result != testCase.wantStatus {
+			t.Errorf("%+v\nBadRequest(%+v) = %+v, want status %+v", testCase.intention, testCase.err, result, testCase.wantStatus)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != string(testCase.want) {
-			t.Errorf(`badRequest(%v) = %v, want %v`, testCase.err, string(result), string(testCase.want))
+		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+			t.Errorf("%+v\nBadRequest(%+v) = %+v, want %+v", testCase.intention, testCase.err, string(result), testCase.want)
 		}
 	}
 }
 
 func Test_Unauthorized(t *testing.T) {
 	var cases = []struct {
-		err  error
-		want string
+		intention  string
+		err        error
+		want       string
+		wantStatus int
 	}{
 		{
-			fmt.Errorf(`Unauthorized`),
+			`should set body and status`,
+			errors.New(`Unauthorized`),
 			`Unauthorized
 `,
+			http.StatusUnauthorized,
 		},
 	}
 
@@ -49,41 +57,85 @@ func Test_Unauthorized(t *testing.T) {
 		writer := httptest.NewRecorder()
 		Unauthorized(writer, testCase.err)
 
-		if result := writer.Result().StatusCode; result != http.StatusUnauthorized {
-			t.Errorf(`badRequest(%v) = %v, want %v`, testCase.err, result, http.StatusUnauthorized)
+		if result := writer.Code; result != testCase.wantStatus {
+			t.Errorf("%+v\nUnauthorized(%+v) = %+v, want status %+v", testCase.intention, testCase.err, result, testCase.wantStatus)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != string(testCase.want) {
-			t.Errorf(`unauthorized(%v) = %v, want %v`, testCase.err, string(result), string(testCase.want))
+		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+			t.Errorf("%+v\nUnauthorized(%+v) = %+v, want %+v", testCase.intention, testCase.err, string(result), testCase.want)
 		}
 	}
 }
 
 func Test_Forbidden(t *testing.T) {
 	var cases = []struct {
+		intention  string
+		want       string
+		wantStatus int
 	}{
-		{},
+		{
+			`should set body and status`,
+			`⛔️
+`,
+			http.StatusForbidden,
+		},
 	}
 
-	for range cases {
+	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
 		Forbidden(writer)
 
-		if result := writer.Result().StatusCode; result != http.StatusForbidden {
-			t.Errorf(`forbidden() = %v, want %v`, result, http.StatusForbidden)
+		if result := writer.Code; result != testCase.wantStatus {
+			t.Errorf("%+v\nForbidden() = %+v, want status %+v", testCase.intention, result, testCase.wantStatus)
+		}
+
+		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+			t.Errorf("%+v\nForbidden() = %+v, want %+v", testCase.intention, string(result), testCase.want)
+		}
+	}
+}
+
+func Test_NotFound(t *testing.T) {
+	var cases = []struct {
+		intention  string
+		want       string
+		wantStatus int
+	}{
+		{
+			`should set body and status`,
+			`¯\_(ツ)_/¯
+`,
+			http.StatusNotFound,
+		},
+	}
+
+	for _, testCase := range cases {
+		writer := httptest.NewRecorder()
+		NotFound(writer)
+
+		if result := writer.Code; result != testCase.wantStatus {
+			t.Errorf("%+v\nNotFound() = %+v, want status %+v", testCase.intention, result, testCase.wantStatus)
+		}
+
+		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+			t.Errorf("%+v\nNotFound() = %+v, want %+v", testCase.intention, string(result), testCase.want)
 		}
 	}
 }
 
 func Test_InternalServerError(t *testing.T) {
 	var cases = []struct {
-		err  error
-		want string
+		intention  string
+		err        error
+		want       string
+		wantStatus int
 	}{
 		{
-			fmt.Errorf(`Internal server error`),
-			`Internal server error
+			`should set body and status`,
+			errors.New(`Failed to do something`),
+			`Failed to do something
 `,
+			http.StatusInternalServerError,
 		},
 	}
 
@@ -91,8 +143,12 @@ func Test_InternalServerError(t *testing.T) {
 		writer := httptest.NewRecorder()
 		InternalServerError(writer, testCase.err)
 
-		if result := writer.Result().StatusCode; result != http.StatusInternalServerError {
-			t.Errorf(`errorHandler(%v) = %v, want %v`, testCase.err, result, http.StatusInternalServerError)
+		if result := writer.Code; result != testCase.wantStatus {
+			t.Errorf("%+v\nInternalServerError(%+v) = %+v, want status %+v", testCase.intention, testCase.err, result, testCase.wantStatus)
+		}
+
+		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+			t.Errorf("%+v\nInternalServerError(%+v) = %+v, want %+v", testCase.intention, testCase.err, string(result), testCase.want)
 		}
 	}
 }
