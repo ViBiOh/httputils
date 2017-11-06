@@ -8,8 +8,9 @@ import (
 )
 
 // ParsePaginationParams parse common pagination param from request
-func ParsePaginationParams(r *http.Request, defaultPageSize, maxPageSize int64) (page, pageSize int64, sortKey string, sortAsc bool, err error) {
-	var parsedInt int64
+func ParsePaginationParams(r *http.Request, defaultPageSize, maxPageSize uint) (page, pageSize uint, sortKey string, sortAsc bool, err error) {
+	var parsed uint64
+	var parsedUint uint
 	var params url.Values
 
 	params, err = url.ParseQuery(r.URL.RawQuery)
@@ -20,28 +21,30 @@ func ParsePaginationParams(r *http.Request, defaultPageSize, maxPageSize int64) 
 	page = 1
 	rawPage := params.Get(`page`)
 	if rawPage != `` {
-		parsedInt, err = strconv.ParseInt(rawPage, 10, 64)
+		parsed, err = strconv.ParseUint(rawPage, 10, 32)
+		parsedUint = uint(parsed)
 		if err != nil {
 			err = fmt.Errorf(`Error while parsing page param: %v`, err)
 			return
 		}
 
-		page = parsedInt
+		page = parsedUint
 	}
 
 	pageSize = defaultPageSize
 	rawPageSize := params.Get(`pageSize`)
 	if rawPageSize != `` {
-		parsedInt, err = strconv.ParseInt(rawPageSize, 10, 64)
+		parsed, err = strconv.ParseUint(rawPageSize, 10, 32)
+		parsedUint = uint(parsed)
 		if err != nil {
 			err = fmt.Errorf(`Error while parsing pageSize param: %v`, err)
 			return
-		} else if parsedInt > maxPageSize {
+		} else if parsedUint > maxPageSize {
 			err = fmt.Errorf(`Maximum page size exceeded`)
 			return
 		}
 
-		pageSize = parsedInt
+		pageSize = parsedUint
 	}
 
 	sortKey = ``

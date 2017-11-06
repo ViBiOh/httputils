@@ -51,7 +51,7 @@ func (c *ConcurrentMap) Close() map[string]interface{} {
 }
 
 // CreateConcurrentMap in a subroutine
-func CreateConcurrentMap(contentSize int, channelSize int) *ConcurrentMap {
+func CreateConcurrentMap(contentSize uint, channelSize uint) *ConcurrentMap {
 	concurrentMap := ConcurrentMap{req: make(chan request, channelSize), content: make(map[string]interface{}, contentSize)}
 
 	go func() {

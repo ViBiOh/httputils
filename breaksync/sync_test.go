@@ -115,7 +115,7 @@ func Test_AlgorithmWithRupture(t *testing.T) {
 		intention string
 		sources   []*Source
 		ruptures  []*Rupture
-		want      int
+		want      uint
 	}{
 		{
 			`should work with basic rupture on read`,
@@ -131,7 +131,7 @@ func Test_AlgorithmWithRupture(t *testing.T) {
 	for _, testCase := range cases {
 		synchronization := NewSynchronization(testCase.sources, testCase.ruptures)
 
-		result := 0
+		result := uint(0)
 		synchronization.Run(func(s *Synchronization) {
 			allSynchronized := true
 			for _, source := range s.Sources {

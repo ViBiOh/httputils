@@ -172,9 +172,9 @@ func TestResponseArrayJSON(t *testing.T) {
 func Test_ResponsePaginatedJSON(t *testing.T) {
 	var cases = []struct {
 		intention  string
-		page       int64
-		pageSize   int64
-		total      int64
+		page       uint
+		pageSize   uint
+		total      uint
 		obj        interface{}
 		want       string
 		wantStatus int

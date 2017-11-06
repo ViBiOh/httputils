@@ -67,21 +67,21 @@ func Test_GetIP(t *testing.T) {
 
 func Test_checkRate(t *testing.T) {
 	var cases = []struct {
-		ipRate map[string]int
+		ipRate map[string]uint
 		want   bool
 	}{
 		{
-			map[string]int{},
+			map[string]uint{},
 			true,
 		},
 		{
-			map[string]int{
+			map[string]uint{
 				`localhost`: 100,
 			},
 			true,
 		},
 		{
-			map[string]int{
+			map[string]uint{
 				`localhost`: defaultLimit,
 			},
 			false,
@@ -110,26 +110,26 @@ func Benchmark_checkRate(b *testing.B) {
 }
 
 func Test_ServeHTTP(t *testing.T) {
-	limit := 20
+	limit := uint(20)
 
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)
 	request.Header.Add(forwardedForHeader, `localhost`)
 
 	calls := make([]time.Time, defaultLimit)
-	for i := 0; i < defaultLimit; i++ {
+	for i := uint(0); i < defaultLimit; i++ {
 		calls[i] = time.Now()
 	}
 
 	var cases = []struct {
 		request *http.Request
 		config  map[string]interface{}
-		ipRate  map[string]int
+		ipRate  map[string]uint
 		want    int
 	}{
 		{
 			request,
 			nil,
-			map[string]int{},
+			map[string]uint{},
 			http.StatusOK,
 		},
 		{
@@ -137,7 +137,7 @@ func Test_ServeHTTP(t *testing.T) {
 			map[string]interface{}{
 				`limit`: &limit,
 			},
-			map[string]int{
+			map[string]uint{
 				`localhost`: limit,
 			},
 			http.StatusTooManyRequests,
@@ -145,7 +145,7 @@ func Test_ServeHTTP(t *testing.T) {
 		{
 			httptest.NewRequest(http.MethodGet, `/rate_limits`, nil),
 			nil,
-			map[string]int{
+			map[string]uint{
 				`localhost`: defaultLimit - 1,
 			},
 			http.StatusOK,

@@ -14,21 +14,21 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// WhereInInt64 wrapper for assigning `IN ($n)` in WHERE clause
-type WhereInInt64 []int64
+// WhereInUint wrapper for assigning `IN ($n)` in WHERE clause
+type WhereInUint []uint
 
 // Value implements the driver.Valuer interface.
-func (a WhereInInt64) Value() (driver.Value, error) {
+func (a WhereInUint) Value() (driver.Value, error) {
 	ints := make([]string, len(a))
 	for i, v := range a {
-		ints[i] = strconv.FormatInt(v, 10)
+		ints[i] = strconv.FormatUint(uint64(v), 10)
 	}
 
 	return strings.Join(ints, ","), nil
 }
 
 // PrepareFullTextSearch replace $INDEX param in query and expand words
-func PrepareFullTextSearch(query, search string, index int) (string, string) {
+func PrepareFullTextSearch(query, search string, index uint) (string, string) {
 	if search == `` {
 		return ``, ``
 	}

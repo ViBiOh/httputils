@@ -13,10 +13,10 @@ type results struct {
 
 type pagination struct {
 	Results   interface{} `json:"results"`
-	Page      int64       `json:"page"`
-	PageSize  int64       `json:"pageSize"`
-	PageCount int64       `json:"pageCount"`
-	Total     int64       `json:"total"`
+	Page      uint        `json:"page"`
+	PageSize  uint        `json:"pageSize"`
+	PageCount uint        `json:"pageCount"`
+	Total     uint        `json:"total"`
 }
 
 // IsPretty determine if pretty is defined in query params
@@ -57,8 +57,8 @@ func ResponseArrayJSON(w http.ResponseWriter, status int, array interface{}, pre
 }
 
 // ResponsePaginatedJSON write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func ResponsePaginatedJSON(w http.ResponseWriter, status int, page int64, pageSize int64, total int64, array interface{}, pretty bool) {
-	pageCount := int64(total / pageSize)
+func ResponsePaginatedJSON(w http.ResponseWriter, status int, page uint, pageSize uint, total uint, array interface{}, pretty bool) {
+	pageCount := uint(total / pageSize)
 	if total%pageSize != 0 {
 		pageCount++
 	}

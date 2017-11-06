@@ -10,18 +10,18 @@ import (
 	"github.com/ViBiOh/httputils/tools"
 )
 
-const defaultLimit = 5000
+const defaultLimit = uint(5000)
 const forwardedForHeader = `X-Forwarded-For`
 const ipRateDelay = time.Second * 60
 
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
-		`limit`: flag.Int(tools.ToCamel(prefix+`Count`), defaultLimit, `[rate] IP limit`),
+		`limit`: flag.Uint(tools.ToCamel(prefix+`Count`), defaultLimit, `[rate] IP limit`),
 	}
 }
 
-var ipRate = make(map[string]int)
+var ipRate = make(map[string]uint)
 var ipRateMutex sync.RWMutex
 
 func init() {
@@ -32,7 +32,7 @@ func init() {
 			select {
 			case <-ticker.C:
 				ipRateMutex.Lock()
-				ipRate = make(map[string]int)
+				ipRate = make(map[string]uint)
 				ipRateMutex.Unlock()
 			}
 		}
@@ -49,7 +49,7 @@ func GetIP(r *http.Request) (ip string) {
 	return
 }
 
-func checkRate(r *http.Request, limit int) bool {
+func checkRate(r *http.Request, limit uint) bool {
 	ip := GetIP(r)
 
 	ipRateMutex.Lock()
@@ -69,7 +69,7 @@ func Handler(config map[string]interface{}, next http.Handler) http.Handler {
 	var ok bool
 
 	if given, ok = config[`limit`]; ok {
-		limit = *(given.(*int))
+		limit = *(given.(*uint))
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
