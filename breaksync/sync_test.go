@@ -68,15 +68,7 @@ type client struct {
 }
 
 func Test_AlgorithmWithRupture(t *testing.T) {
-	cardIndex := -1
 	cards := []string{`MASTERCARD`, `VISA`}
-	cardsReader := func() (interface{}, error) {
-		cardIndex++
-		if cardIndex < len(cards) {
-			return cards[cardIndex], nil
-		}
-		return nil, nil
-	}
 	cardKeyer := func(o interface{}) string {
 		return fmt.Sprintf(`%-10s`, o)
 	}
@@ -84,7 +76,6 @@ func Test_AlgorithmWithRupture(t *testing.T) {
 		return fmt.Sprintf(`%.10s`, i)
 	})
 
-	clientIndex := -1
 	clients := []client{
 		{`Bob`, `MASTERCARD`},
 		{`Chuck`, `MASTERCARD`},
@@ -98,17 +89,20 @@ func Test_AlgorithmWithRupture(t *testing.T) {
 		{`Einstein`, `VISA`},
 		{`Vincent`, `VISA`},
 	}
-	clientsReader := func() (interface{}, error) {
-		clientIndex++
-		if clientIndex < len(clients) {
-			return clients[clientIndex], nil
-		}
-		return nil, nil
-	}
 	clientKeyer := func(o interface{}) string {
 		c := o.(client)
 
 		return fmt.Sprintf(`%-10s%s`, c.card, c.name)
+	}
+
+	interfaceCards := make([]interface{}, len(cards))
+	for i, d := range cards {
+		interfaceCards[i] = d
+	}
+
+	interfaceClients := make([]interface{}, len(clients))
+	for i, d := range clients {
+		interfaceClients[i] = d
 	}
 
 	var cases = []struct {
@@ -120,8 +114,8 @@ func Test_AlgorithmWithRupture(t *testing.T) {
 		{
 			`should work with basic rupture on read`,
 			[]*Source{
-				NewSource(clientsReader, clientKeyer, nil),
-				NewSource(cardsReader, cardKeyer, cardRupture),
+				NewSliceSource(interfaceClients, clientKeyer, nil),
+				NewSliceSource(interfaceCards, cardKeyer, cardRupture),
 			},
 			[]*Rupture{cardRupture},
 			11,

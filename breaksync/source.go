@@ -23,6 +23,19 @@ func NewSource(reader func() (interface{}, error), keyer func(interface{}) strin
 	return &Source{synchronized: true, reader: reader, keyer: keyer, readRupture: readRupture}
 }
 
+// NewSliceSource creates source from given slice
+func NewSliceSource(slice []interface{}, keyer func(interface{}) string, readRupture *Rupture) *Source {
+	index := -1
+
+	return NewSource(func() (interface{}, error) {
+		index++
+		if index < len(slice) {
+			return slice[index], nil
+		}
+		return nil, nil
+	}, keyer, readRupture)
+}
+
 // SourceBasicKeyer basic keyer for string conversion
 func SourceBasicKeyer(e interface{}) string {
 	return fmt.Sprintf(`%v`, e)
