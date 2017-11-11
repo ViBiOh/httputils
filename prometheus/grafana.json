@@ -45,7 +45,7 @@
   "hideControls": false,
   "id": null,
   "links": [],
-  "refresh": "30s",
+  "refresh": "1m",
   "rows": [
     {
       "collapse": false,
@@ -114,7 +114,7 @@
               "legendFormat": "",
               "metric": "http_requests_total",
               "refId": "A",
-              "step": 600
+              "step": 1800
             }
           ],
           "thresholds": "",
@@ -187,14 +187,13 @@
           "tableColumn": "",
           "targets": [
             {
-              "expr":
-                "avg(rate(http_request_duration_seconds_sum{job=\"[[app]]\"}[5m]) / rate(http_request_duration_seconds_count{job=\"[[app]]\"}[5m]))",
+              "expr": "avg(rate(http_request_duration_seconds_sum{job=\"[[app]]\"}[5m]) / rate(http_request_duration_seconds_count{job=\"[[app]]\"}[5m]))",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
               "legendFormat": "",
               "refId": "A",
-              "step": 600
+              "step": 1800
             }
           ],
           "thresholds": "1,2",
@@ -267,13 +266,12 @@
           "tableColumn": "",
           "targets": [
             {
-              "expr":
-                "sum(rate(http_requests_total{code=~\"^[4|5]..$\",job=\"[[app]]\"}[5m]))",
+              "expr": "sum(rate(http_requests_total{code=~\"^[4|5]..$\",job=\"[[app]]\"}[5m]))",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "",
               "refId": "A",
-              "step": 600
+              "step": 1800
             }
           ],
           "thresholds": "5,30",
@@ -353,7 +351,7 @@
               "legendFormat": "",
               "metric": "http_goroutines",
               "refId": "A",
-              "step": 600
+              "step": 1800
             }
           ],
           "thresholds": "10,50",
@@ -424,7 +422,7 @@
               "legendFormat": "{{job}}",
               "metric": "http_requests_total",
               "refId": "A",
-              "step": 60
+              "step": 240
             }
           ],
           "thresholds": [],
@@ -443,7 +441,9 @@
             "mode": "time",
             "name": null,
             "show": true,
-            "values": ["total"]
+            "values": [
+              "total"
+            ]
           },
           "yaxes": [
             {
@@ -497,15 +497,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr":
-                "sum(rate(http_requests_total{code=~\"^[4|5]..$\"}[5m])) by (job)",
+              "expr": "sum(rate(http_requests_total{code=~\"^[4|5]..$\"}[5m])) by (job)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
               "legendFormat": "{{job}}",
               "metric": "http_requests_total",
               "refId": "A",
-              "step": 60
+              "step": 240
             }
           ],
           "thresholds": [],
@@ -589,15 +588,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr":
-                "avg(rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])) by (job)",
+              "expr": "avg(rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])) by (job)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
               "legendFormat": "{{job}}",
               "metric": "",
               "refId": "A",
-              "step": 60
+              "step": 240
             }
           ],
           "thresholds": [],
@@ -673,10 +671,10 @@
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
-              "legendFormat": "{{job}}",
+              "legendFormat": "{{instance}}",
               "metric": "http_goroutines",
               "refId": "A",
-              "step": 60
+              "step": 240
             }
           ],
           "thresholds": [],
@@ -753,7 +751,7 @@
     ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {
@@ -769,9 +767,19 @@
       "2h",
       "1d"
     ],
-    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
   },
   "timezone": "",
   "title": "net/http Monitoring",
-  "version": 6
+  "version": 8
 }
