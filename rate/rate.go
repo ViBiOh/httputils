@@ -78,7 +78,7 @@ func Handler(config map[string]interface{}, next http.Handler) http.Handler {
 			return
 		}
 
-		if r.Method == http.MethodGet && r.URL.Path == `/rate_limits` {
+		if r.Method == http.MethodGet && (r.URL.Path == `/rate_limits` || r.URL.Path == `/rate_limits/`) {
 			ipRateMutex.RLock()
 			defer ipRateMutex.RUnlock()
 

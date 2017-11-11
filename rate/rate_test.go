@@ -150,6 +150,14 @@ func Test_ServeHTTP(t *testing.T) {
 			},
 			http.StatusOK,
 		},
+		{
+			httptest.NewRequest(http.MethodGet, `/rate_limits/`, nil),
+			nil,
+			map[string]uint{
+				`localhost`: defaultLimit - 1,
+			},
+			http.StatusOK,
+		},
 	}
 
 	for _, testCase := range cases {
