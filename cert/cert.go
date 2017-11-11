@@ -15,13 +15,18 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/ViBiOh/httputils/tools"
 )
 
-var (
-	tlsCertFile = flag.String(`tlscert`, ``, `TLS PEM Certificate file`)
-	tlsKeyFile  = flag.String(`tlskey`, ``, `TLS PEM Key file`)
-	tlsHosts    = flag.String(`tlshosts`, `localhost`, `TLS Self-signed certificate hosts, comma separated`)
-)
+// Flags add flags for given prefix
+func Flags(prefix string) map[string]*string {
+	return map[string]*string{
+		`cert`:  flag.String(tools.ToCamel(prefix+`Cert`), ``, `[tls] PEM Certificate file`),
+		`key`:   flag.String(tools.ToCamel(prefix+`Key`), ``, `[tls] PEM Key file`),
+		`hosts`: flag.String(tools.ToCamel(prefix+`Hosts`), `localhost`, `[tls] Self-signed certificate hosts, comma separated`),
+	}
+}
 
 // tcpKeepAliveListener sets TCP keep-alive timeouts on accepted
 // connections. It's used by ListenAndServe and ListenAndServeTLS so
@@ -72,12 +77,12 @@ func strSliceContains(slice []string, search string) bool {
 
 // ListenAndServeTLS with provided certFile flag or self-signed generated certificate
 // Largely inspired by https://golang.org/src/net/http/server.go
-func ListenAndServeTLS(server *http.Server) error {
-	if *tlsCertFile != `` {
-		return server.ListenAndServeTLS(*tlsCertFile, *tlsKeyFile)
+func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
+	if *config[`cert`] != `` {
+		return server.ListenAndServeTLS(*config[`cert`], *config[`key`])
 	}
 
-	certPEMBlock, keyPEMBlock, err := GenerateCert(`ViBiOh`, strings.Split(*tlsHosts, `,`))
+	certPEMBlock, keyPEMBlock, err := GenerateCert(`ViBiOh`, strings.Split(*config[`hosts`], `,`))
 	if err != nil {
 		return fmt.Errorf(`Error while generating certificate: %v`, err)
 	}
@@ -87,18 +92,18 @@ func ListenAndServeTLS(server *http.Server) error {
 		addr = `:https`
 	}
 
-	config := &tls.Config{}
-	config.NextProtos = append(config.NextProtos, `h2`)
-	if !strSliceContains(config.NextProtos, `http/1.1`) {
-		config.NextProtos = append(config.NextProtos, `http/1.1`)
+	tlsConfig := &tls.Config{}
+	tlsConfig.NextProtos = append(tlsConfig.NextProtos, `h2`)
+	if !strSliceContains(tlsConfig.NextProtos, `http/1.1`) {
+		tlsConfig.NextProtos = append(tlsConfig.NextProtos, `http/1.1`)
 	}
 
-	config.Certificates = make([]tls.Certificate, 1)
+	tlsConfig.Certificates = make([]tls.Certificate, 1)
 	certificate, err := tls.X509KeyPair(certPEMBlock, keyPEMBlock)
 	if err != nil {
 		return fmt.Errorf(`Error while getting x509 KeyPair: %v`, err)
 	}
-	config.Certificates[0] = certificate
+	tlsConfig.Certificates[0] = certificate
 
 	listener, err := net.Listen(`tcp`, addr)
 	if err != nil {
@@ -107,7 +112,7 @@ func ListenAndServeTLS(server *http.Server) error {
 
 	tlsListener := tls.NewListener(
 		tcpKeepAliveListener{listener.(*net.TCPListener)},
-		config,
+		tlsConfig,
 	)
 	return server.Serve(tlsListener)
 }
@@ -125,7 +130,7 @@ func GenerateCert(organization string, hosts []string) ([]byte, []byte, error) {
 	}
 
 	startDate := time.Now()
-	endDate := startDate.Add(time.Hour * 24 * 265)
+	endDate := startDate.Add(time.Hour * 24 * 365)
 
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
