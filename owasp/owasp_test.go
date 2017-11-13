@@ -38,7 +38,7 @@ func Test_Flags(t *testing.T) {
 	}
 }
 
-func TestServeHTTP(t *testing.T) {
+func Test_ServeHTTP(t *testing.T) {
 	hsts := false
 	csp := `default-src 'self'; script-src 'self' 'unsafe-inline'`
 
@@ -105,6 +105,7 @@ func TestServeHTTP(t *testing.T) {
 				`hsts`: &hsts,
 			},
 			func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add(`Cache-Control`, `max-age=no-cache`)
 				w.WriteHeader(http.StatusOK)
 			},
 			map[string]string{
@@ -114,7 +115,7 @@ func TestServeHTTP(t *testing.T) {
 				`X-Content-Type-Options`:            `nosniff`,
 				`X-Xss-Protection`:                  `1; mode=block`,
 				`X-Permitted-Cross-Domain-Policies`: `none`,
-				`Cache-Control`:                     `max-age=864000`,
+				`Cache-Control`:                     `max-age=no-cache`,
 			},
 		},
 	}

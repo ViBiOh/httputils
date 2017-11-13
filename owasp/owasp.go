@@ -7,6 +7,7 @@ import (
 	"github.com/ViBiOh/httputils/tools"
 )
 
+const cacheControlHeader = `Cache-Control`
 const defaultCsp = `default-src 'self'`
 const defaultHsts = true
 
@@ -25,10 +26,12 @@ type middleware struct {
 
 func (m *middleware) WriteHeader(status int) {
 	if status == http.StatusOK || status == http.StatusMovedPermanently {
-		if m.index {
-			m.Header().Add(`Cache-Control`, `no-cache`)
-		} else {
-			m.Header().Add(`Cache-Control`, `max-age=864000`)
+		if m.Header().Get(cacheControlHeader) == `` {
+			if m.index {
+				m.Header().Add(cacheControlHeader, `no-cache`)
+			} else {
+				m.Header().Add(cacheControlHeader, `max-age=864000`)
+			}
 		}
 	}
 
