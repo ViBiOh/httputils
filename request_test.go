@@ -46,7 +46,7 @@ func TestDoAndRead(t *testing.T) {
 			bad,
 			false,
 			``,
-			fmt.Errorf(`Error status 400: `),
+			fmt.Errorf(`Error status 400`),
 		},
 		{
 			test,
