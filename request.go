@@ -32,19 +32,20 @@ func doAndRead(request *http.Request, skipTLSVerify bool) ([]byte, error) {
 	}
 
 	response, err := client.Do(request)
-	if response != nil {
-		defer response.Body.Close()
-	}
 	if err != nil {
+		if response != nil {
+			response.Body.Close()
+		}
 		return nil, fmt.Errorf(`Error while processing request: %v`, err)
 	}
 
 	responseBody, err := ReadBody(response.Body)
-	if response.StatusCode >= http.StatusBadRequest {
-		return nil, fmt.Errorf(`Error status %d: %s`, response.StatusCode, responseBody)
-	}
 	if err != nil {
 		return nil, fmt.Errorf(`Error while reading body: %v`, err)
+	}
+
+	if response.StatusCode >= http.StatusBadRequest {
+		return responseBody, fmt.Errorf(`Error status %d`, response.StatusCode)
 	}
 
 	return responseBody, nil
