@@ -16,7 +16,7 @@ type postStruct struct {
 	Amount float64
 }
 
-func TestDoAndRead(t *testing.T) {
+func Test_DoAndRead(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == `/bad` {
 			w.WriteHeader(http.StatusBadRequest)
@@ -31,32 +31,27 @@ func TestDoAndRead(t *testing.T) {
 	test, _ := http.NewRequest(http.MethodGet, testServer.URL, nil)
 
 	var cases = []struct {
-		request       *http.Request
-		skipTLSVerify bool
-		want          string
-		wantErr       error
+		request *http.Request
+		want    string
+		wantErr error
 	}{
 		{
 			emptyRequest,
-			false,
 			``,
 			fmt.Errorf(`Error while processing request: Get : unsupported protocol scheme ""`),
 		},
 		{
 			bad,
-			false,
 			``,
 			fmt.Errorf(`Error status 400`),
 		},
 		{
 			test,
-			false,
 			`Hello, test`,
 			nil,
 		},
 		{
 			test,
-			true,
 			`Hello, test`,
 			nil,
 		},
@@ -65,7 +60,7 @@ func TestDoAndRead(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := doAndRead(testCase.request, testCase.skipTLSVerify)
+		result, err := doAndRead(testCase.request)
 
 		failed = false
 
@@ -85,7 +80,7 @@ func TestDoAndRead(t *testing.T) {
 	}
 }
 
-func TestGetBasicAuth(t *testing.T) {
+func Test_GetBasicAuth(t *testing.T) {
 	var cases = []struct {
 		username string
 		password string
@@ -110,7 +105,7 @@ func TestGetBasicAuth(t *testing.T) {
 	}
 }
 
-func TestReadBody(t *testing.T) {
+func Test_ReadBody(t *testing.T) {
 	var cases = []struct {
 		body    io.ReadCloser
 		want    string
@@ -146,7 +141,7 @@ func TestReadBody(t *testing.T) {
 	}
 }
 
-func TestGetBody(t *testing.T) {
+func Test_GetBody(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `Hello, test`)
 	}))
@@ -175,7 +170,7 @@ func TestGetBody(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := GetBody(testCase.url, testCase.headers, false)
+		result, err := GetBody(testCase.url, testCase.headers)
 
 		failed = false
 
@@ -195,7 +190,7 @@ func TestGetBody(t *testing.T) {
 	}
 }
 
-func TestPostJSONBody(t *testing.T) {
+func Test_PostJSONBody(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `Hello, test`)
 	}))
@@ -241,7 +236,7 @@ func TestPostJSONBody(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := PostJSONBody(testCase.url, testCase.body, testCase.headers, false)
+		result, err := PostJSONBody(testCase.url, testCase.body, testCase.headers)
 
 		failed = false
 

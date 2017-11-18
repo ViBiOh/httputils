@@ -2,7 +2,6 @@ package httputils
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -12,26 +11,10 @@ import (
 	"time"
 )
 
-const clientTimeout = 30 * time.Second
+var httpClient = http.Client{Timeout: 30 * time.Second}
 
-var httpClient = http.Client{Timeout: clientTimeout}
-
-var httpClientSkipTLS = http.Client{
-	Timeout: clientTimeout,
-	Transport: &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	},
-}
-
-func doAndRead(request *http.Request, skipTLSVerify bool) ([]byte, error) {
-	client := httpClient
-	if skipTLSVerify {
-		client = httpClientSkipTLS
-	}
-
-	response, err := client.Do(request)
+func doAndRead(request *http.Request) ([]byte, error) {
+	response, err := httpClient.Do(request)
 	if err != nil {
 		if response != nil {
 			response.Body.Close()
@@ -63,7 +46,7 @@ func ReadBody(body io.ReadCloser) ([]byte, error) {
 }
 
 // GetBody return body of given URL or error if something goes wrong
-func GetBody(url string, headers map[string]string, skipTLSVerify bool) ([]byte, error) {
+func GetBody(url string, headers map[string]string) ([]byte, error) {
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf(`Error while creating request: %v`, err)
@@ -73,11 +56,11 @@ func GetBody(url string, headers map[string]string, skipTLSVerify bool) ([]byte,
 		request.Header.Add(key, value)
 	}
 
-	return doAndRead(request, skipTLSVerify)
+	return doAndRead(request)
 }
 
 // PostJSONBody post given interface to URL with optional credential supplied
-func PostJSONBody(url string, body interface{}, headers map[string]string, skipTLSVerify bool) ([]byte, error) {
+func PostJSONBody(url string, body interface{}, headers map[string]string) ([]byte, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf(`Error while marshalling body: %v`, err)
@@ -93,5 +76,5 @@ func PostJSONBody(url string, body interface{}, headers map[string]string, skipT
 	}
 	request.Header.Add(`Content-Type`, `application/json`)
 
-	return doAndRead(request, skipTLSVerify)
+	return doAndRead(request)
 }
