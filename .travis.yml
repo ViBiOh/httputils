@@ -2,5 +2,6 @@ language: go
 go: 1.9
 after_success: |
   bash <(curl -s https://codecov.io/bash)
+  curl -s -X POST https://goreportcard.com/checks?repo=github.com/ViBiOh/httputils
 notifications:
   email: false
