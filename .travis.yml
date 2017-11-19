@@ -1,8 +1,6 @@
 language: go
 go: 1.9
 after_success: |
-  if [ "${TRAVIS_BRANCH}" == "master" ]; then
-    bash <(curl -s https://codecov.io/bash)
-  fi
+  bash <(curl -s https://codecov.io/bash)
 notifications:
   email: false
