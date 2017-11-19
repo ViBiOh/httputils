@@ -1,12 +1,12 @@
-default: deps dev
+default: go
+
+go: deps dev
 
 dev: format lint tst bench build
 
 deps:
+	go get -t ./...
 	go get -u github.com/golang/lint/golint
-	go get -u github.com/lib/pq
-	go get -u github.com/prometheus/client_golang/prometheus
-	go get -u github.com/prometheus/client_golang/prometheus/promhttp
 	go get -u golang.org/x/tools/cmd/goimports
 
 format:
