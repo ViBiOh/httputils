@@ -59,14 +59,9 @@ func GetBody(url string, headers map[string]string) ([]byte, error) {
 	return doAndRead(request)
 }
 
-// PostJSONBody post given interface to URL with optional credential supplied
-func PostJSONBody(url string, body interface{}, headers map[string]string) ([]byte, error) {
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		return nil, fmt.Errorf(`Error while marshalling body: %v`, err)
-	}
-
-	request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBody))
+// PostBody post given content to URL with optional headers supplied
+func PostBody(url string, body []byte, headers map[string]string) ([]byte, error) {
+	request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf(`Error while creating request: %v`, err)
 	}
@@ -74,7 +69,21 @@ func PostJSONBody(url string, body interface{}, headers map[string]string) ([]by
 	for key, value := range headers {
 		request.Header.Add(key, value)
 	}
-	request.Header.Add(`Content-Type`, `application/json`)
 
 	return doAndRead(request)
+}
+
+// PostJSONBody post given interface{} to URL with optional headers supplied
+func PostJSONBody(url string, body interface{}, headers map[string]string) ([]byte, error) {
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf(`Error while marshalling body: %v`, err)
+	}
+
+	if headers == nil {
+		headers = make(map[string]string)
+	}
+	headers[`Content-Type`] = `application/json`
+
+	return PostBody(url, jsonBody, headers)
 }
