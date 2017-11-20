@@ -23,7 +23,8 @@ func doAction(wg *sync.WaitGroup, inputs <-chan interface{}, action func(interfa
 }
 
 // ConcurrentAction create a pool of goroutines for executing action with concurrency limits
-func ConcurrentAction(maxConcurrent uint, action func(interface{}) (interface{}, error)) (chan<- interface{}, <-chan interface{}, <-chan *Error) {
+func ConcurrentAction(maxConcurrent uint, action func(interface{}) (interface{}, error)) (<-chan struct{}, chan<- interface{}, <-chan interface{}, <-chan *Error) {
+	running := make(chan struct{})
 	inputs := make(chan interface{}, maxConcurrent)
 	results := make(chan interface{}, maxConcurrent)
 	errors := make(chan *Error, maxConcurrent)
@@ -37,9 +38,10 @@ func ConcurrentAction(maxConcurrent uint, action func(interface{}) (interface{},
 
 	go func() {
 		wg.Wait()
+		close(running)
 		close(results)
 		close(errors)
 	}()
 
-	return inputs, results, errors
+	return running, inputs, results, errors
 }
