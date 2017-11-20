@@ -2,6 +2,7 @@ package httputils
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -38,12 +39,12 @@ func Test_DoAndRead(t *testing.T) {
 		{
 			emptyRequest,
 			``,
-			fmt.Errorf(`Error while processing request: Get : unsupported protocol scheme ""`),
+			errors.New(`Error while processing request: Get : unsupported protocol scheme ""`),
 		},
 		{
 			bad,
 			``,
-			fmt.Errorf(`Error status 400`),
+			errors.New(`Error status 400`),
 		},
 		{
 			test,
@@ -157,7 +158,7 @@ func Test_GetBody(t *testing.T) {
 			`://fail`,
 			nil,
 			``,
-			fmt.Errorf(`Error while creating request: parse ://fail: missing protocol scheme`),
+			errors.New(`Error while creating request: parse ://fail: missing protocol scheme`),
 		},
 		{
 			testServer.URL,
@@ -208,21 +209,21 @@ func Test_PostJSONBody(t *testing.T) {
 			testFn,
 			nil,
 			``,
-			fmt.Errorf(`Error while marshalling body: json: unsupported type: func() string`),
+			errors.New(`Error while marshalling body: json: unsupported type: func() string`),
 		},
 		{
 			`://fail`,
 			nil,
 			nil,
 			``,
-			fmt.Errorf(`Error while creating request: parse ://fail: missing protocol scheme`),
+			errors.New(`Error while creating request: parse ://fail: missing protocol scheme`),
 		},
 		{
 			``,
 			nil,
 			nil,
 			``,
-			fmt.Errorf(`Error while processing request: Post : unsupported protocol scheme ""`),
+			errors.New(`Error while processing request: Post : unsupported protocol scheme ""`),
 		},
 		{
 			testServer.URL,

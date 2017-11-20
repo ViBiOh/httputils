@@ -1,7 +1,7 @@
 package httputils
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"testing"
 	"time"
@@ -43,7 +43,7 @@ func TestHttpGracefulClose(t *testing.T) {
 				}),
 			},
 			true,
-			fmt.Errorf(`Error while shutting down http server: context deadline exceeded`),
+			errors.New(`Error while shutting down http server: context deadline exceeded`),
 		},
 	}
 
@@ -136,7 +136,7 @@ func TestGracefulClose(t *testing.T) {
 			nil,
 			false,
 			func() error {
-				return fmt.Errorf(`Error while shutting down`)
+				return errors.New(`Error while shutting down`)
 			},
 			1,
 		},
