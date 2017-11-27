@@ -5,6 +5,7 @@ go: deps dev
 dev: format lint tst bench build
 
 deps:
+	go get -u github.com/golang/dep/cmd/dep
 	go get -u github.com/golang/lint/golint
 	go get -u golang.org/x/tools/cmd/goimports
 	dep ensure
