@@ -1,3 +1,4 @@
-# Go binary
-coverage.*
+# Golang
+bin/
 vendor/
+coverage.*
