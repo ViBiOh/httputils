@@ -5,16 +5,16 @@ go: deps dev
 dev: format lint tst bench build
 
 deps:
-	go get -t ./...
 	go get -u github.com/golang/lint/golint
 	go get -u golang.org/x/tools/cmd/goimports
+	dep ensure
 
 format:
 	goimports -w **/*.go *.go
 	gofmt -s -w **/*.go *.go
 
 lint:
-	golint ./...
+	golint `go list ./... | grep -v vendor`
 	go vet ./...
 
 tst:

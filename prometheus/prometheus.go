@@ -36,7 +36,7 @@ func getPrometheusHandlers(prefix string, next http.Handler) (http.HandlerFunc, 
 			Name: prefix + `_requests_total`,
 			Help: `Total number of HTTP requests made.`,
 		},
-		[]string{`method`, `code`},
+		[]string{`code`, `method`},
 	)
 
 	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
