@@ -17,16 +17,18 @@ func Test_Flags(t *testing.T) {
 			`default prefix`,
 			``,
 			map[string]interface{}{
-				`csp`:  nil,
-				`hsts`: nil,
+				`csp`:          nil,
+				`hsts`:         nil,
+				`frameOptions`: nil,
 			},
 		},
 		{
 			`given prefix`,
 			`test`,
 			map[string]interface{}{
-				`csp`:  nil,
-				`hsts`: nil,
+				`csp`:          nil,
+				`hsts`:         nil,
+				`frameOptions`: nil,
 			},
 		},
 	}
@@ -41,6 +43,7 @@ func Test_Flags(t *testing.T) {
 func Test_ServeHTTP(t *testing.T) {
 	hsts := false
 	csp := `default-src 'self'; script-src 'self' 'unsafe-inline'`
+	frameOptions := `allow-from https://vibioh.fr`
 
 	var cases = []struct {
 		path        string
@@ -101,8 +104,9 @@ func Test_ServeHTTP(t *testing.T) {
 		{
 			`/testCase.html`,
 			map[string]interface{}{
-				`csp`:  &csp,
-				`hsts`: &hsts,
+				`csp`:          &csp,
+				`hsts`:         &hsts,
+				`frameOptions`: &frameOptions,
 			},
 			func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Add(`Cache-Control`, `max-age=no-cache`)
@@ -111,7 +115,7 @@ func Test_ServeHTTP(t *testing.T) {
 			map[string]string{
 				`Content-Security-Policy`:           `default-src 'self'; script-src 'self' 'unsafe-inline'`,
 				`Referrer-Policy`:                   `strict-origin-when-cross-origin`,
-				`X-Frame-Options`:                   `deny`,
+				`X-Frame-Options`:                   `allow-from https://vibioh.fr`,
 				`X-Content-Type-Options`:            `nosniff`,
 				`X-Xss-Protection`:                  `1; mode=block`,
 				`X-Permitted-Cross-Domain-Policies`: `none`,

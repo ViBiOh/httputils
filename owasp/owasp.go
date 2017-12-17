@@ -10,12 +10,14 @@ import (
 const cacheControlHeader = `Cache-Control`
 const defaultCsp = `default-src 'self'`
 const defaultHsts = true
+const defaultFrameOptions = `deny`
 
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
-		`csp`:  flag.String(tools.ToCamel(prefix+`Csp`), defaultCsp, `[owasp] Content-Security-Policy`),
-		`hsts`: flag.Bool(tools.ToCamel(prefix+`Hsts`), defaultHsts, `[owasp] Indicate Strict Transport Security`),
+		`csp`:          flag.String(tools.ToCamel(prefix+`Csp`), defaultCsp, `[owasp] Content-Security-Policy`),
+		`hsts`:         flag.Bool(tools.ToCamel(prefix+`Hsts`), defaultHsts, `[owasp] Indicate Strict Transport Security`),
+		`frameOptions`: flag.String(tools.ToCamel(prefix+`FrameOptions`), defaultFrameOptions, `[owasp] X-Frame-Options`),
 	}
 }
 
@@ -41,8 +43,9 @@ func (m *middleware) WriteHeader(status int) {
 // Handler for net/http package allowing owasp header
 func Handler(config map[string]interface{}, next http.Handler) http.Handler {
 	var (
-		csp  = defaultCsp
-		hsts = defaultHsts
+		csp          = defaultCsp
+		hsts         = defaultHsts
+		frameOptions = defaultFrameOptions
 	)
 
 	var given interface{}
@@ -54,11 +57,14 @@ func Handler(config map[string]interface{}, next http.Handler) http.Handler {
 	if given, ok = config[`hsts`]; ok {
 		hsts = *(given.(*bool))
 	}
+	if given, ok = config[`frameOptions`]; ok {
+		frameOptions = *(given.(*string))
+	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(`Content-Security-Policy`, csp)
 		w.Header().Add(`Referrer-Policy`, `strict-origin-when-cross-origin`)
-		w.Header().Add(`X-Frame-Options`, `deny`)
+		w.Header().Add(`X-Frame-Options`, frameOptions)
 		w.Header().Add(`X-Content-Type-Options`, `nosniff`)
 		w.Header().Add(`X-Xss-Protection`, `1; mode=block`)
 		w.Header().Add(`X-Permitted-Cross-Domain-Policies`, `none`)
