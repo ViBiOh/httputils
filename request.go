@@ -59,9 +59,9 @@ func GetBody(url string, headers map[string]string) ([]byte, error) {
 	return doAndRead(request)
 }
 
-// PostBody post given content to URL with optional headers supplied
-func PostBody(url string, body []byte, headers map[string]string) ([]byte, error) {
-	request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
+// MethodBody send given method with given content to URL with optional headers supplied
+func MethodBody(url string, body []byte, headers map[string]string, method string) ([]byte, error) {
+	request, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf(`Error while creating request: %v`, err)
 	}
@@ -71,6 +71,11 @@ func PostBody(url string, body []byte, headers map[string]string) ([]byte, error
 	}
 
 	return doAndRead(request)
+}
+
+// PostBody post given content to URL with optional headers supplied
+func PostBody(url string, body []byte, headers map[string]string) ([]byte, error) {
+	return MethodBody(url, body, headers, http.MethodPost)
 }
 
 // PostJSONBody post given interface{} to URL with optional headers supplied
