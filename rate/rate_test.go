@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/ViBiOh/httputils"
 )
 
 func Test_Flags(t *testing.T) {
@@ -32,35 +34,6 @@ func Test_Flags(t *testing.T) {
 	for _, testCase := range cases {
 		if result := Flags(testCase.prefix); len(result) != len(testCase.want) {
 			t.Errorf("%v\nFlags(%v) = %v, want %v", testCase.intention, testCase.prefix, result, testCase.want)
-		}
-	}
-}
-
-func Test_GetIP(t *testing.T) {
-	request := httptest.NewRequest(http.MethodGet, `/`, nil)
-	request.RemoteAddr = `localhost`
-
-	requestWithProxy := httptest.NewRequest(http.MethodGet, `/`, nil)
-	requestWithProxy.RemoteAddr = `localhost`
-	requestWithProxy.Header.Add(forwardedForHeader, `proxy`)
-
-	var cases = []struct {
-		r    *http.Request
-		want string
-	}{
-		{
-			request,
-			`localhost`,
-		},
-		{
-			requestWithProxy,
-			`proxy`,
-		},
-	}
-
-	for _, testCase := range cases {
-		if result := GetIP(testCase.r); result != testCase.want {
-			t.Errorf(`GetIP(%v) = %v, want %v`, testCase.r, result, testCase.want)
 		}
 	}
 }
@@ -113,7 +86,7 @@ func Test_ServeHTTP(t *testing.T) {
 	limit := uint(20)
 
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)
-	request.Header.Add(forwardedForHeader, `localhost`)
+	request.Header.Add(httputils.ForwardedForHeader, `localhost`)
 
 	calls := make([]time.Time, defaultLimit)
 	for i := uint(0); i < defaultLimit; i++ {

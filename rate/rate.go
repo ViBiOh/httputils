@@ -11,7 +11,6 @@ import (
 )
 
 const defaultLimit = uint(5000)
-const forwardedForHeader = `X-Forwarded-For`
 const ipRateDelay = time.Second * 60
 
 // Flags add flags for given prefix
@@ -39,18 +38,8 @@ func init() {
 	}()
 }
 
-// GetIP give remote IP
-func GetIP(r *http.Request) (ip string) {
-	ip = r.Header.Get(forwardedForHeader)
-	if ip == `` {
-		ip = r.RemoteAddr
-	}
-
-	return
-}
-
 func checkRate(r *http.Request, limit uint) bool {
-	ip := GetIP(r)
+	ip := httputils.GetIP(r)
 
 	ipRateMutex.Lock()
 	defer ipRateMutex.Unlock()

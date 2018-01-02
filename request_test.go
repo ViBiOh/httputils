@@ -256,3 +256,32 @@ func Test_PostJSONBody(t *testing.T) {
 		}
 	}
 }
+
+func Test_GetIP(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, `/`, nil)
+	request.RemoteAddr = `localhost`
+
+	requestWithProxy := httptest.NewRequest(http.MethodGet, `/`, nil)
+	requestWithProxy.RemoteAddr = `localhost`
+	requestWithProxy.Header.Add(ForwardedForHeader, `proxy`)
+
+	var cases = []struct {
+		r    *http.Request
+		want string
+	}{
+		{
+			request,
+			`localhost`,
+		},
+		{
+			requestWithProxy,
+			`proxy`,
+		},
+	}
+
+	for _, testCase := range cases {
+		if result := GetIP(testCase.r); result != testCase.want {
+			t.Errorf(`GetIP(%v) = %v, want %v`, testCase.r, result, testCase.want)
+		}
+	}
+}

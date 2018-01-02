@@ -11,6 +11,9 @@ import (
 	"time"
 )
 
+// ForwardedForHeader that proxy uses to fill
+const ForwardedForHeader = `X-Forwarded-For`
+
 var httpClient = http.Client{Timeout: 30 * time.Second}
 
 func doAndRead(request *http.Request) ([]byte, error) {
@@ -91,4 +94,14 @@ func PostJSONBody(url string, body interface{}, headers map[string]string) ([]by
 	headers[`Content-Type`] = `application/json`
 
 	return PostBody(url, jsonBody, headers)
+}
+
+// GetIP give remote IP
+func GetIP(r *http.Request) (ip string) {
+	ip = r.Header.Get(ForwardedForHeader)
+	if ip == `` {
+		ip = r.RemoteAddr
+	}
+
+	return
 }
