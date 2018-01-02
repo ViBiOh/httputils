@@ -47,24 +47,6 @@ func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 	return tc, nil
 }
 
-func getLocalIps() ([]net.IP, error) {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return nil, fmt.Errorf(`Error while getting interface addrs: %v`, err)
-	}
-
-	ips := make([]net.IP, 0)
-
-	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				ips = append(ips, ipnet.IP)
-			}
-		}
-	}
-	return ips, nil
-}
-
 func strSliceContains(slice []string, search string) bool {
 	for _, value := range slice {
 		if value == search {
@@ -154,7 +136,7 @@ func GenerateCert(organization string, hosts []string) ([]byte, []byte, error) {
 		}
 	}
 
-	ips, err := getLocalIps()
+	ips, err := tools.GetLocalIPS()
 	if err != nil {
 		return nil, nil, fmt.Errorf(`Error while getting locals ips: %v`, err)
 	}

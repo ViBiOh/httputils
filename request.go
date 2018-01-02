@@ -96,6 +96,11 @@ func PostJSONBody(url string, body interface{}, headers map[string]string) ([]by
 	return PostBody(url, jsonBody, headers)
 }
 
+// SetIP set remote IP
+func SetIP(r *http.Request, ip string) {
+	r.Header.Add(ForwardedForHeader, ip)
+}
+
 // GetIP give remote IP
 func GetIP(r *http.Request) (ip string) {
 	ip = r.Header.Get(ForwardedForHeader)
