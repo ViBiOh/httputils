@@ -23,25 +23,27 @@ func init() {
 }
 
 // WriteHTMLTemplate write template name from given template into writer for provided content with HTML minification
-func WriteHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}) error {
+func WriteHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
 	templateBuffer := &bytes.Buffer{}
 	if err := tpl.Execute(templateBuffer, content); err != nil {
 		return err
 	}
 
+	w.WriteHeader(status)
 	w.Header().Add(`Content-Type`, `text/html; charset=UTF-8`)
 	minifier.Minify(`text/html`, w, templateBuffer)
 	return nil
 }
 
 // WriteXMLTemplate write template name from given template into writer for provided content with XML minification
-func WriteXMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}) error {
+func WriteXMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
 	templateBuffer := &bytes.Buffer{}
 	templateBuffer.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
 	if err := tpl.Execute(templateBuffer, content); err != nil {
 		return err
 	}
 
+	w.WriteHeader(status)
 	w.Header().Add(`Content-Type`, `text/xml; charset=UTF-8`)
 	minifier.Minify(`text/xml`, w, templateBuffer)
 	return nil
