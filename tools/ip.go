@@ -24,3 +24,21 @@ func GetLocalIPS() ([]net.IP, error) {
 
 	return ips, nil
 }
+
+// GetLocalIP return first found local IP
+func GetLocalIP() (net.IP, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, fmt.Errorf(`Error while getting interface addrs: %v`, err)
+	}
+
+	for _, address := range addrs {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP, nil
+			}
+		}
+	}
+
+	return nil, nil
+}
