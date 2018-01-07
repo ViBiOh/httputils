@@ -142,56 +142,7 @@ func Test_ReadBody(t *testing.T) {
 	}
 }
 
-func Test_GetBody(t *testing.T) {
-	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `Hello, test`)
-	}))
-	defer testServer.Close()
-
-	var cases = []struct {
-		url     string
-		headers map[string]string
-		want    string
-		wantErr error
-	}{
-		{
-			`://fail`,
-			nil,
-			``,
-			errors.New(`Error while creating request: parse ://fail: missing protocol scheme`),
-		},
-		{
-			testServer.URL,
-			map[string]string{`Authorization`: `admin:password`},
-			`Hello, test`,
-			nil,
-		},
-	}
-
-	var failed bool
-
-	for _, testCase := range cases {
-		result, err := GetBody(testCase.url, testCase.headers)
-
-		failed = false
-
-		if err == nil && testCase.wantErr != nil {
-			failed = true
-		} else if err != nil && testCase.wantErr == nil {
-			failed = true
-		} else if err != nil && err.Error() != testCase.wantErr.Error() {
-			failed = true
-		} else if string(result) != testCase.want {
-			failed = true
-		}
-
-		if failed {
-			t.Errorf(`GetBody(%v, '') = (%s, %v), want (%s, %v)`, testCase.url, result, err, testCase.want, testCase.wantErr)
-		}
-	}
-}
-
-func Test_PostJSONBody(t *testing.T) {
+func Test_RequestJSON(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `Hello, test`)
 	}))
@@ -237,7 +188,7 @@ func Test_PostJSONBody(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := PostJSONBody(testCase.url, testCase.body, testCase.headers)
+		result, err := RequestJSON(testCase.url, testCase.body, testCase.headers, http.MethodPost)
 
 		failed = false
 

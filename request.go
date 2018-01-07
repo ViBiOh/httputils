@@ -48,22 +48,8 @@ func ReadBody(body io.ReadCloser) ([]byte, error) {
 	return ioutil.ReadAll(body)
 }
 
-// GetBody return body of given URL or error if something goes wrong
-func GetBody(url string, headers map[string]string) ([]byte, error) {
-	request, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf(`Error while creating request: %v`, err)
-	}
-
-	for key, value := range headers {
-		request.Header.Add(key, value)
-	}
-
-	return doAndRead(request)
-}
-
-// MethodBody send given method with given content to URL with optional headers supplied
-func MethodBody(url string, body []byte, headers map[string]string, method string) ([]byte, error) {
+// Request send given method with given content to URL with optional headers supplied
+func Request(url string, body []byte, headers map[string]string, method string) ([]byte, error) {
 	request, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf(`Error while creating request: %v`, err)
@@ -76,13 +62,8 @@ func MethodBody(url string, body []byte, headers map[string]string, method strin
 	return doAndRead(request)
 }
 
-// PostBody post given content to URL with optional headers supplied
-func PostBody(url string, body []byte, headers map[string]string) ([]byte, error) {
-	return MethodBody(url, body, headers, http.MethodPost)
-}
-
-// PostJSONBody post given interface{} to URL with optional headers supplied
-func PostJSONBody(url string, body interface{}, headers map[string]string) ([]byte, error) {
+// RequestJSON send given method with given interface{} as JSON to URL with optional headers supplied
+func RequestJSON(url string, body interface{}, headers map[string]string, method string) ([]byte, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf(`Error while marshalling body: %v`, err)
@@ -93,7 +74,12 @@ func PostJSONBody(url string, body interface{}, headers map[string]string) ([]by
 	}
 	headers[`Content-Type`] = `application/json`
 
-	return PostBody(url, jsonBody, headers)
+	return Request(url, jsonBody, headers, method)
+}
+
+// GetRequest send GET request to URL with optional headers supplied
+func GetRequest(url string, headers map[string]string) ([]byte, error) {
+	return Request(url, nil, headers, http.MethodGet)
 }
 
 // SetIP set remote IP
