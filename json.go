@@ -31,7 +31,7 @@ func IsPretty(rawQuery string) (pretty bool) {
 }
 
 // ResponseJSON write marshalled obj to http.ResponseWriter with correct header
-func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty bool) {
+func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty bool) error {
 	var objJSON []byte
 	var err error
 
@@ -41,27 +41,31 @@ func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty boo
 		objJSON, err = json.Marshal(obj)
 	}
 
-	if err == nil {
-		w.Header().Add(`Content-Type`, `application/json`)
-		w.Header().Add(`Cache-Control`, `no-cache`)
-		w.WriteHeader(status)
-		w.Write(objJSON)
-	} else {
-		InternalServerError(w, fmt.Errorf(`Error while marshalling JSON response: %v`, err))
+	if err != nil {
+		return fmt.Errorf(`Error while marshalling JSON response: %v`, err)
 	}
+
+	w.Header().Add(`Content-Type`, `application/json`)
+	w.Header().Add(`Cache-Control`, `no-cache`)
+	w.WriteHeader(status)
+
+	if _, err := w.Write(objJSON); err != nil {
+		return fmt.Errorf(`Error while writing JSON: %v`, err)
+	}
+	return nil
 }
 
 // ResponseArrayJSON write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func ResponseArrayJSON(w http.ResponseWriter, status int, array interface{}, pretty bool) {
-	ResponseJSON(w, status, results{array}, pretty)
+func ResponseArrayJSON(w http.ResponseWriter, status int, array interface{}, pretty bool) error {
+	return ResponseJSON(w, status, results{array}, pretty)
 }
 
 // ResponsePaginatedJSON write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func ResponsePaginatedJSON(w http.ResponseWriter, status int, page uint, pageSize uint, total uint, array interface{}, pretty bool) {
+func ResponsePaginatedJSON(w http.ResponseWriter, status int, page uint, pageSize uint, total uint, array interface{}, pretty bool) error {
 	pageCount := uint(total / pageSize)
 	if total%pageSize != 0 {
 		pageCount++
 	}
 
-	ResponseJSON(w, status, pagination{Results: array, Page: page, PageSize: pageSize, PageCount: pageCount, Total: total}, pretty)
+	return ResponseJSON(w, status, pagination{Results: array, Page: page, PageSize: pageSize, PageCount: pageCount, Total: total}, pretty)
 }

@@ -69,16 +69,23 @@ func (s *Synchronization) computeSynchros() {
 }
 
 // Run start break/sync algorithm
-func (s *Synchronization) Run(business func(*Synchronization)) {
-	s.read()
+func (s *Synchronization) Run(business func(*Synchronization)) error {
+	if err := s.read(); err != nil {
+		return err
+	}
 	s.computeKeys()
 
 	for !s.end {
-		s.read()
+		if err := s.read(); err != nil {
+			return err
+		}
+
 		s.computeSynchro()
 		s.computeKeys()
 		s.computeRuptures()
 
 		business(s)
 	}
+
+	return nil
 }

@@ -7,6 +7,7 @@ dev: format lint tst bench build
 deps:
 	go get -u github.com/golang/dep/cmd/dep
 	go get -u github.com/golang/lint/golint
+	go get -u github.com/kisielk/errcheck
 	go get -u golang.org/x/tools/cmd/goimports
 	dep ensure
 
@@ -16,6 +17,7 @@ format:
 
 lint:
 	golint `go list ./... | grep -v vendor`
+	errcheck -ignoretests `go list ./... | grep -v vendor`
 	go vet ./...
 
 tst:

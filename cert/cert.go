@@ -42,9 +42,11 @@ func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 	if err != nil {
 		return
 	}
-	tc.SetKeepAlive(true)
-	tc.SetKeepAlivePeriod(3 * time.Minute)
-	return tc, nil
+
+	err = tc.SetKeepAlive(true)
+	err = tc.SetKeepAlivePeriod(3 * time.Minute)
+
+	return
 }
 
 func strSliceContains(slice []string, search string) bool {

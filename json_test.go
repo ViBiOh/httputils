@@ -1,6 +1,7 @@
 package httputils
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -52,58 +53,76 @@ func Test_IsPretty(t *testing.T) {
 	}
 }
 
-func TestResponseJSON(t *testing.T) {
+func Test_ResponseJSON(t *testing.T) {
 	var cases = []struct {
+		intention  string
 		obj        interface{}
 		pretty     bool
 		want       string
-		wantStatus int
 		wantHeader map[string]string
+		wantErr    error
 	}{
+
 		{
+			`should work with nil obj`,
 			nil,
 			false,
 			`null`,
-			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+			nil,
 		},
 		{
+			`should work with given obj`,
 			testStruct{id: `Test`},
 			false,
 			`{"Active":false,"Amount":0}`,
-			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+			nil,
 		},
 		{
+			`should work with pretty print`,
 			testStruct{id: `Test`, Active: true, Amount: 12.34},
 			true,
 			`{
   "Active": true,
   "Amount": 12.34
 }`,
-			http.StatusOK,
 			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+			nil,
 		},
 		{
+			`should work with error print`,
 			testFn,
 			false,
-			`Error while marshalling JSON response: json: unsupported type: func() string
-`,
-			500,
+			``,
 			nil,
+			errors.New(`Error while marshalling JSON response: json: unsupported type: func() string`),
 		},
 	}
 
+	var failed bool
+
 	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		ResponseJSON(writer, http.StatusOK, testCase.obj, testCase.pretty)
+		err := ResponseJSON(writer, http.StatusOK, testCase.obj, testCase.pretty)
 
-		if result := writer.Result().StatusCode; result != testCase.wantStatus {
-			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, result, testCase.wantStatus)
+		rawResult, _ := ReadBody(writer.Result().Body)
+		result := string(rawResult)
+
+		failed = false
+
+		if err == nil && testCase.wantErr != nil {
+			failed = true
+		} else if err != nil && testCase.wantErr == nil {
+			failed = true
+		} else if err != nil && err.Error() != testCase.wantErr.Error() {
+			failed = true
+		} else if result != testCase.want {
+			failed = true
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
-			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, string(result), testCase.want)
+		if failed {
+			t.Errorf("%s\nResponseJSON(%+v, %+v) = (%+v, %+v), want (%+v, %+v)", testCase.intention, testCase.obj, testCase.pretty, result, err, testCase.want, testCase.wantErr)
 		}
 
 		for key, value := range testCase.wantHeader {

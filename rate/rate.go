@@ -71,7 +71,9 @@ func Handler(config map[string]interface{}, next http.Handler) http.Handler {
 			ipRateMutex.RLock()
 			defer ipRateMutex.RUnlock()
 
-			httputils.ResponseJSON(w, http.StatusOK, ipRate, httputils.IsPretty(r.URL.RawQuery))
+			if err := httputils.ResponseJSON(w, http.StatusOK, ipRate, httputils.IsPretty(r.URL.RawQuery)); err != nil {
+				httputils.InternalServerError(w, err)
+			}
 			return
 		}
 

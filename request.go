@@ -20,7 +20,9 @@ func doAndRead(request *http.Request) ([]byte, error) {
 	response, err := httpClient.Do(request)
 	if err != nil {
 		if response != nil {
-			response.Body.Close()
+			if closeErr := response.Body.Close(); closeErr != nil {
+				err = fmt.Errorf(`, and also error while closing body: %v`, closeErr)
+			}
 		}
 		return nil, fmt.Errorf(`Error while processing request: %v`, err)
 	}
@@ -43,8 +45,10 @@ func GetBasicAuth(username string, password string) string {
 }
 
 // ReadBody return content of a body request (defined as a ReadCloser)
-func ReadBody(body io.ReadCloser) ([]byte, error) {
-	defer body.Close()
+func ReadBody(body io.ReadCloser) (_ []byte, err error) {
+	defer func() {
+		err = body.Close()
+	}()
 	return ioutil.ReadAll(body)
 }
 

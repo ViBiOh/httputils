@@ -33,8 +33,7 @@ func WriteHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content in
 	w.Header().Add(`Content-Type`, `text/html; charset=UTF-8`)
 	w.Header().Add(`Cache-Control`, `no-cache`)
 	w.Header().Add(`X-UA-Compatible`, `IE=edge,chrome=1`)
-	minifier.Minify(`text/html`, w, templateBuffer)
-	return nil
+	return minifier.Minify(`text/html`, w, templateBuffer)
 }
 
 // WriteXMLTemplate write template name from given template into writer for provided content with XML minification
@@ -48,6 +47,5 @@ func WriteXMLTemplate(tpl *template.Template, w http.ResponseWriter, content int
 	w.WriteHeader(status)
 	w.Header().Add(`Content-Type`, `text/xml; charset=UTF-8`)
 	w.Header().Add(`Cache-Control`, `no-cache`)
-	minifier.Minify(`text/xml`, w, templateBuffer)
-	return nil
+	return minifier.Minify(`text/xml`, w, templateBuffer)
 }
