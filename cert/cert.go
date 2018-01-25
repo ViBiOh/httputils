@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"flag"
 	"fmt"
+	"log"
 	"math/big"
 	"net"
 	"net/http"
@@ -37,16 +38,20 @@ type tcpKeepAliveListener struct {
 	*net.TCPListener
 }
 
-func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
+func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	tc, err := ln.AcceptTCP()
 	if err != nil {
-		return
+		return tc, err
 	}
 
-	err = tc.SetKeepAlive(true)
-	err = tc.SetKeepAlivePeriod(3 * time.Minute)
+	if err = tc.SetKeepAlive(true); err != nil {
+		log.Printf(`Error while setting keep alive: %v`, err)
+	}
+	if err := tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
+		log.Printf(`Error while setting keep alive period: %v`, err)
+	}
 
-	return
+	return tc, nil
 }
 
 func strSliceContains(slice []string, search string) bool {
