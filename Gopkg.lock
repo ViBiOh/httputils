@@ -8,10 +8,10 @@
   revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
 
 [[projects]]
-  branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "c65a0412e71e8b9b3bfd22925720d23c0f054237"
+  revision = "925541529c1fa6821df4e44ce2723319eb2be768"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -20,7 +20,7 @@
     ".",
     "oid"
   ]
-  revision = "19c8e9ad00952ce0c64489b60e8df88bb16dd514"
+  revision = "88edab0803230a3898347e77b474f8c1820a1f20"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
@@ -35,7 +35,7 @@
     "prometheus",
     "prometheus/promhttp"
   ]
-  revision = "06bc6e01f4baf4ee783ffcd23abfcb0b0f9dfada"
+  revision = "9bb6ab929dcbe1c8393cd9ef70387cb69811bd1c"
 
 [[projects]]
   branch = "master"
