@@ -86,7 +86,7 @@ func Test_ServeHTTP(t *testing.T) {
 	limit := uint(20)
 
 	request := httptest.NewRequest(http.MethodGet, `/test`, nil)
-	request.Header.Add(httputils.ForwardedForHeader, `localhost`)
+	request.Header.Set(httputils.ForwardedForHeader, `localhost`)
 
 	calls := make([]time.Time, defaultLimit)
 	for i := uint(0); i < defaultLimit; i++ {

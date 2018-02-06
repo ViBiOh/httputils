@@ -214,7 +214,7 @@ func Test_GetIP(t *testing.T) {
 
 	requestWithProxy := httptest.NewRequest(http.MethodGet, `/`, nil)
 	requestWithProxy.RemoteAddr = `localhost`
-	requestWithProxy.Header.Add(ForwardedForHeader, `proxy`)
+	requestWithProxy.Header.Set(ForwardedForHeader, `proxy`)
 
 	var cases = []struct {
 		r    *http.Request

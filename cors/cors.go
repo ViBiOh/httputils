@@ -55,11 +55,11 @@ func Handler(config map[string]interface{}, next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add(`Access-Control-Allow-Origin`, origin)
-		w.Header().Add(`Access-Control-Allow-Headers`, headers)
-		w.Header().Add(`Access-Control-Allow-Methods`, methods)
-		w.Header().Add(`Access-Control-Expose-Headers`, exposes)
-		w.Header().Add(`Access-Control-Allow-Credentials`, strconv.FormatBool(credentials))
+		w.Header().Set(`Access-Control-Allow-Origin`, origin)
+		w.Header().Set(`Access-Control-Allow-Headers`, headers)
+		w.Header().Set(`Access-Control-Allow-Methods`, methods)
+		w.Header().Set(`Access-Control-Expose-Headers`, exposes)
+		w.Header().Set(`Access-Control-Allow-Credentials`, strconv.FormatBool(credentials))
 
 		next.ServeHTTP(w, r)
 	})

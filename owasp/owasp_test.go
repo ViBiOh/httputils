@@ -109,7 +109,7 @@ func Test_ServeHTTP(t *testing.T) {
 				`frameOptions`: &frameOptions,
 			},
 			func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Add(`Cache-Control`, `max-age=no-cache`)
+				w.Header().Set(`Cache-Control`, `max-age=no-cache`)
 				w.WriteHeader(http.StatusOK)
 			},
 			map[string]string{

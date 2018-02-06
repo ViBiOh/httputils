@@ -60,7 +60,7 @@ func Request(url string, body []byte, headers map[string]string, method string) 
 	}
 
 	for key, value := range headers {
-		request.Header.Add(key, value)
+		request.Header.Set(key, value)
 	}
 
 	return doAndRead(request)
@@ -88,7 +88,7 @@ func GetRequest(url string, headers map[string]string) ([]byte, error) {
 
 // SetIP set remote IP
 func SetIP(r *http.Request, ip string) {
-	r.Header.Add(ForwardedForHeader, ip)
+	r.Header.Set(ForwardedForHeader, ip)
 }
 
 // GetIP give remote IP
