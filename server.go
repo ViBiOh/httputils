@@ -66,7 +66,7 @@ func ServerGracefulClose(server *http.Server, serveError <-chan error, callback 
 }
 
 // StartMainServer starts server with common behavior and from a func that provide root handler
-func StartMainServer(getHandler func() http.Handler) {
+func StartMainServer(getHandler func() http.Handler, onGracefulClose func() error) {
 	alcotestConfig := alcotest.Flags(``)
 	certConfig := cert.Flags(`tls`)
 
@@ -96,5 +96,5 @@ func StartMainServer(getHandler func() http.Handler) {
 		}
 	}()
 
-	ServerGracefulClose(server, serveError, nil)
+	ServerGracefulClose(server, serveError, onGracefulClose)
 }
