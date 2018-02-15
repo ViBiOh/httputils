@@ -3,66 +3,12 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/beorn7/perks"
-  packages = ["quantile"]
-  revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
-
-[[projects]]
-  name = "github.com/golang/protobuf"
-  packages = ["proto"]
-  revision = "925541529c1fa6821df4e44ce2723319eb2be768"
-  version = "v1.0.0"
-
-[[projects]]
-  branch = "master"
   name = "github.com/lib/pq"
   packages = [
     ".",
     "oid"
   ]
   revision = "88edab0803230a3898347e77b474f8c1820a1f20"
-
-[[projects]]
-  name = "github.com/matttproud/golang_protobuf_extensions"
-  packages = ["pbutil"]
-  revision = "3247c84500bff8d9fb6d579d800f20b3e091582c"
-  version = "v1.0.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/prometheus/client_golang"
-  packages = [
-    "prometheus",
-    "prometheus/promhttp"
-  ]
-  revision = "9bb6ab929dcbe1c8393cd9ef70387cb69811bd1c"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/prometheus/client_model"
-  packages = ["go"]
-  revision = "99fa1f4be8e564e8a6b613da7fa6f46c9edafc6c"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/prometheus/common"
-  packages = [
-    "expfmt",
-    "internal/bitbucket.org/ww/goautoneg",
-    "model"
-  ]
-  revision = "89604d197083d4781071d3c65855d24ecfb0a563"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/prometheus/procfs"
-  packages = [
-    ".",
-    "internal/util",
-    "nfs",
-    "xfs"
-  ]
-  revision = "cb4147076ac75738c9a7d279075a253c0cc5acbd"
 
 [[projects]]
   name = "github.com/tdewolff/minify"
@@ -93,6 +39,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0957f81f4d255803ab3e708fe043884f963280e6f78e7478b8261da1d6981f60"
+  inputs-digest = "d3c2883d29c0d8548b6afdc63eb75f4b9b5f4d2ca57cdab106cfcedbd9e0b492"
   solver-name = "gps-cdcl"
   solver-version = 1

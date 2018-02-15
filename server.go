@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ViBiOh/alcotest/alcotest"
+	"github.com/ViBiOh/httputils/alcotest"
 	"github.com/ViBiOh/httputils/cert"
 )
 
