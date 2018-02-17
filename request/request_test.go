@@ -11,6 +11,10 @@ import (
 	"testing"
 )
 
+func testFn() string {
+	return `toto`
+}
+
 type postStruct struct {
 	id     string
 	Active bool

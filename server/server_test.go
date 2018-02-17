@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"testing"
 	"time"
+
+	request "github.com/ViBiOh/httputils/request"
 )
 
 func TestHttpGracefulClose(t *testing.T) {
@@ -54,19 +56,19 @@ func TestHttpGracefulClose(t *testing.T) {
 			go testCase.server.ListenAndServe()
 			defer testCase.server.Close()
 
-			if _, err := GetRequest(testCase.url, nil); err != nil {
+			if _, err := request.GetRequest(testCase.url, nil); err != nil {
 				t.Errorf(`httpGracefulClose(%v), unable to fetch started server: %v`, testCase.server, err)
 			}
 		}
 
 		if testCase.wait {
-			go GetRequest(testCase.url+`/long`, nil)
+			go request.GetRequest(testCase.url+`/long`, nil)
 			time.Sleep(time.Second)
 		}
 		err := httpGracefulClose(testCase.server)
 
 		if testCase.server != nil {
-			if _, err := GetRequest(testCase.url, nil); err == nil {
+			if _, err := request.GetRequest(testCase.url, nil); err == nil {
 				t.Errorf(`httpGracefulClose(%v), still able to fetch data`, testCase.server)
 			}
 		}
@@ -149,7 +151,7 @@ func TestGracefulClose(t *testing.T) {
 		}
 
 		if testCase.wait {
-			go GetRequest(testCase.url+`/long`, nil)
+			go request.GetRequest(testCase.url+`/long`, nil)
 			time.Sleep(time.Second)
 		}
 

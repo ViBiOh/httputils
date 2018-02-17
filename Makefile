@@ -14,8 +14,8 @@ deps:
 	dep ensure
 
 format:
-	goimports -w **/*.go *.go
-	gofmt -s -w **/*.go *.go
+	goimports -w **/*.go
+	gofmt -s -w **/*.go
 
 lint:
 	golint `go list ./... | grep -v vendor`

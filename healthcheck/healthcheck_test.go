@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ViBiOh/httputils"
+	request "github.com/ViBiOh/httputils/request"
 )
 
 func Test_Handler(t *testing.T) {
@@ -37,7 +37,7 @@ func Test_Handler(t *testing.T) {
 			t.Errorf("%s\nHandler(%+v) = %+v, want status %+v", testCase.intention, testCase.request, result, testCase.wantStatus)
 		}
 
-		if result, _ := httputils.ReadBody(writer.Result().Body); string(result) != testCase.want {
+		if result, _ := request.ReadBody(writer.Result().Body); string(result) != testCase.want {
 			t.Errorf("%s\nHandler(%+v) = %+v, want %+v", testCase.intention, testCase.request, string(result), testCase.want)
 		}
 	}

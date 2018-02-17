@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	request "github.com/ViBiOh/httputils/request"
 )
 
 func Test_BadRequest(t *testing.T) {
@@ -31,7 +33,7 @@ func Test_BadRequest(t *testing.T) {
 			t.Errorf("%+v\nBadRequest(%+v) = %+v, want status %+v", testCase.intention, testCase.err, result, testCase.wantStatus)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+		if result, _ := request.ReadBody(writer.Result().Body); string(result) != testCase.want {
 			t.Errorf("%+v\nBadRequest(%+v) = %+v, want %+v", testCase.intention, testCase.err, string(result), testCase.want)
 		}
 	}
@@ -61,7 +63,7 @@ func Test_Unauthorized(t *testing.T) {
 			t.Errorf("%+v\nUnauthorized(%+v) = %+v, want status %+v", testCase.intention, testCase.err, result, testCase.wantStatus)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+		if result, _ := request.ReadBody(writer.Result().Body); string(result) != testCase.want {
 			t.Errorf("%+v\nUnauthorized(%+v) = %+v, want %+v", testCase.intention, testCase.err, string(result), testCase.want)
 		}
 	}
@@ -89,7 +91,7 @@ func Test_Forbidden(t *testing.T) {
 			t.Errorf("%+v\nForbidden() = %+v, want status %+v", testCase.intention, result, testCase.wantStatus)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+		if result, _ := request.ReadBody(writer.Result().Body); string(result) != testCase.want {
 			t.Errorf("%+v\nForbidden() = %+v, want %+v", testCase.intention, string(result), testCase.want)
 		}
 	}
@@ -117,7 +119,7 @@ func Test_NotFound(t *testing.T) {
 			t.Errorf("%+v\nNotFound() = %+v, want status %+v", testCase.intention, result, testCase.wantStatus)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+		if result, _ := request.ReadBody(writer.Result().Body); string(result) != testCase.want {
 			t.Errorf("%+v\nNotFound() = %+v, want %+v", testCase.intention, string(result), testCase.want)
 		}
 	}
@@ -147,7 +149,7 @@ func Test_InternalServerError(t *testing.T) {
 			t.Errorf("%+v\nInternalServerError(%+v) = %+v, want status %+v", testCase.intention, testCase.err, result, testCase.wantStatus)
 		}
 
-		if result, _ := ReadBody(writer.Result().Body); string(result) != testCase.want {
+		if result, _ := request.ReadBody(writer.Result().Body); string(result) != testCase.want {
 			t.Errorf("%+v\nInternalServerError(%+v) = %+v, want %+v", testCase.intention, testCase.err, string(result), testCase.want)
 		}
 	}
