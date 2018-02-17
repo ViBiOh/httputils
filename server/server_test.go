@@ -1,4 +1,4 @@
-package httputils
+package server
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	request "github.com/ViBiOh/httputils/request"
+	"github.com/ViBiOh/httputils/request"
 )
 
 func TestHttpGracefulClose(t *testing.T) {

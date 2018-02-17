@@ -1,8 +1,7 @@
-package httputils
+package server
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,9 +9,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/ViBiOh/httputils/alcotest"
-	"github.com/ViBiOh/httputils/cert"
 )
 
 func httpGracefulClose(server *http.Server) error {
@@ -50,8 +46,8 @@ func gracefulClose(server *http.Server, callback func() error) int {
 	return exitCode
 }
 
-// ServerGracefulClose gracefully close net/http server
-func ServerGracefulClose(server *http.Server, serveError <-chan error, callback func() error) {
+// GracefulClose gracefully close net/http server
+func GracefulClose(server *http.Server, serveError <-chan error, callback func() error) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM)
 
@@ -63,38 +59,4 @@ func ServerGracefulClose(server *http.Server, serveError <-chan error, callback 
 	}
 
 	os.Exit(gracefulClose(server, callback))
-}
-
-// StartMainServer starts server with common behavior and from a func that provide root handler
-func StartMainServer(getHandler func() http.Handler, onGracefulClose func() error) {
-	alcotestConfig := alcotest.Flags(``)
-	certConfig := cert.Flags(`tls`)
-
-	port := flag.String(`port`, `1080`, `Listen port`)
-	tls := flag.Bool(`tls`, false, `Serve TLS content`)
-
-	flag.Parse()
-
-	alcotest.DoAndExit(alcotestConfig)
-
-	log.Printf(`Starting HTTP server on port %s`, *port)
-
-	server := &http.Server{
-		Addr:    fmt.Sprintf(`:%s`, *port),
-		Handler: getHandler(),
-	}
-
-	var serveError = make(chan error)
-	go func() {
-		defer close(serveError)
-		if *tls {
-			log.Print(`👍 Listening with TLS`)
-			serveError <- cert.ListenAndServeTLS(certConfig, server)
-		} else {
-			log.Print(`⚠ Listening without TLS`)
-			serveError <- server.ListenAndServe()
-		}
-	}()
-
-	ServerGracefulClose(server, serveError, onGracefulClose)
 }

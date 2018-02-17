@@ -1,4 +1,4 @@
-package httputils
+package httperror
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	request "github.com/ViBiOh/httputils/request"
+	"github.com/ViBiOh/httputils/request"
 )
 
 func Test_BadRequest(t *testing.T) {

@@ -1,4 +1,4 @@
-package httputils
+package json
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	request "github.com/ViBiOh/httputils/request"
+	"github.com/ViBiOh/httputils/request"
 )
 
 type testStruct struct {
