@@ -1,10 +1,8 @@
-default: go docker
+default: go
 
 go: deps dev
 
 dev: format lint tst bench build
-
-docker: docker-deps docker-build
 
 deps:
 	go get -u github.com/golang/dep/cmd/dep
@@ -31,13 +29,3 @@ bench:
 build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo ./...
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo -o bin/alcotest cmd/alcotest/alcotest.go
-
-docker-deps:
-	curl -s -o cacert.pem https://curl.haxx.se/ca/cacert.pem
-
-docker-build:
-	docker build -t ${DOCKER_USER}/alcotest .
-
-docker-push:
-	docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-	docker push ${DOCKER_USER}/alcotest

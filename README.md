@@ -12,13 +12,17 @@ Make your server blow into balloon for checking its health.
 
 ```
 Usage of alcotest:
-  -c string
+  -url string
       [health] URL to check
 ```
 
-### Why argument with name `-c` for setting `url` ?
+in Dockerfile
 
-Main goal of this program is to be use for `HEALTHCHECK` in a Docker container, which run command from `/bin/sh -c`. So copying this binary as `/bin/sh` allow to only set url as `CMD` (cf. Dockerfile).
+```
+HEALTHCHECK --retries=10 CMD /alcotest -url http://localhost/health
+
+COPY alcotest /alcotest
+```
 
 ### Why `alcotest` ?
 
