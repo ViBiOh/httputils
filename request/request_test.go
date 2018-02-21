@@ -146,7 +146,7 @@ func Test_ReadBody(t *testing.T) {
 	}
 }
 
-func Test_RequestJSON(t *testing.T) {
+func Test_DoJSON(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `Hello, test`)
 	}))
@@ -192,7 +192,7 @@ func Test_RequestJSON(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := RequestJSON(testCase.url, testCase.body, testCase.headers, http.MethodPost)
+		result, err := DoJSON(testCase.url, testCase.body, testCase.headers, http.MethodPost)
 
 		failed = false
 

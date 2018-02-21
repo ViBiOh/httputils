@@ -52,8 +52,8 @@ func ReadBody(body io.ReadCloser) (_ []byte, err error) {
 	return ioutil.ReadAll(body)
 }
 
-// Request send given method with given content to URL with optional headers supplied
-func Request(url string, body []byte, headers map[string]string, method string) ([]byte, error) {
+// Do send given method with given content to URL with optional headers supplied
+func Do(url string, body []byte, headers map[string]string, method string) ([]byte, error) {
 	request, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf(`Error while creating request: %v`, err)
@@ -66,8 +66,8 @@ func Request(url string, body []byte, headers map[string]string, method string) 
 	return doAndRead(request)
 }
 
-// RequestJSON send given method with given interface{} as JSON to URL with optional headers supplied
-func RequestJSON(url string, body interface{}, headers map[string]string, method string) ([]byte, error) {
+// DoJSON send given method with given interface{} as JSON to URL with optional headers supplied
+func DoJSON(url string, body interface{}, headers map[string]string, method string) ([]byte, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf(`Error while marshalling body: %v`, err)
@@ -78,12 +78,12 @@ func RequestJSON(url string, body interface{}, headers map[string]string, method
 	}
 	headers[`Content-Type`] = `application/json`
 
-	return Request(url, jsonBody, headers, method)
+	return Do(url, jsonBody, headers, method)
 }
 
-// GetRequest send GET request to URL with optional headers supplied
-func GetRequest(url string, headers map[string]string) ([]byte, error) {
-	return Request(url, nil, headers, http.MethodGet)
+// Get send GET request to URL with optional headers supplied
+func Get(url string, headers map[string]string) ([]byte, error) {
+	return Do(url, nil, headers, http.MethodGet)
 }
 
 // SetIP set remote IP
