@@ -75,6 +75,7 @@ func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
 	if err != nil {
 		return fmt.Errorf(`Error while generating certificate: %v`, err)
 	}
+	log.Print(`Self-signed certificate generated`)
 
 	addr := server.Addr
 	if addr == `` {
