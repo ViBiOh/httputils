@@ -8,7 +8,7 @@ import (
 )
 
 const cacheControlHeader = `Cache-Control`
-const defaultCsp = `default-src 'self'`
+const defaultCsp = `default-src 'self'; base-uri 'self'`
 const defaultHsts = true
 const defaultFrameOptions = `deny`
 
