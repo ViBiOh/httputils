@@ -58,7 +58,7 @@ func Test_ServeHTTP(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			},
 			map[string]string{
-				`Content-Security-Policy`:           `default-src 'self'`,
+				`Content-Security-Policy`:           `default-src 'self'; base-uri 'self'`,
 				`Referrer-Policy`:                   `strict-origin-when-cross-origin`,
 				`X-Frame-Options`:                   `deny`,
 				`X-Content-Type-Options`:            `nosniff`,
@@ -75,7 +75,7 @@ func Test_ServeHTTP(t *testing.T) {
 				w.WriteHeader(http.StatusMovedPermanently)
 			},
 			map[string]string{
-				`Content-Security-Policy`:           `default-src 'self'`,
+				`Content-Security-Policy`:           `default-src 'self'; base-uri 'self'`,
 				`Referrer-Policy`:                   `strict-origin-when-cross-origin`,
 				`X-Frame-Options`:                   `deny`,
 				`X-Content-Type-Options`:            `nosniff`,
@@ -92,7 +92,7 @@ func Test_ServeHTTP(t *testing.T) {
 				w.WriteHeader(http.StatusBadRequest)
 			},
 			map[string]string{
-				`Content-Security-Policy`:           `default-src 'self'`,
+				`Content-Security-Policy`:           `default-src 'self'; base-uri 'self'`,
 				`Referrer-Policy`:                   `strict-origin-when-cross-origin`,
 				`X-Frame-Options`:                   `deny`,
 				`X-Content-Type-Options`:            `nosniff`,
