@@ -12,6 +12,11 @@ type ResponseWriter struct {
 	content *bytes.Buffer
 }
 
+// Create create ResponseWriter
+func Create() *ResponseWriter {
+	return &ResponseWriter{}
+}
+
 // Content return current contant buffer
 func (rw *ResponseWriter) Content() *bytes.Buffer {
 	return rw.content
