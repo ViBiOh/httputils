@@ -13,39 +13,52 @@ type ResponseWriter struct {
 }
 
 // Content return current contant buffer
-func (w *ResponseWriter) Content() *bytes.Buffer {
-	return w.content
+func (rw *ResponseWriter) Content() *bytes.Buffer {
+	return rw.content
 }
 
 // Status return current writer status
-func (w *ResponseWriter) Status() int {
-	return w.status
+func (rw *ResponseWriter) Status() int {
+	return rw.status
 }
 
 // SetStatus set current writer status
-func (w *ResponseWriter) SetStatus(status int) {
-	w.status = status
+func (rw *ResponseWriter) SetStatus(status int) {
+	rw.status = status
 }
 
 // Header cf. https://golang.org/pkg/net/http/#ResponseWriter
-func (w *ResponseWriter) Header() http.Header {
-	if w.header == nil {
-		w.header = http.Header{}
+func (rw *ResponseWriter) Header() http.Header {
+	if rw.header == nil {
+		rw.header = http.Header{}
 	}
 
-	return w.header
+	return rw.header
 }
 
 // Write cf. https://golang.org/pkg/net/http/#ResponseWriter
-func (w *ResponseWriter) Write(content []byte) (int, error) {
-	if w.content == nil {
-		w.content = bytes.NewBuffer(make([]byte, 0, 1024))
+func (rw *ResponseWriter) Write(content []byte) (int, error) {
+	if rw.content == nil {
+		rw.content = bytes.NewBuffer(make([]byte, 0, 1024))
 	}
 
-	return w.content.Write(content)
+	return rw.content.Write(content)
 }
 
 // WriteHeader cf. https://golang.org/pkg/net/http/#ResponseWriter
-func (w *ResponseWriter) WriteHeader(status int) {
-	w.status = status
+func (rw *ResponseWriter) WriteHeader(status int) {
+	rw.status = status
+}
+
+// WriteResponse write memory content to real http ResponseWriter
+func (rw *ResponseWriter) WriteResponse(w http.ResponseWriter) (int, error) {
+	w.WriteHeader(rw.status)
+
+	for key, values := range rw.header {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+
+	return w.Write(rw.content.Bytes())
 }
