@@ -2,6 +2,7 @@ package cors
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -17,11 +18,11 @@ const defaultCredentials = false
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
-		`origin`:      flag.String(tools.ToCamel(prefix+`Origin`), defaultOrigin, `[cors] Access-Control-Allow-Origin`),
-		`headers`:     flag.String(tools.ToCamel(prefix+`Headers`), defaultHeaders, `[cors] Access-Control-Allow-Headers`),
-		`methods`:     flag.String(tools.ToCamel(prefix+`Methods`), defaultMethods, `[cors] Access-Control-Allow-Methods`),
-		`exposes`:     flag.String(tools.ToCamel(prefix+`Expose`), defaultExposes, `[cors] Access-Control-Expose-Headers`),
-		`credentials`: flag.Bool(tools.ToCamel(prefix+`Credentials`), defaultCredentials, `[cors] Access-Control-Allow-Credentials`),
+		`origin`:      flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Origin`)), defaultOrigin, `[cors] Access-Control-Allow-Origin`),
+		`headers`:     flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Headers`)), defaultHeaders, `[cors] Access-Control-Allow-Headers`),
+		`methods`:     flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Methods`)), defaultMethods, `[cors] Access-Control-Allow-Methods`),
+		`exposes`:     flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Expose`)), defaultExposes, `[cors] Access-Control-Expose-Headers`),
+		`credentials`: flag.Bool(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Credentials`)), defaultCredentials, `[cors] Access-Control-Allow-Credentials`),
 	}
 }
 

@@ -2,6 +2,7 @@ package owasp
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 
 	"github.com/ViBiOh/httputils/tools"
@@ -15,9 +16,9 @@ const defaultFrameOptions = `deny`
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
-		`csp`:          flag.String(tools.ToCamel(prefix+`Csp`), defaultCsp, `[owasp] Content-Security-Policy`),
-		`hsts`:         flag.Bool(tools.ToCamel(prefix+`Hsts`), defaultHsts, `[owasp] Indicate Strict Transport Security`),
-		`frameOptions`: flag.String(tools.ToCamel(prefix+`FrameOptions`), defaultFrameOptions, `[owasp] X-Frame-Options`),
+		`csp`:          flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Csp`)), defaultCsp, `[owasp] Content-Security-Policy`),
+		`hsts`:         flag.Bool(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Hsts`)), defaultHsts, `[owasp] Indicate Strict Transport Security`),
+		`frameOptions`: flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `FrameOptions`)), defaultFrameOptions, `[owasp] X-Frame-Options`),
 	}
 }
 

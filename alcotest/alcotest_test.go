@@ -2,6 +2,7 @@ package alcotest
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -65,7 +66,7 @@ func Test_Do(t *testing.T) {
 	for _, testCase := range cases {
 		failed = false
 
-		result := Do(testServer.URL + testCase.url)
+		result := Do(fmt.Sprintf(`%s%s`, testServer.URL, testCase.url))
 
 		if result == nil && testCase.want != nil {
 			failed = true

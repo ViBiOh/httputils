@@ -44,7 +44,7 @@ func GetStatusCode(url string) (int, error) {
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]*string {
 	return map[string]*string{
-		`url`: flag.String(tools.ToCamel(prefix+`Url`), ``, `[health] URL to check`),
+		`url`: flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Url`)), ``, `[health] URL to check`),
 	}
 }
 

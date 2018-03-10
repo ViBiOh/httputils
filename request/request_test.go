@@ -32,7 +32,7 @@ func Test_DoAndRead(t *testing.T) {
 	defer testServer.Close()
 
 	emptyRequest, _ := http.NewRequest(http.MethodGet, ``, nil)
-	bad, _ := http.NewRequest(http.MethodGet, testServer.URL+`/bad`, nil)
+	bad, _ := http.NewRequest(http.MethodGet, fmt.Sprintf(`%s/bad`, testServer.URL), nil)
 	test, _ := http.NewRequest(http.MethodGet, testServer.URL, nil)
 
 	var cases = []struct {

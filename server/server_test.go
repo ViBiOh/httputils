@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -62,7 +63,7 @@ func TestHttpGracefulClose(t *testing.T) {
 		}
 
 		if testCase.wait {
-			go request.Get(testCase.url+`/long`, nil)
+			go request.Get(fmt.Sprintf(`%s/long`, testCase.url), nil)
 			time.Sleep(time.Second)
 		}
 		err := httpGracefulClose(testCase.server)
@@ -151,7 +152,7 @@ func TestGracefulClose(t *testing.T) {
 		}
 
 		if testCase.wait {
-			go request.Get(testCase.url+`/long`, nil)
+			go request.Get(fmt.Sprintf(`%s/long`, testCase.url), nil)
 			time.Sleep(time.Second)
 		}
 

@@ -1,6 +1,7 @@
 package owasp
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -126,7 +127,7 @@ func Test_ServeHTTP(t *testing.T) {
 
 	for _, testCase := range cases {
 		request := httptest.NewRecorder()
-		Handler(testCase.config, http.HandlerFunc(testCase.handlerFunc)).ServeHTTP(request, httptest.NewRequest(http.MethodGet, `http://localhost`+testCase.path, nil))
+		Handler(testCase.config, http.HandlerFunc(testCase.handlerFunc)).ServeHTTP(request, httptest.NewRequest(http.MethodGet, fmt.Sprintf(`http://localhost%s`, testCase.path), nil))
 
 		for key, value := range testCase.want {
 			if result, ok := request.Result().Header[key]; !ok || (ok && strings.Join(result, ``) != value) {
