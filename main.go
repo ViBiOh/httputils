@@ -9,38 +9,65 @@ import (
 	"github.com/ViBiOh/httputils/alcotest"
 	"github.com/ViBiOh/httputils/cert"
 	"github.com/ViBiOh/httputils/server"
+	"github.com/ViBiOh/httputils/tools"
 )
 
-// StartMainServer starts server with common behavior and from a func that provide root handler
-func StartMainServer(getHandler func() http.Handler, onGracefulClose func() error) {
-	alcotestConfig := alcotest.Flags(``)
-	certConfig := cert.Flags(`tls`)
+// App stores informations
+type App struct {
+	handlerFn       func() http.Handler
+	gracefulCloseFn func() error
+	port            *int
+	tls             *bool
+	alcotestConfig  map[string]*string
+	certConfig      map[string]*string
+}
 
-	port := flag.String(`port`, `1080`, `Listen port`)
-	tls := flag.Bool(`tls`, false, `Serve TLS content`)
+// NewApp creates new App from Flags' config
+func NewApp(config map[string]interface{}, getHandler func() http.Handler, onGracefulClose func() error) *App {
+	return &App{
+		handlerFn:       getHandler,
+		gracefulCloseFn: onGracefulClose,
+		port:            config[`port`].(*int),
+		tls:             config[`tls`].(*bool),
+		alcotestConfig:  config[`alcotestConfig`].(map[string]*string),
+		certConfig:      config[`certConfig`].(map[string]*string),
+	}
+}
 
+// Flags adds flags for given prefix
+func Flags(prefix string) map[string]interface{} {
+	return map[string]interface{}{
+		`port`:           flag.Int(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), 1080, `Listen port`),
+		`tls`:            flag.Bool(tools.ToCamel(fmt.Sprintf(`%sTls`, prefix)), true, `Serve TLS content`),
+		`certConfig`:     cert.Flags(`tls`),
+		`alcotestConfig`: alcotest.Flags(``),
+	}
+}
+
+// ListenAndServe starts server
+func (a *App) ListenAndServe() {
 	flag.Parse()
 
-	alcotest.DoAndExit(alcotestConfig)
-
-	log.Printf(`Starting HTTP server on port %s`, *port)
+	alcotest.DoAndExit(a.alcotestConfig)
 
 	httpServer := &http.Server{
-		Addr:    fmt.Sprintf(`:%s`, *port),
-		Handler: getHandler(),
+		Addr:    fmt.Sprintf(`:%d`, *a.port),
+		Handler: a.handlerFn(),
 	}
+
+	log.Printf(`Starting HTTP server on port %s`, httpServer.Addr)
 
 	var serveError = make(chan error)
 	go func() {
 		defer close(serveError)
-		if *tls {
+		if *a.tls {
 			log.Print(`👍 Listening with TLS`)
-			serveError <- cert.ListenAndServeTLS(certConfig, httpServer)
+			serveError <- cert.ListenAndServeTLS(a.certConfig, httpServer)
 		} else {
 			log.Print(`⚠ Listening without TLS`)
 			serveError <- httpServer.ListenAndServe()
 		}
 	}()
 
-	server.GracefulClose(httpServer, serveError, onGracefulClose)
+	server.GracefulClose(httpServer, serveError, a.gracefulCloseFn)
 }
