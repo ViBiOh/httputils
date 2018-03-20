@@ -212,6 +212,26 @@ func Test_DoJSON(t *testing.T) {
 	}
 }
 
+func Test_SetIP(t *testing.T) {
+	var cases = []struct {
+		intention string
+		request   *http.Request
+		ip        string
+	}{
+		{
+			`should set header with given string`,
+			httptest.NewRequest(http.MethodGet, `/`, nil),
+			`test`,
+		},
+	}
+
+	for _, testCase := range cases {
+		if SetIP(testCase.request, testCase.ip); testCase.request.Header.Get(ForwardedForHeader) != testCase.ip {
+			t.Errorf("%s\nSetIP(%+v, %+v) = %+v, want %+v", testCase.intention, testCase.request, testCase.ip, testCase.request.Header.Get(ForwardedForHeader), testCase.ip)
+		}
+	}
+}
+
 func Test_GetIP(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, `/`, nil)
 	request.RemoteAddr = `localhost`
