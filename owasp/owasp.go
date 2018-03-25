@@ -41,6 +41,19 @@ func (m *middleware) WriteHeader(status int) {
 	m.ResponseWriter.WriteHeader(status)
 }
 
+func (m *middleware) Push(target string, opts *http.PushOptions) error {
+	if pusher, ok := m.ResponseWriter.(http.Pusher); ok {
+		return pusher.Push(target, opts)
+	}
+	return http.ErrNotSupported
+}
+
+func (m *middleware) Flush() {
+	if f, ok := m.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
 // Handler for net/http package allowing owasp header
 func Handler(config map[string]interface{}, next http.Handler) http.Handler {
 	var (
