@@ -33,17 +33,17 @@ func Test_IsPretty(t *testing.T) {
 		},
 		{
 			`should work with pretty param`,
-			`&&`,
-			false,
-		},
-		{
-			`should work with pretty param`,
 			`pretty`,
 			true,
 		},
 		{
-			`should work with pretty param`,
-			`test=1&pretty`,
+			`should work with pretty value`,
+			`test=1&pretty=false`,
+			false,
+		},
+		{
+			`should work with pretty value`,
+			`test=1&pretty=invalidBool`,
 			true,
 		},
 	}

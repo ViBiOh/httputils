@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 type results struct {
@@ -20,14 +21,17 @@ type pagination struct {
 }
 
 // IsPretty determine if pretty is defined in query params
-func IsPretty(rawQuery string) (pretty bool) {
+func IsPretty(rawQuery string) bool {
 	if params, err := url.ParseQuery(rawQuery); err == nil {
 		if _, ok := params[`pretty`]; ok {
-			pretty = true
+			if pretty, err := strconv.ParseBool(params[`pretty`][0]); err == nil {
+				return pretty
+			}
+			return true
 		}
 	}
 
-	return
+	return false
 }
 
 // ResponseJSON write marshalled obj to http.ResponseWriter with correct header
