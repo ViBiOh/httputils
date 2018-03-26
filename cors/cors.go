@@ -9,11 +9,13 @@ import (
 	"github.com/ViBiOh/httputils/tools"
 )
 
-const defaultOrigin = `*`
-const defaultHeaders = `Content-Type`
-const defaultMethods = http.MethodGet
-const defaultExposes = ``
-const defaultCredentials = false
+const (
+	defaultOrigin      = `*`
+	defaultHeaders     = `Content-Type`
+	defaultMethods     = http.MethodGet
+	defaultExposes     = ``
+	defaultCredentials = false
+)
 
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
