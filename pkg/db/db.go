@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ViBiOh/httputils/tools"
+	"github.com/ViBiOh/httputils/pkg/tools"
 
 	// Not referenced but needed for database/sql
 	_ "github.com/lib/pq"

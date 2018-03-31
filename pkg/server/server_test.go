@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ViBiOh/httputils/request"
+	"github.com/ViBiOh/httputils/pkg/request"
 )
 
 func TestHttpGracefulClose(t *testing.T) {

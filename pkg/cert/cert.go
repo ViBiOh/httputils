@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ViBiOh/httputils/tools"
+	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
 // Flags add flags for given prefix

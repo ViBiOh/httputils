@@ -6,10 +6,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ViBiOh/httputils/alcotest"
-	"github.com/ViBiOh/httputils/cert"
-	"github.com/ViBiOh/httputils/server"
-	"github.com/ViBiOh/httputils/tools"
+	"github.com/ViBiOh/httputils/pkg/alcotest"
+	"github.com/ViBiOh/httputils/pkg/cert"
+	"github.com/ViBiOh/httputils/pkg/server"
+	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
 // App stores informations

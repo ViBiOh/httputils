@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ViBiOh/httputils/tools"
+	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
 var httpClient = http.Client{

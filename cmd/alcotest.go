@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	"github.com/ViBiOh/httputils/alcotest"
+	"github.com/ViBiOh/httputils/pkg/alcotest"
 )
 
 func main() {
