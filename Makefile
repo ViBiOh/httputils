@@ -1,6 +1,6 @@
 default: lib
 
-lib: deps dev
+lib: deps go
 
 go: format lint tst bench build
 
