@@ -49,7 +49,7 @@ func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty boo
 		return fmt.Errorf(`Error while marshalling JSON response: %v`, err)
 	}
 
-	w.Header().Set(`Content-Type`, `application/json`)
+	w.Header().Set(`Content-Type`, `application/json; charset=utf-8`)
 	w.Header().Set(`Cache-Control`, `no-cache`)
 	w.WriteHeader(status)
 

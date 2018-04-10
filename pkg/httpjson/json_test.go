@@ -70,7 +70,7 @@ func Test_ResponseJSON(t *testing.T) {
 			nil,
 			false,
 			`null`,
-			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
 			nil,
 		},
 		{
@@ -78,7 +78,7 @@ func Test_ResponseJSON(t *testing.T) {
 			testStruct{id: `Test`},
 			false,
 			`{"Active":false,"Amount":0}`,
-			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
 			nil,
 		},
 		{
@@ -89,7 +89,7 @@ func Test_ResponseJSON(t *testing.T) {
   "Active": true,
   "Amount": 12.34
 }`,
-			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
 			nil,
 		},
 		{
@@ -160,13 +160,13 @@ func TestResponseArrayJSON(t *testing.T) {
 			nil,
 			`{"results":null}`,
 			http.StatusOK,
-			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
 		},
 		{
 			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
 			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}]}`,
 			http.StatusOK,
-			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
 		},
 	}
 
@@ -209,7 +209,7 @@ func Test_ResponsePaginatedJSON(t *testing.T) {
 			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
 			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":2,"pageCount":1,"total":2}`,
 			http.StatusOK,
-			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
 		},
 		{
 			`should calcul page count when pageSize match total`,
@@ -219,7 +219,7 @@ func Test_ResponsePaginatedJSON(t *testing.T) {
 			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
 			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":10,"pageCount":4,"total":40}`,
 			http.StatusOK,
-			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
 		},
 		{
 			`should calcul page count when pageSize don't match total`,
@@ -229,7 +229,7 @@ func Test_ResponsePaginatedJSON(t *testing.T) {
 			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
 			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":10,"pageCount":5,"total":45}`,
 			http.StatusOK,
-			map[string]string{`Content-Type`: `application/json`, `Cache-Control`: `no-cache`},
+			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
 		},
 	}
 
