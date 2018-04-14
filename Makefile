@@ -29,3 +29,5 @@ bench:
 build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo ./...
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo -o bin/alcotest cmd/alcotest.go
+
+.PHONY: lib go deps format lint tst bench build
