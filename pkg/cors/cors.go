@@ -9,53 +9,24 @@ import (
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
-const (
-	defaultOrigin      = `*`
-	defaultHeaders     = `Content-Type`
-	defaultMethods     = http.MethodGet
-	defaultExposes     = ``
-	defaultCredentials = false
-)
-
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
-		`origin`:      flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Origin`)), defaultOrigin, `[cors] Access-Control-Allow-Origin`),
-		`headers`:     flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Headers`)), defaultHeaders, `[cors] Access-Control-Allow-Headers`),
-		`methods`:     flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Methods`)), defaultMethods, `[cors] Access-Control-Allow-Methods`),
-		`exposes`:     flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Expose`)), defaultExposes, `[cors] Access-Control-Expose-Headers`),
-		`credentials`: flag.Bool(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Credentials`)), defaultCredentials, `[cors] Access-Control-Allow-Credentials`),
+		`origin`:      flag.String(tools.ToCamel(fmt.Sprintf(`%sOrigin`, prefix)), `*`, `[cors] Access-Control-Allow-Origin`),
+		`headers`:     flag.String(tools.ToCamel(fmt.Sprintf(`%sHeaders`, prefix)), `Content-Type`, `[cors] Access-Control-Allow-Headers`),
+		`methods`:     flag.String(tools.ToCamel(fmt.Sprintf(`%sMethods`, prefix)), http.MethodGet, `[cors] Access-Control-Allow-Methods`),
+		`exposes`:     flag.String(tools.ToCamel(fmt.Sprintf(`%sExpose`, prefix)), ``, `[cors] Access-Control-Expose-Headers`),
+		`credentials`: flag.Bool(tools.ToCamel(fmt.Sprintf(`%sCredentials`, prefix)), false, `[cors] Access-Control-Allow-Credentials`),
 	}
 }
 
 // Handler for net/http package allowing cors header
 func Handler(config map[string]interface{}, next http.Handler) http.Handler {
-	var (
-		origin      = defaultOrigin
-		headers     = defaultHeaders
-		methods     = defaultMethods
-		exposes     = defaultExposes
-		credentials = defaultCredentials
-	)
-
-	var given interface{}
-	var ok bool
-
-	if given, ok = config[`origin`]; ok {
-		origin = *(given.(*string))
-	}
-	if given, ok = config[`headers`]; ok {
-		headers = *(given.(*string))
-	}
-	if given, ok = config[`methods`]; ok {
-		methods = *(given.(*string))
-	}
-	if given, ok = config[`exposes`]; ok {
-		exposes = *(given.(*string))
-	}
-	if given, ok = config[`credentials`]; ok {
-		credentials = *(given.(*bool))
-	}
+	origin := *(config[`origin`].(*string))
+	headers := *(config[`headers`].(*string))
+	methods := *(config[`methods`].(*string))
+	exposes := *(config[`exposes`].(*string))
+	credentials := *(config[`credentials`].(*bool))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(`Access-Control-Allow-Origin`, origin)

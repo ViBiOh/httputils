@@ -1,56 +1,40 @@
 package cors
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
 
+var (
+	origin      = `localhost`
+	headers     = `Content-Type,Authorization`
+	methods     = fmt.Sprintf(`%s,%s`, http.MethodGet, http.MethodPost)
+	exposes     = `X-Total-Count`
+	credentials = true
+)
+
 func Test_Flags(t *testing.T) {
 	var cases = []struct {
 		intention string
-		prefix    string
-		want      map[string]interface{}
+		want      int
 	}{
 		{
-			`default prefix`,
-			``,
-			map[string]interface{}{
-				`origin`:      nil,
-				`headers`:     nil,
-				`methods`:     nil,
-				`exposes`:     nil,
-				`credentials`: nil,
-			},
-		},
-		{
-			`given prefix`,
-			`test`,
-			map[string]interface{}{
-				`origin`:      nil,
-				`headers`:     nil,
-				`methods`:     nil,
-				`exposes`:     nil,
-				`credentials`: nil,
-			},
+			`should add 5 params to flags`,
+			5,
 		},
 	}
 
 	for _, testCase := range cases {
-		if result := Flags(testCase.prefix); len(result) != len(testCase.want) {
-			t.Errorf("%v\nFlags(%v) = %v, want %v", testCase.intention, testCase.prefix, result, testCase.want)
+		if result := Flags(`cors_Test_Flags_empty`); len(result) != testCase.want {
+			t.Errorf("%s\nFlags() = %+v, want %+v", testCase.intention, result, testCase.want)
 		}
 	}
 }
 
 func Test_ServeHTTP(t *testing.T) {
-	var origin = `localhost`
-	var headers = `Content-Type,Authorization`
-	var methods = `GET,POST`
-	var exposes = `X-Total-Count`
-	var credentials = true
-
 	var cases = []struct {
 		intention string
 		config    map[string]interface{}
@@ -58,8 +42,14 @@ func Test_ServeHTTP(t *testing.T) {
 	}{
 		{
 			`default values`,
-			nil,
-			map[string]string{`Access-Control-Allow-Origin`: `*`, `Access-Control-Allow-Headers`: `Content-Type`, `Access-Control-Allow-Methods`: http.MethodGet, `Access-Control-Expose-Headers`: ``, `Access-Control-Allow-Credentials`: `false`},
+			Flags(`cors_Test_ServeHTTP_default`),
+			map[string]string{
+				`Access-Control-Allow-Origin`:      `*`,
+				`Access-Control-Allow-Headers`:     `Content-Type`,
+				`Access-Control-Allow-Methods`:     http.MethodGet,
+				`Access-Control-Expose-Headers`:    ``,
+				`Access-Control-Allow-Credentials`: `false`,
+			},
 		},
 		{
 			`given values`,
@@ -89,7 +79,13 @@ func Test_ServeHTTP(t *testing.T) {
 }
 
 func Benchmark_ServeHTTP(b *testing.B) {
-	handler := Handler(nil, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := Handler(map[string]interface{}{
+		`origin`:      &origin,
+		`headers`:     &headers,
+		`methods`:     &methods,
+		`exposes`:     &exposes,
+		`credentials`: &credentials,
+	}, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 

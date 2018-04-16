@@ -9,18 +9,6 @@ import (
 )
 
 const cacheControlHeader = `Cache-Control`
-const defaultCsp = `default-src 'self'; base-uri 'self'`
-const defaultHsts = true
-const defaultFrameOptions = `deny`
-
-// Flags add flags for given prefix
-func Flags(prefix string) map[string]interface{} {
-	return map[string]interface{}{
-		`csp`:          flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Csp`)), defaultCsp, `[owasp] Content-Security-Policy`),
-		`hsts`:         flag.Bool(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Hsts`)), defaultHsts, `[owasp] Indicate Strict Transport Security`),
-		`frameOptions`: flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `FrameOptions`)), defaultFrameOptions, `[owasp] X-Frame-Options`),
-	}
-}
 
 type middleware struct {
 	http.ResponseWriter
@@ -54,26 +42,20 @@ func (m *middleware) Flush() {
 	}
 }
 
+// Flags add flags for given prefix
+func Flags(prefix string) map[string]interface{} {
+	return map[string]interface{}{
+		`csp`:          flag.String(tools.ToCamel(fmt.Sprintf(`%sCsp`, prefix)), `default-src 'self'; base-uri 'self'`, `[owasp] Content-Security-Policy`),
+		`hsts`:         flag.Bool(tools.ToCamel(fmt.Sprintf(`%sHsts`, prefix)), true, `[owasp] Indicate Strict Transport Security`),
+		`frameOptions`: flag.String(tools.ToCamel(fmt.Sprintf(`%sFrameOptions`, prefix)), `deny`, `[owasp] X-Frame-Options`),
+	}
+}
+
 // Handler for net/http package allowing owasp header
 func Handler(config map[string]interface{}, next http.Handler) http.Handler {
-	var (
-		csp          = defaultCsp
-		hsts         = defaultHsts
-		frameOptions = defaultFrameOptions
-	)
-
-	var given interface{}
-	var ok bool
-
-	if given, ok = config[`csp`]; ok {
-		csp = *(given.(*string))
-	}
-	if given, ok = config[`hsts`]; ok {
-		hsts = *(given.(*bool))
-	}
-	if given, ok = config[`frameOptions`]; ok {
-		frameOptions = *(given.(*string))
-	}
+	csp := *(config[`csp`].(*string))
+	hsts := *(config[`hsts`].(*bool))
+	frameOptions := *(config[`frameOptions`].(*string))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(`Content-Security-Policy`, csp)

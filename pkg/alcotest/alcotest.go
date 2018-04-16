@@ -20,39 +20,44 @@ var httpClient = http.Client{
 	},
 }
 
-// GetStatusCode return status code of a GET on given url
-func GetStatusCode(url string) (int, error) {
-	request, err := http.NewRequest(`GET`, url, nil)
-	if err != nil {
-		return 0, err
-	}
-	request.Header.Set(`X-Forwarded-For`, `alcotest`)
-
-	response, err := httpClient.Do(request)
-	if response != nil {
-		if closeErr := response.Body.Close(); closeErr != nil {
-			err = fmt.Errorf(`%s, and also error while closing response: %v`, err, closeErr)
-		}
-	}
-	if err != nil {
-		return 0, err
-	}
-
-	return response.StatusCode, nil
-}
-
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]*string {
 	return map[string]*string{
-		`url`: flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Url`)), ``, `[health] URL to check`),
+		`url`: flag.String(tools.ToCamel(fmt.Sprintf(`%sUrl`, prefix)), ``, `[health] URL to check`),
 	}
+}
+
+// GetStatusCode return status code of a GET on given url
+func GetStatusCode(url string) (status int, err error) {
+	r, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	var response *http.Response
+
+	response, err = httpClient.Do(r)
+	if response != nil {
+		status = response.StatusCode
+
+		defer func() {
+			if closeErr := response.Body.Close(); closeErr != nil {
+				err = fmt.Errorf(`%s, and also error while closing response: %v`, err, closeErr)
+			}
+		}()
+	}
+
+	return
 }
 
 // Do test status code of given URL
 func Do(url string) error {
-	if statusCode, err := GetStatusCode(url); err != nil {
+	statusCode, err := GetStatusCode(url)
+	if err != nil {
 		return fmt.Errorf(`Unable to blow in ballon: %v`, err)
-	} else if statusCode != http.StatusOK {
+	}
+
+	if statusCode != http.StatusOK {
 		return fmt.Errorf(`Alcotest failed: HTTP/%d`, statusCode)
 	}
 

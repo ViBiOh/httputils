@@ -8,44 +8,31 @@ import (
 	"testing"
 )
 
+var (
+	hsts         = false
+	csp          = `default-src 'self'; script-src 'self' 'unsafe-inline'`
+	frameOptions = `allow-from https://vibioh.fr`
+)
+
 func Test_Flags(t *testing.T) {
 	var cases = []struct {
 		intention string
-		prefix    string
-		want      map[string]interface{}
+		want      int
 	}{
 		{
-			`default prefix`,
-			``,
-			map[string]interface{}{
-				`csp`:          nil,
-				`hsts`:         nil,
-				`frameOptions`: nil,
-			},
-		},
-		{
-			`given prefix`,
-			`test`,
-			map[string]interface{}{
-				`csp`:          nil,
-				`hsts`:         nil,
-				`frameOptions`: nil,
-			},
+			`should add 3 params to flags`,
+			3,
 		},
 	}
 
 	for _, testCase := range cases {
-		if result := Flags(testCase.prefix); len(result) != len(testCase.want) {
-			t.Errorf("%v\nFlags(%v) = %v, want %v", testCase.intention, testCase.prefix, result, testCase.want)
+		if result := Flags(`owasp_Test_Flags`); len(result) != testCase.want {
+			t.Errorf("%s\nFlags() = %+v, want %+v", testCase.intention, result, testCase.want)
 		}
 	}
 }
 
 func Test_ServeHTTP(t *testing.T) {
-	hsts := false
-	csp := `default-src 'self'; script-src 'self' 'unsafe-inline'`
-	frameOptions := `allow-from https://vibioh.fr`
-
 	var cases = []struct {
 		path        string
 		config      map[string]interface{}
@@ -54,7 +41,7 @@ func Test_ServeHTTP(t *testing.T) {
 	}{
 		{
 			`/`,
-			nil,
+			Flags(`owasp_Test_ServeHTTP_default`),
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},
@@ -71,7 +58,7 @@ func Test_ServeHTTP(t *testing.T) {
 		},
 		{
 			`/`,
-			nil,
+			Flags(`owasp_Test_ServeHTTP_redirect`),
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusMovedPermanently)
 			},
@@ -88,7 +75,7 @@ func Test_ServeHTTP(t *testing.T) {
 		},
 		{
 			`/`,
-			nil,
+			Flags(`owasp_Test_ServeHTTP_bad`),
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
 			},
@@ -137,10 +124,15 @@ func Test_ServeHTTP(t *testing.T) {
 	}
 }
 
-func BenchmarkServeHTTP(b *testing.B) {
-	handler := Handler(nil, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusMovedPermanently)
-	}))
+func Benchmark_ServeHTTP(b *testing.B) {
+	handler := Handler(
+		map[string]interface{}{
+			`csp`:          &csp,
+			`hsts`:         &hsts,
+			`frameOptions`: &frameOptions,
+		}, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusMovedPermanently)
+		}))
 
 	request := httptest.NewRequest(http.MethodGet, `/`, nil)
 	writer := httptest.NewRecorder()
