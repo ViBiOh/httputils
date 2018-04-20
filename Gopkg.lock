@@ -2,13 +2,23 @@
 
 
 [[projects]]
+  name = "github.com/DataDog/dd-trace-go"
+  packages = [
+    "contrib/net/http",
+    "tracer",
+    "tracer/ext"
+  ]
+  revision = "27617015d45e6cd550b9a7ac7715c37cc2f7d020"
+  version = "v0.6.1"
+
+[[projects]]
   branch = "master"
   name = "github.com/lib/pq"
   packages = [
     ".",
     "oid"
   ]
-  revision = "88edab0803230a3898347e77b474f8c1820a1f20"
+  revision = "d34b9ff171c21ad295489235aec8b6626023cd04"
 
 [[projects]]
   name = "github.com/tdewolff/minify"
@@ -36,9 +46,20 @@
   revision = "639f6272aec6b52094db77b9ec488214b0b4b1a1"
   version = "v2.3.2"
 
+[[projects]]
+  name = "github.com/ugorji/go"
+  packages = ["codec"]
+  revision = "9c7f9b7a2bc3a520f7c7b30b34b7f85f47fe27b6"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["windows"]
+  revision = "a2a45943ae67364d56c5d7d62dee78cff16c8dc8"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d3c2883d29c0d8548b6afdc63eb75f4b9b5f4d2ca57cdab106cfcedbd9e0b492"
+  inputs-digest = "1f17426c43ae7d0270fbad072c8330100b4eab01fcce313da157ca3ac43ba349"
   solver-name = "gps-cdcl"
   solver-version = 1
