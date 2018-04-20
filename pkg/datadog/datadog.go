@@ -57,6 +57,9 @@ func (a *App) Handler(next http.Handler) http.Handler {
 		span.Type = ext.HTTPType
 		span.SetMeta(ext.HTTPMethod, r.Method)
 		span.SetMeta(ext.HTTPURL, r.URL.Path)
+		span.SetMeta(`RemoteAddr`, r.RemoteAddr)
+		span.SetMeta(`X-Real-Ip`, r.Header.Get(`X-Real-Ip`))
+		span.SetMeta(`X-Forwarded-For`, r.Header.Get(`X-Forwarded-For`))
 
 		// Enriching request and writer with tracer
 		ctx := span.Context(r.Context())
