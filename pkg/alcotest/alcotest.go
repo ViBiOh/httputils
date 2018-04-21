@@ -34,6 +34,8 @@ func GetStatusCode(url string) (status int, err error) {
 		return 0, err
 	}
 
+	r.Header.Set(`User-Agent`, `Golang alcotest`)
+
 	var response *http.Response
 
 	response, err = httpClient.Do(r)
