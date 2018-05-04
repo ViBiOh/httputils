@@ -32,7 +32,7 @@ func WriteHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content in
 	w.WriteHeader(status)
 	w.Header().Set(`Content-Type`, `text/html; charset=UTF-8`)
 	w.Header().Set(`Cache-Control`, `no-cache`)
-	w.Header().Set(`X-UA-Compatible`, `IE=edge,chrome=1`)
+	w.Header().Set(`X-UA-Compatible`, `ie=edge`)
 	return minifier.Minify(`text/html`, w, templateBuffer)
 }
 

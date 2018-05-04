@@ -26,14 +26,14 @@ func Handler(config map[string]interface{}, next http.Handler) http.Handler {
 	headers := *(config[`headers`].(*string))
 	methods := *(config[`methods`].(*string))
 	exposes := *(config[`exposes`].(*string))
-	credentials := *(config[`credentials`].(*bool))
+	credentials := strconv.FormatBool(*(config[`credentials`].(*bool)))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(`Access-Control-Allow-Origin`, origin)
 		w.Header().Set(`Access-Control-Allow-Headers`, headers)
 		w.Header().Set(`Access-Control-Allow-Methods`, methods)
 		w.Header().Set(`Access-Control-Expose-Headers`, exposes)
-		w.Header().Set(`Access-Control-Allow-Credentials`, strconv.FormatBool(credentials))
+		w.Header().Set(`Access-Control-Allow-Credentials`, credentials)
 
 		next.ServeHTTP(w, r)
 	})

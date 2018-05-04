@@ -66,7 +66,7 @@ func Handler(config map[string]interface{}, next http.Handler) http.Handler {
 		w.Header().Set(`X-Permitted-Cross-Domain-Policies`, `none`)
 
 		if hsts {
-			w.Header().Set(`Strict-Transport-Security`, `max-age=5184000`)
+			w.Header().Set(`Strict-Transport-Security`, `max-age=10886400`)
 		}
 
 		next.ServeHTTP(&middleware{w, r.URL.Path == `/`}, r)
