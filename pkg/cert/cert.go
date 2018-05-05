@@ -23,9 +23,9 @@ import (
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]*string {
 	return map[string]*string{
-		`cert`:  flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Cert`)), ``, `[tls] PEM Certificate file`),
-		`key`:   flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Key`)), ``, `[tls] PEM Key file`),
-		`hosts`: flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Hosts`)), `localhost`, `[tls] Self-signed certificate hosts, comma separated`),
+		`cert`:  flag.String(tools.ToCamel(fmt.Sprintf(`%sCert`, prefix)), ``, `[tls] PEM Certificate file`),
+		`key`:   flag.String(tools.ToCamel(fmt.Sprintf(`%sKey`, prefix)), ``, `[tls] PEM Key file`),
+		`hosts`: flag.String(tools.ToCamel(fmt.Sprintf(`%sHosts`, prefix)), `localhost`, `[tls] Self-signed certificate hosts, comma separated`),
 	}
 }
 

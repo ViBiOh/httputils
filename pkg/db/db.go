@@ -46,11 +46,11 @@ func PrepareFullTextSearch(query, search string, index uint) (string, string) {
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]*string {
 	return map[string]*string{
-		`host`: flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Host`)), ``, `[database] Host`),
-		`port`: flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Port`)), `5432`, `[database] Port`),
-		`user`: flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `User`)), ``, `[database] User`),
-		`pass`: flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Pass`)), ``, `[database] Pass`),
-		`name`: flag.String(tools.ToCamel(fmt.Sprintf(`%s%s`, prefix, `Name`)), ``, `[database] Name`),
+		`host`: flag.String(tools.ToCamel(fmt.Sprintf(`%sHost`, prefix)), ``, `[database] Host`),
+		`port`: flag.String(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), `5432`, `[database] Port`),
+		`user`: flag.String(tools.ToCamel(fmt.Sprintf(`%sUser`, prefix)), ``, `[database] User`),
+		`pass`: flag.String(tools.ToCamel(fmt.Sprintf(`%sPass`, prefix)), ``, `[database] Pass`),
+		`name`: flag.String(tools.ToCamel(fmt.Sprintf(`%sName`, prefix)), ``, `[database] Name`),
 	}
 }
 
