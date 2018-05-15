@@ -8,6 +8,7 @@ import (
 
 	"github.com/ViBiOh/httputils/pkg/alcotest"
 	"github.com/ViBiOh/httputils/pkg/cert"
+	"github.com/ViBiOh/httputils/pkg/healthcheck"
 	"github.com/ViBiOh/httputils/pkg/server"
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
@@ -16,6 +17,7 @@ import (
 type App struct {
 	handlerFn       func() http.Handler
 	gracefulCloseFn func() error
+	healthcheckApp  *healthcheck.App
 	port            *int
 	tls             *bool
 	alcotestConfig  map[string]*string
@@ -23,10 +25,11 @@ type App struct {
 }
 
 // NewApp creates new App from Flags' config
-func NewApp(config map[string]interface{}, getHandler func() http.Handler, onGracefulClose func() error) *App {
+func NewApp(config map[string]interface{}, getHandler func() http.Handler, onGracefulClose func() error, healthcheckApp *healthcheck.App) *App {
 	return &App{
 		handlerFn:       getHandler,
 		gracefulCloseFn: onGracefulClose,
+		healthcheckApp:  healthcheckApp,
 		port:            config[`port`].(*int),
 		tls:             config[`tls`].(*bool),
 		alcotestConfig:  config[`alcotestConfig`].(map[string]*string),
@@ -69,5 +72,5 @@ func (a *App) ListenAndServe() {
 		}
 	}()
 
-	server.GracefulClose(httpServer, serveError, a.gracefulCloseFn)
+	server.GracefulClose(httpServer, serveError, a.gracefulCloseFn, a.healthcheckApp)
 }

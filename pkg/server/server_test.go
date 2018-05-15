@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ViBiOh/httputils/pkg/healthcheck"
 	"github.com/ViBiOh/httputils/pkg/request"
 )
 
@@ -92,16 +93,18 @@ func TestHttpGracefulClose(t *testing.T) {
 
 func TestGracefulClose(t *testing.T) {
 	var cases = []struct {
-		url      string
-		server   *http.Server
-		wait     bool
-		callback func() error
-		want     int
+		url            string
+		server         *http.Server
+		wait           bool
+		callback       func() error
+		healthcheckApp *healthcheck.App
+		want           int
 	}{
 		{
 			``,
 			nil,
 			false,
+			nil,
 			nil,
 			0,
 		},
@@ -117,6 +120,7 @@ func TestGracefulClose(t *testing.T) {
 			func() error {
 				return nil
 			},
+			nil,
 			0,
 		},
 		{
@@ -132,6 +136,7 @@ func TestGracefulClose(t *testing.T) {
 			},
 			true,
 			nil,
+			nil,
 			1,
 		},
 		{
@@ -141,6 +146,7 @@ func TestGracefulClose(t *testing.T) {
 			func() error {
 				return errors.New(`Error while shutting down`)
 			},
+			nil,
 			1,
 		},
 	}
@@ -156,7 +162,7 @@ func TestGracefulClose(t *testing.T) {
 			time.Sleep(time.Second)
 		}
 
-		if result := gracefulClose(testCase.server, testCase.callback); result != testCase.want {
+		if result := gracefulClose(testCase.server, testCase.callback, testCase.healthcheckApp); result != testCase.want {
 			t.Errorf(`gracefulClose(%v) = %v, want %v`, testCase.server, result, testCase.want)
 		}
 	}

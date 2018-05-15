@@ -8,7 +8,7 @@ import (
 	"github.com/ViBiOh/httputils/pkg/request"
 )
 
-func Test_Handler(t *testing.T) {
+func Test_Basic(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		request    *http.Request
@@ -31,14 +31,14 @@ func Test_Handler(t *testing.T) {
 
 	for _, testCase := range cases {
 		writer := httptest.NewRecorder()
-		Handler().ServeHTTP(writer, testCase.request)
+		Basic().ServeHTTP(writer, testCase.request)
 
 		if result := writer.Code; result != testCase.wantStatus {
-			t.Errorf("%s\nHandler(%+v) = %+v, want status %+v", testCase.intention, testCase.request, result, testCase.wantStatus)
+			t.Errorf("%s\nBasic(%+v) = %+v, want status %+v", testCase.intention, testCase.request, result, testCase.wantStatus)
 		}
 
 		if result, _ := request.ReadBody(writer.Result().Body); string(result) != testCase.want {
-			t.Errorf("%s\nHandler(%+v) = %+v, want %+v", testCase.intention, testCase.request, string(result), testCase.want)
+			t.Errorf("%s\nBasic(%+v) = %+v, want %+v", testCase.intention, testCase.request, string(result), testCase.want)
 		}
 	}
 }

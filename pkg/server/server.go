@@ -9,7 +9,11 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/ViBiOh/httputils/pkg/healthcheck"
 )
+
+const healthcheckDuration = 35
 
 func httpGracefulClose(server *http.Server) error {
 	if server == nil {
@@ -28,8 +32,14 @@ func httpGracefulClose(server *http.Server) error {
 	return nil
 }
 
-func gracefulClose(server *http.Server, callback func() error) int {
+func gracefulClose(server *http.Server, callback func() error, healthcheckApp *healthcheck.App) int {
 	exitCode := 0
+
+	if healthcheckApp != nil {
+		healthcheckApp.Close()
+		log.Printf(`Waiting %d seconds for healthcheck`, healthcheckDuration)
+		time.Sleep(time.Second * healthcheckDuration)
+	}
 
 	if err := httpGracefulClose(server); err != nil {
 		log.Print(err)
@@ -47,7 +57,7 @@ func gracefulClose(server *http.Server, callback func() error) int {
 }
 
 // GracefulClose gracefully close net/http server
-func GracefulClose(server *http.Server, serveError <-chan error, callback func() error) {
+func GracefulClose(server *http.Server, serveError <-chan error, callback func() error, healthcheckApp *healthcheck.App) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM)
 
@@ -58,5 +68,5 @@ func GracefulClose(server *http.Server, serveError <-chan error, callback func()
 		log.Print(`SIGTERM received`)
 	}
 
-	os.Exit(gracefulClose(server, callback))
+	os.Exit(gracefulClose(server, callback, healthcheckApp))
 }
