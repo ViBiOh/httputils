@@ -30,6 +30,11 @@ func (a *App) Handler() http.Handler {
 	})
 }
 
+// SetHandler set a new handler for healthcheck
+func (a *App) SetHandler(handler http.Handler) {
+	a.handler = handler
+}
+
 // Close set all healthchecks to be unavailable
 func (a *App) Close() {
 	a.closed = true
