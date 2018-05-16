@@ -6,33 +6,31 @@ import (
 
 // App stores informations
 type App struct {
-	closed  bool
-	handler http.Handler
+	closed bool
 }
 
 // NewApp creates new App for given handler
-func NewApp(handler http.Handler) *App {
+func NewApp() *App {
 	return &App{
-		closed:  false,
-		handler: handler,
+		closed: false,
 	}
 }
 
 // Handler for Health request. Should be use with net/http
-func (a *App) Handler() http.Handler {
+func (a *App) Handler(next http.Handler) http.Handler {
+	handler := next
+	if handler == nil {
+		handler = Basic()
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if a.closed {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
 
-		a.handler.ServeHTTP(w, r)
+		handler.ServeHTTP(w, r)
 	})
-}
-
-// SetHandler set a new handler for healthcheck
-func (a *App) SetHandler(handler http.Handler) {
-	a.handler = handler
 }
 
 // Close set all healthchecks to be unavailable
