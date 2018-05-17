@@ -67,8 +67,9 @@ func strSliceContains(slice []string, search string) bool {
 // ListenAndServeTLS with provided certFile flag or self-signed generated certificate
 // Largely inspired by https://golang.org/src/net/http/server.go
 func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
-	if *config[`cert`] != `` {
-		return server.ListenAndServeTLS(*config[`cert`], *config[`key`])
+	cert := strings.TrimSpace(*config[`cert`])
+	if cert != `` {
+		return server.ListenAndServeTLS(cert, *config[`key`])
 	}
 
 	certPEMBlock, keyPEMBlock, err := GenerateCert(`ViBiOh`, strings.Split(*config[`hosts`], `,`))

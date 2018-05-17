@@ -21,6 +21,15 @@
   revision = "d34b9ff171c21ad295489235aec8b6626023cd04"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/opentracing/opentracing-go"
+  packages = [
+    ".",
+    "log"
+  ]
+  revision = "6c572c00d1830223701e155de97408483dfcd14a"
+
+[[projects]]
   name = "github.com/tdewolff/minify"
   packages = [
     ".",
@@ -55,11 +64,11 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["windows"]
-  revision = "6f686a352de66814cdd080d970febae7767857a3"
+  revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1f17426c43ae7d0270fbad072c8330100b4eab01fcce313da157ca3ac43ba349"
+  inputs-digest = "5e01e8af1cdd887a3d4a486c3988deb5c3ce50948e61053359a175e35b3bd5f8"
   solver-name = "gps-cdcl"
   solver-version = 1

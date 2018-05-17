@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ViBiOh/httputils/pkg/tools"
@@ -68,7 +69,7 @@ func Do(url string) error {
 
 // DoAndExit test status code of given URL (if present) and exit program with correct status
 func DoAndExit(config map[string]*string) {
-	url := *config[`url`]
+	url := strings.TrimSpace(*config[`url`])
 
 	if url != `` {
 		if err := Do(url); err != nil {
