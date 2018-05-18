@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/pkg/tools"
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing "github.com/opentracing/opentracing-go"
 	jaeger "github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
@@ -105,17 +106,11 @@ func (a App) Handler(next http.Handler) http.Handler {
 		return next
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		span, _ := opentracing.StartSpanFromContext(r.Context(), `HTTP Request`)
-		defer span.Finish()
-
-		span.SetTag(`http.method`, r.Method)
-		span.SetTag(`http.url`, r.URL.Path)
-		span.SetTag(`http.remote_addr`, r.RemoteAddr)
-		span.SetTag(`headers.real_ip`, r.Header.Get(`X-Real-Ip`))
-		span.SetTag(`headers.forwarded_for`, r.Header.Get(`X-Forwarded-For`))
-		span.SetTag(`headers.user_agent`, r.Header.Get(`User-Agent`))
-
-		next.ServeHTTP(NewResponseWriter(w, span), r)
-	})
+	return nethttp.Middleware(
+		a.tracer,
+		next,
+		nethttp.OperationNameFunc(func(r *http.Request) string {
+			return fmt.Sprintf(`HTTP %s`, r.Method)
+		}),
+	)
 }

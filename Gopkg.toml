@@ -3,6 +3,10 @@
   version = "1.0.2"
 
 [[constraint]]
+  branch = "master"
+  name = "github.com/opentracing-contrib/go-stdlib"
+
+[[constraint]]
   name = "github.com/uber/jaeger-client-go"
   version = "2.14.0"
 
