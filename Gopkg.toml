@@ -1,8 +1,4 @@
 [[constraint]]
-  name = "github.com/DataDog/dd-trace-go"
-  version = "0.6.1"
-
-[[constraint]]
   branch = "master"
   name = "github.com/opentracing/opentracing-go"
 

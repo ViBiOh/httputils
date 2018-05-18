@@ -2,16 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/DataDog/dd-trace-go"
-  packages = [
-    "contrib/net/http",
-    "tracer",
-    "tracer/ext"
-  ]
-  revision = "27617015d45e6cd550b9a7ac7715c37cc2f7d020"
-  version = "v0.6.1"
-
-[[projects]]
   branch = "master"
   name = "github.com/lib/pq"
   packages = [
@@ -55,20 +45,9 @@
   revision = "639f6272aec6b52094db77b9ec488214b0b4b1a1"
   version = "v2.3.2"
 
-[[projects]]
-  name = "github.com/ugorji/go"
-  packages = ["codec"]
-  revision = "9c7f9b7a2bc3a520f7c7b30b34b7f85f47fe27b6"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/sys"
-  packages = ["windows"]
-  revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5e01e8af1cdd887a3d4a486c3988deb5c3ce50948e61053359a175e35b3bd5f8"
+  inputs-digest = "45150ea39a67a4de5e6687f965fb455b1dad9011e18fb333886912c3fbb04011"
   solver-name = "gps-cdcl"
   solver-version = 1
