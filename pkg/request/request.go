@@ -2,6 +2,7 @@ package request
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -9,14 +10,28 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // ForwardedForHeader that proxy uses to fill
 const ForwardedForHeader = `X-Forwarded-For`
 
-var httpClient = http.Client{Timeout: 30 * time.Second}
+var httpClient = http.Client{
+	Timeout:   30 * time.Second,
+	Transport: &nethttp.Transport{},
+}
 
-func doAndRead(request *http.Request) ([]byte, error) {
+func doAndRead(ctx context.Context, request *http.Request) ([]byte, error) {
+	if ctx != nil {
+		var netTracer *nethttp.Tracer
+
+		request = request.WithContext(ctx)
+		request, netTracer = nethttp.TraceRequest(opentracing.GlobalTracer(), request)
+		defer netTracer.Finish()
+	}
+
 	response, err := httpClient.Do(request)
 	if err != nil {
 		if response != nil {
@@ -53,19 +68,18 @@ func ReadBody(body io.ReadCloser) (_ []byte, err error) {
 }
 
 // Do send given method with given content to URL with optional headers supplied
-func Do(url string, body []byte, headers http.Header, method string) ([]byte, error) {
+func Do(ctx context.Context, url string, body []byte, headers http.Header, method string) ([]byte, error) {
 	request, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf(`Error while creating request: %v`, err)
 	}
-
 	request.Header = headers
 
-	return doAndRead(request)
+	return doAndRead(ctx, request)
 }
 
 // DoJSON send given method with given interface{} as JSON to URL with optional headers supplied
-func DoJSON(url string, body interface{}, headers http.Header, method string) ([]byte, error) {
+func DoJSON(ctx context.Context, url string, body interface{}, headers http.Header, method string) ([]byte, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf(`Error while marshalling body: %v`, err)
@@ -76,12 +90,12 @@ func DoJSON(url string, body interface{}, headers http.Header, method string) ([
 	}
 	headers.Set(`Content-Type`, `application/json`)
 
-	return Do(url, jsonBody, headers, method)
+	return Do(ctx, url, jsonBody, headers, method)
 }
 
 // Get send GET request to URL with optional headers supplied
-func Get(url string, headers http.Header) ([]byte, error) {
-	return Do(url, nil, headers, http.MethodGet)
+func Get(ctx context.Context, url string, headers http.Header) ([]byte, error) {
+	return Do(ctx, url, nil, headers, http.MethodGet)
 }
 
 // SetIP set remote IP

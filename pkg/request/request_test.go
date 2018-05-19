@@ -2,6 +2,7 @@ package request
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -36,26 +37,31 @@ func Test_DoAndRead(t *testing.T) {
 	test, _ := http.NewRequest(http.MethodGet, testServer.URL, nil)
 
 	var cases = []struct {
+		ctx     context.Context
 		request *http.Request
 		want    string
 		wantErr error
 	}{
 		{
+			nil,
 			emptyRequest,
 			``,
 			errors.New(`Error while processing request: Get : unsupported protocol scheme ""`),
 		},
 		{
+			nil,
 			bad,
 			``,
 			errors.New(`Error status 400`),
 		},
 		{
+			nil,
 			test,
 			`Hello, test`,
 			nil,
 		},
 		{
+			nil,
 			test,
 			`Hello, test`,
 			nil,
@@ -65,7 +71,7 @@ func Test_DoAndRead(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := doAndRead(testCase.request)
+		result, err := doAndRead(testCase.ctx, testCase.request)
 
 		failed = false
 
@@ -153,6 +159,7 @@ func Test_DoJSON(t *testing.T) {
 	defer testServer.Close()
 
 	var cases = []struct {
+		ctx     context.Context
 		url     string
 		body    interface{}
 		headers http.Header
@@ -160,6 +167,7 @@ func Test_DoJSON(t *testing.T) {
 		wantErr error
 	}{
 		{
+			nil,
 			``,
 			testFn,
 			nil,
@@ -167,6 +175,7 @@ func Test_DoJSON(t *testing.T) {
 			errors.New(`Error while marshalling body: json: unsupported type: func() string`),
 		},
 		{
+			nil,
 			`://fail`,
 			nil,
 			nil,
@@ -174,6 +183,7 @@ func Test_DoJSON(t *testing.T) {
 			errors.New(`Error while creating request: parse ://fail: missing protocol scheme`),
 		},
 		{
+			nil,
 			``,
 			nil,
 			nil,
@@ -181,6 +191,7 @@ func Test_DoJSON(t *testing.T) {
 			errors.New(`Error while processing request: Post : unsupported protocol scheme ""`),
 		},
 		{
+			nil,
 			testServer.URL,
 			&postStruct{},
 			http.Header{`Authorization`: []string{`admin:password`}},
@@ -192,7 +203,7 @@ func Test_DoJSON(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := DoJSON(testCase.url, testCase.body, testCase.headers, http.MethodPost)
+		result, err := DoJSON(testCase.ctx, testCase.url, testCase.body, testCase.headers, http.MethodPost)
 
 		failed = false
 
