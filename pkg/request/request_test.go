@@ -155,7 +155,7 @@ func Test_DoJSON(t *testing.T) {
 	var cases = []struct {
 		url     string
 		body    interface{}
-		headers map[string]string
+		headers http.Header
 		want    string
 		wantErr error
 	}{
@@ -183,7 +183,7 @@ func Test_DoJSON(t *testing.T) {
 		{
 			testServer.URL,
 			&postStruct{},
-			map[string]string{`Authorization`: `admin:password`},
+			http.Header{`Authorization`: []string{`admin:password`}},
 			`Hello, test`,
 			nil,
 		},

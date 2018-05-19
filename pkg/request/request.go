@@ -53,36 +53,34 @@ func ReadBody(body io.ReadCloser) (_ []byte, err error) {
 }
 
 // Do send given method with given content to URL with optional headers supplied
-func Do(url string, body []byte, headers map[string]string, method string) ([]byte, error) {
+func Do(url string, body []byte, headers http.Header, method string) ([]byte, error) {
 	request, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf(`Error while creating request: %v`, err)
 	}
 
-	for key, value := range headers {
-		request.Header.Set(key, value)
-	}
+	request.Header = headers
 
 	return doAndRead(request)
 }
 
 // DoJSON send given method with given interface{} as JSON to URL with optional headers supplied
-func DoJSON(url string, body interface{}, headers map[string]string, method string) ([]byte, error) {
+func DoJSON(url string, body interface{}, headers http.Header, method string) ([]byte, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf(`Error while marshalling body: %v`, err)
 	}
 
 	if headers == nil {
-		headers = make(map[string]string)
+		headers = http.Header{}
 	}
-	headers[`Content-Type`] = `application/json`
+	headers.Set(`Content-Type`, `application/json`)
 
 	return Do(url, jsonBody, headers, method)
 }
 
 // Get send GET request to URL with optional headers supplied
-func Get(url string, headers map[string]string) ([]byte, error) {
+func Get(url string, headers http.Header) ([]byte, error) {
 	return Do(url, nil, headers, http.MethodGet)
 }
 
