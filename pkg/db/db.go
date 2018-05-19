@@ -56,7 +56,17 @@ func Flags(prefix string) map[string]*string {
 
 // GetDB start DB connection
 func GetDB(config map[string]*string) (*sql.DB, error) {
-	db, err := sql.Open(`postgres`, fmt.Sprintf(`host=%s port=%s user=%s password=%s dbname=%s sslmode=disable`, *config[`host`], *config[`port`], *config[`user`], *config[`pass`], *config[`name`]))
+	host := strings.TrimSpace(*config[`host`])
+	if host == `` {
+		return nil, nil
+	}
+
+	port := strings.TrimSpace(*config[`port`])
+	user := strings.TrimSpace(*config[`user`])
+	pass := strings.TrimSpace(*config[`pass`])
+	name := strings.TrimSpace(*config[`name`])
+
+	db, err := sql.Open(`postgres`, fmt.Sprintf(`host=%s port=%s user=%s password=%s dbname=%s sslmode=disable`, host, port, user, pass, name))
 	if err != nil {
 		return nil, fmt.Errorf(`Error while opening database connection: %v`, err)
 	}
@@ -75,7 +85,7 @@ func Ping(db *sql.DB) bool {
 
 // GetTx return given transaction if not nil or create a new one
 func GetTx(db *sql.DB, tx *sql.Tx) (*sql.Tx, error) {
-	if tx == nil {
+	if db != nil && tx == nil {
 		usedTx, err := db.Begin()
 
 		if err != nil {
