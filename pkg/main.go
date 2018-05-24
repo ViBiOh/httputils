@@ -48,7 +48,7 @@ func Flags(prefix string) map[string]interface{} {
 }
 
 // ListenAndServe starts server
-func (a *App) ListenAndServe() {
+func (a App) ListenAndServe() {
 	flag.Parse()
 
 	alcotest.DoAndExit(a.alcotestConfig)
