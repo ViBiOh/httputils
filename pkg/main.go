@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ViBiOh/httputils/pkg/alcotest"
 	"github.com/ViBiOh/httputils/pkg/cert"
 	"github.com/ViBiOh/httputils/pkg/healthcheck"
 	"github.com/ViBiOh/httputils/pkg/server"
@@ -16,29 +15,26 @@ import (
 
 // App stores informations
 type App struct {
-	port           *int
-	tls            *bool
-	alcotestConfig map[string]*string
-	certConfig     map[string]*string
+	port       *int
+	tls        *bool
+	certConfig map[string]*string
 }
 
 // NewApp creates new App from Flags' config
 func NewApp(config map[string]interface{}) *App {
 	return &App{
-		port:           config[`port`].(*int),
-		tls:            config[`tls`].(*bool),
-		alcotestConfig: config[`alcotestConfig`].(map[string]*string),
-		certConfig:     config[`certConfig`].(map[string]*string),
+		port:       config[`port`].(*int),
+		tls:        config[`tls`].(*bool),
+		certConfig: config[`certConfig`].(map[string]*string),
 	}
 }
 
 // Flags adds flags for given prefix
 func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
-		`port`:           flag.Int(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), 1080, `Listen port`),
-		`tls`:            flag.Bool(tools.ToCamel(fmt.Sprintf(`%sTls`, prefix)), true, `Serve TLS content`),
-		`certConfig`:     cert.Flags(`tls`),
-		`alcotestConfig`: alcotest.Flags(``),
+		`port`:       flag.Int(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), 1080, `Listen port`),
+		`tls`:        flag.Bool(tools.ToCamel(fmt.Sprintf(`%sTls`, prefix)), true, `Serve TLS content`),
+		`certConfig`: cert.Flags(`tls`),
 	}
 }
 
@@ -67,10 +63,10 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 	go func() {
 		defer close(serveError)
 		if *a.tls {
-			log.Print(`👍 Listening with TLS`)
+			log.Print(`Listening with TLS ✅`)
 			serveError <- cert.ListenAndServeTLS(a.certConfig, httpServer)
 		} else {
-			log.Print(`⚠ Listening without TLS`)
+			log.Print(`Listening without TLS ⚠️`)
 			serveError <- httpServer.ListenAndServe()
 		}
 	}()
