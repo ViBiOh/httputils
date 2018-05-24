@@ -19,7 +19,6 @@ import (
 
 // App stores informations
 type App struct {
-	tracer opentracing.Tracer
 	closer io.Closer
 }
 
@@ -51,7 +50,7 @@ func initJaeger(serviceName string, agentHostPort string) (opentracing.Tracer, i
 func NewApp(config map[string]*string) *App {
 	serviceName := strings.TrimSpace(*config[`name`])
 	if serviceName == `` {
-		log.Print(`[opentracing] ⚠ No service name provided`)
+		log.Print(`[opentracing] No service name provided`)
 		return &App{}
 	}
 
@@ -72,7 +71,6 @@ func NewApp(config map[string]*string) *App {
 	opentracing.SetGlobalTracer(tracer)
 
 	return &App{
-		tracer: tracer,
 		closer: closer,
 	}
 }
@@ -81,17 +79,13 @@ func NewApp(config map[string]*string) *App {
 func Flags(prefix string) map[string]*string {
 	return map[string]*string{
 		`name`:  flag.String(tools.ToCamel(fmt.Sprintf(`%sName`, prefix)), ``, `[opentracing] Service name`),
-		`agent`: flag.String(tools.ToCamel(fmt.Sprintf(`%sAgent`, prefix)), `jaeger:6831`, `[opentracing] Jaeger Agent host:port`),
+		`agent`: flag.String(tools.ToCamel(fmt.Sprintf(`%sAgent`, prefix)), `jaeger:6831`, `[opentracing] Jaeger Agent (e.g. host:port)`),
 	}
-}
-
-func (a App) check() bool {
-	return a.tracer != nil
 }
 
 // Close tracer
 func (a App) Close() {
-	if !a.check() {
+	if a.closer == nil {
 		return
 	}
 
@@ -102,15 +96,5 @@ func (a App) Close() {
 
 // Handler for net/http
 func (a App) Handler(next http.Handler) http.Handler {
-	if !a.check() {
-		return next
-	}
-
-	return nethttp.Middleware(
-		a.tracer,
-		next,
-		nethttp.OperationNameFunc(func(r *http.Request) string {
-			return fmt.Sprintf(`HTTP %s`, r.Method)
-		}),
-	)
+	return nethttp.Middleware(opentracing.GlobalTracer(), next)
 }

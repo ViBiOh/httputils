@@ -42,7 +42,23 @@ func (m *middleware) Flush() {
 	}
 }
 
-// Flags add flags for given prefix
+// App stores informations
+type App struct {
+	csp          string
+	hsts         bool
+	frameOptions string
+}
+
+// NewApp creates new App from Flags' config
+func NewApp(config map[string]interface{}) *App {
+	return &App{
+		csp:          *(config[`csp`].(*string)),
+		hsts:         *(config[`hsts`].(*bool)),
+		frameOptions: *(config[`frameOptions`].(*string)),
+	}
+}
+
+// Flags adds flags for given prefix
 func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
 		`csp`:          flag.String(tools.ToCamel(fmt.Sprintf(`%sCsp`, prefix)), `default-src 'self'; base-uri 'self'`, `[owasp] Content-Security-Policy`),
@@ -52,20 +68,16 @@ func Flags(prefix string) map[string]interface{} {
 }
 
 // Handler for net/http package allowing owasp header
-func Handler(config map[string]interface{}, next http.Handler) http.Handler {
-	csp := *(config[`csp`].(*string))
-	hsts := *(config[`hsts`].(*bool))
-	frameOptions := *(config[`frameOptions`].(*string))
-
+func (a App) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set(`Content-Security-Policy`, csp)
+		w.Header().Set(`Content-Security-Policy`, a.csp)
 		w.Header().Set(`Referrer-Policy`, `strict-origin-when-cross-origin`)
-		w.Header().Set(`X-Frame-Options`, frameOptions)
+		w.Header().Set(`X-Frame-Options`, a.frameOptions)
 		w.Header().Set(`X-Content-Type-Options`, `nosniff`)
 		w.Header().Set(`X-Xss-Protection`, `1; mode=block`)
 		w.Header().Set(`X-Permitted-Cross-Domain-Policies`, `none`)
 
-		if hsts {
+		if a.hsts {
 			w.Header().Set(`Strict-Transport-Security`, `max-age=10886400`)
 		}
 

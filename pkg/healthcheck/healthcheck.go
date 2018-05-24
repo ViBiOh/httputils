@@ -6,7 +6,8 @@ import (
 
 // App stores informations
 type App struct {
-	closed bool
+	handler http.Handler
+	closed  bool
 }
 
 // NewApp creates new App for given handler
@@ -17,20 +18,26 @@ func NewApp() *App {
 }
 
 // Handler for Health request. Should be use with net/http
-func (a *App) Handler(next http.Handler) http.Handler {
-	handler := next
-	if handler == nil {
-		handler = Basic()
-	}
-
+func (a *App) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+
 		if a.closed {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
 
-		handler.ServeHTTP(w, r)
+		if a.handler != nil {
+			a.handler.ServeHTTP(w, r)
+		}
 	})
+}
+
+// NextHealthcheck define sub healthcheck
+func (a *App) NextHealthcheck(next http.Handler) {
+	a.handler = next
 }
 
 // Close set all healthchecks to be unavailable

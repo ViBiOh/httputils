@@ -9,7 +9,27 @@ import (
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
-// Flags add flags for given prefix
+// App stores informations
+type App struct {
+	origin      string
+	headers     string
+	methods     string
+	exposes     string
+	credentials string
+}
+
+// NewApp creates new App from Flags' config
+func NewApp(config map[string]interface{}) *App {
+	return &App{
+		origin:      *(config[`origin`].(*string)),
+		headers:     *(config[`headers`].(*string)),
+		methods:     *(config[`methods`].(*string)),
+		exposes:     *(config[`exposes`].(*string)),
+		credentials: strconv.FormatBool(*(config[`credentials`].(*bool))),
+	}
+}
+
+// Flags adds flags for given prefix
 func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
 		`origin`:      flag.String(tools.ToCamel(fmt.Sprintf(`%sOrigin`, prefix)), `*`, `[cors] Access-Control-Allow-Origin`),
@@ -21,19 +41,13 @@ func Flags(prefix string) map[string]interface{} {
 }
 
 // Handler for net/http package allowing cors header
-func Handler(config map[string]interface{}, next http.Handler) http.Handler {
-	origin := *(config[`origin`].(*string))
-	headers := *(config[`headers`].(*string))
-	methods := *(config[`methods`].(*string))
-	exposes := *(config[`exposes`].(*string))
-	credentials := strconv.FormatBool(*(config[`credentials`].(*bool)))
-
+func (a App) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set(`Access-Control-Allow-Origin`, origin)
-		w.Header().Set(`Access-Control-Allow-Headers`, headers)
-		w.Header().Set(`Access-Control-Allow-Methods`, methods)
-		w.Header().Set(`Access-Control-Expose-Headers`, exposes)
-		w.Header().Set(`Access-Control-Allow-Credentials`, credentials)
+		w.Header().Set(`Access-Control-Allow-Origin`, a.origin)
+		w.Header().Set(`Access-Control-Allow-Headers`, a.headers)
+		w.Header().Set(`Access-Control-Allow-Methods`, a.methods)
+		w.Header().Set(`Access-Control-Expose-Headers`, a.exposes)
+		w.Header().Set(`Access-Control-Allow-Credentials`, a.credentials)
 
 		next.ServeHTTP(w, r)
 	})

@@ -15,6 +15,9 @@ import (
 
 const healthcheckDuration = 35
 
+// Middleware describe a middleware in the net/http package form
+type Middleware func(http.Handler) http.Handler
+
 func httpGracefulClose(server *http.Server) error {
 	if server == nil {
 		return nil
@@ -69,4 +72,15 @@ func GracefulClose(server *http.Server, serveError <-chan error, callback func()
 	}
 
 	os.Exit(gracefulClose(server, callback, healthcheckApp))
+}
+
+// ChainMiddlewares chains middlewares call for easy wrapping
+func ChainMiddlewares(handler http.Handler, middlewares []Middleware) http.Handler {
+	result := handler
+
+	for i := len(middlewares) - 1; i >= 0; i-- {
+		result = middlewares[i](result)
+	}
+
+	return result
 }

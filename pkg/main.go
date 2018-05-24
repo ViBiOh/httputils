@@ -11,29 +11,24 @@ import (
 	"github.com/ViBiOh/httputils/pkg/healthcheck"
 	"github.com/ViBiOh/httputils/pkg/server"
 	"github.com/ViBiOh/httputils/pkg/tools"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // App stores informations
 type App struct {
-	handlerFn       func() http.Handler
-	gracefulCloseFn func() error
-	healthcheckApp  *healthcheck.App
-	port            *int
-	tls             *bool
-	alcotestConfig  map[string]*string
-	certConfig      map[string]*string
+	port           *int
+	tls            *bool
+	alcotestConfig map[string]*string
+	certConfig     map[string]*string
 }
 
 // NewApp creates new App from Flags' config
-func NewApp(config map[string]interface{}, getHandler func() http.Handler, onGracefulClose func() error, healthcheckApp *healthcheck.App) *App {
+func NewApp(config map[string]interface{}) *App {
 	return &App{
-		handlerFn:       getHandler,
-		gracefulCloseFn: onGracefulClose,
-		healthcheckApp:  healthcheckApp,
-		port:            config[`port`].(*int),
-		tls:             config[`tls`].(*bool),
-		alcotestConfig:  config[`alcotestConfig`].(map[string]*string),
-		certConfig:      config[`certConfig`].(map[string]*string),
+		port:           config[`port`].(*int),
+		tls:            config[`tls`].(*bool),
+		alcotestConfig: config[`alcotestConfig`].(map[string]*string),
+		certConfig:     config[`certConfig`].(map[string]*string),
 	}
 }
 
@@ -48,14 +43,22 @@ func Flags(prefix string) map[string]interface{} {
 }
 
 // ListenAndServe starts server
-func (a App) ListenAndServe() {
-	flag.Parse()
-
-	alcotest.DoAndExit(a.alcotestConfig)
+func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, healthcheckApp *healthcheck.App) {
+	healthcheckHandler := healthcheckApp.Handler()
+	prometheusHandler := promhttp.Handler()
 
 	httpServer := &http.Server{
-		Addr:    fmt.Sprintf(`:%d`, *a.port),
-		Handler: a.handlerFn(),
+		Addr: fmt.Sprintf(`:%d`, *a.port),
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case `/health`:
+				healthcheckHandler.ServeHTTP(w, r)
+			case `/metrics`:
+				prometheusHandler.ServeHTTP(w, r)
+			default:
+				handler.ServeHTTP(w, r)
+			}
+		}),
 	}
 
 	log.Printf(`Starting HTTP server on port %s`, httpServer.Addr)
@@ -72,5 +75,5 @@ func (a App) ListenAndServe() {
 		}
 	}()
 
-	server.GracefulClose(httpServer, serveError, a.gracefulCloseFn, a.healthcheckApp)
+	server.GracefulClose(httpServer, serveError, onGracefulClose, healthcheckApp)
 }
