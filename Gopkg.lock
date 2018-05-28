@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/NYTimes/gziphandler"
+  packages = ["."]
+  revision = "2600fb119af974220d3916a5916d6e31176aac1b"
+  version = "v1.0.1"
+
+[[projects]]
   branch = "master"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
@@ -31,8 +37,8 @@
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
-  revision = "3247c84500bff8d9fb6d579d800f20b3e091582c"
-  version = "v1.0.0"
+  revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
+  version = "v1.0.1"
 
 [[projects]]
   branch = "master"
@@ -151,11 +157,11 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "9ef9f5bb98a1fdc41f8cf6c250a4404b4085e389"
+  revision = "dfa909b99c79129e1100513e5cd36307665e5723"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "818519c6d8fa6611d19fb12ce2ea9ef8701c4e28c69f93d096fa55a2971b4054"
+  inputs-digest = "d6c7bb9c494d9545a58f03acb367fd22cfdb35be794f91a8852e1b322acb6457"
   solver-name = "gps-cdcl"
   solver-version = 1
