@@ -96,5 +96,10 @@ func (a App) Close() {
 
 // Handler for net/http
 func (a App) Handler(next http.Handler) http.Handler {
-	return nethttp.Middleware(opentracing.GlobalTracer(), next)
+	return nethttp.Middleware(opentracing.GlobalTracer(), next, nethttp.MWSpanObserver(func(span opentracing.Span, r *http.Request) {
+		span.SetTag(`http.remote_addr`, r.RemoteAddr)
+		span.SetTag(`headers.real_ip`, r.Header.Get(`X-Real-Ip`))
+		span.SetTag(`headers.forwarded_for`, r.Header.Get(`X-Forwarded-For`))
+		span.SetTag(`headers.user_agent`, r.Header.Get(`User-Agent`))
+	}))
 }
