@@ -37,7 +37,7 @@ func Request(r *http.Request) string {
 	}
 
 	var outputPattern bytes.Buffer
-	outputPattern.WriteString("\n%s %s\n")
+	outputPattern.WriteString("%s %s\n")
 	outputData := []interface{}{
 		r.Method,
 		r.URL.Path,
