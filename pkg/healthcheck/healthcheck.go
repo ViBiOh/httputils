@@ -36,11 +36,15 @@ func (a *App) Handler() http.Handler {
 }
 
 // NextHealthcheck define sub healthcheck
-func (a *App) NextHealthcheck(next http.Handler) {
+func (a *App) NextHealthcheck(next http.Handler) *App {
 	a.handler = next
+
+	return a
 }
 
 // Close set all healthchecks to be unavailable
-func (a *App) Close() {
+func (a *App) Close() *App {
 	a.closed = true
+
+	return a
 }
