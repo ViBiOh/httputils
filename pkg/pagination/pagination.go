@@ -12,8 +12,8 @@ import (
 // ErrMaxPageSizeExceeded occurs when pagesize read is above defined limit
 var ErrMaxPageSizeExceeded = errors.New(`Maximum page size exceeded`)
 
-// ParsePaginationParams parse common pagination param from request
-func ParsePaginationParams(r *http.Request, defaultPageSize, maxPageSize uint) (page, pageSize uint, sortKey string, sortAsc bool, err error) {
+// ParseParams parse common pagination param from request
+func ParseParams(r *http.Request, defaultPage, defaultPageSize, maxPageSize uint) (page, pageSize uint, sortKey string, sortAsc bool, err error) {
 	var parsed uint64
 	var parsedUint uint
 	var params url.Values
@@ -23,7 +23,7 @@ func ParsePaginationParams(r *http.Request, defaultPageSize, maxPageSize uint) (
 		return
 	}
 
-	page = 1
+	page = defaultPage
 	rawPage := strings.TrimSpace(params.Get(`page`))
 	if rawPage != `` {
 		parsed, err = strconv.ParseUint(rawPage, 10, 32)
