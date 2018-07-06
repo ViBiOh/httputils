@@ -18,12 +18,13 @@ import (
 // ForwardedForHeader that proxy uses to fill
 const ForwardedForHeader = `X-Forwarded-For`
 
-var httpClient = http.Client{
+var defaultHTTPClient = http.Client{
 	Timeout:   30 * time.Second,
 	Transport: &nethttp.Transport{},
 }
 
-func doAndRead(ctx context.Context, request *http.Request) ([]byte, error) {
+// DoAndReadWithClient execute read and return given request on given client
+func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.Request) ([]byte, error) {
 	if ctx != nil {
 		var netTracer *nethttp.Tracer
 
@@ -32,7 +33,7 @@ func doAndRead(ctx context.Context, request *http.Request) ([]byte, error) {
 		defer netTracer.Finish()
 	}
 
-	response, err := httpClient.Do(request)
+	response, err := client.Do(request)
 	if err != nil {
 		if response != nil {
 			if closeErr := response.Body.Close(); closeErr != nil {
@@ -52,6 +53,10 @@ func doAndRead(ctx context.Context, request *http.Request) ([]byte, error) {
 	}
 
 	return responseBody, nil
+}
+
+func doAndRead(ctx context.Context, request *http.Request) ([]byte, error) {
+	return DoAndReadWithClient(ctx, defaultHTTPClient, request)
 }
 
 // GetBasicAuth generates Basic Auth for given username and password
