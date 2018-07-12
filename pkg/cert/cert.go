@@ -23,9 +23,10 @@ import (
 // Flags add flags for given prefix
 func Flags(prefix string) map[string]*string {
 	return map[string]*string{
-		`cert`:  flag.String(tools.ToCamel(fmt.Sprintf(`%sCert`, prefix)), ``, `[tls] PEM Certificate file`),
-		`key`:   flag.String(tools.ToCamel(fmt.Sprintf(`%sKey`, prefix)), ``, `[tls] PEM Key file`),
-		`hosts`: flag.String(tools.ToCamel(fmt.Sprintf(`%sHosts`, prefix)), `localhost`, `[tls] Self-signed certificate hosts, comma separated`),
+		`cert`:         flag.String(tools.ToCamel(fmt.Sprintf(`%sCert`, prefix)), ``, `[tls] PEM Certificate file`),
+		`key`:          flag.String(tools.ToCamel(fmt.Sprintf(`%sKey`, prefix)), ``, `[tls] PEM Key file`),
+		`organization`: flag.String(tools.ToCamel(fmt.Sprintf(`%sOrganization`, prefix)), `ViBiOh`, `[tls] Self-signed certificate organization`),
+		`hosts`:        flag.String(tools.ToCamel(fmt.Sprintf(`%sHosts`, prefix)), `localhost`, `[tls] Self-signed certificate hosts, comma separated`),
 	}
 }
 
@@ -69,10 +70,10 @@ func strSliceContains(slice []string, search string) bool {
 func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
 	cert := strings.TrimSpace(*config[`cert`])
 	if cert != `` {
-		return server.ListenAndServeTLS(cert, *config[`key`])
+		return server.ListenAndServeTLS(cert, strings.TrimSpace(*config[`key`]))
 	}
 
-	certPEMBlock, keyPEMBlock, err := GenerateCert(`ViBiOh`, strings.Split(*config[`hosts`], `,`))
+	certPEMBlock, keyPEMBlock, err := GenerateCert(strings.TrimSpace(*config[`organization`]), strings.Split(strings.TrimSpace(*config[`hosts`]), `,`))
 	if err != nil {
 		return fmt.Errorf(`Error while generating certificate: %v`, err)
 	}
