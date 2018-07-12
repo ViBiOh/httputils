@@ -25,17 +25,21 @@ var httpClient = http.Client{
 func Flags(prefix string) map[string]*string {
 	return map[string]*string{
 		`url`: flag.String(tools.ToCamel(fmt.Sprintf(`%sUrl`, prefix)), ``, `[health] URL to check`),
+		`userAgent`: flag.String(tools.ToCamel(fmt.Sprintf(`%sUserAgent`, prefix)), `Golang alcotest`, `[health] User-Agent used`),
 	}
 }
 
 // GetStatusCode return status code of a GET on given url
-func GetStatusCode(url string) (status int, err error) {
+func GetStatusCode(url, userAgent string) (status int, err error) {
 	r, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return 0, err
+		err = fmt.Errorf(`Error while creating request: %v`, err)
+		return
 	}
 
-	r.Header.Set(`User-Agent`, `Golang alcotest`)
+	if userAgent != `` {
+		r.Header.Set(`User-Agent`, userAgent)
+	}
 
 	var response *http.Response
 
@@ -54,10 +58,10 @@ func GetStatusCode(url string) (status int, err error) {
 }
 
 // Do test status code of given URL
-func Do(url string) error {
-	statusCode, err := GetStatusCode(url)
+func Do(url, userAgent string) error {
+	statusCode, err := GetStatusCode(url, userAgent)
 	if err != nil {
-		return fmt.Errorf(`Unable to blow in ballon: %v`, err)
+		return fmt.Errorf(`Unable to blow in balloon: %v`, err)
 	}
 
 	if statusCode != http.StatusOK {
@@ -70,9 +74,10 @@ func Do(url string) error {
 // DoAndExit test status code of given URL (if present) and exit program with correct status
 func DoAndExit(config map[string]*string) {
 	url := strings.TrimSpace(*config[`url`])
+	userAgent := strings.TrimSpace(*config[`userAgent`])
 
 	if url != `` {
-		if err := Do(url); err != nil {
+		if err := Do(url, userAgent); err != nil {
 			fmt.Print(err)
 			os.Exit(1)
 		} else {
