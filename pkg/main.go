@@ -34,7 +34,7 @@ func Flags(prefix string) map[string]interface{} {
 	return map[string]interface{}{
 		`port`:       flag.Int(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), 1080, `Listen port`),
 		`tls`:        flag.Bool(tools.ToCamel(fmt.Sprintf(`%sTls`, prefix)), true, `Serve TLS content`),
-		`certConfig`: cert.Flags(`tls`),
+		`certConfig`: cert.Flags(tools.ToCamel(fmt.Sprintf(`%sTls`, prefix))),
 	}
 }
 
