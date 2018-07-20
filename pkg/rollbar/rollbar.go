@@ -29,6 +29,9 @@ func NewApp(config map[string]*string) *App {
 	rollbar.SetEnvironment(strings.TrimSpace(*config[`env`]))
 	rollbar.SetServerRoot(strings.TrimSpace(*config[`root`]))
 
+	log.Print(fmt.Sprintf(`[rollbar] Configuration for %s`, rollbar.Environment()))
+	rollbar.Info(`App started`)
+
 	return &App{
 		token: token,
 	}
@@ -58,6 +61,11 @@ func (a App) Handler(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	})
+}
+
+// Critical send critical error to rollbar
+func (a App) Critical(interfaces ...interface{}) {
+	rollbar.Critical(interfaces)
 }
 
 // Flush wait for empty queues of message
