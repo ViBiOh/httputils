@@ -2,115 +2,152 @@
 
 
 [[projects]]
+  digest = "1:0803645e1f57fb5271a6edc7570b9ea59bac2e5de67957075a43f3d74c8dbd97"
   name = "github.com/NYTimes/gziphandler"
   packages = ["."]
+  pruneopts = "UT"
   revision = "2600fb119af974220d3916a5916d6e31176aac1b"
   version = "v1.0.1"
 
 [[projects]]
   branch = "master"
+  digest = "1:d6afaeed1502aa28e80a4ed0981d570ad91b2579193404256ce672ed0a609e0d"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
+  pruneopts = "UT"
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
   branch = "master"
+  digest = "1:4c4c33075b704791d6a7f09dfb55c66769e8a1dc6adf87026292d274fe8ad113"
   name = "github.com/codahale/hdrhistogram"
   packages = ["."]
+  pruneopts = "UT"
   revision = "3a0bb77429bd3a61596f5e8a3172445844342120"
 
 [[projects]]
+  digest = "1:15042ad3498153684d09f393bbaec6b216c8eec6d61f63dff711de7d64ed8861"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
+  pruneopts = "UT"
   revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
   version = "v1.1.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:6866fc4160284073ee63525fc9e2cdef043a26892574340f71b4add734232853"
   name = "github.com/lib/pq"
   packages = [
     ".",
-    "oid"
+    "oid",
   ]
+  pruneopts = "UT"
   revision = "90697d60dd844d5ef6ff15135d0203f65d2f53b8"
 
 [[projects]]
+  digest = "1:ff5ebae34cfbf047d505ee150de27e60570e8c394b3b8fdbb720ff6ac71985fc"
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
+  pruneopts = "UT"
   revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
   version = "v1.0.1"
 
 [[projects]]
   branch = "master"
+  digest = "1:264f2848854a41b03a6525ea6c1e858762caa34964a63dde898dc4bba339e50f"
   name = "github.com/opentracing-contrib/go-stdlib"
   packages = ["nethttp"]
-  revision = "36723135187404d2f4002f4f189938565e64cc5c"
+  pruneopts = "UT"
+  revision = "07a764486eb10927e8cf38337918a40d430524ee"
 
 [[projects]]
+  digest = "1:27af6024faa3c28426a698b8c653be0fd908bc96e25b7d76f2192eb342427db6"
   name = "github.com/opentracing/opentracing-go"
   packages = [
     ".",
     "ext",
-    "log"
+    "log",
   ]
+  pruneopts = "UT"
   revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
   version = "v1.0.2"
 
 [[projects]]
+  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
+  pruneopts = "UT"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:1bd84ab43883f0ef0129fb753f9fdabba3903eff922816aaaba8e6204fb3cde9"
   name = "github.com/prometheus/client_golang"
   packages = [
     "prometheus",
-    "prometheus/promhttp"
+    "prometheus/promhttp",
   ]
+  pruneopts = "UT"
   revision = "c5b7fccd204277076155f10851dad72b76a49317"
   version = "v0.8.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:0f37e09b3e92aaeda5991581311f8dbf38944b36a3edec61cc2d1991f527554a"
   name = "github.com/prometheus/client_model"
   packages = ["go"]
-  revision = "99fa1f4be8e564e8a6b613da7fa6f46c9edafc6c"
+  pruneopts = "UT"
+  revision = "5c3871d89910bfb32f5fcab2aa4b9ec68e65a99f"
 
 [[projects]]
   branch = "master"
+  digest = "1:4d291d51042ed9de40eef61a3c1b56e969d6e0f8aa5fd3da5e958ec66bee68e4"
   name = "github.com/prometheus/common"
   packages = [
     "expfmt",
     "internal/bitbucket.org/ww/goautoneg",
-    "model"
+    "model",
   ]
+  pruneopts = "UT"
   revision = "7600349dcfe1abd18d72d3a1770870d9800a7801"
 
 [[projects]]
   branch = "master"
+  digest = "1:55d7449d6987dabf272b4e81b2f9c449f05b17415c939b68d1e82f57e3374b7f"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
     "internal/util",
     "nfs",
-    "xfs"
+    "xfs",
   ]
-  revision = "8b1c2da0d56deffdbb9e48d4414b4e674bd8083e"
+  pruneopts = "UT"
+  revision = "ae68e2d4c00fed4943b5f6698d504a5fe083da8a"
 
 [[projects]]
+  digest = "1:f9141ca80ae9d81b7b8a624848750d6ac73bf942de994086bdcf6e373349be3f"
+  name = "github.com/rollbar/rollbar-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "dff56a4ed902ad4f385427794b1748ea2182e84c"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:aa424126c67d89cf1a7488f0134d59b33fa106b766470aca95dfe53a3ab549d8"
   name = "github.com/tdewolff/minify"
   packages = [
     ".",
     "css",
     "html",
     "js",
-    "xml"
+    "xml",
   ]
-  revision = "222672169d634c440a73abc47685074e1a9daa60"
-  version = "v2.3.4"
+  pruneopts = "UT"
+  revision = "8d72a4127ae33b755e95bffede9b92e396267ce2"
+  version = "v2.3.5"
 
 [[projects]]
+  digest = "1:ec790a8f24bb12096cb8c4acf1e2edf38e034282e2c74277dcc81b455df351e1"
   name = "github.com/tdewolff/parse"
   packages = [
     ".",
@@ -119,12 +156,14 @@
     "html",
     "js",
     "strconv",
-    "xml"
+    "xml",
   ]
-  revision = "639f6272aec6b52094db77b9ec488214b0b4b1a1"
-  version = "v2.3.2"
+  pruneopts = "UT"
+  revision = "d739d6fccb0971177e06352fea02d3552625efb1"
+  version = "v2.3.3"
 
 [[projects]]
+  digest = "1:7627e9377eb0551bc8c6e2b0c54abbbf67e9afb675f45ea916bc63d8acb1d690"
   name = "github.com/uber/jaeger-client-go"
   packages = [
     ".",
@@ -142,26 +181,46 @@
     "thrift-gen/jaeger",
     "thrift-gen/sampling",
     "thrift-gen/zipkincore",
-    "utils"
+    "utils",
   ]
+  pruneopts = "UT"
   revision = "b043381d944715b469fd6b37addfd30145ca1758"
   version = "v2.14.0"
 
 [[projects]]
+  digest = "1:0f09db8429e19d57c8346ad76fbbc679341fa86073d3b8fb5ac919f0357d8f4c"
   name = "github.com/uber/jaeger-lib"
   packages = ["metrics"]
+  pruneopts = "UT"
   revision = "ed3a127ec5fef7ae9ea95b01b542c47fbd999ce5"
   version = "v1.5.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:76ee51c3f468493aff39dbacc401e8831fbb765104cbf613b89bef01cf4bad70"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "dfa909b99c79129e1100513e5cd36307665e5723"
+  pruneopts = "UT"
+  revision = "a680a1efc54dd51c040b3b5ce4939ea3cf2ea0d1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d6c7bb9c494d9545a58f03acb367fd22cfdb35be794f91a8852e1b322acb6457"
+  input-imports = [
+    "github.com/NYTimes/gziphandler",
+    "github.com/lib/pq",
+    "github.com/opentracing-contrib/go-stdlib/nethttp",
+    "github.com/opentracing/opentracing-go",
+    "github.com/prometheus/client_golang/prometheus/promhttp",
+    "github.com/rollbar/rollbar-go",
+    "github.com/tdewolff/minify",
+    "github.com/tdewolff/minify/css",
+    "github.com/tdewolff/minify/html",
+    "github.com/tdewolff/minify/js",
+    "github.com/tdewolff/minify/xml",
+    "github.com/uber/jaeger-client-go",
+    "github.com/uber/jaeger-client-go/config",
+    "github.com/uber/jaeger-client-go/log",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

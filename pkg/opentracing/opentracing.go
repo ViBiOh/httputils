@@ -83,6 +83,24 @@ func Flags(prefix string) map[string]*string {
 	}
 }
 
+func (a App) check() bool {
+	return a.closer != nil
+}
+
+// Handler for net/http
+func (a App) Handler(next http.Handler) http.Handler {
+	if !a.check() {
+		return next
+	}
+
+	return nethttp.Middleware(opentracing.GlobalTracer(), next, nethttp.MWSpanObserver(func(span opentracing.Span, r *http.Request) {
+		span.SetTag(`http.remote_addr`, r.RemoteAddr)
+		span.SetTag(`headers.real_ip`, r.Header.Get(`X-Real-Ip`))
+		span.SetTag(`headers.forwarded_for`, r.Header.Get(`X-Forwarded-For`))
+		span.SetTag(`headers.user_agent`, r.Header.Get(`User-Agent`))
+	}))
+}
+
 // Close tracer
 func (a App) Close() {
 	if a.closer == nil {
@@ -92,14 +110,4 @@ func (a App) Close() {
 	if err := a.closer.Close(); err != nil {
 		log.Printf(`[opentracing] Error while closing tracer: %v`, err)
 	}
-}
-
-// Handler for net/http
-func (a App) Handler(next http.Handler) http.Handler {
-	return nethttp.Middleware(opentracing.GlobalTracer(), next, nethttp.MWSpanObserver(func(span opentracing.Span, r *http.Request) {
-		span.SetTag(`http.remote_addr`, r.RemoteAddr)
-		span.SetTag(`headers.real_ip`, r.Header.Get(`X-Real-Ip`))
-		span.SetTag(`headers.forwarded_for`, r.Header.Get(`X-Forwarded-For`))
-		span.SetTag(`headers.user_agent`, r.Header.Get(`User-Agent`))
-	}))
 }
