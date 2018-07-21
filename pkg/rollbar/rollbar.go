@@ -17,8 +17,8 @@ type App struct {
 }
 
 // NewApp creates new App from Flags' config
-func NewApp(config map[string]*string) *App {
-	token := strings.TrimSpace(*config[`token`])
+func NewApp(config map[string]interface{}) *App {
+	token := strings.TrimSpace(*(config[`token`].(*string)))
 
 	if token == `` {
 		log.Print(`[rollbar] No token provided`)
@@ -26,11 +26,13 @@ func NewApp(config map[string]*string) *App {
 	}
 
 	rollbar.SetToken(token)
-	rollbar.SetEnvironment(strings.TrimSpace(*config[`env`]))
-	rollbar.SetServerRoot(strings.TrimSpace(*config[`root`]))
+	rollbar.SetEnvironment(strings.TrimSpace(*(config[`env`].(*string))))
+	rollbar.SetServerRoot(strings.TrimSpace(*(config[`root`].(*string))))
 
 	log.Print(fmt.Sprintf(`[rollbar] Configuration for %s`, rollbar.Environment()))
-	rollbar.Info(`App started`)
+	if *(config[`welcome`].(*bool)) {
+		rollbar.Info(`App started`)
+	}
 
 	return &App{
 		token: token,
@@ -38,11 +40,12 @@ func NewApp(config map[string]*string) *App {
 }
 
 // Flags adds flags for given prefix
-func Flags(prefix string) map[string]*string {
-	return map[string]*string{
-		`token`: flag.String(tools.ToCamel(fmt.Sprintf(`%sToken`, prefix)), ``, `[rollbar] Token`),
-		`env`:   flag.String(tools.ToCamel(fmt.Sprintf(`%sEnv`, prefix)), `prod`, `[rollbar] Environment`),
-		`root`:  flag.String(tools.ToCamel(fmt.Sprintf(`%sServerRoot`, prefix)), ``, `[rollbar] Server Root`),
+func Flags(prefix string) map[string]interface{} {
+	return map[string]interface{}{
+		`token`:   flag.String(tools.ToCamel(fmt.Sprintf(`%sToken`, prefix)), ``, `[rollbar] Token`),
+		`env`:     flag.String(tools.ToCamel(fmt.Sprintf(`%sEnv`, prefix)), `prod`, `[rollbar] Environment`),
+		`root`:    flag.String(tools.ToCamel(fmt.Sprintf(`%sServerRoot`, prefix)), ``, `[rollbar] Server Root`),
+		`welcome`: flag.Bool(tools.ToCamel(fmt.Sprintf(`%sWelcome`, prefix)), false, `[rollbar] Send welcome message on start`),
 	}
 }
 
