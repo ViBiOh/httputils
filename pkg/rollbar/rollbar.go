@@ -11,14 +11,14 @@ import (
 	rollbar "github.com/rollbar/rollbar-go"
 )
 
+var configured = false
+
 // App stores informations
-type App struct {
-	token string
-}
+type App struct{}
 
 // NewApp creates new App from Flags' config
-func NewApp(config map[string]interface{}) *App {
-	token := strings.TrimSpace(*(config[`token`].(*string)))
+func NewApp(config map[string]*string) *App {
+	token := strings.TrimSpace(*config[`token`])
 
 	if token == `` {
 		log.Print(`[rollbar] No token provided`)
@@ -26,31 +26,35 @@ func NewApp(config map[string]interface{}) *App {
 	}
 
 	rollbar.SetToken(token)
-	rollbar.SetEnvironment(strings.TrimSpace(*(config[`env`].(*string))))
-	rollbar.SetServerRoot(strings.TrimSpace(*(config[`root`].(*string))))
+	rollbar.SetEnvironment(strings.TrimSpace(*config[`env`]))
+	rollbar.SetServerRoot(strings.TrimSpace(*config[`root`]))
 
 	log.Print(fmt.Sprintf(`[rollbar] Configuration for %s`, rollbar.Environment()))
-	if *(config[`welcome`].(*bool)) {
-		rollbar.Info(`App started`)
-	}
+	rollbar.Info(fmt.Sprintf(`%s start`, rollbar.Environment()))
 
-	return &App{
-		token: token,
-	}
+	configured = true
+
+	return &App{}
 }
 
 // Flags adds flags for given prefix
-func Flags(prefix string) map[string]interface{} {
-	return map[string]interface{}{
-		`token`:   flag.String(tools.ToCamel(fmt.Sprintf(`%sToken`, prefix)), ``, `[rollbar] Token`),
-		`env`:     flag.String(tools.ToCamel(fmt.Sprintf(`%sEnv`, prefix)), `prod`, `[rollbar] Environment`),
-		`root`:    flag.String(tools.ToCamel(fmt.Sprintf(`%sServerRoot`, prefix)), ``, `[rollbar] Server Root`),
-		`welcome`: flag.Bool(tools.ToCamel(fmt.Sprintf(`%sWelcome`, prefix)), false, `[rollbar] Send welcome message on start`),
+func Flags(prefix string) map[string]*string {
+	return map[string]*string{
+		`token`: flag.String(tools.ToCamel(fmt.Sprintf(`%sToken`, prefix)), ``, `[rollbar] Token`),
+		`env`:   flag.String(tools.ToCamel(fmt.Sprintf(`%sEnv`, prefix)), `prod`, `[rollbar] Environment`),
+		`root`:  flag.String(tools.ToCamel(fmt.Sprintf(`%sServerRoot`, prefix)), ``, `[rollbar] Server Root`),
+	}
+}
+
+// Critical send critical error to rollbar
+func Critical(interfaces ...interface{}) {
+	if configured {
+		rollbar.Critical(interfaces)
 	}
 }
 
 func (a App) check() bool {
-	return a.token != ``
+	return configured
 }
 
 // Handler for net/http
@@ -64,11 +68,6 @@ func (a App) Handler(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	})
-}
-
-// Critical send critical error to rollbar
-func (a App) Critical(interfaces ...interface{}) {
-	rollbar.Critical(interfaces)
 }
 
 // Flush wait for empty queues of message

@@ -26,11 +26,6 @@ func Test_Flags(t *testing.T) {
 			`root`,
 			`*string`,
 		},
-		{
-			`should add bool welcome param to flags`,
-			`welcome`,
-			`*bool`,
-		},
 	}
 
 	for _, testCase := range cases {

@@ -3,6 +3,8 @@ package httperror
 import (
 	"log"
 	"net/http"
+
+	"github.com/ViBiOh/httputils/pkg/rollbar"
 )
 
 // BadRequest logs error and sets BadRequest status
@@ -30,5 +32,6 @@ func NotFound(w http.ResponseWriter) {
 // InternalServerError logs error and sets InternalServerError status
 func InternalServerError(w http.ResponseWriter, err error) {
 	log.Printf(`HTTP/500 %v`, err)
+	rollbar.Critical(`HTTP/500 %v`, err)
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
