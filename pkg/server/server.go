@@ -20,6 +20,11 @@ type Middleware interface {
 	Handler(http.Handler) http.Handler
 }
 
+// Flusher describe a struct with a Flush() method
+type Flusher interface {
+	Flush()
+}
+
 func httpGracefulClose(server *http.Server) error {
 	if server == nil {
 		return nil
@@ -37,7 +42,7 @@ func httpGracefulClose(server *http.Server) error {
 	return nil
 }
 
-func gracefulClose(server *http.Server, callback func() error, healthcheckApp *healthcheck.App) int {
+func gracefulClose(server *http.Server, callback func() error, healthcheckApp *healthcheck.App, flushers ...Flusher) int {
 	exitCode := 0
 
 	if healthcheckApp != nil {
@@ -58,11 +63,15 @@ func gracefulClose(server *http.Server, callback func() error, healthcheckApp *h
 		}
 	}
 
+	for _, flusher := range flushers {
+		flusher.Flush()
+	}
+
 	return exitCode
 }
 
 // GracefulClose gracefully close net/http server
-func GracefulClose(server *http.Server, serveError <-chan error, callback func() error, healthcheckApp *healthcheck.App) {
+func GracefulClose(server *http.Server, serveError <-chan error, callback func() error, healthcheckApp *healthcheck.App, flushers ...Flusher) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM)
 
@@ -73,7 +82,7 @@ func GracefulClose(server *http.Server, serveError <-chan error, callback func()
 		log.Print(`SIGTERM received`)
 	}
 
-	os.Exit(gracefulClose(server, callback, healthcheckApp))
+	os.Exit(gracefulClose(server, callback, healthcheckApp, flushers...))
 }
 
 // ChainMiddlewares chains middlewares call for easy wrapping

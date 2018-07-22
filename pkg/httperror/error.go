@@ -10,12 +10,14 @@ import (
 // BadRequest logs error and sets BadRequest status
 func BadRequest(w http.ResponseWriter, err error) {
 	log.Printf(`HTTP/400 %v`, err)
+	rollbar.Warning(`HTTP/400 %v`, err)
 	http.Error(w, err.Error(), http.StatusBadRequest)
 }
 
 // Unauthorized logs error and sets Unauthorized status
 func Unauthorized(w http.ResponseWriter, err error) {
 	log.Printf(`HTTP/401 %v`, err)
+	rollbar.Warning(`HTTP/401 %v`, err)
 	http.Error(w, err.Error(), http.StatusUnauthorized)
 }
 
@@ -32,6 +34,6 @@ func NotFound(w http.ResponseWriter) {
 // InternalServerError logs error and sets InternalServerError status
 func InternalServerError(w http.ResponseWriter, err error) {
 	log.Printf(`HTTP/500 %v`, err)
-	rollbar.Critical(`HTTP/500 %v`, err)
+	rollbar.Error(`HTTP/500 %v`, err)
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }

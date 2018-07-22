@@ -46,10 +46,17 @@ func Flags(prefix string) map[string]*string {
 	}
 }
 
-// Critical send critical error to rollbar
-func Critical(interfaces ...interface{}) {
+// Warning send warning message to rollbar
+func Warning(interfaces ...interface{}) {
 	if configured {
-		rollbar.Critical(interfaces)
+		rollbar.Warning(interfaces...)
+	}
+}
+
+// Error send error message to rollbar
+func Error(interfaces ...interface{}) {
+	if configured {
+		rollbar.Error(interfaces...)
 	}
 }
 

@@ -39,7 +39,7 @@ func Flags(prefix string) map[string]interface{} {
 }
 
 // ListenAndServe starts server
-func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, healthcheckApp *healthcheck.App) {
+func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, healthcheckApp *healthcheck.App, flushers ...server.Flusher) {
 	healthcheckHandler := healthcheckApp.Handler()
 	prometheusHandler := promhttp.Handler()
 
@@ -71,5 +71,5 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 		}
 	}()
 
-	server.GracefulClose(httpServer, serveError, onGracefulClose, healthcheckApp)
+	server.GracefulClose(httpServer, serveError, onGracefulClose, healthcheckApp, flushers...)
 }
