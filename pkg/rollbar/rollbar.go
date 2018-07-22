@@ -1,14 +1,21 @@
 package rollbar
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 
+	"github.com/ViBiOh/httputils/pkg/request"
 	"github.com/ViBiOh/httputils/pkg/tools"
 	rollbar "github.com/rollbar/rollbar-go"
+)
+
+const (
+	deployEndpoint = `https://api.rollbar.com/api/1/deploy/`
 )
 
 var configured = false
@@ -58,6 +65,21 @@ func Error(interfaces ...interface{}) {
 	if configured {
 		rollbar.Error(interfaces...)
 	}
+}
+
+// Deploy send deploy informations to rollbar
+func Deploy(ctx context.Context, token, environment, revision, user string) error {
+	payload, err := request.PostForm(ctx, deployEndpoint, nil, url.Values{
+		`access_token`:   {token},
+		`environment`:    {environment},
+		`revision`:       {revision},
+		`local_username`: {user},
+	})
+
+	if err != nil {
+		return fmt.Errorf(`Error while posting form: %v. %s`, err, payload)
+	}
+	return nil
 }
 
 func (a App) check() bool {

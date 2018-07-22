@@ -9,14 +9,20 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing "github.com/opentracing/opentracing-go"
 )
 
-// ForwardedForHeader that proxy uses to fill
-const ForwardedForHeader = `X-Forwarded-For`
+const (
+	// ForwardedForHeader that proxy uses to fill
+	ForwardedForHeader = `X-Forwarded-For`
+
+	// ContentTypeHeader value
+	ContentTypeHeader = `Content-Type`
+)
 
 var defaultHTTPClient = http.Client{
 	Timeout:   30 * time.Second,
@@ -93,7 +99,7 @@ func DoJSON(ctx context.Context, url string, body interface{}, headers http.Head
 	if headers == nil {
 		headers = http.Header{}
 	}
-	headers.Set(`Content-Type`, `application/json`)
+	headers.Set(ContentTypeHeader, `application/json`)
 
 	return Do(ctx, url, jsonBody, headers, method)
 }
@@ -101,6 +107,16 @@ func DoJSON(ctx context.Context, url string, body interface{}, headers http.Head
 // Get send GET request to URL with optional headers supplied
 func Get(ctx context.Context, url string, headers http.Header) ([]byte, error) {
 	return Do(ctx, url, nil, headers, http.MethodGet)
+}
+
+// PostForm send form via POST with urlencoded data
+func PostForm(ctx context.Context, url string, headers http.Header, data url.Values) ([]byte, error) {
+	if headers == nil {
+		headers = http.Header{}
+	}
+	headers.Set(ContentTypeHeader, `application/x-www-form-urlencoded`)
+
+	return Do(ctx, url, []byte(data.Encode()), headers, http.MethodPost)
 }
 
 // SetIP set remote IP

@@ -194,7 +194,7 @@ func Test_DoJSON(t *testing.T) {
 			nil,
 			testServer.URL,
 			&postStruct{},
-			http.Header{`Authorization`: []string{`admin:password`}},
+			http.Header{`Authorization`: {`admin:password`}},
 			`Hello, test`,
 			nil,
 		},
