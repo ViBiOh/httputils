@@ -67,6 +67,22 @@ func Error(interfaces ...interface{}) {
 	}
 }
 
+// LogWarning send warning to rollbar and to standard log
+func LogWarning(format string, a ...interface{}) {
+	content := fmt.Sprintf(format, a...)
+
+	log.Print(content)
+	Warning(content);
+}
+
+// LogError send error to rollbar and to standard log
+func LogError(format string, a ...interface{}) {
+	err := fmt.Errorf(format, a...)
+
+	log.Print(err)
+	Error(err);
+}
+
 // Deploy send deploy informations to rollbar
 func Deploy(ctx context.Context, token, environment, revision, user string) error {
 	payload, err := request.PostForm(ctx, deployEndpoint, nil, url.Values{
