@@ -13,6 +13,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile | log.LUTC)
+}
+
 // App stores informations
 type App struct {
 	port       *int

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ViBiOh/httputils/pkg/server"
 	"github.com/ViBiOh/httputils/pkg/tools"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -16,6 +17,8 @@ import (
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	jaegerlog "github.com/uber/jaeger-client-go/log"
 )
+
+var _ server.Middleware = &App{}
 
 // App stores informations
 type App struct {

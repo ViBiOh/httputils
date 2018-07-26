@@ -5,10 +5,15 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ViBiOh/httputils/pkg/server"
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
-const cacheControlHeader = `Cache-Control`
+const (
+	cacheControlHeader = `Cache-Control`
+)
+
+var _ server.Middleware = &App{}
 
 type middleware struct {
 	http.ResponseWriter

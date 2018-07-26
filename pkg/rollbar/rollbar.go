@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ViBiOh/httputils/pkg/request"
+	"github.com/ViBiOh/httputils/pkg/server"
 	"github.com/ViBiOh/httputils/pkg/tools"
 	rollbar "github.com/rollbar/rollbar-go"
 )
@@ -17,6 +18,9 @@ import (
 const (
 	deployEndpoint = `https://api.rollbar.com/api/1/deploy/`
 )
+
+var _ server.Middleware = &App{}
+var _ server.Flusher = &App{}
 
 var configured = false
 
@@ -72,7 +76,7 @@ func LogWarning(format string, a ...interface{}) {
 	content := fmt.Sprintf(format, a...)
 
 	log.Print(content)
-	Warning(content);
+	Warning(content)
 }
 
 // LogError send error to rollbar and to standard log
@@ -80,7 +84,7 @@ func LogError(format string, a ...interface{}) {
 	err := fmt.Errorf(format, a...)
 
 	log.Print(err)
-	Error(err);
+	Error(err)
 }
 
 // Deploy send deploy informations to rollbar
