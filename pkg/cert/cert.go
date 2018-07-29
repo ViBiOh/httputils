@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ViBiOh/httputils/pkg/rollbar"
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
@@ -46,10 +47,10 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	}
 
 	if err = tc.SetKeepAlive(true); err != nil {
-		log.Printf(`Error while setting keep alive: %v`, err)
+		rollbar.LogError(`Error while setting keep alive: %v`, err)
 	}
 	if err := tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
-		log.Printf(`Error while setting keep alive period: %v`, err)
+		rollbar.LogError(`Error while setting keep alive period: %v`, err)
 	}
 
 	return tc, nil

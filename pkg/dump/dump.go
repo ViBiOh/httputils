@@ -3,11 +3,11 @@ package dump
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/ViBiOh/httputils/pkg/request"
+	"github.com/ViBiOh/httputils/pkg/rollbar"
 )
 
 // Request dump request
@@ -33,7 +33,7 @@ func Request(r *http.Request) string {
 
 	body, err := request.ReadBody(r.Body)
 	if err != nil {
-		log.Printf(`Error while reading body: %v`, err)
+		rollbar.LogError(`Error while reading body: %v`, err)
 	}
 
 	var outputPattern bytes.Buffer

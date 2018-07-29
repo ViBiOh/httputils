@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/ViBiOh/httputils/pkg/model"
 	"github.com/ViBiOh/httputils/pkg/request"
-	"github.com/ViBiOh/httputils/pkg/server"
 	"github.com/ViBiOh/httputils/pkg/tools"
 	rollbar "github.com/rollbar/rollbar-go"
 )
@@ -19,8 +19,8 @@ const (
 	deployEndpoint = `https://api.rollbar.com/api/1/deploy/`
 )
 
-var _ server.Middleware = &App{}
-var _ server.Flusher = &App{}
+var _ model.Middleware = &App{}
+var _ model.Flusher = &App{}
 
 var configured = false
 
@@ -32,7 +32,7 @@ func NewApp(config map[string]*string) *App {
 	token := strings.TrimSpace(*config[`token`])
 
 	if token == `` {
-		log.Print(`[rollbar] No token provided`)
+		LogWarning(`[rollbar] No token provided`)
 		return &App{}
 	}
 

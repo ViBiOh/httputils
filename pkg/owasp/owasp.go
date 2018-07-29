@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ViBiOh/httputils/pkg/server"
+	"github.com/ViBiOh/httputils/pkg/model"
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
@@ -13,7 +13,7 @@ const (
 	cacheControlHeader = `Cache-Control`
 )
 
-var _ server.Middleware = &App{}
+var _ model.Middleware = &App{}
 
 type middleware struct {
 	http.ResponseWriter

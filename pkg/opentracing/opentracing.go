@@ -4,12 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/ViBiOh/httputils/pkg/server"
+	"github.com/ViBiOh/httputils/pkg/model"
+	"github.com/ViBiOh/httputils/pkg/rollbar"
 	"github.com/ViBiOh/httputils/pkg/tools"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -18,7 +18,7 @@ import (
 	jaegerlog "github.com/uber/jaeger-client-go/log"
 )
 
-var _ server.Middleware = &App{}
+var _ model.Middleware = &App{}
 
 // App stores informations
 type App struct {
@@ -53,17 +53,17 @@ func initJaeger(serviceName string, agentHostPort string) (opentracing.Tracer, i
 func NewApp(config map[string]*string) *App {
 	serviceName := strings.TrimSpace(*config[`name`])
 	if serviceName == `` {
-		log.Print(`[opentracing] No service name provided`)
+		rollbar.LogWarning(`[opentracing] No service name provided`)
 		return &App{}
 	}
 
 	tracer, closer, err := initJaeger(serviceName, strings.TrimSpace(*config[`agent`]))
 	if err != nil {
-		log.Printf(`[opentracing] %v`, err)
+		rollbar.LogError(`[opentracing] %v`, err)
 		if closer != nil {
 			defer func() {
 				if err := closer.Close(); err != nil {
-					log.Printf(`[opentracing] Error while closing tracer: %v`, err)
+					rollbar.LogError(`[opentracing] Error while closing tracer: %v`, err)
 				}
 			}()
 		}
@@ -111,6 +111,6 @@ func (a App) Close() {
 	}
 
 	if err := a.closer.Close(); err != nil {
-		log.Printf(`[opentracing] Error while closing tracer: %v`, err)
+		rollbar.LogError(`[opentracing] Error while closing tracer: %v`, err)
 	}
 }

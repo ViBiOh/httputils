@@ -11,19 +11,11 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/pkg/healthcheck"
+	"github.com/ViBiOh/httputils/pkg/model"
+	"github.com/ViBiOh/httputils/pkg/rollbar"
 )
 
 const healthcheckDuration = 35
-
-// Middleware describe a middleware in the net/http package form
-type Middleware interface {
-	Handler(http.Handler) http.Handler
-}
-
-// Flusher describe a struct with a Flush() method
-type Flusher interface {
-	Flush()
-}
 
 func httpGracefulClose(server *http.Server) error {
 	if server == nil {
@@ -42,7 +34,7 @@ func httpGracefulClose(server *http.Server) error {
 	return nil
 }
 
-func gracefulClose(server *http.Server, callback func() error, healthcheckApp *healthcheck.App, flushers ...Flusher) int {
+func gracefulClose(server *http.Server, callback func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) int {
 	exitCode := 0
 
 	if healthcheckApp != nil {
@@ -52,13 +44,13 @@ func gracefulClose(server *http.Server, callback func() error, healthcheckApp *h
 	}
 
 	if err := httpGracefulClose(server); err != nil {
-		log.Print(err)
+		rollbar.LogError(`%v`, err)
 		exitCode = 1
 	}
 
 	if callback != nil {
 		if err := callback(); err != nil {
-			log.Print(err)
+			rollbar.LogError(`%v`, err)
 			exitCode = 1
 		}
 	}
@@ -71,13 +63,13 @@ func gracefulClose(server *http.Server, callback func() error, healthcheckApp *h
 }
 
 // GracefulClose gracefully close net/http server
-func GracefulClose(server *http.Server, serveError <-chan error, callback func() error, healthcheckApp *healthcheck.App, flushers ...Flusher) {
+func GracefulClose(server *http.Server, serveError <-chan error, callback func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM)
 
 	select {
 	case err := <-serveError:
-		log.Print(err)
+		rollbar.LogError(`%v`, err)
 	case <-signals:
 		log.Print(`SIGTERM received`)
 	}
@@ -86,7 +78,7 @@ func GracefulClose(server *http.Server, serveError <-chan error, callback func()
 }
 
 // ChainMiddlewares chains middlewares call for easy wrapping
-func ChainMiddlewares(handler http.Handler, middlewares ...Middleware) http.Handler {
+func ChainMiddlewares(handler http.Handler, middlewares ...model.Middleware) http.Handler {
 	result := handler
 
 	for i := len(middlewares) - 1; i >= 0; i-- {

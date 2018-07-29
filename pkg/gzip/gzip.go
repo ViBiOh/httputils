@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/NYTimes/gziphandler"
-	"github.com/ViBiOh/httputils/pkg/server"
+	"github.com/ViBiOh/httputils/pkg/model"
 )
 
-var _ server.Middleware = &App{}
+var _ model.Middleware = &App{}
 
 // App stores informations
 type App struct {

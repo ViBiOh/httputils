@@ -8,6 +8,8 @@ import (
 
 	"github.com/ViBiOh/httputils/pkg/cert"
 	"github.com/ViBiOh/httputils/pkg/healthcheck"
+	"github.com/ViBiOh/httputils/pkg/model"
+	"github.com/ViBiOh/httputils/pkg/rollbar"
 	"github.com/ViBiOh/httputils/pkg/server"
 	"github.com/ViBiOh/httputils/pkg/tools"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -43,7 +45,7 @@ func Flags(prefix string) map[string]interface{} {
 }
 
 // ListenAndServe starts server
-func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, healthcheckApp *healthcheck.App, flushers ...server.Flusher) {
+func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) {
 	healthcheckHandler := healthcheckApp.Handler()
 	prometheusHandler := promhttp.Handler()
 
@@ -70,7 +72,7 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 			log.Print(`Listening with TLS ✅`)
 			serveError <- cert.ListenAndServeTLS(a.certConfig, httpServer)
 		} else {
-			log.Print(`Listening without TLS ⚠️`)
+			rollbar.LogWarning(`Listening without TLS ⚠️`)
 			serveError <- httpServer.ListenAndServe()
 		}
 	}()
