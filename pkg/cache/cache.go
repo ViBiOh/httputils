@@ -48,8 +48,8 @@ func (t *timeMap) Store(key, value interface{}, duration time.Duration) {
 func (t *timeMap) Load(key interface{}) (interface{}, bool) {
 	value, ok := t.store.Load(key)
 
-	timeValue := value.(mapValue)
 	if ok {
+		timeValue := value.(mapValue)
 		if timeValue.isValid() {
 			return timeValue.content, true
 		}
