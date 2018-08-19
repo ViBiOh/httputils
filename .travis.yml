@@ -1,10 +1,16 @@
-language: go
-go : '1.10'
-after_success: |
-  bash <(curl -s https://codecov.io/bash)
+jobs:
+  include:
+  - stage: Build
 
-  if [ "${TRAVIS_BRANCH}" == "master" ]; then
-    curl -s -X POST https://goreportcard.com/checks?repo=github.com/ViBiOh/httputils
-  fi
+    sudo: required
+    services:
+    - docker
+    script: make docker
+    after_success: |
+      curl -s -X POST https://goreportcard.com/checks?repo=github.com/ViBiOh/httputils
+
+stages:
+  - Build
+
 notifications:
   email: false
