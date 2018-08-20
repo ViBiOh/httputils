@@ -1,17 +1,12 @@
+MAKEFLAGS += --silent
+GOBIN=bin
+
 APP_NAME ?= httputils
 VERSION ?= $(shell git log --pretty=format:'%h' -n 1)
 AUTHOR ?= $(shell git log --pretty=format:'%an' -n 1)
 
-MAKEFLAGS += --silent
-GOBIN=bin
-PID=/tmp/.$(APP_NAME).pid
-
 help: Makefile
 	@sed -n 's|^##||p' $< | column -t -s ':' | sed -e 's|^| |'
-
-## docker: Build App in a Docker container, tagged with current version
-docker:
-	docker build -t vibioh/$(APP_NAME):$(VERSION) .
 
 $(APP_NAME): deps go
 
@@ -55,4 +50,4 @@ build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo ./...
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo -o $(GOBIN)/alcotest cmd/alcotest.go
 
-.PHONY: docker $(APP_NAME) go name version author deps format lint tst bench build
+.PHONY: $(APP_NAME) go name version author deps format lint tst bench build
