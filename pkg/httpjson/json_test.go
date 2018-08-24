@@ -21,36 +21,41 @@ func testFn() string {
 }
 
 func Test_IsPretty(t *testing.T) {
+	emptyRequest, _ := http.NewRequest(http.MethodGet, `http://localhost`, nil)
+	prettyRequest, _ := http.NewRequest(http.MethodGet, `http://localhost?pretty`, nil)
+	prettyValueRequest, _ := http.NewRequest(http.MethodGet, `http://localhost?test=1&pretty=false`, nil)
+	prettyInvalidRequest, _ := http.NewRequest(http.MethodGet, `http://localhost?test=1&pretty=invalidBool`, nil)
+
 	var cases = []struct {
 		intention string
-		query     string
+		request     *http.Request
 		want      bool
 	}{
 		{
 			`should work with empty param`,
-			``,
+			emptyRequest,
 			false,
 		},
 		{
 			`should work with pretty param`,
-			`pretty`,
+			prettyRequest,
 			true,
 		},
 		{
 			`should work with pretty value`,
-			`test=1&pretty=false`,
+			prettyValueRequest,
 			false,
 		},
 		{
-			`should work with pretty value`,
-			`test=1&pretty=invalidBool`,
+			`should work with pretty value not equal to a boolean`,
+			prettyInvalidRequest,
 			true,
 		},
 	}
 
 	for _, testCase := range cases {
-		if result := IsPretty(testCase.query); result != testCase.want {
-			t.Errorf("%v\nIsPretty(%v) = %v, want %v", testCase.intention, testCase.query, result, testCase.want)
+		if result := IsPretty(testCase.request); result != testCase.want {
+			t.Errorf("%v\nIsPretty(%v) = %v, want %v", testCase.intention, testCase.request, result, testCase.want)
 		}
 	}
 }
