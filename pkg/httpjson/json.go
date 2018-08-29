@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strconv"
+
+	"github.com/ViBiOh/httputils/pkg/query"
 )
 
 type results struct {
@@ -22,16 +22,7 @@ type pagination struct {
 
 // IsPretty determine if pretty is defined in query params
 func IsPretty(r *http.Request) bool {
-	if params, err := url.ParseQuery(r.URL.RawQuery); err == nil {
-		if _, ok := params[`pretty`]; ok {
-			if pretty, err := strconv.ParseBool(params[`pretty`][0]); err == nil {
-				return pretty
-			}
-			return true
-		}
-	}
-
-	return false
+	return query.GetBool(r, `pretty`)
 }
 
 // ResponseJSON write marshalled obj to http.ResponseWriter with correct header

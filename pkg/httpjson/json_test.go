@@ -28,7 +28,7 @@ func Test_IsPretty(t *testing.T) {
 
 	var cases = []struct {
 		intention string
-		request     *http.Request
+		request   *http.Request
 		want      bool
 	}{
 		{
@@ -49,7 +49,7 @@ func Test_IsPretty(t *testing.T) {
 		{
 			`should work with pretty value not equal to a boolean`,
 			prettyInvalidRequest,
-			true,
+			false,
 		},
 	}
 
