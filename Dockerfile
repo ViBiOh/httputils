@@ -1,4 +1,4 @@
-FROM golang:1.10 as builder
+FROM golang:1.11 as builder
 
 ENV APP_NAME httputils
 ENV WORKDIR ${GOPATH}/src/github.com/ViBiOh/httputils
