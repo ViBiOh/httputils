@@ -74,7 +74,7 @@ func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
 		return server.ListenAndServeTLS(cert, strings.TrimSpace(*config[`key`]))
 	}
 
-	certPEMBlock, keyPEMBlock, err := GenerateCert(strings.TrimSpace(*config[`organization`]), strings.Split(strings.TrimSpace(*config[`hosts`]), `,`))
+	certPEMBlock, keyPEMBlock, err := GenerateFromConfig(config)
 	if err != nil {
 		return fmt.Errorf(`Error while generating certificate: %v`, err)
 	}
@@ -110,8 +110,12 @@ func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
 	return server.Serve(tlsListener)
 }
 
-// GenerateCert self signed with CA for use with TLS
-func GenerateCert(organization string, hosts []string) ([]byte, []byte, error) {
+func GenerateFromConfig(config map[string]*string) ([]byte, []byte, error) {
+	return Generate(strings.TrimSpace(*config[`organization`]), strings.Split(strings.TrimSpace(*config[`hosts`]), `,`))
+}
+
+// Generate self signed with CA for use with TLS
+func Generate(organization string, hosts []string) ([]byte, []byte, error) {
 	ecdsaKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf(`Error while generating cert key: %v`, err)
@@ -136,7 +140,7 @@ func GenerateCert(organization string, hosts []string) ([]byte, []byte, error) {
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
-		IsCA: true,
+		IsCA:                  true,
 	}
 
 	for _, h := range hosts {

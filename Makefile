@@ -60,6 +60,6 @@ bench:
 ## build: Build binary of app
 build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo ./...
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo -o $(GOBIN)/alcotest cmd/alcotest.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo -o $(GOBIN)/alcotest cmd/alcotest/alcotest.go
 
 .PHONY: help $(APP_NAME) go name dist version author deps format lint tst bench build
