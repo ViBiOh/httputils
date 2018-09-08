@@ -71,7 +71,7 @@ func Test_DoAndRead(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := doAndRead(testCase.ctx, testCase.request)
+		result, err := DoAndRead(testCase.ctx, testCase.request)
 
 		failed = false
 
@@ -86,7 +86,7 @@ func Test_DoAndRead(t *testing.T) {
 		}
 
 		if failed {
-			t.Errorf(`doAndRead(%v) = (%v, %v), want (%v, %v)`, testCase.request, string(result), err, testCase.want, testCase.wantErr)
+			t.Errorf(`DoAndRead(%v) = (%v, %v), want (%v, %v)`, testCase.request, string(result), err, testCase.want, testCase.wantErr)
 		}
 	}
 }

@@ -29,7 +29,7 @@ var defaultHTTPClient = http.Client{
 	Transport: &nethttp.Transport{},
 }
 
-// DoAndReadWithClient execute read and return given request on given client
+// DoAndReadWithClient execute request and return output with given client
 func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.Request) ([]byte, error) {
 	if ctx != nil {
 		var netTracer *nethttp.Tracer
@@ -61,7 +61,8 @@ func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.
 	return responseBody, nil
 }
 
-func doAndRead(ctx context.Context, request *http.Request) ([]byte, error) {
+// DoAndRead execute request and return output
+func DoAndRead(ctx context.Context, request *http.Request) ([]byte, error) {
 	return DoAndReadWithClient(ctx, defaultHTTPClient, request)
 }
 
@@ -86,7 +87,7 @@ func Do(ctx context.Context, url string, body []byte, headers http.Header, metho
 	}
 	request.Header = headers
 
-	return doAndRead(ctx, request)
+	return DoAndRead(ctx, request)
 }
 
 // DoJSON send given method with given interface{} as JSON to URL with optional headers supplied

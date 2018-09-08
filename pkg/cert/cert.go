@@ -110,6 +110,7 @@ func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
 	return server.Serve(tlsListener)
 }
 
+// GenerateFromConfig generates certs from given config
 func GenerateFromConfig(config map[string]*string) ([]byte, []byte, error) {
 	return Generate(strings.TrimSpace(*config[`organization`]), strings.Split(strings.TrimSpace(*config[`hosts`]), `,`))
 }
