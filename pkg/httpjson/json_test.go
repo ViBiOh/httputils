@@ -113,7 +113,7 @@ func Test_ResponseJSON(t *testing.T) {
 		writer := httptest.NewRecorder()
 		err := ResponseJSON(writer, http.StatusOK, testCase.obj, testCase.pretty)
 
-		rawResult, _ := request.ReadBody(writer.Result().Body)
+		rawResult, _ := request.ReadBodyResponse(writer.Result())
 		result := string(rawResult)
 
 		failed = false
@@ -183,7 +183,7 @@ func TestResponseArrayJSON(t *testing.T) {
 			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, result, testCase.wantStatus)
 		}
 
-		if result, _ := request.ReadBody(writer.Result().Body); string(result) != testCase.want {
+		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
 			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, string(result), testCase.want)
 		}
 
@@ -246,7 +246,7 @@ func Test_ResponsePaginatedJSON(t *testing.T) {
 			t.Errorf(`%s\ResponsePaginatedJSON(%v, %v) = %v, want %v`, testCase.intention, testCase.total, testCase.obj, result, testCase.wantStatus)
 		}
 
-		if result, _ := request.ReadBody(writer.Result().Body); string(result) != testCase.want {
+		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
 			t.Errorf(`%s\ResponsePaginatedJSON(%v, %v) = %v, want %v`, testCase.intention, testCase.total, testCase.obj, string(result), testCase.want)
 		}
 

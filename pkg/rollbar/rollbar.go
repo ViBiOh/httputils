@@ -89,12 +89,12 @@ func LogError(format string, a ...interface{}) {
 
 // Deploy send deploy informations to rollbar
 func Deploy(ctx context.Context, token, environment, revision, user string) error {
-	payload, err := request.PostForm(ctx, deployEndpoint, nil, url.Values{
+	payload, err := request.PostForm(ctx, deployEndpoint, url.Values{
 		`access_token`:   {token},
 		`environment`:    {environment},
 		`revision`:       {revision},
 		`local_username`: {user},
-	})
+	}, nil)
 
 	if err != nil {
 		return fmt.Errorf(`Error while posting form: %v. %s`, err, payload)

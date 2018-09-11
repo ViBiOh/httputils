@@ -31,7 +31,7 @@ func Request(r *http.Request) string {
 		}
 	}
 
-	body, err := request.ReadBody(r.Body)
+	body, err := request.ReadBodyRequest(r)
 	if err != nil {
 		rollbar.LogError(`Error while reading body: %v`, err)
 	}
