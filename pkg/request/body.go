@@ -7,7 +7,8 @@ import (
 	"net/http"
 )
 
-func readBody(body io.ReadCloser) (content []byte, err error) {
+// ReadBody return content of given body
+func ReadBody(body io.ReadCloser) (content []byte, err error) {
 	defer func() {
 		closeErr := body.Close()
 
@@ -26,10 +27,10 @@ func readBody(body io.ReadCloser) (content []byte, err error) {
 
 // ReadBodyRequest return content of a body request (defined as a ReadCloser)
 func ReadBodyRequest(r *http.Request) ([]byte, error) {
-	return readBody(r.Body)
+	return ReadBody(r.Body)
 }
 
 // ReadBodyResponse return content of a body response (defined as a ReadCloser)
 func ReadBodyResponse(r *http.Response) ([]byte, error) {
-	return readBody(r.Body)
+	return ReadBody(r.Body)
 }
