@@ -86,6 +86,6 @@ func (a App) Handler(next http.Handler) http.Handler {
 			w.Header().Set(`Strict-Transport-Security`, `max-age=10886400`)
 		}
 
-		next.ServeHTTP(&middleware{w, r.URL.Path == `/`}, r)
+		next.ServeHTTP(&middleware{w, tools.IsRoot(r)}, r)
 	})
 }

@@ -1,5 +1,7 @@
 package tools
 
+const bufferSize = 20
+
 // ConcurrentMap is a map[string]interface{} with concurrent access
 type ConcurrentMap struct {
 	req     chan request
@@ -15,7 +17,7 @@ type request struct {
 
 // List map content to output channel
 func (c *ConcurrentMap) List() <-chan interface{} {
-	req := request{action: `list`, ioContent: make(chan interface{}, len(c.content))}
+	req := request{action: `list`, ioContent: make(chan interface{}, bufferSize)}
 	c.req <- req
 
 	return req.ioContent

@@ -36,11 +36,12 @@ func TestGet(t *testing.T) {
 
 	for _, testCase := range cases {
 		concurrentMap := initConccurentMapWithValues(testCase.entries)
-		defer concurrentMap.Close()
 
 		if result := concurrentMap.Get(testCase.ID); result != testCase.want {
 			t.Errorf(`Get(%v) = %v, want %v`, testCase.ID, result, testCase.want)
 		}
+
+		concurrentMap.Close()
 	}
 }
 
@@ -72,13 +73,13 @@ func TestPush(t *testing.T) {
 
 	for _, testCase := range cases {
 		concurrentMap := CreateConcurrentMap(5, 2)
-		defer concurrentMap.Close()
-
 		concurrentMap.Push(`one`, testCase.content)
 
 		if result := concurrentMap.Get(`one`); testCase.content != result {
 			t.Errorf(`Push(%v) = %v, want %v`, testCase.content, result, testCase.content)
 		}
+
+		concurrentMap.Close()
 	}
 }
 
@@ -119,7 +120,6 @@ func TestRemove(t *testing.T) {
 
 	for _, testCase := range cases {
 		concurrentMap := initConccurentMapWithValues(testCase.entries)
-		defer concurrentMap.Close()
 
 		initial := concurrentMap.Get(testCase.key)
 		concurrentMap.Remove(testCase.key)
@@ -127,6 +127,8 @@ func TestRemove(t *testing.T) {
 		if result := concurrentMap.Get(testCase.key); (testCase.want && result == initial) || (!testCase.want && result != initial) {
 			t.Errorf(`Remove(%v) = %v, want %v`, testCase.key, result, initial)
 		}
+
+		concurrentMap.Close()
 	}
 }
 
@@ -162,7 +164,6 @@ func TestList(t *testing.T) {
 
 	for _, testCase := range cases {
 		concurrentMap := initConccurentMapWithValues(testCase.entries)
-		defer concurrentMap.Close()
 
 		result := 0
 		for range concurrentMap.List() {
@@ -172,6 +173,8 @@ func TestList(t *testing.T) {
 		if result != testCase.want {
 			t.Errorf(`List() = %v, want %v`, result, testCase.want)
 		}
+
+		concurrentMap.Close()
 	}
 }
 
