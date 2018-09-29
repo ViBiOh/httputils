@@ -20,17 +20,21 @@ func NewApp() *App {
 // Handler for Health request. Should be use with net/http
 func (a *App) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
+		switch r.Method {
+		case http.MethodGet:
+			if a.closed {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				return
+			}
+
+			if a.handler != nil {
+				a.handler.ServeHTTP(w, r)
+				return
+			}
+
+		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
-		}
-
-		if a.closed {
-			w.WriteHeader(http.StatusServiceUnavailable)
 			return
-		}
-
-		if a.handler != nil {
-			a.handler.ServeHTTP(w, r)
 		}
 	})
 }
