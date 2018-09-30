@@ -2,8 +2,12 @@ package templates
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
 
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
@@ -20,6 +24,23 @@ func init() {
 	minifier.AddFunc(`text/css`, css.Minify)
 	minifier.AddFunc(`text/javascript`, js.Minify)
 	minifier.AddFunc(`text/xml`, xml.Minify)
+}
+
+// GetTemplates list files by extension
+func GetTemplates(dir, ext string) ([]string, error) {
+	output := make([]string, 0)
+
+	if err := filepath.Walk(dir, func(walkedPath string, info os.FileInfo, _ error) error {
+		if path.Ext(info.Name()) == ext {
+			output = append(output, walkedPath)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf(`Error while globbing templates: %v`, err)
+	}
+
+	return output, nil
 }
 
 // WriteHTMLTemplate write template name from given template into writer for provided content with HTML minification
