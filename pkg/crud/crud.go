@@ -16,7 +16,7 @@ import (
 
 var (
 	// ErrNotFound occurs when item with given ID if not found
-	ErrNotFound = errors.New(`Item not found`)
+	ErrNotFound = errors.New(`item not found`)
 )
 
 // App stores informations
@@ -50,7 +50,7 @@ func handleError(w http.ResponseWriter, err error, label string) {
 	if err == ErrNotFound {
 		httperror.NotFound(w)
 	} else {
-		httperror.InternalServerError(w, fmt.Errorf(`Error while executing %s: %v`, label, err))
+		httperror.InternalServerError(w, fmt.Errorf(`error while executing %s: %v`, label, err))
 	}
 }
 
@@ -58,12 +58,12 @@ func (a App) readPayload(r *http.Request) (Item, error) {
 	bodyBytes, err := request.ReadBodyRequest(r)
 
 	if err != nil {
-		return nil, fmt.Errorf(`Error while reading body: %v`, err)
+		return nil, fmt.Errorf(`error while reading body: %v`, err)
 	}
 
 	var obj = a.service.Empty()
 	if err := json.Unmarshal(bodyBytes, obj); err != nil {
-		return nil, fmt.Errorf(`Error while unmarshalling body: %v`, err)
+		return nil, fmt.Errorf(`error while unmarshalling body: %v`, err)
 	}
 
 	return obj, nil
@@ -72,13 +72,13 @@ func (a App) readPayload(r *http.Request) (Item, error) {
 func (a App) list(w http.ResponseWriter, r *http.Request) {
 	page, pageSize, sortKey, sortAsc, err := pagination.ParseParams(r, a.defaultPage, a.defaultPageSize, a.maxPageSize)
 	if err != nil {
-		httperror.BadRequest(w, fmt.Errorf(`Error while parsing pagination: %v`, err))
+		httperror.BadRequest(w, fmt.Errorf(`error while parsing pagination: %v`, err))
 		return
 	}
 
 	list, err := a.service.List(page, pageSize, sortKey, sortAsc)
 	if err != nil {
-		httperror.InternalServerError(w, fmt.Errorf(`Error while listing items: %v`, err))
+		httperror.InternalServerError(w, fmt.Errorf(`error while listing items: %v`, err))
 		return
 	}
 
@@ -105,7 +105,7 @@ func (a App) create(w http.ResponseWriter, r *http.Request) {
 	obj, err := a.readPayload(r)
 
 	if err != nil {
-		httperror.BadRequest(w, fmt.Errorf(`Error while parsing body: %v`, err))
+		httperror.BadRequest(w, fmt.Errorf(`error while parsing body: %v`, err))
 		return
 	}
 
@@ -125,7 +125,7 @@ func (a App) update(w http.ResponseWriter, r *http.Request, id string) {
 	obj, err := a.readPayload(r)
 
 	if err != nil {
-		httperror.BadRequest(w, fmt.Errorf(`Error while parsing body: %v`, err))
+		httperror.BadRequest(w, fmt.Errorf(`error while parsing body: %v`, err))
 		return
 	}
 

@@ -28,7 +28,7 @@ func httpGracefulClose(server *http.Server) error {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		return fmt.Errorf(`Error while shutting down HTTP server: %v`, err)
+		return fmt.Errorf(`error while shutting down HTTP server: %v`, err)
 	}
 
 	return nil

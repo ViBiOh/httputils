@@ -43,7 +43,7 @@ func initJaeger(serviceName string, agentHostPort string) (opentracing.Tracer, i
 		jaegercfg.Logger(jaegerlog.StdLogger),
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf(`Error while initializing Jaeger tracer: %v`, err)
+		return nil, nil, fmt.Errorf(`error while initializing Jaeger tracer: %v`, err)
 	}
 
 	return tracer, closer, nil

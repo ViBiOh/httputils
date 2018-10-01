@@ -78,7 +78,7 @@ func Test_GetStatusCode(t *testing.T) {
 			`:`,
 			``,
 			0,
-			errors.New(`Error while creating request: parse :: missing protocol scheme`),
+			errors.New(`error while creating request: parse :: missing protocol scheme`),
 		},
 		{
 			`should handle malformed URL`,
@@ -147,13 +147,13 @@ func Test_Do(t *testing.T) {
 			`should handle error during call`,
 			`http://`,
 			`Test_Do`,
-			errors.New(`Unable to blow in balloon: `),
+			errors.New(`unable to blow in balloon: `),
 		},
 		{
 			`should handle bad status code`,
 			fmt.Sprintf(`%s/ko`, testServer.URL),
 			`Test_Do`,
-			errors.New(`Alcotest failed: HTTP/500`),
+			errors.New(`alcotest failed: HTTP/500`),
 		},
 		{
 			`should handle valid code`,

@@ -33,7 +33,7 @@ func Flags(prefix string) map[string]*string {
 func GetStatusCode(url, userAgent string) (status int, err error) {
 	r, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		err = fmt.Errorf(`Error while creating request: %v`, err)
+		err = fmt.Errorf(`error while creating request: %v`, err)
 		return
 	}
 
@@ -61,11 +61,11 @@ func GetStatusCode(url, userAgent string) (status int, err error) {
 func Do(url, userAgent string) error {
 	statusCode, err := GetStatusCode(url, userAgent)
 	if err != nil {
-		return fmt.Errorf(`Unable to blow in balloon: %v`, err)
+		return fmt.Errorf(`unable to blow in balloon: %v`, err)
 	}
 
 	if statusCode != http.StatusOK {
-		return fmt.Errorf(`Alcotest failed: HTTP/%d`, statusCode)
+		return fmt.Errorf(`alcotest failed: HTTP/%d`, statusCode)
 	}
 
 	return nil

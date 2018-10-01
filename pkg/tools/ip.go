@@ -9,7 +9,7 @@ import (
 func GetLocalIPS() ([]net.IP, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		return nil, fmt.Errorf(`Error while getting interface addrs: %v`, err)
+		return nil, fmt.Errorf(`error while getting interface addrs: %v`, err)
 	}
 
 	ips := make([]net.IP, 0)
@@ -29,7 +29,7 @@ func GetLocalIPS() ([]net.IP, error) {
 func GetLocalIP() (net.IP, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		return nil, fmt.Errorf(`Error while getting interface addrs: %v`, err)
+		return nil, fmt.Errorf(`error while getting interface addrs: %v`, err)
 	}
 
 	for _, address := range addrs {

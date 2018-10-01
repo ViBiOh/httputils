@@ -97,7 +97,7 @@ func Deploy(ctx context.Context, token, environment, revision, user string) erro
 	}, nil)
 
 	if err != nil {
-		return fmt.Errorf(`Error while posting form: %v. %s`, err, payload)
+		return fmt.Errorf(`error while posting form: %v. %s`, err, payload)
 	}
 	return nil
 }

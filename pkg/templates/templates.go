@@ -37,7 +37,7 @@ func GetTemplates(dir, ext string) ([]string, error) {
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf(`Error while globbing templates: %v`, err)
+		return nil, fmt.Errorf(`error while globbing templates: %v`, err)
 	}
 
 	return output, nil

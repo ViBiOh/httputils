@@ -32,16 +32,16 @@ func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.
 				err = fmt.Errorf(`, and also error while closing body: %v`, closeErr)
 			}
 		}
-		return nil, fmt.Errorf(`Error while processing request: %v`, err)
+		return nil, fmt.Errorf(`error while processing request: %v`, err)
 	}
 
 	responseBody, err := ReadBodyResponse(response)
 	if err != nil {
-		return nil, fmt.Errorf(`Error while reading body: %v`, err)
+		return nil, fmt.Errorf(`error while reading body: %v`, err)
 	}
 
 	if response.StatusCode >= http.StatusBadRequest {
-		return responseBody, fmt.Errorf(`Error status %d`, response.StatusCode)
+		return responseBody, fmt.Errorf(`error status %d`, response.StatusCode)
 	}
 
 	return responseBody, nil

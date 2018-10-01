@@ -33,13 +33,13 @@ func Test_DoAndRead(t *testing.T) {
 			nil,
 			emptyRequest,
 			``,
-			errors.New(`Error while processing request: Get : unsupported protocol scheme ""`),
+			errors.New(`error while processing request: Get : unsupported protocol scheme ""`),
 		},
 		{
 			nil,
 			bad,
 			``,
-			errors.New(`Error status 400`),
+			errors.New(`error status 400`),
 		},
 		{
 			nil,

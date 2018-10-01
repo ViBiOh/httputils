@@ -47,7 +47,7 @@ func TestHttpGracefulClose(t *testing.T) {
 				}),
 			},
 			true,
-			errors.New(`Error while shutting down HTTP server: context deadline exceeded`),
+			errors.New(`error while shutting down HTTP server: context deadline exceeded`),
 		},
 	}
 
@@ -144,7 +144,7 @@ func TestGracefulClose(t *testing.T) {
 			nil,
 			false,
 			func() error {
-				return errors.New(`Error while shutting down`)
+				return errors.New(`error while shutting down`)
 			},
 			nil,
 			1,

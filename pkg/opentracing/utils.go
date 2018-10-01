@@ -21,7 +21,7 @@ func InjectSpanToMap(ctx context.Context, content map[string]string) error {
 
 	err := tracer.Inject(span.Context(), opentracing.TextMap, opentracing.TextMapCarrier(content))
 	if err != nil {
-		return fmt.Errorf(`Error while injecting span to map: %v`, err)
+		return fmt.Errorf(`error while injecting span to map: %v`, err)
 	}
 
 	return nil
@@ -36,7 +36,7 @@ func ExtractSpanFromMap(ctx context.Context, content map[string]string, name str
 
 	spanCtx, err := tracer.Extract(opentracing.TextMap, opentracing.TextMapCarrier(content))
 	if err != nil {
-		return ctx, nil, fmt.Errorf(`Error while extracting span from map: %v - %+v`, err, content)
+		return ctx, nil, fmt.Errorf(`error while extracting span from map: %v - %+v`, err, content)
 	}
 
 	span := opentracing.StartSpan(name, opentracing.ChildOf(spanCtx))
