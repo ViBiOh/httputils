@@ -50,10 +50,10 @@ func WriteHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content in
 		return err
 	}
 
-	w.WriteHeader(status)
 	w.Header().Set(`Content-Type`, `text/html; charset=UTF-8`)
 	w.Header().Set(`Cache-Control`, `no-cache`)
 	w.Header().Set(`X-UA-Compatible`, `ie=edge`)
+	w.WriteHeader(status)
 	return minifier.Minify(`text/html`, w, templateBuffer)
 }
 
@@ -65,8 +65,8 @@ func WriteXMLTemplate(tpl *template.Template, w http.ResponseWriter, content int
 		return err
 	}
 
-	w.WriteHeader(status)
 	w.Header().Set(`Content-Type`, `text/xml; charset=UTF-8`)
 	w.Header().Set(`Cache-Control`, `no-cache`)
+	w.WriteHeader(status)
 	return minifier.Minify(`text/xml`, w, templateBuffer)
 }
