@@ -17,21 +17,36 @@ var _ model.Middleware = &App{}
 
 type middleware struct {
 	http.ResponseWriter
-	index bool
+	index       bool
+	wroteHeader bool
+}
+
+func (m *middleware) setHeader() {
+	if m.Header().Get(cacheControlHeader) == `` {
+		if m.index {
+			m.Header().Set(cacheControlHeader, `no-cache`)
+		} else {
+			m.Header().Set(cacheControlHeader, `max-age=864000`)
+		}
+	}
 }
 
 func (m *middleware) WriteHeader(status int) {
+	m.wroteHeader = true
+
 	if status == http.StatusOK || status == http.StatusMovedPermanently {
-		if m.Header().Get(cacheControlHeader) == `` {
-			if m.index {
-				m.Header().Set(cacheControlHeader, `no-cache`)
-			} else {
-				m.Header().Set(cacheControlHeader, `max-age=864000`)
-			}
-		}
+		m.setHeader()
 	}
 
 	m.ResponseWriter.WriteHeader(status)
+}
+
+func (m *middleware) Write(b []byte) (int, error) {
+	if !m.wroteHeader {
+		m.setHeader()
+	}
+
+	return m.ResponseWriter.Write(b)
 }
 
 func (m *middleware) Push(target string, opts *http.PushOptions) error {
@@ -86,6 +101,6 @@ func (a App) Handler(next http.Handler) http.Handler {
 			w.Header().Set(`Strict-Transport-Security`, `max-age=10886400`)
 		}
 
-		next.ServeHTTP(&middleware{w, tools.IsRoot(r)}, r)
+		next.ServeHTTP(&middleware{w, tools.IsRoot(r), false}, r)
 	})
 }
