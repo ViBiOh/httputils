@@ -36,7 +36,7 @@ func ExtractSpanFromMap(ctx context.Context, content map[string]string, name str
 
 	spanCtx, err := tracer.Extract(opentracing.TextMap, opentracing.TextMapCarrier(content))
 	if err != nil {
-		return ctx, nil, fmt.Errorf(`error while extracting span from map: %v - %+v`, err, content)
+		return ctx, nil, nil
 	}
 
 	span := opentracing.StartSpan(name, opentracing.ChildOf(spanCtx))
