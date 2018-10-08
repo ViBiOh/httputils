@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 
 	"github.com/ViBiOh/httputils/pkg/model"
@@ -57,6 +58,13 @@ func Flags(prefix string) map[string]*string {
 	}
 }
 
+// PrintCaller of function (use 1)
+func PrintCaller(depth int) {
+	if _, file, line, ok := runtime.Caller(depth); ok {
+		log.Printf(`from %s:%d`, file, line)
+	}
+}
+
 // Warning send warning message to rollbar
 func Warning(interfaces ...interface{}) {
 	if configured {
@@ -76,6 +84,7 @@ func LogWarning(format string, a ...interface{}) {
 	content := fmt.Sprintf(format, a...)
 
 	log.Print(content)
+	PrintCaller(2)
 	Warning(content)
 }
 
@@ -84,6 +93,7 @@ func LogError(format string, a ...interface{}) {
 	err := fmt.Errorf(format, a...)
 
 	log.Print(err)
+	PrintCaller(2)
 	Error(err)
 }
 
