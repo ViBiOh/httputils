@@ -90,7 +90,7 @@ func GetCaller(start, depth int) string {
 		return fmt.Sprintf("\nfrom %s", stacktraces[0])
 	}
 
-	return fmt.Sprintf("\nfrom\n\t-%s", strings.Join(stacktraces, "\n\t- "))
+	return fmt.Sprintf("\nfrom\n\t- %s", strings.Join(stacktraces, "\n\t- "))
 }
 
 // Warning send warning message to rollbar
