@@ -53,17 +53,17 @@ func initJaeger(serviceName string, agentHostPort string) (opentracing.Tracer, i
 func NewApp(config map[string]*string) *App {
 	serviceName := strings.TrimSpace(*config[`name`])
 	if serviceName == `` {
-		rollbar.LogWarning(`[opentracing] No service name provided`)
+		rollbar.LogWarning(`no service name provided`)
 		return &App{}
 	}
 
 	tracer, closer, err := initJaeger(serviceName, strings.TrimSpace(*config[`agent`]))
 	if err != nil {
-		rollbar.LogError(`[opentracing] %v`, err)
+		rollbar.LogError(`%v`, err)
 		if closer != nil {
 			defer func() {
 				if err := closer.Close(); err != nil {
-					rollbar.LogError(`[opentracing] Error while closing tracer: %v`, err)
+					rollbar.LogError(`error while closing tracer: %v`, err)
 				}
 			}()
 		}
@@ -111,6 +111,6 @@ func (a App) Close() {
 	}
 
 	if err := a.closer.Close(); err != nil {
-		rollbar.LogError(`[opentracing] Error while closing tracer: %v`, err)
+		rollbar.LogError(`error while closing tracer: %v`, err)
 	}
 }

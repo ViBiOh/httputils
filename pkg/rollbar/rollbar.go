@@ -33,7 +33,7 @@ func NewApp(config map[string]*string) *App {
 	token := strings.TrimSpace(*config[`token`])
 
 	if token == `` {
-		LogWarning(`[rollbar] No token provided`)
+		LogWarning(`no token provided`)
 		return &App{}
 	}
 
@@ -41,7 +41,7 @@ func NewApp(config map[string]*string) *App {
 	rollbar.SetEnvironment(strings.TrimSpace(*config[`env`]))
 	rollbar.SetServerRoot(strings.TrimSpace(*config[`root`]))
 
-	log.Print(fmt.Sprintf(`[rollbar] Configuration for %s`, rollbar.Environment()))
+	log.Print(fmt.Sprintf(`configuration for %s`, rollbar.Environment()))
 	rollbar.Info(fmt.Sprintf(`%s start`, rollbar.Environment()))
 
 	configured = true
@@ -58,11 +58,39 @@ func Flags(prefix string) map[string]*string {
 	}
 }
 
-// PrintCaller of function (use 1)
-func PrintCaller(depth int) {
-	if _, file, line, ok := runtime.Caller(depth); ok {
-		log.Printf(`from %s:%d`, file, line)
+// GetCaller of function (use start 1)
+func GetCaller(start, depth int) string {
+	pc := make([]uintptr, depth)
+	n := runtime.Callers(start, pc)
+	if n == 0 {
+		return ``
 	}
+
+	pc = pc[:n]
+	frames := runtime.CallersFrames(pc)
+	stacktraces := make([]string, 0)
+
+	for {
+		frame, more := frames.Next()
+		if strings.Contains(frame.File, `runtime/`) {
+			break
+		}
+
+		stacktraces = append(stacktraces, fmt.Sprintf(`%s:%d`, frame.Function, frame.Line))
+		if !more {
+			break
+		}
+	}
+
+	if len(stacktraces) == 0 {
+		return ``
+	}
+
+	if len(stacktraces) == 1 {
+		return fmt.Sprintf("\nfrom %s", stacktraces[0])
+	}
+
+	return fmt.Sprintf("\nfrom\n\t-%s", strings.Join(stacktraces, "\n\t- "))
 }
 
 // Warning send warning message to rollbar
@@ -83,8 +111,7 @@ func Error(interfaces ...interface{}) {
 func LogWarning(format string, a ...interface{}) {
 	content := fmt.Sprintf(format, a...)
 
-	log.Print(content)
-	PrintCaller(2)
+	log.Print(content, GetCaller(3, 1))
 	Warning(content)
 }
 
@@ -92,8 +119,7 @@ func LogWarning(format string, a ...interface{}) {
 func LogError(format string, a ...interface{}) {
 	err := fmt.Errorf(format, a...)
 
-	log.Print(err)
-	PrintCaller(2)
+	log.Print(err, GetCaller(3, 5))
 	Error(err)
 }
 
