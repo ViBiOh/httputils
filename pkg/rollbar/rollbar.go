@@ -58,10 +58,20 @@ func Flags(prefix string) map[string]*string {
 	}
 }
 
-// GetCaller of function (use start 1)
-func GetCaller(start, depth int) string {
+// GetCaller returns file:line caller
+func GetCaller(skip int) string {
+	if pc, _, _, ok := runtime.Caller(skip); ok {
+		frame, _ := runtime.CallersFrames([]uintptr{pc}).Next()
+		return fmt.Sprintf(`%s:%d`, frame.Function, frame.Line)
+	}
+
+	return ``
+}
+
+// GetStackTrace of function (use skip 1)
+func GetStackTrace(skip, depth int) string {
 	pc := make([]uintptr, depth)
-	n := runtime.Callers(start, pc)
+	n := runtime.Callers(skip, pc)
 	if n == 0 {
 		return ``
 	}
@@ -111,16 +121,18 @@ func Error(interfaces ...interface{}) {
 func LogWarning(format string, a ...interface{}) {
 	content := fmt.Sprintf(format, a...)
 
-	log.Print(content, GetCaller(3, 1))
-	Warning(content)
+	caller := fmt.Sprintf(`from %s `, GetCaller(2))
+	log.Print(caller, content)
+	Warning(caller, content)
 }
 
 // LogError send error to rollbar and to standard log
 func LogError(format string, a ...interface{}) {
 	err := fmt.Errorf(format, a...)
 
-	log.Print(err, GetCaller(3, 5))
-	Error(err)
+	stacktrace := GetStackTrace(3, 5)
+	log.Print(err, stacktrace)
+	Error(err, stacktrace)
 }
 
 // Deploy send deploy informations to rollbar
