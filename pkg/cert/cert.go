@@ -10,7 +10,6 @@ import (
 	"encoding/pem"
 	"flag"
 	"fmt"
-	"log"
 	"math/big"
 	"net"
 	"net/http"
@@ -78,7 +77,7 @@ func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
 	if err != nil {
 		return fmt.Errorf(`error while generating certificate: %v`, err)
 	}
-	log.Print(`Self-signed certificate generated`)
+	logger.Info(`Self-signed certificate generated`)
 
 	addr := server.Addr
 	if addr == `` {

@@ -70,3 +70,14 @@ func Error(format string, a ...interface{}) {
 		reporter.Error(content)
 	}
 }
+
+// Fatal log error message and exit
+func Fatal(format string, a ...interface{}) {
+	content := output(erro, format, a...)
+
+	for _, reporter := range reporters {
+		reporter.Error(content)
+	}
+
+	os.Exit(1)
+}

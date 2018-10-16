@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,7 +21,7 @@ func httpGracefulClose(server *http.Server) error {
 		return nil
 	}
 
-	log.Print(`Shutting down HTTP server`)
+	logger.Info(`Shutting down HTTP server`)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -39,7 +38,7 @@ func gracefulClose(server *http.Server, callback func() error, healthcheckApp *h
 
 	if healthcheckApp != nil {
 		healthcheckApp.Close()
-		log.Printf(`Waiting %d seconds for healthcheck`, healthcheckDuration)
+		logger.Info(`Waiting %d seconds for healthcheck`, healthcheckDuration)
 		time.Sleep(time.Second * healthcheckDuration)
 	}
 
@@ -71,7 +70,7 @@ func GracefulClose(server *http.Server, serveError <-chan error, callback func()
 	case err := <-serveError:
 		logger.Error(`%v`, err)
 	case <-signals:
-		log.Print(`SIGTERM received`)
+		logger.Info(`SIGTERM received`)
 	}
 
 	os.Exit(gracefulClose(server, callback, healthcheckApp, flushers...))

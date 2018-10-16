@@ -3,7 +3,6 @@ package httputils
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/ViBiOh/httputils/pkg/cert"
@@ -59,16 +58,16 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 		}),
 	}
 
-	log.Printf(`Starting HTTP server on port %s`, httpServer.Addr)
+	logger.Info(`Starting HTTP server on port %s`, httpServer.Addr)
 
 	var serveError = make(chan error)
 	go func() {
 		defer close(serveError)
 		if *a.tls {
-			log.Print(`Listening with TLS ✅`)
+			logger.Info(`Listening with TLS`)
 			serveError <- cert.ListenAndServeTLS(a.certConfig, httpServer)
 		} else {
-			logger.Warn(`Listening without TLS ⚠️`)
+			logger.Warn(`Listening without TLS`)
 			serveError <- httpServer.ListenAndServe()
 		}
 	}()
