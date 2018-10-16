@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ViBiOh/httputils/pkg/logger"
 	"github.com/ViBiOh/httputils/pkg/model"
-	"github.com/ViBiOh/httputils/pkg/rollbar"
 	"github.com/ViBiOh/httputils/pkg/tools"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -53,17 +53,17 @@ func initJaeger(serviceName string, agentHostPort string) (opentracing.Tracer, i
 func NewApp(config map[string]*string) *App {
 	serviceName := strings.TrimSpace(*config[`name`])
 	if serviceName == `` {
-		rollbar.LogWarning(`no service name provided`)
+		logger.Warn(`no service name provided`)
 		return &App{}
 	}
 
 	tracer, closer, err := initJaeger(serviceName, strings.TrimSpace(*config[`agent`]))
 	if err != nil {
-		rollbar.LogError(`%v`, err)
+		logger.Error(`%v`, err)
 		if closer != nil {
 			defer func() {
 				if err := closer.Close(); err != nil {
-					rollbar.LogError(`error while closing tracer: %v`, err)
+					logger.Error(`error while closing tracer: %v`, err)
 				}
 			}()
 		}
@@ -111,6 +111,6 @@ func (a App) Close() {
 	}
 
 	if err := a.closer.Close(); err != nil {
-		rollbar.LogError(`error while closing tracer: %v`, err)
+		logger.Error(`error while closing tracer: %v`, err)
 	}
 }

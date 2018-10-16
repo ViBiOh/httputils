@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/pkg/healthcheck"
+	"github.com/ViBiOh/httputils/pkg/logger"
 	"github.com/ViBiOh/httputils/pkg/model"
-	"github.com/ViBiOh/httputils/pkg/rollbar"
 )
 
 const healthcheckDuration = 35
@@ -44,13 +44,13 @@ func gracefulClose(server *http.Server, callback func() error, healthcheckApp *h
 	}
 
 	if err := httpGracefulClose(server); err != nil {
-		rollbar.LogError(`%v`, err)
+		logger.Error(`%v`, err)
 		exitCode = 1
 	}
 
 	if callback != nil {
 		if err := callback(); err != nil {
-			rollbar.LogError(`%v`, err)
+			logger.Error(`%v`, err)
 			exitCode = 1
 		}
 	}
@@ -69,7 +69,7 @@ func GracefulClose(server *http.Server, serveError <-chan error, callback func()
 
 	select {
 	case err := <-serveError:
-		rollbar.LogError(`%v`, err)
+		logger.Error(`%v`, err)
 	case <-signals:
 		log.Print(`SIGTERM received`)
 	}
