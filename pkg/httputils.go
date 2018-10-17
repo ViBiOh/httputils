@@ -11,7 +11,6 @@ import (
 	"github.com/ViBiOh/httputils/pkg/model"
 	"github.com/ViBiOh/httputils/pkg/server"
 	"github.com/ViBiOh/httputils/pkg/tools"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // App stores informations
@@ -42,17 +41,13 @@ func Flags(prefix string) map[string]interface{} {
 // ListenAndServe starts server
 func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) {
 	healthcheckHandler := healthcheckApp.Handler()
-	prometheusHandler := promhttp.Handler()
 
 	httpServer := &http.Server{
 		Addr: fmt.Sprintf(`:%d`, *a.port),
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			switch r.URL.Path {
-			case `/health`:
+			if r.URL.Path == `/health` {
 				healthcheckHandler.ServeHTTP(w, r)
-			case `/metrics`:
-				prometheusHandler.ServeHTTP(w, r)
-			default:
+			} else {
 				handler.ServeHTTP(w, r)
 			}
 		}),
