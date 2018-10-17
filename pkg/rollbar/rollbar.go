@@ -67,7 +67,10 @@ func (a App) check() bool {
 }
 
 // Info send info message to rollbar
-func (a App) Info(_ string) {
+func (a App) Info(content string) {
+	if a.check() {
+		rollbar.Info(content)
+	}
 }
 
 // Warn send warning message to rollbar
