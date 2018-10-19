@@ -44,7 +44,7 @@ func NewApp(config map[string]*string) *App {
 	rollbar.SetEnvironment(strings.TrimSpace(*config[`env`]))
 	rollbar.SetServerRoot(strings.TrimSpace(*config[`root`]))
 
-	logger.Info(fmt.Sprintf(`Configuration for %s`, rollbar.Environment()))
+	logger.Info(`Configuration for %s`, rollbar.Environment())
 
 	app := &App{
 		active: true,

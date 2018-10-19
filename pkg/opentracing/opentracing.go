@@ -60,7 +60,7 @@ func NewApp(config map[string]*string) *App {
 
 	tracer, closer, err := initJaeger(serviceName, strings.TrimSpace(*config[`agent`]))
 	if err != nil {
-		logger.Error(`%v`, err)
+		logger.Error(`%+v`, err)
 		if closer != nil {
 			defer func() {
 				if err := closer.Close(); err != nil {
@@ -112,6 +112,6 @@ func (a App) Close() {
 	}
 
 	if err := a.closer.Close(); err != nil {
-		logger.Error(`%v`, errors.WithStack(err))
+		logger.Error(`%+v`, errors.WithStack(err))
 	}
 }

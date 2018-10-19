@@ -43,13 +43,13 @@ func gracefulClose(server *http.Server, callback func() error, healthcheckApp *h
 	}
 
 	if err := httpGracefulClose(server); err != nil {
-		logger.Error(`%v`, err)
+		logger.Error(`%+v`, err)
 		exitCode = 1
 	}
 
 	if callback != nil {
 		if err := callback(); err != nil {
-			logger.Error(`%v`, err)
+			logger.Error(`%+v`, err)
 			exitCode = 1
 		}
 	}
@@ -68,7 +68,7 @@ func GracefulClose(server *http.Server, serveError <-chan error, callback func()
 
 	select {
 	case err := <-serveError:
-		logger.Error(`%v`, err)
+		logger.Error(`%+v`, err)
 	case <-signals:
 		logger.Info(`SIGTERM received`)
 	}
