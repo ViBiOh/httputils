@@ -24,6 +24,10 @@ func New(format string, a ...interface{}) error {
 
 // WithStack wrap error with stack trace saved
 func WithStack(err error) error {
+	if err == nil {
+		return nil
+	}
+
 	return enhancedError{
 		message: err.Error(),
 		callers: callers(3, 5),

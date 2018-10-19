@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/logger"
 	"github.com/ViBiOh/httputils/pkg/model"
 	"github.com/ViBiOh/httputils/pkg/request"
@@ -108,7 +107,7 @@ func (a App) Flush() {
 
 // Deploy send deploy informations to rollbar
 func Deploy(ctx context.Context, token, environment, revision, user string) error {
-	payload, err := request.PostForm(ctx, deployEndpoint, url.Values{
+	_, err := request.PostForm(ctx, deployEndpoint, url.Values{
 		`access_token`:   {token},
 		`environment`:    {environment},
 		`revision`:       {revision},
@@ -116,7 +115,7 @@ func Deploy(ctx context.Context, token, environment, revision, user string) erro
 	}, nil)
 
 	if err != nil {
-		return errors.New(`%v with payload %s`, err, payload)
+		return err
 	}
 	return nil
 }
