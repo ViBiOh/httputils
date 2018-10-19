@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/logger"
 	"github.com/ViBiOh/httputils/pkg/model"
 	"github.com/ViBiOh/httputils/pkg/tools"
@@ -43,7 +44,7 @@ func initJaeger(serviceName string, agentHostPort string) (opentracing.Tracer, i
 		jaegercfg.Logger(jaegerlog.StdLogger),
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf(`error while initializing Jaeger tracer: %v`, err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	return tracer, closer, nil
@@ -63,7 +64,7 @@ func NewApp(config map[string]*string) *App {
 		if closer != nil {
 			defer func() {
 				if err := closer.Close(); err != nil {
-					logger.Error(`error while closing tracer: %v`, err)
+					logger.Error(`%+v`, errors.WithStack(err))
 				}
 			}()
 		}
@@ -111,6 +112,6 @@ func (a App) Close() {
 	}
 
 	if err := a.closer.Close(); err != nil {
-		logger.Error(`error while closing tracer: %v`, err)
+		logger.Error(`%v`, errors.WithStack(err))
 	}
 }

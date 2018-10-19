@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/logger"
 	"github.com/ViBiOh/httputils/pkg/model"
 	"github.com/ViBiOh/httputils/pkg/request"
@@ -115,7 +116,7 @@ func Deploy(ctx context.Context, token, environment, revision, user string) erro
 	}, nil)
 
 	if err != nil {
-		return fmt.Errorf(`error while posting form: %v. %s`, err, payload)
+		return errors.New(`%v with payload %s`, err, payload)
 	}
 	return nil
 }

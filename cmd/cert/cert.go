@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ViBiOh/httputils/pkg/cert"
+	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/logger"
 )
 
@@ -15,7 +16,7 @@ func saveFile(filename, defaultFilename string, content []byte) {
 	}
 
 	if err := ioutil.WriteFile(filename, content, 0600); err != nil {
-		logger.Fatal(`error while writing %s: %v`, filename, err)
+		logger.Fatal(`%+v`, errors.WithStack(err))
 	}
 
 	logger.Info(`File %s created`, filename)
@@ -27,7 +28,7 @@ func main() {
 
 	cert, key, err := cert.GenerateFromConfig(certConfig)
 	if err != nil {
-		logger.Fatal(`error while generating certificate: %v`, err)
+		logger.Fatal(`%+v`, err)
 	}
 
 	saveFile(strings.TrimSpace(*certConfig[`cert`]), `public.crt`, cert)

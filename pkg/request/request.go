@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
+
+	"github.com/ViBiOh/httputils/pkg/errors"
 )
 
 const (
@@ -18,7 +19,7 @@ const (
 func New(method string, url string, body []byte, headers http.Header) (req *http.Request, err error) {
 	req, err = http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
-		return nil, fmt.Errorf(`error while creating request: %v`, err)
+		return nil, errors.WithStack(err)
 	}
 	req.Header = headers
 
@@ -29,7 +30,7 @@ func New(method string, url string, body []byte, headers http.Header) (req *http
 func JSON(method string, url string, body interface{}, headers http.Header) (*http.Request, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		return nil, fmt.Errorf(`error while marshalling body: %v`, err)
+		return nil, errors.WithStack(err)
 	}
 
 	if headers == nil {

@@ -39,7 +39,7 @@ func Test_DoJSON(t *testing.T) {
 			testFn,
 			nil,
 			``,
-			errors.New(`error while marshalling body: json: unsupported type: func() string`),
+			errors.New(`json: unsupported type: func() string`),
 		},
 		{
 			nil,
@@ -47,7 +47,7 @@ func Test_DoJSON(t *testing.T) {
 			nil,
 			nil,
 			``,
-			errors.New(`error while creating request: parse ://fail: missing protocol scheme`),
+			errors.New(`parse ://fail: missing protocol scheme`),
 		},
 		{
 			nil,
@@ -55,7 +55,7 @@ func Test_DoJSON(t *testing.T) {
 			nil,
 			nil,
 			``,
-			errors.New(`error while processing request: Post : unsupported protocol scheme ""`),
+			errors.New(`Post : unsupported protocol scheme ""`),
 		},
 		{
 			nil,

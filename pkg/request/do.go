@@ -2,10 +2,10 @@ package request
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing "github.com/opentracing/opentracing-go"
 )
@@ -29,19 +29,19 @@ func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.
 	if err != nil {
 		if response != nil {
 			if closeErr := response.Body.Close(); closeErr != nil {
-				err = fmt.Errorf(`, and also error while closing body: %v`, closeErr)
+				err = errors.New(`%v, and also %v`, err, closeErr)
 			}
 		}
-		return nil, fmt.Errorf(`error while processing request: %v`, err)
+		return nil, errors.WithStack(err)
 	}
 
 	responseBody, err := ReadBodyResponse(response)
 	if err != nil {
-		return nil, fmt.Errorf(`error while reading body: %v`, err)
+		return nil, err
 	}
 
 	if response.StatusCode >= http.StatusBadRequest {
-		return responseBody, fmt.Errorf(`error status %d`, response.StatusCode)
+		return responseBody, errors.New(`error status %d`, response.StatusCode)
 	}
 
 	return responseBody, nil

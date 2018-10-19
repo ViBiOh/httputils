@@ -2,9 +2,9 @@ package httpjson
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
+	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/query"
 )
 
@@ -37,7 +37,7 @@ func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty boo
 	}
 
 	if err != nil {
-		return fmt.Errorf(`error while marshalling JSON response: %v`, err)
+		return errors.WithStack(err)
 	}
 
 	w.Header().Set(`Content-Type`, `application/json; charset=utf-8`)
@@ -45,7 +45,7 @@ func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty boo
 	w.WriteHeader(status)
 
 	if _, err := w.Write(objJSON); err != nil {
-		return fmt.Errorf(`error while writing JSON: %v`, err)
+		return errors.WithStack(err)
 	}
 	return nil
 }

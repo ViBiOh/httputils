@@ -2,13 +2,13 @@ package templates
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 
+	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
 	"github.com/tdewolff/minify/html"
@@ -37,7 +37,7 @@ func GetTemplates(dir, ext string) ([]string, error) {
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf(`error while globbing templates: %v`, err)
+		return nil, errors.WithStack(err)
 	}
 
 	return output, nil

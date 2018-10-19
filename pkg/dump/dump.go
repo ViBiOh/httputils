@@ -24,7 +24,7 @@ func Request(r *http.Request) string {
 
 	var form bytes.Buffer
 	if err := r.ParseForm(); err != nil {
-		form.WriteString(fmt.Sprintf(`Error while parsing form: %v`, err))
+		form.WriteString(err.Error())
 	} else {
 		for key, value := range r.PostForm {
 			form.WriteString(fmt.Sprintf("%s: %s\n", key, strings.Join(value, `,`)))
@@ -33,7 +33,7 @@ func Request(r *http.Request) string {
 
 	body, err := request.ReadBodyRequest(r)
 	if err != nil {
-		logger.Error(`Error while reading body: %v`, err)
+		logger.Error(`%+v`, err)
 	}
 
 	var outputPattern bytes.Buffer

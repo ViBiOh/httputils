@@ -8,10 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/tools"
-
-	// Not referenced but needed for database/sql
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // Not referenced but needed for database/sql
 )
 
 // WhereInUint wrapper for assigning `IN ($n)` in WHERE clause
@@ -68,11 +67,11 @@ func GetDB(config map[string]*string) (*sql.DB, error) {
 
 	db, err := sql.Open(`postgres`, fmt.Sprintf(`host=%s port=%s user=%s password=%s dbname=%s sslmode=disable`, host, port, user, pass, name))
 	if err != nil {
-		return nil, fmt.Errorf(`error while opening database connection: %v`, err)
+		return nil, errors.WithStack(err)
 	}
 
 	if err = db.Ping(); err != nil {
-		return db, fmt.Errorf(`error while connecting to database: %v`, err)
+		return db, errors.WithStack(err)
 	}
 
 	return db, nil
@@ -89,7 +88,7 @@ func GetTx(db *sql.DB, tx *sql.Tx) (*sql.Tx, error) {
 		usedTx, err := db.Begin()
 
 		if err != nil {
-			return nil, fmt.Errorf(`error while starting transaction: %v`, err)
+			return nil, errors.WithStack(err)
 		}
 		return usedTx, nil
 	}
@@ -101,10 +100,10 @@ func GetTx(db *sql.DB, tx *sql.Tx) (*sql.Tx, error) {
 func EndTx(tx *sql.Tx, err error) error {
 	if err != nil {
 		if endErr := tx.Rollback(); endErr != nil {
-			return fmt.Errorf(`%v, and also, Error while rolling back transaction: %v`, err, endErr)
+			return errors.New(`%v, and also %v`, err, endErr)
 		}
 	} else if endErr := tx.Commit(); endErr != nil {
-		return fmt.Errorf(`error while committing transaction: %v`, endErr)
+		return errors.WithStack(err)
 	}
 
 	return err
@@ -113,12 +112,10 @@ func EndTx(tx *sql.Tx, err error) error {
 // RowsClose closes rows without shadowing error
 func RowsClose(rows *sql.Rows, err error) error {
 	if endErr := rows.Close(); endErr != nil {
-		endErr = fmt.Errorf(`error while closing rows: %v`, endErr)
-
 		if err == nil {
-			return endErr
+			return errors.WithStack(endErr)
 		}
-		return fmt.Errorf(`%v, and also, %v`, err, endErr)
+		return errors.New(`%v, and also %v`, err, endErr)
 	}
 
 	return err

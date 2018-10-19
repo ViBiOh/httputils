@@ -2,8 +2,8 @@ package opentracing
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/ViBiOh/httputils/pkg/errors"
 	opentracing "github.com/opentracing/opentracing-go"
 )
 
@@ -21,7 +21,7 @@ func InjectSpanToMap(ctx context.Context, content map[string]string) error {
 
 	err := tracer.Inject(span.Context(), opentracing.TextMap, opentracing.TextMapCarrier(content))
 	if err != nil {
-		return fmt.Errorf(`error while injecting span to map: %v`, err)
+		return errors.WithStack(err)
 	}
 
 	return nil

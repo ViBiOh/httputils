@@ -1,10 +1,11 @@
 package request
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/ViBiOh/httputils/pkg/errors"
 )
 
 // ReadBody return content of given body
@@ -14,7 +15,7 @@ func ReadBody(body io.ReadCloser) (content []byte, err error) {
 
 		if closeErr != nil {
 			if err != nil {
-				err = fmt.Errorf(`, and also error while closing body: %v`, closeErr)
+				err = errors.New(`%v, and also %v`, err, closeErr)
 			} else {
 				err = closeErr
 			}
@@ -22,6 +23,9 @@ func ReadBody(body io.ReadCloser) (content []byte, err error) {
 	}()
 
 	content, err = ioutil.ReadAll(body)
+	if err != nil {
+		err = errors.WithStack(err)
+	}
 	return
 }
 

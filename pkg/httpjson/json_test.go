@@ -103,7 +103,7 @@ func Test_ResponseJSON(t *testing.T) {
 			false,
 			``,
 			nil,
-			errors.New(`error while marshalling JSON response: json: unsupported type: func() string`),
+			errors.New(`json: unsupported type: func() string`),
 		},
 	}
 

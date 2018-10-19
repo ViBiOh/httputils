@@ -1,6 +1,6 @@
 package breaksync
 
-import "fmt"
+import "github.com/ViBiOh/httputils/pkg/errors"
 
 const finalValue = "\uffff"
 
@@ -23,7 +23,7 @@ func (s *Synchronization) read() error {
 	for _, source := range s.Sources {
 		if source.synchronized && (source.readRupture == nil || source.readRupture.last) {
 			if _, err := source.read(); err != nil {
-				return fmt.Errorf(`error while reading source: %v`, err)
+				return errors.WithStack(err)
 			}
 		}
 	}

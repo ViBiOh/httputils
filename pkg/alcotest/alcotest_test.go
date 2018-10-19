@@ -67,18 +67,18 @@ func Test_GetStatusCode(t *testing.T) {
 	defer testServer.Close()
 
 	var cases = []struct {
-		intention   string
-		url         string
-		userAgent   string
-		want        int
-		wantErr     error
+		intention string
+		url       string
+		userAgent string
+		want      int
+		wantErr   error
 	}{
 		{
 			`should handle invalid request`,
 			`:`,
 			``,
 			0,
-			errors.New(`error while creating request: parse :: missing protocol scheme`),
+			errors.New(`parse :: missing protocol scheme`),
 		},
 		{
 			`should handle malformed URL`,
@@ -147,7 +147,7 @@ func Test_Do(t *testing.T) {
 			`should handle error during call`,
 			`http://`,
 			`Test_Do`,
-			errors.New(`unable to blow in balloon: `),
+			errors.New(`http: no Host in request URL`),
 		},
 		{
 			`should handle bad status code`,

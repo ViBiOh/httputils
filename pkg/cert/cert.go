@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/logger"
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
@@ -46,10 +47,10 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	}
 
 	if err = tc.SetKeepAlive(true); err != nil {
-		logger.Error(`Error while setting keep alive: %v`, err)
+		logger.Error(`%+v`, errors.WithStack(err))
 	}
 	if err := tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
-		logger.Error(`Error while setting keep alive period: %v`, err)
+		logger.Error(`%+v`, errors.WithStack(err))
 	}
 
 	return tc, nil
@@ -75,7 +76,7 @@ func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
 
 	certPEMBlock, keyPEMBlock, err := GenerateFromConfig(config)
 	if err != nil {
-		return fmt.Errorf(`error while generating certificate: %v`, err)
+		return err
 	}
 	logger.Info(`Self-signed certificate generated`)
 
@@ -93,13 +94,13 @@ func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
 	tlsConfig.Certificates = make([]tls.Certificate, 1)
 	certificate, err := tls.X509KeyPair(certPEMBlock, keyPEMBlock)
 	if err != nil {
-		return fmt.Errorf(`error while getting x509 KeyPair: %v`, err)
+		return errors.WithStack(err)
 	}
 	tlsConfig.Certificates[0] = certificate
 
 	listener, err := net.Listen(`tcp`, addr)
 	if err != nil {
-		return fmt.Errorf(`error while listening: %v`, err)
+		return errors.WithStack(err)
 	}
 
 	tlsListener := tls.NewListener(
@@ -118,12 +119,12 @@ func GenerateFromConfig(config map[string]*string) ([]byte, []byte, error) {
 func Generate(organization string, hosts []string) ([]byte, []byte, error) {
 	ecdsaKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf(`error while generating cert key: %v`, err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
 	if err != nil {
-		return nil, nil, fmt.Errorf(`error while generating serial number: %v`, err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	startDate := time.Now()
@@ -153,7 +154,7 @@ func Generate(organization string, hosts []string) ([]byte, []byte, error) {
 
 	ips, err := tools.GetLocalIPS()
 	if err != nil {
-		return nil, nil, fmt.Errorf(`error while getting locals ips: %v`, err)
+		return nil, nil, err
 	}
 
 	for _, ip := range ips {
@@ -162,12 +163,12 @@ func Generate(organization string, hosts []string) ([]byte, []byte, error) {
 
 	der, err := x509.CreateCertificate(rand.Reader, &template, &template, &ecdsaKey.PublicKey, ecdsaKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf(`error while creating certificate: %v`, err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	key, err := x509.MarshalECPrivateKey(ecdsaKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf(`error while marshalling private key: %v`, err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	return pem.EncodeToMemory(&pem.Block{Type: `CERTIFICATE`, Bytes: der}), pem.EncodeToMemory(&pem.Block{Type: `EC PRIVATE KEY`, Bytes: key}), nil

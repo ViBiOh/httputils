@@ -2,11 +2,12 @@ package crud
 
 import (
 	"encoding/json"
-	"errors"
+	native_errors "errors"
 	"flag"
 	"fmt"
 	"net/http"
 
+	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/httperror"
 	"github.com/ViBiOh/httputils/pkg/httpjson"
 	"github.com/ViBiOh/httputils/pkg/pagination"
@@ -16,7 +17,7 @@ import (
 
 var (
 	// ErrNotFound occurs when item with given ID if not found
-	ErrNotFound = errors.New(`item not found`)
+	ErrNotFound = native_errors.New(`item not found`)
 )
 
 // App stores informations
@@ -46,24 +47,30 @@ func Flags(prefix string) map[string]*uint {
 	}
 }
 
-func handleError(w http.ResponseWriter, err error, label string) {
+func handleError(w http.ResponseWriter, err error) bool {
+	if err == nil {
+		return false
+	}
+
 	if err == ErrNotFound {
 		httperror.NotFound(w)
 	} else {
-		httperror.InternalServerError(w, fmt.Errorf(`error while executing %s: %v`, label, err))
+		httperror.InternalServerError(w, err)
 	}
+
+	return true
 }
 
 func (a App) readPayload(r *http.Request) (Item, error) {
 	bodyBytes, err := request.ReadBodyRequest(r)
 
 	if err != nil {
-		return nil, fmt.Errorf(`error while reading body: %v`, err)
+		return nil, err
 	}
 
 	var obj = a.service.Empty()
 	if err := json.Unmarshal(bodyBytes, obj); err != nil {
-		return nil, fmt.Errorf(`error while unmarshalling body: %v`, err)
+		return nil, errors.WithStack(err)
 	}
 
 	return obj, nil
@@ -72,13 +79,13 @@ func (a App) readPayload(r *http.Request) (Item, error) {
 func (a App) list(w http.ResponseWriter, r *http.Request) {
 	page, pageSize, sortKey, sortAsc, err := pagination.ParseParams(r, a.defaultPage, a.defaultPageSize, a.maxPageSize)
 	if err != nil {
-		httperror.BadRequest(w, fmt.Errorf(`error while parsing pagination: %v`, err))
+		httperror.BadRequest(w, err)
 		return
 	}
 
 	list, err := a.service.List(page, pageSize, sortKey, sortAsc)
 	if err != nil {
-		httperror.InternalServerError(w, fmt.Errorf(`error while listing items: %v`, err))
+		httperror.InternalServerError(w, err)
 		return
 	}
 
@@ -90,8 +97,7 @@ func (a App) list(w http.ResponseWriter, r *http.Request) {
 
 func (a App) get(w http.ResponseWriter, r *http.Request, id string) {
 	obj, err := a.service.Get(id)
-	if err != nil {
-		handleError(w, err, `get`)
+	if handleError(w, err) {
 		return
 	}
 
@@ -105,13 +111,12 @@ func (a App) create(w http.ResponseWriter, r *http.Request) {
 	obj, err := a.readPayload(r)
 
 	if err != nil {
-		httperror.BadRequest(w, fmt.Errorf(`error while parsing body: %v`, err))
+		httperror.BadRequest(w, err)
 		return
 	}
 
 	obj, err = a.service.Create(obj)
-	if err != nil {
-		handleError(w, err, `create`)
+	if handleError(w, err) {
 		return
 	}
 
@@ -125,13 +130,12 @@ func (a App) update(w http.ResponseWriter, r *http.Request, id string) {
 	obj, err := a.readPayload(r)
 
 	if err != nil {
-		httperror.BadRequest(w, fmt.Errorf(`error while parsing body: %v`, err))
+		httperror.BadRequest(w, err)
 		return
 	}
 
 	obj, err = a.service.Update(id, obj)
-	if err != nil {
-		handleError(w, err, `update`)
+	if handleError(w, err) {
 		return
 	}
 
@@ -144,13 +148,12 @@ func (a App) update(w http.ResponseWriter, r *http.Request, id string) {
 func (a App) delete(w http.ResponseWriter, r *http.Request, id string) {
 	_, err := a.service.Get(id)
 	if err == nil {
-		handleError(w, err, `get`)
+		handleError(w, err)
 		return
 	}
 
 	err = a.service.Delete(id)
-	if err != nil {
-		handleError(w, err, `delete`)
+	if handleError(w, err) {
 		return
 	}
 

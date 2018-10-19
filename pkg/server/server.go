@@ -2,13 +2,13 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/healthcheck"
 	"github.com/ViBiOh/httputils/pkg/logger"
 	"github.com/ViBiOh/httputils/pkg/model"
@@ -27,7 +27,7 @@ func httpGracefulClose(server *http.Server) error {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		return fmt.Errorf(`error while shutting down HTTP server: %v`, err)
+		return errors.WithStack(err)
 	}
 
 	return nil
