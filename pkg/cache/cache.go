@@ -12,6 +12,7 @@ type TimeMap interface {
 	LoadOrStore(key, value interface{}, duration time.Duration) (interface{}, bool)
 	Range(f func(key, value interface{}) bool)
 	Delete(key interface{})
+	Clean()
 }
 
 // New create a new TimeMap
@@ -76,6 +77,18 @@ func (t *timeMap) Range(f func(key, value interface{}) bool) {
 		timeValue := value.(mapValue)
 		if timeValue.isValid() {
 			return f(key, value)
+		}
+
+		return true
+	})
+}
+
+// Clean remove invalid entries
+func (t *timeMap) Clean() {
+	t.store.Range(func(key, value interface{}) bool {
+		timeValue := value.(mapValue)
+		if !timeValue.isValid() {
+			t.Delete(key)
 		}
 
 		return true
