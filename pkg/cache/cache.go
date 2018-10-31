@@ -27,7 +27,7 @@ type mapValue struct {
 }
 
 func (t *mapValue) isValid() bool {
-	return t.expiration.Before(time.Now())
+	return t.expiration.After(time.Now())
 }
 
 var _ TimeMap = &timeMap{}
