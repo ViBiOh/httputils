@@ -16,7 +16,7 @@ var defaultHTTPClient = http.Client{
 }
 
 // DoAndReadWithClient execute request and return output with given client
-func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.Request) ([]byte, error) {
+func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.Request) ([]byte, int, http.Header, error) {
 	if ctx != nil {
 		var netTracer *nethttp.Tracer
 
@@ -32,22 +32,22 @@ func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.
 				err = errors.New(`%v, and also %v`, err, closeErr)
 			}
 		}
-		return nil, errors.WithStack(err)
+		return nil, 0, nil, errors.WithStack(err)
 	}
 
 	responseBody, err := ReadBodyResponse(response)
 	if err != nil {
-		return nil, err
+		return nil, 0, nil, err
 	}
 
 	if response.StatusCode >= http.StatusBadRequest {
-		return responseBody, errors.New(`error status %d`, response.StatusCode)
+		err = errors.New(`error status %d`, response.StatusCode)
 	}
 
-	return responseBody, nil
+	return responseBody, response.StatusCode, response.Header, err
 }
 
 // DoAndRead execute request and return output
-func DoAndRead(ctx context.Context, request *http.Request) ([]byte, error) {
+func DoAndRead(ctx context.Context, request *http.Request) ([]byte, int, http.Header, error) {
 	return DoAndReadWithClient(ctx, defaultHTTPClient, request)
 }

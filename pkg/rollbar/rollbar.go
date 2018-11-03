@@ -107,7 +107,7 @@ func (a App) Flush() {
 
 // Deploy send deploy informations to rollbar
 func Deploy(ctx context.Context, token, environment, revision, user string) error {
-	_, err := request.PostForm(ctx, deployEndpoint, url.Values{
+	_, _, _, err := request.PostForm(ctx, deployEndpoint, url.Values{
 		`access_token`:   {token},
 		`environment`:    {environment},
 		`revision`:       {revision},

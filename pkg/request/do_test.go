@@ -58,7 +58,7 @@ func Test_DoAndRead(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := DoAndRead(testCase.ctx, testCase.request)
+		result, _, _, err := DoAndRead(testCase.ctx, testCase.request)
 
 		failed = false
 

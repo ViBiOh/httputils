@@ -70,7 +70,7 @@ func Test_DoJSON(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := DoJSON(testCase.ctx, testCase.url, testCase.body, testCase.headers, http.MethodPost)
+		result, _, _, err := DoJSON(testCase.ctx, testCase.url, testCase.body, testCase.headers, http.MethodPost)
 
 		failed = false
 
