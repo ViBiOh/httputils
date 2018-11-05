@@ -23,6 +23,7 @@ var (
 
 // App stores informations
 type App struct {
+	path            string
 	defaultPage     uint
 	defaultPageSize uint
 	maxPageSize     uint
@@ -30,18 +31,20 @@ type App struct {
 }
 
 // NewApp creates new App from Flags' config
-func NewApp(config map[string]*uint, service ItemService) *App {
+func NewApp(config map[string]interface{}, service ItemService) *App {
 	return &App{
-		defaultPage:     *config[`defaultPage`],
-		defaultPageSize: *config[`defaultPageSize`],
-		maxPageSize:     *config[`maxPageSize`],
+		path:            *config[`path`].(*string),
+		defaultPage:     *config[`defaultPage`].(*uint),
+		defaultPageSize: *config[`defaultPageSize`].(*uint),
+		maxPageSize:     *config[`maxPageSize`].(*uint),
 		service:         service,
 	}
 }
 
 // Flags adds flags for given prefix
-func Flags(prefix string) map[string]*uint {
-	return map[string]*uint{
+func Flags(prefix string) map[string]interface{} {
+	return map[string]interface{}{
+		`path`:            flag.String(tools.ToCamel(fmt.Sprintf(`%sPath`, prefix)), fmt.Sprintf(`/%s`, prefix), fmt.Sprintf(`[%s] HTTP Path prefix`, prefix)),
 		`defaultPage`:     flag.Uint(tools.ToCamel(fmt.Sprintf(`%sDefaultPage`, prefix)), 1, fmt.Sprintf(`[%s] Default page`, prefix)),
 		`defaultPageSize`: flag.Uint(tools.ToCamel(fmt.Sprintf(`%sDefaultPageSize`, prefix)), 20, fmt.Sprintf(`[%s] Default page size`, prefix)),
 		`maxPageSize`:     flag.Uint(tools.ToCamel(fmt.Sprintf(`%sMaxPageSize`, prefix)), 500, fmt.Sprintf(`[%s] Max page size`, prefix)),
@@ -172,7 +175,7 @@ func (a App) delete(w http.ResponseWriter, r *http.Request, id string) {
 
 // Handler for CRUD requests. Should be use with net/http
 func (a App) Handler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.StripPrefix(a.path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		isRoot := tools.IsRoot(r)
 
 		switch r.Method {
@@ -210,5 +213,5 @@ func (a App) Handler() http.Handler {
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 }
