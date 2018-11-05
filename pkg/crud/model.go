@@ -8,7 +8,7 @@ type Item interface {
 // ItemService retrieves item
 type ItemService interface {
 	Empty() Item
-	List(page, pageSize uint, sortKey string, sortAsc bool) ([]Item, error)
+	List(page, pageSize uint, sortKey string, sortAsc bool, filters map[string][]string) ([]Item, error)
 	Get(ID string) (Item, error)
 	Create(o Item) (Item, error)
 	Update(ID string, o Item) (Item, error)

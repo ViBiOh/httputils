@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/httperror"
@@ -76,6 +77,15 @@ func (a App) readPayload(r *http.Request) (Item, error) {
 	return obj, nil
 }
 
+func readFilters(r *http.Request) map[string][]string {
+	params, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return nil
+	}
+
+	return params
+}
+
 func (a App) list(w http.ResponseWriter, r *http.Request) {
 	page, pageSize, sortKey, sortAsc, err := pagination.ParseParams(r, a.defaultPage, a.defaultPageSize, a.maxPageSize)
 	if err != nil {
@@ -83,7 +93,7 @@ func (a App) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	list, err := a.service.List(page, pageSize, sortKey, sortAsc)
+	list, err := a.service.List(page, pageSize, sortKey, sortAsc, readFilters(r))
 	if err != nil {
 		httperror.InternalServerError(w, err)
 		return
