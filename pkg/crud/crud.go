@@ -96,13 +96,18 @@ func (a App) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	list, err := a.service.List(r.Context(), page, pageSize, sortKey, sortAsc, readFilters(r))
+	list, total, err := a.service.List(r.Context(), page, pageSize, sortKey, sortAsc, readFilters(r))
 	if err != nil {
 		httperror.InternalServerError(w, err)
 		return
 	}
 
-	if err := httpjson.ResponseArrayJSON(w, http.StatusOK, list, httpjson.IsPretty(r)); err != nil {
+	if len(list) == 0 && total > 0 {
+		w.WriteHeader(http.StatusRequestedRangeNotSatisfiable)
+		return
+	}
+
+	if err := httpjson.ResponsePaginatedJSON(w, http.StatusOK, page, pageSize, total, list, httpjson.IsPretty(r)); err != nil {
 		httperror.InternalServerError(w, err)
 		return
 	}
