@@ -96,7 +96,7 @@ func (a App) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	list, err := a.service.List(page, pageSize, sortKey, sortAsc, readFilters(r))
+	list, err := a.service.List(r.Context(), page, pageSize, sortKey, sortAsc, readFilters(r))
 	if err != nil {
 		httperror.InternalServerError(w, err)
 		return
@@ -109,7 +109,7 @@ func (a App) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a App) get(w http.ResponseWriter, r *http.Request, id string) {
-	obj, err := a.service.Get(id)
+	obj, err := a.service.Get(r.Context(), id)
 	if handleError(w, err) {
 		return
 	}
@@ -128,7 +128,7 @@ func (a App) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	obj, err = a.service.Create(obj)
+	obj, err = a.service.Create(r.Context(), obj)
 	if handleError(w, err) {
 		return
 	}
@@ -147,7 +147,13 @@ func (a App) update(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 
-	obj, err = a.service.Update(id, obj)
+	_, err = a.service.Get(r.Context(), obj.ID())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	obj, err = a.service.Update(r.Context(), obj)
 	if handleError(w, err) {
 		return
 	}
@@ -159,13 +165,13 @@ func (a App) update(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 func (a App) delete(w http.ResponseWriter, r *http.Request, id string) {
-	_, err := a.service.Get(id)
-	if err == nil {
+	obj, err := a.service.Get(r.Context(), id)
+	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	err = a.service.Delete(id)
+	err = a.service.Delete(r.Context(), obj)
 	if handleError(w, err) {
 		return
 	}
