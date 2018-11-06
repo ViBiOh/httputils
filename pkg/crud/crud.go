@@ -1,14 +1,12 @@
 package crud
 
 import (
-	"encoding/json"
 	native_errors "errors"
 	"flag"
 	"fmt"
 	"net/http"
 	"net/url"
 
-	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/httperror"
 	"github.com/ViBiOh/httputils/pkg/httpjson"
 	"github.com/ViBiOh/httputils/pkg/pagination"
@@ -67,17 +65,11 @@ func handleError(w http.ResponseWriter, err error) bool {
 
 func (a App) readPayload(r *http.Request) (Item, error) {
 	bodyBytes, err := request.ReadBodyRequest(r)
-
 	if err != nil {
 		return nil, err
 	}
 
-	var obj = a.service.Empty()
-	if err := json.Unmarshal(bodyBytes, obj); err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return obj, nil
+	return a.service.Unmarsall(bodyBytes)
 }
 
 func readFilters(r *http.Request) map[string][]string {

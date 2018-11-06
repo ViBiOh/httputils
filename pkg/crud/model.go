@@ -9,7 +9,7 @@ type Item interface {
 
 // ItemService retrieves item
 type ItemService interface {
-	Empty() Item
+	Unmarsall([]byte) (Item, error)
 	List(ctx context.Context, page, pageSize uint, sortKey string, sortAsc bool, filters map[string][]string) ([]Item, uint, error)
 	Get(ctx context.Context, ID string) (Item, error)
 	Create(ctx context.Context, o Item) (Item, error)
