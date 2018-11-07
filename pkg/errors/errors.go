@@ -9,14 +9,16 @@ import (
 
 var _ error = New(``)
 
-type enhancedError struct {
+// Error enhanced error
+type Error struct {
 	message string
 	callers []uintptr
+	origin  error
 }
 
 // New creates a new error with stack trace saved
 func New(format string, a ...interface{}) error {
-	return enhancedError{
+	return Error{
 		message: fmt.Sprintf(format, a...),
 		callers: callers(3, 5),
 	}
@@ -28,23 +30,39 @@ func WithStack(err error) error {
 		return nil
 	}
 
-	return enhancedError{
+	return Error{
 		message: err.Error(),
 		callers: callers(3, 5),
 	}
 }
 
-func (e enhancedError) Error() string {
+// Wrap wrap origin error into a new one
+func Wrap(err error, format string, a ...interface{}) error {
+	return Error{
+		message: fmt.Sprintf(format, a...),
+		callers: callers(3, 5),
+		origin:  err,
+	}
+}
+
+// Error return string representation of error
+func (e Error) Error() string {
 	return e.message
 }
 
-func (e enhancedError) Format(state fmt.State, verb rune) {
+// Format formats error
+func (e Error) Format(state fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if state.Flag('+') {
 			safeWriteString(state, e.message)
 			safeWriteString(state, "\n")
 			safeWriteString(state, stackTrace(e.callers))
+
+			if e.origin != nil {
+				safeWriteString(state, "\nfrom\n")
+				safeWriteString(state, e.origin.Error())
+			}
 			break
 		}
 		fallthrough
@@ -55,6 +73,10 @@ func (e enhancedError) Format(state fmt.State, verb rune) {
 			fmt.Print(err)
 		}
 	}
+}
+
+func (e Error) OriginError() error {
+	return e.origin
 }
 
 func safeWriteString(w io.Writer, s string) {
