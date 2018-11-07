@@ -144,7 +144,7 @@ func (a App) update(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 
-	_, err = a.service.Get(r.Context(), obj.ID())
+	_, err = a.service.Get(r.Context(), id)
 	if err != nil {
 		handleError(w, err)
 		return

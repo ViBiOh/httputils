@@ -3,9 +3,7 @@ package crud
 import "context"
 
 // Item describe item
-type Item interface {
-	ID() string
-}
+type Item interface {}
 
 // ItemService retrieves item
 type ItemService interface {
