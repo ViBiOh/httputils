@@ -60,8 +60,8 @@ func (e Error) Format(state fmt.State, verb rune) {
 			safeWriteString(state, stackTrace(e.callers))
 
 			if e.origin != nil {
-				safeWriteString(state, "\nfrom\n")
-				safeWriteString(state, e.origin.Error())
+				safeWriteString(state, "\n\nfrom\n")
+				safeWriteString(state, fmt.Sprintf("%+v", e.origin))
 			}
 			break
 		}
