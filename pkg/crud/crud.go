@@ -58,9 +58,15 @@ func handleError(w http.ResponseWriter, err error) bool {
 		return false
 	}
 
-	if err == ErrInvalid || (err.(errors.Error)).OriginError() == ErrInvalid {
+	var originErr error
+
+	if wrappedError, ok := err.(errors.Error); ok {
+		originErr = wrappedError.OriginError()
+	}
+
+	if err == ErrInvalid || originErr == ErrInvalid {
 		httperror.BadRequest(w, err)
-	} else if err == ErrNotFound || (err.(errors.Error)).OriginError() == ErrNotFound {
+	} else if err == ErrNotFound || originErr == ErrNotFound {
 		httperror.NotFound(w)
 	} else {
 		httperror.InternalServerError(w, err)
@@ -130,6 +136,8 @@ func (a App) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	obj.SetID(``)
+
 	obj, err = a.service.Create(r.Context(), obj)
 	if handleError(w, err) {
 		return
@@ -154,6 +162,8 @@ func (a App) update(w http.ResponseWriter, r *http.Request, id string) {
 		handleError(w, err)
 		return
 	}
+
+	obj.SetID(id)
 
 	obj, err = a.service.Update(r.Context(), obj)
 	if handleError(w, err) {
