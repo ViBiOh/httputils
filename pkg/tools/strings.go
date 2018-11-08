@@ -12,3 +12,13 @@ func ToCamel(s string) string {
 	a[0] = unicode.ToLower(a[0])
 	return string(a)
 }
+
+func IncludesString(array []string, lookup string) bool {
+	for _, item := range array {
+		if item == lookup {
+			return true
+		}
+	}
+
+	return false
+}

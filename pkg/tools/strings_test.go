@@ -31,3 +31,37 @@ func Test_ToCamel(t *testing.T) {
 		}
 	}
 }
+
+func Test_IncludesString(t *testing.T) {
+	var cases = []struct {
+		intention string
+		array     []string
+		lookup    string
+		want      bool
+	}{
+		{
+			`should work with nil params`,
+			nil,
+			``,
+			false,
+		},
+		{
+			`should work with found value`,
+			[]string{`hello`, `world`},
+			`world`,
+			true,
+		},
+		{
+			`should work with not found value`,
+			[]string{`hello`, `world`},
+			`bob`,
+			false,
+		},
+	}
+
+	for _, testCase := range cases {
+		if result := IncludesString(testCase.array, testCase.lookup); result != testCase.want {
+			t.Errorf("%s\nIncludes(%+v, `%s`) = %+v, want %+v", testCase.intention, testCase.array, testCase.lookup, result, testCase.want)
+		}
+	}
+}
