@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var _ error = New(``)
+var _ error = Error{}
 
 // Error enhanced error
 type Error struct {
