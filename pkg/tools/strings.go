@@ -13,6 +13,7 @@ func ToCamel(s string) string {
 	return string(a)
 }
 
+// IncludesString checks in an array includes given string
 func IncludesString(array []string, lookup string) bool {
 	for _, item := range array {
 		if item == lookup {

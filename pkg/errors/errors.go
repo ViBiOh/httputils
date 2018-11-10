@@ -75,6 +75,7 @@ func (e Error) Format(state fmt.State, verb rune) {
 	}
 }
 
+// OriginError returns origin error
 func (e Error) OriginError() error {
 	return e.origin
 }
