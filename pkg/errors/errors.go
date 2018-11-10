@@ -11,16 +11,16 @@ var _ error = Error{}
 
 // Error enhanced error
 type Error struct {
-	message string
-	callers []uintptr
-	origin  error
+	message    string
+	stacktrace string
+	origin     error
 }
 
 // New creates a new error with stack trace saved
 func New(format string, a ...interface{}) error {
 	return Error{
-		message: fmt.Sprintf(format, a...),
-		callers: callers(3, 5),
+		message:    fmt.Sprintf(format, a...),
+		stacktrace: stackTrace(3, 5),
 	}
 }
 
@@ -31,17 +31,17 @@ func WithStack(err error) error {
 	}
 
 	return Error{
-		message: err.Error(),
-		callers: callers(3, 5),
+		message:    err.Error(),
+		stacktrace: stackTrace(3, 5),
 	}
 }
 
 // Wrap wrap origin error into a new one
 func Wrap(err error, format string, a ...interface{}) error {
 	return Error{
-		message: fmt.Sprintf(format, a...),
-		callers: callers(3, 5),
-		origin:  err,
+		message:    fmt.Sprintf(format, a...),
+		stacktrace: stackTrace(3, 5),
+		origin:     err,
 	}
 }
 
@@ -56,8 +56,11 @@ func (e Error) Format(state fmt.State, verb rune) {
 	case 'v':
 		if state.Flag('+') {
 			safeWriteString(state, e.message)
-			safeWriteString(state, "\n")
-			safeWriteString(state, stackTrace(e.callers))
+
+			if e.stacktrace != `` {
+				safeWriteString(state, "\n")
+				safeWriteString(state, e.stacktrace)
+			}
 
 			if e.origin != nil {
 				safeWriteString(state, "\n\nfrom\n")
@@ -76,7 +79,7 @@ func (e Error) Format(state fmt.State, verb rune) {
 }
 
 // OriginError returns origin error
-func (e Error) OriginError() error {
+func (e Error) Cause() error {
 	return e.origin
 }
 
@@ -86,19 +89,11 @@ func safeWriteString(w io.Writer, s string) {
 	}
 }
 
-func callers(skip, depth int) []uintptr {
+func stackTrace(skip, depth int) string {
 	pc := make([]uintptr, depth)
 	n := runtime.Callers(skip, pc)
 
-	if n == 0 {
-		return nil
-	}
-
-	return pc[:n]
-}
-
-func stackTrace(pc []uintptr) string {
-	frames := runtime.CallersFrames(pc)
+	frames := runtime.CallersFrames(pc[:n])
 	stacktraces := make([]string, 0)
 
 	for {

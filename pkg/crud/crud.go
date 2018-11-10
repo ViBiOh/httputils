@@ -61,7 +61,7 @@ func handleError(w http.ResponseWriter, err error) bool {
 	var originErr error
 
 	if wrappedError, ok := err.(errors.Error); ok {
-		originErr = wrappedError.OriginError()
+		originErr = wrappedError.Cause()
 	}
 
 	if err == ErrInvalid || originErr == ErrInvalid {
