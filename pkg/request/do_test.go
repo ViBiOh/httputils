@@ -13,6 +13,7 @@ func Test_DoAndRead(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == `/bad` {
 			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`oops`))
 		} else {
 			fmt.Fprint(w, `Hello, test`)
 		}
@@ -38,8 +39,8 @@ func Test_DoAndRead(t *testing.T) {
 		{
 			nil,
 			bad,
-			``,
-			errors.New(`error status 400`),
+			`oops`,
+			errors.New(`error status 400: oops`),
 		},
 		{
 			nil,

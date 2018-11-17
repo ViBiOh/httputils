@@ -41,7 +41,7 @@ func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.
 	}
 
 	if response.StatusCode >= http.StatusBadRequest {
-		err = errors.New(`error status %d`, response.StatusCode)
+		err = errors.New(`error status %d: %s`, response.StatusCode, responseBody)
 	}
 
 	return responseBody, response.StatusCode, response.Header, err

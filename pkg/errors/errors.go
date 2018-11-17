@@ -78,7 +78,7 @@ func (e Error) Format(state fmt.State, verb rune) {
 	}
 }
 
-// OriginError returns origin error
+// Cause returns origin error
 func (e Error) Cause() error {
 	return e.origin
 }
