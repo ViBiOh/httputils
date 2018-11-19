@@ -1,9 +1,10 @@
 APP_NAME ?= httputils
+VERSION ?= $(shell git log --pretty=format:'%h' -n 1)
+AUTHOR ?= $(shell git log --pretty=format:'%an' -n 1)
+PACKAGES ?= ./...
 
 GOBIN=bin
 BINARY_PATH=$(GOBIN)/$(APP_NAME)
-VERSION ?= $(shell git log --pretty=format:'%h' -n 1)
-AUTHOR ?= $(shell git log --pretty=format:'%an' -n 1)
 
 help: Makefile
 	@sed -n 's|^##||p' $< | column -t -s ':' | sed -e 's|^| |'
@@ -44,9 +45,9 @@ format:
 
 ## lint: Lint code of app
 lint:
-	golint `go list ./... | grep -v vendor`
-	errcheck -ignoretests `go list ./... | grep -v vendor`
-	go vet ./...
+	golint `go list $(PACKAGES) | grep -v vendor`
+	errcheck -ignoretests `go list $(PACKAGES) | grep -v vendor`
+	go vet $(PACKAGES)
 
 ## tst: Test code of app with coverage
 tst:
@@ -54,7 +55,7 @@ tst:
 
 ## bench: Benchmark code of app
 bench:
-	go test ./... -bench . -benchmem -run Benchmark.*
+	go test $(PACKAGES) -bench . -benchmem -run Benchmark.*
 
 ## build: Build binary of app
 build:
