@@ -13,28 +13,35 @@ import (
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
-// App stores informations
-type App struct {
+// Config of package
+type Config struct {
 	port       *int
 	tls        *bool
-	certConfig map[string]*string
+	certConfig cert.Config
 }
 
-// NewApp creates new App from Flags' config
-func NewApp(config map[string]interface{}) *App {
-	return &App{
-		port:       config[`port`].(*int),
-		tls:        config[`tls`].(*bool),
-		certConfig: config[`certConfig`].(map[string]*string),
+// App of package
+type App struct {
+	port       int
+	tls        bool
+	certConfig cert.Config
+}
+
+// Flags adds flags for configuring package
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		port:       fs.Int(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), 1080, `Listen port`),
+		tls:        flag.Bool(tools.ToCamel(fmt.Sprintf(`%sTls`, prefix)), true, `Serve TLS content`),
+		certConfig: cert.Flags(fs, tools.ToCamel(fmt.Sprintf(`%sTls`, prefix))),
 	}
 }
 
-// Flags adds flags for given prefix
-func Flags(prefix string) map[string]interface{} {
-	return map[string]interface{}{
-		`port`:       flag.Int(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), 1080, `Listen port`),
-		`tls`:        flag.Bool(tools.ToCamel(fmt.Sprintf(`%sTls`, prefix)), true, `Serve TLS content`),
-		`certConfig`: cert.Flags(tools.ToCamel(fmt.Sprintf(`%sTls`, prefix))),
+// New creates new App from Config
+func New(config Config) *App {
+	return &App{
+		port:       *config.port,
+		tls:        *config.tls,
+		certConfig: config.certConfig,
 	}
 }
 
@@ -43,7 +50,7 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 	healthcheckHandler := healthcheckApp.Handler()
 
 	httpServer := &http.Server{
-		Addr: fmt.Sprintf(`:%d`, *a.port),
+		Addr: fmt.Sprintf(`:%d`, a.port),
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == `/health` {
 				healthcheckHandler.ServeHTTP(w, r)
@@ -58,7 +65,7 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 	var serveError = make(chan error)
 	go func() {
 		defer close(serveError)
-		if *a.tls {
+		if a.tls {
 			logger.Info(`Listening with TLS`)
 			serveError <- cert.ListenAndServeTLS(a.certConfig, httpServer)
 		} else {

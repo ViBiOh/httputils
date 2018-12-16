@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/httperror"
@@ -23,7 +24,15 @@ var (
 	ErrInvalid = goerrors.New(`invalid`)
 )
 
-// App stores informations
+// Config of package
+type Config struct {
+	path            *string
+	defaultPage     *uint
+	defaultPageSize *uint
+	maxPageSize     *uint
+}
+
+// App of package
 type App struct {
 	path            string
 	defaultPage     uint
@@ -32,24 +41,24 @@ type App struct {
 	service         ItemService
 }
 
-// NewApp creates new App from Flags' config
-func NewApp(config map[string]interface{}, service ItemService) *App {
-	return &App{
-		path:            *config[`path`].(*string),
-		defaultPage:     *config[`defaultPage`].(*uint),
-		defaultPageSize: *config[`defaultPageSize`].(*uint),
-		maxPageSize:     *config[`maxPageSize`].(*uint),
-		service:         service,
+// Flags adds flags for configuring package
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		path:            fs.String(tools.ToCamel(fmt.Sprintf(`%sPath`, prefix)), fmt.Sprintf(`/%s`, prefix), fmt.Sprintf(`[%s] HTTP Path prefix`, prefix)),
+		defaultPage:     fs.Uint(tools.ToCamel(fmt.Sprintf(`%sDefaultPage`, prefix)), 1, fmt.Sprintf(`[%s] Default page`, prefix)),
+		defaultPageSize: fs.Uint(tools.ToCamel(fmt.Sprintf(`%sDefaultPageSize`, prefix)), 20, fmt.Sprintf(`[%s] Default page size`, prefix)),
+		maxPageSize:     fs.Uint(tools.ToCamel(fmt.Sprintf(`%sMaxPageSize`, prefix)), 500, fmt.Sprintf(`[%s] Max page size`, prefix)),
 	}
 }
 
-// Flags adds flags for given prefix
-func Flags(prefix string) map[string]interface{} {
-	return map[string]interface{}{
-		`path`:            flag.String(tools.ToCamel(fmt.Sprintf(`%sPath`, prefix)), fmt.Sprintf(`/%s`, prefix), fmt.Sprintf(`[%s] HTTP Path prefix`, prefix)),
-		`defaultPage`:     flag.Uint(tools.ToCamel(fmt.Sprintf(`%sDefaultPage`, prefix)), 1, fmt.Sprintf(`[%s] Default page`, prefix)),
-		`defaultPageSize`: flag.Uint(tools.ToCamel(fmt.Sprintf(`%sDefaultPageSize`, prefix)), 20, fmt.Sprintf(`[%s] Default page size`, prefix)),
-		`maxPageSize`:     flag.Uint(tools.ToCamel(fmt.Sprintf(`%sMaxPageSize`, prefix)), 500, fmt.Sprintf(`[%s] Max page size`, prefix)),
+// New creates new App from Config
+func New(config Config, service ItemService) *App {
+	return &App{
+		path:            strings.TrimSpace(*config.path),
+		defaultPage:     *config.defaultPage,
+		defaultPageSize: *config.defaultPageSize,
+		maxPageSize:     *config.maxPageSize,
+		service:         service,
 	}
 }
 

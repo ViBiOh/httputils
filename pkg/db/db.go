@@ -42,28 +42,37 @@ func PrepareFullTextSearch(query, search string, index uint) (string, string) {
 	return strings.Replace(query, `$INDEX`, fmt.Sprintf(`$%d`, index), -1), strings.Join(transformedWords, ` | `)
 }
 
-// Flags add flags for given prefix
-func Flags(prefix string) map[string]*string {
-	return map[string]*string{
-		`host`: flag.String(tools.ToCamel(fmt.Sprintf(`%sHost`, prefix)), ``, `[database] Host`),
-		`port`: flag.String(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), `5432`, `[database] Port`),
-		`user`: flag.String(tools.ToCamel(fmt.Sprintf(`%sUser`, prefix)), ``, `[database] User`),
-		`pass`: flag.String(tools.ToCamel(fmt.Sprintf(`%sPass`, prefix)), ``, `[database] Pass`),
-		`name`: flag.String(tools.ToCamel(fmt.Sprintf(`%sName`, prefix)), ``, `[database] Name`),
+// Config of package
+type Config struct {
+	host *string
+	port *string
+	user *string
+	pass *string
+	name *string
+}
+
+// Flags adds flags for configuring package
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		host: fs.String(tools.ToCamel(fmt.Sprintf(`%sHost`, prefix)), ``, `[database] Host`),
+		port: fs.String(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), `5432`, `[database] Port`),
+		user: fs.String(tools.ToCamel(fmt.Sprintf(`%sUser`, prefix)), ``, `[database] User`),
+		pass: fs.String(tools.ToCamel(fmt.Sprintf(`%sPass`, prefix)), ``, `[database] Pass`),
+		name: fs.String(tools.ToCamel(fmt.Sprintf(`%sName`, prefix)), ``, `[database] Name`),
 	}
 }
 
 // GetDB start DB connection
-func GetDB(config map[string]*string) (*sql.DB, error) {
-	host := strings.TrimSpace(*config[`host`])
+func GetDB(config Config) (*sql.DB, error) {
+	host := strings.TrimSpace(*config.host)
 	if host == `` {
 		return nil, nil
 	}
 
-	port := strings.TrimSpace(*config[`port`])
-	user := strings.TrimSpace(*config[`user`])
-	pass := strings.TrimSpace(*config[`pass`])
-	name := strings.TrimSpace(*config[`name`])
+	port := strings.TrimSpace(*config.port)
+	user := strings.TrimSpace(*config.user)
+	pass := strings.TrimSpace(*config.pass)
+	name := strings.TrimSpace(*config.name)
 
 	db, err := sql.Open(`postgres`, fmt.Sprintf(`host=%s port=%s user=%s password=%s dbname=%s sslmode=disable`, host, port, user, pass, name))
 	if err != nil {

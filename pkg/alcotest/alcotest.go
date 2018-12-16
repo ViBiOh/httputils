@@ -22,11 +22,17 @@ var httpClient = http.Client{
 	},
 }
 
-// Flags add flags for given prefix
-func Flags(prefix string) map[string]*string {
-	return map[string]*string{
-		`url`:       flag.String(tools.ToCamel(fmt.Sprintf(`%sUrl`, prefix)), ``, `[health] URL to check`),
-		`userAgent`: flag.String(tools.ToCamel(fmt.Sprintf(`%sUserAgent`, prefix)), `Golang alcotest`, `[health] User-Agent for check`),
+// Config of package
+type Config struct {
+	url       *string
+	userAgent *string
+}
+
+// Flags adds flags for configuring package
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		url:       fs.String(tools.ToCamel(fmt.Sprintf(`%sUrl`, prefix)), ``, `[health] URL to check`),
+		userAgent: fs.String(tools.ToCamel(fmt.Sprintf(`%sUserAgent`, prefix)), `Golang alcotest`, `[health] User-Agent for check`),
 	}
 }
 
@@ -76,9 +82,9 @@ func Do(url, userAgent string) error {
 }
 
 // DoAndExit test status code of given URL (if present) and exit program with correct status
-func DoAndExit(config map[string]*string) {
-	url := strings.TrimSpace(*config[`url`])
-	userAgent := strings.TrimSpace(*config[`userAgent`])
+func DoAndExit(config Config) {
+	url := strings.TrimSpace(*config.url)
+	userAgent := strings.TrimSpace(*config.userAgent)
 
 	if url != `` {
 		if err := Do(url, userAgent); err != nil {

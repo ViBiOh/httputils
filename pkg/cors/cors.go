@@ -9,7 +9,16 @@ import (
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
-// App stores informations
+// Config of package
+type Config struct {
+	origin      *string
+	headers     *string
+	methods     *string
+	exposes     *string
+	credentials *bool
+}
+
+// App of package
 type App struct {
 	origin      string
 	headers     string
@@ -18,25 +27,25 @@ type App struct {
 	credentials string
 }
 
-// NewApp creates new App from Flags' config
-func NewApp(config map[string]interface{}) *App {
-	return &App{
-		origin:      *(config[`origin`].(*string)),
-		headers:     *(config[`headers`].(*string)),
-		methods:     *(config[`methods`].(*string)),
-		exposes:     *(config[`exposes`].(*string)),
-		credentials: strconv.FormatBool(*(config[`credentials`].(*bool))),
+// Flags adds flags for configuring package
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		origin:      fs.String(tools.ToCamel(fmt.Sprintf(`%sOrigin`, prefix)), `*`, `[cors] Access-Control-Allow-Origin`),
+		headers:     fs.String(tools.ToCamel(fmt.Sprintf(`%sHeaders`, prefix)), `Content-Type`, `[cors] Access-Control-Allow-Headers`),
+		methods:     fs.String(tools.ToCamel(fmt.Sprintf(`%sMethods`, prefix)), http.MethodGet, `[cors] Access-Control-Allow-Methods`),
+		exposes:     fs.String(tools.ToCamel(fmt.Sprintf(`%sExpose`, prefix)), ``, `[cors] Access-Control-Expose-Headers`),
+		credentials: fs.Bool(tools.ToCamel(fmt.Sprintf(`%sCredentials`, prefix)), false, `[cors] Access-Control-Allow-Credentials`),
 	}
 }
 
-// Flags adds flags for given prefix
-func Flags(prefix string) map[string]interface{} {
-	return map[string]interface{}{
-		`origin`:      flag.String(tools.ToCamel(fmt.Sprintf(`%sOrigin`, prefix)), `*`, `[cors] Access-Control-Allow-Origin`),
-		`headers`:     flag.String(tools.ToCamel(fmt.Sprintf(`%sHeaders`, prefix)), `Content-Type`, `[cors] Access-Control-Allow-Headers`),
-		`methods`:     flag.String(tools.ToCamel(fmt.Sprintf(`%sMethods`, prefix)), http.MethodGet, `[cors] Access-Control-Allow-Methods`),
-		`exposes`:     flag.String(tools.ToCamel(fmt.Sprintf(`%sExpose`, prefix)), ``, `[cors] Access-Control-Expose-Headers`),
-		`credentials`: flag.Bool(tools.ToCamel(fmt.Sprintf(`%sCredentials`, prefix)), false, `[cors] Access-Control-Allow-Credentials`),
+// New creates new App from Config
+func New(config Config) *App {
+	return &App{
+		origin:      *config.origin,
+		headers:     *config.headers,
+		methods:     *config.methods,
+		exposes:     *config.exposes,
+		credentials: strconv.FormatBool(*config.credentials),
 	}
 }
 

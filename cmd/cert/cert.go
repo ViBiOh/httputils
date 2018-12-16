@@ -23,7 +23,9 @@ func saveFile(filename, defaultFilename string, content []byte) {
 }
 
 func main() {
-	certConfig := cert.Flags(``)
+	fs := flag.NewFlagSet(`cert`, flag.ExitOnError)
+
+	certConfig := cert.Flags(fs, ``)
 	flag.Parse()
 
 	cert, key, err := cert.GenerateFromConfig(certConfig)
@@ -31,6 +33,6 @@ func main() {
 		logger.Fatal(`%+v`, err)
 	}
 
-	saveFile(strings.TrimSpace(*certConfig[`cert`]), `public.crt`, cert)
-	saveFile(strings.TrimSpace(*certConfig[`key`]), `private.key`, key)
+	saveFile(strings.TrimSpace(*certConfig.Cert), `public.crt`, cert)
+	saveFile(strings.TrimSpace(*certConfig.Key), `private.key`, key)
 }

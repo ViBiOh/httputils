@@ -7,7 +7,9 @@ import (
 )
 
 func main() {
-	alcotestConfig := alcotest.Flags(``)
+	fs := flag.NewFlagSet(`alcotest`, flag.ExitOnError)
+
+	alcotestConfig := alcotest.Flags(fs, ``)
 	flag.Parse()
 
 	alcotest.DoAndExit(alcotestConfig)

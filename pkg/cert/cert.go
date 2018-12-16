@@ -21,13 +21,21 @@ import (
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
+// Config of package
+type Config struct {
+	Cert         *string
+	Key          *string
+	Organization *string
+	Hosts        *string
+}
+
 // Flags add flags for given prefix
-func Flags(prefix string) map[string]*string {
-	return map[string]*string{
-		`cert`:         flag.String(tools.ToCamel(fmt.Sprintf(`%sCert`, prefix)), ``, `[tls] PEM Certificate file`),
-		`key`:          flag.String(tools.ToCamel(fmt.Sprintf(`%sKey`, prefix)), ``, `[tls] PEM Key file`),
-		`organization`: flag.String(tools.ToCamel(fmt.Sprintf(`%sOrganization`, prefix)), `ViBiOh`, `[tls] Self-signed certificate organization`),
-		`hosts`:        flag.String(tools.ToCamel(fmt.Sprintf(`%sHosts`, prefix)), `localhost`, `[tls] Self-signed certificate hosts, comma separated`),
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		Cert:         fs.String(tools.ToCamel(fmt.Sprintf(`%sCert`, prefix)), ``, `[tls] PEM Certificate file`),
+		Key:          fs.String(tools.ToCamel(fmt.Sprintf(`%sKey`, prefix)), ``, `[tls] PEM Key file`),
+		Organization: fs.String(tools.ToCamel(fmt.Sprintf(`%sOrganization`, prefix)), `ViBiOh`, `[tls] Self-signed certificate organization`),
+		Hosts:        fs.String(tools.ToCamel(fmt.Sprintf(`%sHosts`, prefix)), `localhost`, `[tls] Self-signed certificate hosts, comma separated`),
 	}
 }
 
@@ -68,10 +76,10 @@ func strSliceContains(slice []string, search string) bool {
 
 // ListenAndServeTLS with provided certFile flag or self-signed generated certificate
 // Largely inspired by https://golang.org/src/net/http/server.go
-func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
-	cert := strings.TrimSpace(*config[`cert`])
+func ListenAndServeTLS(config Config, server *http.Server) error {
+	cert := strings.TrimSpace(*config.Cert)
 	if cert != `` {
-		return server.ListenAndServeTLS(cert, strings.TrimSpace(*config[`key`]))
+		return server.ListenAndServeTLS(cert, strings.TrimSpace(*config.Key))
 	}
 
 	certPEMBlock, keyPEMBlock, err := GenerateFromConfig(config)
@@ -111,8 +119,8 @@ func ListenAndServeTLS(config map[string]*string, server *http.Server) error {
 }
 
 // GenerateFromConfig generates certs from given config
-func GenerateFromConfig(config map[string]*string) ([]byte, []byte, error) {
-	return Generate(strings.TrimSpace(*config[`organization`]), strings.Split(strings.TrimSpace(*config[`hosts`]), `,`))
+func GenerateFromConfig(config Config) ([]byte, []byte, error) {
+	return Generate(strings.TrimSpace(*config.Organization), strings.Split(strings.TrimSpace(*config.Hosts), `,`))
 }
 
 // Generate self signed with CA for use with TLS
