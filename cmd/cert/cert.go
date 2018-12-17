@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/ViBiOh/httputils/pkg/cert"
@@ -26,7 +27,10 @@ func main() {
 	fs := flag.NewFlagSet(`cert`, flag.ExitOnError)
 
 	certConfig := cert.Flags(fs, ``)
-	flag.Parse()
+
+	if err := fs.Parse(os.Args[1:]); err != nil {
+		logger.Fatal(`%+v`, err)
+	}
 
 	cert, key, err := cert.GenerateFromConfig(certConfig)
 	if err != nil {

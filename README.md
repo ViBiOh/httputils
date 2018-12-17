@@ -14,6 +14,8 @@ Make your server blow into balloon for checking its health.
 Usage of alcotest:
   -url string
       [health] URL to check
+  -userAgent string
+      [health] User-Agent for check (default "Golang alcotest")
 ```
 
 in Dockerfile
@@ -36,7 +38,7 @@ Generate a certificate for a web server.
 ### Usage
 
 ```bash
-Usage of cmd/cert/cert.go:
+Usage of cert:
   -cert string
       [tls] PEM Certificate file
   -hosts string

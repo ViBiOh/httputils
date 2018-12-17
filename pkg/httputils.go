@@ -31,7 +31,7 @@ type App struct {
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
 		port:       fs.Int(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), 1080, `Listen port`),
-		tls:        flag.Bool(tools.ToCamel(fmt.Sprintf(`%sTls`, prefix)), true, `Serve TLS content`),
+		tls:        fs.Bool(tools.ToCamel(fmt.Sprintf(`%sTls`, prefix)), true, `Serve TLS content`),
 		certConfig: cert.Flags(fs, tools.ToCamel(fmt.Sprintf(`%sTls`, prefix))),
 	}
 }
