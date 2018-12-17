@@ -13,8 +13,8 @@ var _ model.Middleware = &App{}
 type App struct {
 }
 
-// NewApp creates new App from Flags' config
-func NewApp() *App {
+// New creates new App
+func New() *App {
 	return &App{}
 }
 

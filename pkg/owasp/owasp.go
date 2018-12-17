@@ -4,86 +4,40 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"strings"
 
-	"github.com/ViBiOh/httputils/pkg/model"
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
-const (
-	cacheControlHeader = `Cache-Control`
-)
-
-var _ model.Middleware = &App{}
-
-type middleware struct {
-	http.ResponseWriter
-	index       bool
-	wroteHeader bool
+// Config of package
+type Config struct {
+	csp          *string
+	hsts         *bool
+	frameOptions *string
 }
 
-func (m *middleware) setHeader() {
-	if m.Header().Get(cacheControlHeader) == `` {
-		if m.index {
-			m.Header().Set(cacheControlHeader, `no-cache`)
-		} else {
-			m.Header().Set(cacheControlHeader, `max-age=864000`)
-		}
-	}
-}
-
-func (m *middleware) WriteHeader(status int) {
-	m.wroteHeader = true
-
-	if status == http.StatusOK || status == http.StatusMovedPermanently {
-		m.setHeader()
-	}
-
-	m.ResponseWriter.WriteHeader(status)
-}
-
-func (m *middleware) Write(b []byte) (int, error) {
-	if !m.wroteHeader {
-		m.setHeader()
-	}
-
-	return m.ResponseWriter.Write(b)
-}
-
-func (m *middleware) Push(target string, opts *http.PushOptions) error {
-	if pusher, ok := m.ResponseWriter.(http.Pusher); ok {
-		return pusher.Push(target, opts)
-	}
-	return http.ErrNotSupported
-}
-
-func (m *middleware) Flush() {
-	if f, ok := m.ResponseWriter.(http.Flusher); ok {
-		f.Flush()
-	}
-}
-
-// App stores informations
+// App of package
 type App struct {
 	csp          string
 	hsts         bool
 	frameOptions string
 }
 
-// NewApp creates new App from Flags' config
-func NewApp(config map[string]interface{}) *App {
-	return &App{
-		csp:          *(config[`csp`].(*string)),
-		hsts:         *(config[`hsts`].(*bool)),
-		frameOptions: *(config[`frameOptions`].(*string)),
+// Flags adds flags for configuring package
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		csp:          fs.String(tools.ToCamel(fmt.Sprintf(`%sCsp`, prefix)), `default-src 'self'; base-uri 'self'`, `[owasp] Content-Security-Policy`),
+		hsts:         fs.Bool(tools.ToCamel(fmt.Sprintf(`%sHsts`, prefix)), true, `[owasp] Indicate Strict Transport Security`),
+		frameOptions: fs.String(tools.ToCamel(fmt.Sprintf(`%sFrameOptions`, prefix)), `deny`, `[owasp] X-Frame-Options`),
 	}
 }
 
-// Flags adds flags for given prefix
-func Flags(prefix string) map[string]interface{} {
-	return map[string]interface{}{
-		`csp`:          flag.String(tools.ToCamel(fmt.Sprintf(`%sCsp`, prefix)), `default-src 'self'; base-uri 'self'`, `[owasp] Content-Security-Policy`),
-		`hsts`:         flag.Bool(tools.ToCamel(fmt.Sprintf(`%sHsts`, prefix)), true, `[owasp] Indicate Strict Transport Security`),
-		`frameOptions`: flag.String(tools.ToCamel(fmt.Sprintf(`%sFrameOptions`, prefix)), `deny`, `[owasp] X-Frame-Options`),
+// New creates new App from Config
+func New(config Config) *App {
+	return &App{
+		csp:          strings.TrimSpace(*config.csp),
+		hsts:         *config.hsts,
+		frameOptions: strings.TrimSpace(*config.frameOptions),
 	}
 }
 

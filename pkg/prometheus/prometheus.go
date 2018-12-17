@@ -13,22 +13,27 @@ import (
 
 var _ model.Middleware = &App{}
 
-// App stores informations
+// Config of package
+type Config struct {
+	path *string
+}
+
+// App of package
 type App struct {
 	path string
 }
 
-// NewApp creates new App from Flags' config
-func NewApp(config map[string]*string) *App {
-	return &App{
-		path: strings.TrimSpace(*config[`path`]),
+// Flags adds flags for configuring package
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		path: fs.String(tools.ToCamel(fmt.Sprintf(`%sPath`, prefix)), `/metrics`, `[prometheus] Path for exposing metrics`),
 	}
 }
 
-// Flags adds flags for given prefix
-func Flags(prefix string) map[string]*string {
-	return map[string]*string{
-		`path`: flag.String(tools.ToCamel(fmt.Sprintf(`%sPath`, prefix)), `/metrics`, `[prometheus] Path for exposing metrics`),
+// New creates new App from Config
+func New(config Config) *App {
+	return &App{
+		path: strings.TrimSpace(*config.path),
 	}
 }
 

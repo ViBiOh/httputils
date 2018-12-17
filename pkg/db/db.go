@@ -2,45 +2,14 @@ package db
 
 import (
 	"database/sql"
-	"database/sql/driver"
 	"flag"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/tools"
 	_ "github.com/lib/pq" // Not referenced but needed for database/sql
 )
-
-// WhereInUint wrapper for assigning `IN ($n)` in WHERE clause
-type WhereInUint []uint
-
-// Value implements the driver.Valuer interface.
-func (a WhereInUint) Value() (driver.Value, error) {
-	ints := make([]string, len(a))
-	for i, v := range a {
-		ints[i] = strconv.FormatUint(uint64(v), 10)
-	}
-
-	return strings.Join(ints, ","), nil
-}
-
-// PrepareFullTextSearch replace $INDEX param in query and expand words
-func PrepareFullTextSearch(query, search string, index uint) (string, string) {
-	if search == `` {
-		return ``, ``
-	}
-
-	words := strings.Split(search, ` `)
-	transformedWords := make([]string, 0, len(words))
-
-	for _, word := range words {
-		transformedWords = append(transformedWords, word+`:*`)
-	}
-
-	return strings.Replace(query, `$INDEX`, fmt.Sprintf(`$%d`, index), -1), strings.Join(transformedWords, ` | `)
-}
 
 // Config of package
 type Config struct {
@@ -62,8 +31,8 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 	}
 }
 
-// GetDB start DB connection
-func GetDB(config Config) (*sql.DB, error) {
+// New creates new App from Config
+func New(config Config) (*sql.DB, error) {
 	host := strings.TrimSpace(*config.host)
 	if host == `` {
 		return nil, nil

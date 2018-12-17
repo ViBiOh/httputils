@@ -10,8 +10,8 @@ type App struct {
 	closed  bool
 }
 
-// NewApp creates new App for given handler
-func NewApp() *App {
+// New creates new App for given handler
+func New() *App {
 	return &App{
 		closed: false,
 	}

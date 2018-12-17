@@ -19,18 +19,36 @@ const (
 	deployEndpoint = `https://api.rollbar.com/api/1/deploy/`
 )
 
-var _ model.Middleware = &App{}
-var _ model.Flusher = &App{}
-var _ logger.LogReporter = &App{}
+var (
+	_ model.Middleware   = &App{}
+	_ model.Flusher      = &App{}
+	_ logger.LogReporter = &App{}
+)
 
-// App stores informations
+// Config of package
+type Config struct {
+	token *string
+	env   *string
+	root  *string
+}
+
+// App of package
 type App struct {
 	active bool
 }
 
-// NewApp creates new App from Flags' config
-func NewApp(config map[string]*string) *App {
-	token := strings.TrimSpace(*config[`token`])
+// Flags adds flags for configuring package
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		token: fs.String(tools.ToCamel(fmt.Sprintf(`%sToken`, prefix)), ``, `[rollbar] Token`),
+		env:   fs.String(tools.ToCamel(fmt.Sprintf(`%sEnv`, prefix)), `prod`, `[rollbar] Environment`),
+		root:  fs.String(tools.ToCamel(fmt.Sprintf(`%sServerRoot`, prefix)), ``, `[rollbar] Server Root`),
+	}
+}
+
+// New creates new App from Config
+func New(config Config) *App {
+	token := strings.TrimSpace(*config.token)
 
 	if token == `` {
 		logger.Warn(`no token provided`)
@@ -40,8 +58,8 @@ func NewApp(config map[string]*string) *App {
 	}
 
 	rollbar.SetToken(token)
-	rollbar.SetEnvironment(strings.TrimSpace(*config[`env`]))
-	rollbar.SetServerRoot(strings.TrimSpace(*config[`root`]))
+	rollbar.SetEnvironment(strings.TrimSpace(*config.env))
+	rollbar.SetServerRoot(strings.TrimSpace(*config.root))
 
 	logger.Info(`Configuration for %s`, rollbar.Environment())
 
@@ -51,15 +69,6 @@ func NewApp(config map[string]*string) *App {
 	logger.AddReporter(app)
 
 	return app
-}
-
-// Flags adds flags for given prefix
-func Flags(prefix string) map[string]*string {
-	return map[string]*string{
-		`token`: flag.String(tools.ToCamel(fmt.Sprintf(`%sToken`, prefix)), ``, `[rollbar] Token`),
-		`env`:   flag.String(tools.ToCamel(fmt.Sprintf(`%sEnv`, prefix)), `prod`, `[rollbar] Environment`),
-		`root`:  flag.String(tools.ToCamel(fmt.Sprintf(`%sServerRoot`, prefix)), ``, `[rollbar] Server Root`),
-	}
 }
 
 func (a App) check() bool {

@@ -21,9 +21,52 @@ import (
 
 var _ model.Middleware = &App{}
 
-// App stores informations
+// Config of package
+type Config struct {
+	name  *string
+	agent *string
+}
+
+// App of package
 type App struct {
 	closer io.Closer
+}
+
+// Flags adds flags for configuring package
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		name:  fs.String(tools.ToCamel(fmt.Sprintf(`%sName`, prefix)), ``, `[opentracing] Service name`),
+		agent: fs.String(tools.ToCamel(fmt.Sprintf(`%sAgent`, prefix)), `jaeger:6831`, `[opentracing] Jaeger Agent (e.g. host:port)`),
+	}
+}
+
+// New creates new App from Config
+func New(config Config) *App {
+	serviceName := strings.TrimSpace(*config.name)
+	if serviceName == `` {
+		logger.Warn(`no service name provided`)
+		return &App{}
+	}
+
+	tracer, closer, err := initJaeger(serviceName, strings.TrimSpace(*config.agent))
+	if err != nil {
+		logger.Error(`%+v`, err)
+		if closer != nil {
+			defer func() {
+				if err := closer.Close(); err != nil {
+					logger.Error(`%+v`, errors.WithStack(err))
+				}
+			}()
+		}
+
+		return &App{}
+	}
+
+	opentracing.SetGlobalTracer(tracer)
+
+	return &App{
+		closer: closer,
+	}
 }
 
 func initJaeger(serviceName string, agentHostPort string) (opentracing.Tracer, io.Closer, error) {
@@ -48,43 +91,6 @@ func initJaeger(serviceName string, agentHostPort string) (opentracing.Tracer, i
 	}
 
 	return tracer, closer, nil
-}
-
-// NewApp creates new App from Flags' config
-func NewApp(config map[string]*string) *App {
-	serviceName := strings.TrimSpace(*config[`name`])
-	if serviceName == `` {
-		logger.Warn(`no service name provided`)
-		return &App{}
-	}
-
-	tracer, closer, err := initJaeger(serviceName, strings.TrimSpace(*config[`agent`]))
-	if err != nil {
-		logger.Error(`%+v`, err)
-		if closer != nil {
-			defer func() {
-				if err := closer.Close(); err != nil {
-					logger.Error(`%+v`, errors.WithStack(err))
-				}
-			}()
-		}
-
-		return &App{}
-	}
-
-	opentracing.SetGlobalTracer(tracer)
-
-	return &App{
-		closer: closer,
-	}
-}
-
-// Flags adds flags for given prefix
-func Flags(prefix string) map[string]*string {
-	return map[string]*string{
-		`name`:  flag.String(tools.ToCamel(fmt.Sprintf(`%sName`, prefix)), ``, `[opentracing] Service name`),
-		`agent`: flag.String(tools.ToCamel(fmt.Sprintf(`%sAgent`, prefix)), `jaeger:6831`, `[opentracing] Jaeger Agent (e.g. host:port)`),
-	}
 }
 
 func (a App) check() bool {
