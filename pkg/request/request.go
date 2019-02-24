@@ -53,7 +53,7 @@ func Form(method string, url string, data url.Values, headers http.Header) (*htt
 }
 
 // Do send given method with given content to URL with optional headers supplied
-func Do(ctx context.Context, method string, url string, body io.Reader, headers http.Header) ([]byte, int, http.Header, error) {
+func Do(ctx context.Context, method string, url string, body io.Reader, headers http.Header) (io.ReadCloser, int, http.Header, error) {
 	req, err := New(method, url, body, headers)
 	if err != nil {
 		return nil, 0, nil, err
@@ -63,7 +63,7 @@ func Do(ctx context.Context, method string, url string, body io.Reader, headers 
 }
 
 // DoJSON send given method with given interface{} as JSON to URL with optional headers supplied
-func DoJSON(ctx context.Context, url string, data interface{}, headers http.Header, method string) ([]byte, int, http.Header, error) {
+func DoJSON(ctx context.Context, url string, data interface{}, headers http.Header, method string) (io.ReadCloser, int, http.Header, error) {
 	req, err := JSON(method, url, data, headers)
 	if err != nil {
 		return nil, 0, nil, err
@@ -73,7 +73,7 @@ func DoJSON(ctx context.Context, url string, data interface{}, headers http.Head
 }
 
 // PostForm send form via POST with urlencoded data
-func PostForm(ctx context.Context, url string, data url.Values, headers http.Header) ([]byte, int, http.Header, error) {
+func PostForm(ctx context.Context, url string, data url.Values, headers http.Header) (io.ReadCloser, int, http.Header, error) {
 	req, err := Form(http.MethodPost, url, data, headers)
 	if err != nil {
 		return nil, 0, nil, err
@@ -83,6 +83,6 @@ func PostForm(ctx context.Context, url string, data url.Values, headers http.Hea
 }
 
 // Get send GET request to URL with optional headers supplied
-func Get(ctx context.Context, url string, headers http.Header) ([]byte, int, http.Header, error) {
+func Get(ctx context.Context, url string, headers http.Header) (io.ReadCloser, int, http.Header, error) {
 	return Do(ctx, http.MethodGet, url, nil, headers)
 }

@@ -40,7 +40,7 @@ func Test_DoAndRead(t *testing.T) {
 			nil,
 			bad,
 			`oops`,
-			errors.New(`error status 400: oops`),
+			errors.New(`error status 400`),
 		},
 		{
 			nil,
@@ -62,6 +62,7 @@ func Test_DoAndRead(t *testing.T) {
 		result, _, _, err := DoAndRead(testCase.ctx, testCase.request)
 
 		failed = false
+		var content []byte
 
 		if err == nil && testCase.wantErr != nil {
 			failed = true
@@ -69,12 +70,16 @@ func Test_DoAndRead(t *testing.T) {
 			failed = true
 		} else if err != nil && err.Error() != testCase.wantErr.Error() {
 			failed = true
-		} else if string(result) != testCase.want {
-			failed = true
+		} else if result != nil {
+			content, _ = ReadBody(result)
+
+			if string(content) != testCase.want {
+				failed = true
+			}
 		}
 
 		if failed {
-			t.Errorf(`DoAndRead(%v) = (%v, %v), want (%v, %v)`, testCase.request, string(result), err, testCase.want, testCase.wantErr)
+			t.Errorf(`DoAndRead(%v) = (%v, %v), want (%v, %v)`, testCase.request, string(content), err, testCase.want, testCase.wantErr)
 		}
 	}
 }

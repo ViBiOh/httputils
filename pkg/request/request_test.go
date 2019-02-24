@@ -73,6 +73,7 @@ func Test_DoJSON(t *testing.T) {
 		result, _, _, err := DoJSON(testCase.ctx, testCase.url, testCase.body, testCase.headers, http.MethodPost)
 
 		failed = false
+		var content []byte
 
 		if err == nil && testCase.wantErr != nil {
 			failed = true
@@ -80,12 +81,16 @@ func Test_DoJSON(t *testing.T) {
 			failed = true
 		} else if err != nil && err.Error() != testCase.wantErr.Error() {
 			failed = true
-		} else if string(result) != testCase.want {
-			failed = true
+		} else if result != nil {
+			content, _ = ReadBody(result)
+
+			if string(content) != testCase.want {
+				failed = true
+			}
 		}
 
 		if failed {
-			t.Errorf(`PostJSONBody(%v, %v, '') = (%s, %v), want (%s, %v)`, testCase.url, testCase.body, result, err, testCase.want, testCase.wantErr)
+			t.Errorf(`PostJSONBody(%v, %v, '') = (%s, %v), want (%s, %v)`, testCase.url, testCase.body, string(content), err, testCase.want, testCase.wantErr)
 		}
 	}
 }

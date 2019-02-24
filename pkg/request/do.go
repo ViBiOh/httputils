@@ -2,6 +2,7 @@ package request
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"time"
 
@@ -16,7 +17,7 @@ var defaultHTTPClient = http.Client{
 }
 
 // DoAndReadWithClient execute request and return output with given client
-func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.Request) ([]byte, int, http.Header, error) {
+func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.Request) (io.ReadCloser, int, http.Header, error) {
 	if ctx != nil {
 		var netTracer *nethttp.Tracer
 
@@ -35,19 +36,14 @@ func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.
 		return nil, 0, nil, errors.WithStack(err)
 	}
 
-	responseBody, err := ReadBodyResponse(response)
-	if err != nil {
-		return nil, 0, nil, err
-	}
-
 	if response.StatusCode >= http.StatusBadRequest {
-		err = errors.New(`error status %d: %s`, response.StatusCode, responseBody)
+		err = errors.New(`error status %d`, response.StatusCode)
 	}
 
-	return responseBody, response.StatusCode, response.Header, err
+	return response.Body, response.StatusCode, response.Header, err
 }
 
 // DoAndRead execute request and return output
-func DoAndRead(ctx context.Context, request *http.Request) ([]byte, int, http.Header, error) {
+func DoAndRead(ctx context.Context, request *http.Request) (io.ReadCloser, int, http.Header, error) {
 	return DoAndReadWithClient(ctx, defaultHTTPClient, request)
 }
