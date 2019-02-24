@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -16,8 +17,8 @@ const (
 )
 
 // New prepare a request from given params
-func New(method string, url string, body []byte, headers http.Header) (req *http.Request, err error) {
-	req, err = http.NewRequest(method, url, bytes.NewBuffer(body))
+func New(method string, url string, body io.Reader, headers http.Header) (req *http.Request, err error) {
+	req, err = http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -38,7 +39,7 @@ func JSON(method string, url string, body interface{}, headers http.Header) (*ht
 	}
 	headers.Set(ContentTypeHeader, `application/json`)
 
-	return New(method, url, jsonBody, headers)
+	return New(method, url, bytes.NewBuffer(jsonBody), headers)
 }
 
 // Form prepare a Form request from given params
@@ -48,11 +49,11 @@ func Form(method string, url string, data url.Values, headers http.Header) (*htt
 	}
 	headers.Set(ContentTypeHeader, `application/x-www-form-urlencoded`)
 
-	return New(method, url, []byte(data.Encode()), headers)
+	return New(method, url, bytes.NewBuffer([]byte(data.Encode())), headers)
 }
 
 // Do send given method with given content to URL with optional headers supplied
-func Do(ctx context.Context, method string, url string, body []byte, headers http.Header) ([]byte, int, http.Header, error) {
+func Do(ctx context.Context, method string, url string, body io.Reader, headers http.Header) ([]byte, int, http.Header, error) {
 	req, err := New(method, url, body, headers)
 	if err != nil {
 		return nil, 0, nil, err
