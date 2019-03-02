@@ -16,7 +16,7 @@
 
 [[constraint]]
   name = "github.com/NYTimes/gziphandler"
-  version = "1.0.1"
+  version = "1.1.1"
 
 [[constraint]]
   branch = "master"
