@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/ViBiOh/httputils/pkg/errors"
 )
@@ -49,7 +50,7 @@ func Form(method string, url string, data url.Values, headers http.Header) (*htt
 	}
 	headers.Set(ContentTypeHeader, `application/x-www-form-urlencoded`)
 
-	return New(method, url, bytes.NewBuffer([]byte(data.Encode())), headers)
+	return New(method, url, strings.NewReader(data.Encode()), headers)
 }
 
 // Do send given method with given content to URL with optional headers supplied
