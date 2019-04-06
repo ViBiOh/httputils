@@ -110,7 +110,7 @@
   name = "github.com/prometheus/procfs"
   packages = ["."]
   pruneopts = "UT"
-  revision = "af7bedc223fba51343f25a6fa7aba84355d0357a"
+  revision = "ea9eea63887261e4d8ed8315f4078e88d540c725"
 
 [[projects]]
   digest = "1:03a89169777b38862145711ef2317a36e19e1cdf717ab622e196f6a851b71ad9"
