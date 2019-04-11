@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	deployEndpoint = `https://api.rollbar.com/api/1/deploy/`
+	deployEndpoint = "https://api.rollbar.com/api/1/deploy/"
 )
 
 var (
@@ -40,9 +40,9 @@ type App struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		token: fs.String(tools.ToCamel(fmt.Sprintf(`%sToken`, prefix)), ``, `[rollbar] Token`),
-		env:   fs.String(tools.ToCamel(fmt.Sprintf(`%sEnv`, prefix)), `prod`, `[rollbar] Environment`),
-		root:  fs.String(tools.ToCamel(fmt.Sprintf(`%sServerRoot`, prefix)), ``, `[rollbar] Server Root`),
+		token: fs.String(tools.ToCamel(fmt.Sprintf("%sToken", prefix)), "", "[rollbar] Token"),
+		env:   fs.String(tools.ToCamel(fmt.Sprintf("%sEnv", prefix)), "prod", "[rollbar] Environment"),
+		root:  fs.String(tools.ToCamel(fmt.Sprintf("%sServerRoot", prefix)), "", "[rollbar] Server Root"),
 	}
 }
 
@@ -50,8 +50,8 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 func New(config Config) *App {
 	token := strings.TrimSpace(*config.token)
 
-	if token == `` {
-		logger.Warn(`no token provided`)
+	if token == "" {
+		logger.Warn("no token provided")
 		return &App{
 			active: false,
 		}
@@ -61,7 +61,7 @@ func New(config Config) *App {
 	rollbar.SetEnvironment(strings.TrimSpace(*config.env))
 	rollbar.SetServerRoot(strings.TrimSpace(*config.root))
 
-	logger.Info(`Configuration for %s`, rollbar.Environment())
+	logger.Info("Configuration for %s", rollbar.Environment())
 
 	app := &App{
 		active: true,
@@ -117,10 +117,10 @@ func (a App) Flush() {
 // Deploy send deploy informations to rollbar
 func Deploy(ctx context.Context, token, environment, revision, user string) error {
 	_, _, _, err := request.PostForm(ctx, deployEndpoint, url.Values{
-		`access_token`:   {token},
-		`environment`:    {environment},
-		`revision`:       {revision},
-		`local_username`: {user},
+		"access_token":   {token},
+		"environment":    {environment},
+		"revision":       {revision},
+		"local_username": {user},
 	}, nil)
 
 	if err != nil {

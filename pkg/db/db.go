@@ -23,18 +23,18 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		host: fs.String(tools.ToCamel(fmt.Sprintf(`%sHost`, prefix)), ``, `[database] Host`),
-		port: fs.String(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), `5432`, `[database] Port`),
-		user: fs.String(tools.ToCamel(fmt.Sprintf(`%sUser`, prefix)), ``, `[database] User`),
-		pass: fs.String(tools.ToCamel(fmt.Sprintf(`%sPass`, prefix)), ``, `[database] Pass`),
-		name: fs.String(tools.ToCamel(fmt.Sprintf(`%sName`, prefix)), ``, `[database] Name`),
+		host: fs.String(tools.ToCamel(fmt.Sprintf("%sHost", prefix)), "", "[database] Host"),
+		port: fs.String(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), "5432", "[database] Port"),
+		user: fs.String(tools.ToCamel(fmt.Sprintf("%sUser", prefix)), "", "[database] User"),
+		pass: fs.String(tools.ToCamel(fmt.Sprintf("%sPass", prefix)), "", "[database] Pass"),
+		name: fs.String(tools.ToCamel(fmt.Sprintf("%sName", prefix)), "", "[database] Name"),
 	}
 }
 
 // New creates new App from Config
 func New(config Config) (*sql.DB, error) {
 	host := strings.TrimSpace(*config.host)
-	if host == `` {
+	if host == "" {
 		return nil, nil
 	}
 
@@ -43,7 +43,7 @@ func New(config Config) (*sql.DB, error) {
 	pass := strings.TrimSpace(*config.pass)
 	name := strings.TrimSpace(*config.name)
 
-	db, err := sql.Open(`postgres`, fmt.Sprintf(`host=%s port=%s user=%s password=%s dbname=%s sslmode=disable`, host, port, user, pass, name))
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, pass, name))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -78,7 +78,7 @@ func GetTx(db *sql.DB, tx *sql.Tx) (*sql.Tx, error) {
 func EndTx(tx *sql.Tx, err error) error {
 	if err != nil {
 		if endErr := tx.Rollback(); endErr != nil {
-			return errors.New(`%v, and also %v`, err, endErr)
+			return errors.New("%v, and also %v", err, endErr)
 		}
 	} else if endErr := tx.Commit(); endErr != nil {
 		return errors.WithStack(err)
@@ -93,7 +93,7 @@ func RowsClose(rows *sql.Rows, err error) error {
 		if err == nil {
 			return errors.WithStack(endErr)
 		}
-		return errors.New(`%v, and also %v`, err, endErr)
+		return errors.New("%v, and also %v", err, endErr)
 	}
 
 	return err

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// WhereInUint wrapper for assigning `IN ($n)` in WHERE clause
+// WhereInUint wrapper for assigning "IN ($n)" in WHERE clause
 type WhereInUint []uint
 
 // Value implements the driver.Valuer interface.

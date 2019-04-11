@@ -14,12 +14,12 @@ import (
 func Request(r *http.Request) string {
 	var headers bytes.Buffer
 	for key, value := range r.Header {
-		headers.WriteString(fmt.Sprintf("%s: %s\n", key, strings.Join(value, `,`)))
+		headers.WriteString(fmt.Sprintf("%s: %s\n", key, strings.Join(value, ",")))
 	}
 
 	var params bytes.Buffer
 	for key, value := range r.URL.Query() {
-		headers.WriteString(fmt.Sprintf("%s: %s\n", key, strings.Join(value, `,`)))
+		headers.WriteString(fmt.Sprintf("%s: %s\n", key, strings.Join(value, ",")))
 	}
 
 	var form bytes.Buffer
@@ -27,13 +27,13 @@ func Request(r *http.Request) string {
 		form.WriteString(err.Error())
 	} else {
 		for key, value := range r.PostForm {
-			form.WriteString(fmt.Sprintf("%s: %s\n", key, strings.Join(value, `,`)))
+			form.WriteString(fmt.Sprintf("%s: %s\n", key, strings.Join(value, ",")))
 		}
 	}
 
 	body, err := request.ReadBodyRequest(r)
 	if err != nil {
-		logger.Error(`%+v`, err)
+		logger.Error("%+v", err)
 	}
 
 	var outputPattern bytes.Buffer

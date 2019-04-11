@@ -21,7 +21,7 @@ func httpGracefulClose(server *http.Server) error {
 		return nil
 	}
 
-	logger.Info(`Shutting down HTTP server`)
+	logger.Info("Shutting down HTTP server")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -38,18 +38,18 @@ func gracefulClose(server *http.Server, callback func() error, healthcheckApp *h
 
 	if healthcheckApp != nil {
 		healthcheckApp.Close()
-		logger.Info(`Waiting %d seconds for healthcheck`, healthcheckDuration)
+		logger.Info("Waiting %d seconds for healthcheck", healthcheckDuration)
 		time.Sleep(time.Second * healthcheckDuration)
 	}
 
 	if err := httpGracefulClose(server); err != nil {
-		logger.Error(`%+v`, err)
+		logger.Error("%+v", err)
 		exitCode = 1
 	}
 
 	if callback != nil {
 		if err := callback(); err != nil {
-			logger.Error(`%+v`, err)
+			logger.Error("%+v", err)
 			exitCode = 1
 		}
 	}
@@ -68,9 +68,9 @@ func GracefulClose(server *http.Server, serveError <-chan error, callback func()
 
 	select {
 	case err := <-serveError:
-		logger.Error(`%+v`, err)
+		logger.Error("%+v", err)
 	case <-signals:
-		logger.Info(`SIGTERM received`)
+		logger.Info("SIGTERM received")
 	}
 
 	os.Exit(gracefulClose(server, callback, healthcheckApp, flushers...))

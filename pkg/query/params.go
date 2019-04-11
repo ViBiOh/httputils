@@ -11,8 +11,8 @@ import (
 func GetBool(r *http.Request, name string) bool {
 	if params, err := url.ParseQuery(r.URL.RawQuery); err == nil {
 		if value, ok := params[name]; ok {
-			strValue := strings.Join(value, ``)
-			if strValue == `` {
+			strValue := strings.Join(value, "")
+			if strValue == "" {
 				return true
 			}
 

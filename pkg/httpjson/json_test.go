@@ -17,14 +17,14 @@ type testStruct struct {
 }
 
 func testFn() string {
-	return `toto`
+	return "toto"
 }
 
 func Test_IsPretty(t *testing.T) {
-	emptyRequest, _ := http.NewRequest(http.MethodGet, `http://localhost`, nil)
-	prettyRequest, _ := http.NewRequest(http.MethodGet, `http://localhost?pretty`, nil)
-	prettyValueRequest, _ := http.NewRequest(http.MethodGet, `http://localhost?test=1&pretty=false`, nil)
-	prettyInvalidRequest, _ := http.NewRequest(http.MethodGet, `http://localhost?test=1&pretty=invalidBool`, nil)
+	emptyRequest, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
+	prettyRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?pretty", nil)
+	prettyValueRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?test=1&pretty=false", nil)
+	prettyInvalidRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?test=1&pretty=invalidBool", nil)
 
 	var cases = []struct {
 		intention string
@@ -32,22 +32,22 @@ func Test_IsPretty(t *testing.T) {
 		want      bool
 	}{
 		{
-			`should work with empty param`,
+			"should work with empty param",
 			emptyRequest,
 			false,
 		},
 		{
-			`should work with pretty param`,
+			"should work with pretty param",
 			prettyRequest,
 			true,
 		},
 		{
-			`should work with pretty value`,
+			"should work with pretty value",
 			prettyValueRequest,
 			false,
 		},
 		{
-			`should work with pretty value not equal to a boolean`,
+			"should work with pretty value not equal to a boolean",
 			prettyInvalidRequest,
 			false,
 		},
@@ -71,39 +71,39 @@ func Test_ResponseJSON(t *testing.T) {
 	}{
 
 		{
-			`should work with nil obj`,
+			"should work with nil obj",
 			nil,
 			false,
-			`null`,
-			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
+			"null",
+			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 			nil,
 		},
 		{
-			`should work with given obj`,
-			testStruct{id: `Test`},
+			"should work with given obj",
+			testStruct{id: "Test"},
 			false,
 			`{"Active":false,"Amount":0}`,
-			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
+			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 			nil,
 		},
 		{
-			`should work with pretty print`,
-			testStruct{id: `Test`, Active: true, Amount: 12.34},
+			"should work with pretty print",
+			testStruct{id: "Test", Active: true, Amount: 12.34},
 			true,
 			`{
   "Active": true,
   "Amount": 12.34
 }`,
-			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
+			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 			nil,
 		},
 		{
-			`should work with error print`,
+			"should work with error print",
 			testFn,
 			false,
-			``,
+			"",
 			nil,
-			errors.New(`json: unsupported type: func() string`),
+			errors.New("json: unsupported type: func() string"),
 		},
 	}
 
@@ -133,8 +133,8 @@ func Test_ResponseJSON(t *testing.T) {
 		}
 
 		for key, value := range testCase.wantHeader {
-			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, ``) != value {
-				t.Errorf(`ResponseJSON(%v).Header[%s] = %v, want %v`, testCase.obj, key, strings.Join(result, ``), value)
+			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
+				t.Errorf("ResponseJSON(%v).Header[%s] = %v, want %v", testCase.obj, key, strings.Join(result, ""), value)
 			}
 		}
 	}
@@ -144,7 +144,7 @@ func BenchmarkResponseJSON(b *testing.B) {
 	var testCase = struct {
 		obj interface{}
 	}{
-		testStruct{id: `Test`},
+		testStruct{id: "Test"},
 	}
 
 	writer := httptest.NewRecorder()
@@ -165,13 +165,13 @@ func TestResponseArrayJSON(t *testing.T) {
 			nil,
 			`{"results":null}`,
 			http.StatusOK,
-			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
+			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		{
-			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
+			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
 			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}]}`,
 			http.StatusOK,
-			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
+			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 	}
 
@@ -180,16 +180,16 @@ func TestResponseArrayJSON(t *testing.T) {
 		ResponseArrayJSON(writer, http.StatusOK, testCase.obj, false)
 
 		if result := writer.Result().StatusCode; result != testCase.wantStatus {
-			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, result, testCase.wantStatus)
+			t.Errorf("ResponseJSON(%v) = %v, want %v", testCase.obj, result, testCase.wantStatus)
 		}
 
 		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-			t.Errorf(`ResponseJSON(%v) = %v, want %v`, testCase.obj, string(result), testCase.want)
+			t.Errorf("ResponseJSON(%v) = %v, want %v", testCase.obj, string(result), testCase.want)
 		}
 
 		for key, value := range testCase.wantHeader {
-			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, ``) != value {
-				t.Errorf(`ResponseJSON(%v).Header[%s] = %v, want %v`, testCase.obj, key, strings.Join(result, ``), value)
+			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
+				t.Errorf("ResponseJSON(%v).Header[%s] = %v, want %v", testCase.obj, key, strings.Join(result, ""), value)
 			}
 		}
 	}
@@ -207,34 +207,34 @@ func Test_ResponsePaginatedJSON(t *testing.T) {
 		wantHeader map[string]string
 	}{
 		{
-			`should work with given params`,
+			"should work with given params",
 			1,
 			2,
 			2,
-			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
+			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
 			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":2,"pageCount":1,"total":2}`,
 			http.StatusOK,
-			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
+			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		{
-			`should calcul page count when pageSize match total`,
+			"should calcul page count when pageSize match total",
 			1,
 			10,
 			40,
-			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
+			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
 			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":10,"pageCount":4,"total":40}`,
 			http.StatusOK,
-			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
+			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		{
-			`should calcul page count when pageSize don't match total`,
+			"should calcul page count when pageSize don't match total",
 			1,
 			10,
 			45,
-			[]testStruct{{id: `Test`}, {id: `Test`, Active: true, Amount: 12.34}},
+			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
 			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":10,"pageCount":5,"total":45}`,
 			http.StatusOK,
-			map[string]string{`Content-Type`: `application/json; charset=utf-8`, `Cache-Control`: `no-cache`},
+			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 	}
 
@@ -243,16 +243,16 @@ func Test_ResponsePaginatedJSON(t *testing.T) {
 		ResponsePaginatedJSON(writer, http.StatusOK, testCase.page, testCase.pageSize, testCase.total, testCase.obj, false)
 
 		if result := writer.Result().StatusCode; result != testCase.wantStatus {
-			t.Errorf(`%s\ResponsePaginatedJSON(%v, %v) = %v, want %v`, testCase.intention, testCase.total, testCase.obj, result, testCase.wantStatus)
+			t.Errorf("%s\nResponsePaginatedJSON(%v, %v) = %v, want %v", testCase.intention, testCase.total, testCase.obj, result, testCase.wantStatus)
 		}
 
 		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-			t.Errorf(`%s\ResponsePaginatedJSON(%v, %v) = %v, want %v`, testCase.intention, testCase.total, testCase.obj, string(result), testCase.want)
+			t.Errorf("%s\nResponsePaginatedJSON(%v, %v) = %v, want %v", testCase.intention, testCase.total, testCase.obj, string(result), testCase.want)
 		}
 
 		for key, value := range testCase.wantHeader {
-			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, ``) != value {
-				t.Errorf(`%s\ResponsePaginatedJSON(%v, %v).Header[%s] = %v, want %v`, testCase.intention, testCase.total, testCase.obj, key, strings.Join(result, ``), value)
+			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
+				t.Errorf("%s\nResponsePaginatedJSON(%v, %v).Header[%s] = %v, want %v", testCase.intention, testCase.total, testCase.obj, key, strings.Join(result, ""), value)
 			}
 		}
 	}

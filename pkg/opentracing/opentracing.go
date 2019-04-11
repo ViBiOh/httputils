@@ -35,26 +35,26 @@ type App struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		name:  fs.String(tools.ToCamel(fmt.Sprintf(`%sName`, prefix)), ``, `[opentracing] Service name`),
-		agent: fs.String(tools.ToCamel(fmt.Sprintf(`%sAgent`, prefix)), `jaeger:6831`, `[opentracing] Jaeger Agent (e.g. host:port)`),
+		name:  fs.String(tools.ToCamel(fmt.Sprintf("%sName", prefix)), "", "[opentracing] Service name"),
+		agent: fs.String(tools.ToCamel(fmt.Sprintf("%sAgent", prefix)), "jaeger:6831", "[opentracing] Jaeger Agent (e.g. host:port)"),
 	}
 }
 
 // New creates new App from Config
 func New(config Config) *App {
 	serviceName := strings.TrimSpace(*config.name)
-	if serviceName == `` {
-		logger.Warn(`no service name provided`)
+	if serviceName == "" {
+		logger.Warn("no service name provided")
 		return &App{}
 	}
 
 	tracer, closer, err := initJaeger(serviceName, strings.TrimSpace(*config.agent))
 	if err != nil {
-		logger.Error(`%+v`, err)
+		logger.Error("%+v", err)
 		if closer != nil {
 			defer func() {
 				if err := closer.Close(); err != nil {
-					logger.Error(`%+v`, errors.WithStack(err))
+					logger.Error("%+v", errors.WithStack(err))
 				}
 			}()
 		}
@@ -104,10 +104,10 @@ func (a App) Handler(next http.Handler) http.Handler {
 	}
 
 	return nethttp.Middleware(opentracing.GlobalTracer(), next, nethttp.MWSpanObserver(func(span opentracing.Span, r *http.Request) {
-		span.SetTag(`http.remote_addr`, r.RemoteAddr)
-		span.SetTag(`headers.real_ip`, r.Header.Get(`X-Real-Ip`))
-		span.SetTag(`headers.forwarded_for`, r.Header.Get(`X-Forwarded-For`))
-		span.SetTag(`headers.user_agent`, r.Header.Get(`User-Agent`))
+		span.SetTag("http.remote_addr", r.RemoteAddr)
+		span.SetTag("headers.real_ip", r.Header.Get("X-Real-Ip"))
+		span.SetTag("headers.forwarded_for", r.Header.Get("X-Forwarded-For"))
+		span.SetTag("headers.user_agent", r.Header.Get("User-Agent"))
 	}))
 }
 
@@ -118,6 +118,6 @@ func (a App) Close() {
 	}
 
 	if err := a.closer.Close(); err != nil {
-		logger.Error(`%+v`, errors.WithStack(err))
+		logger.Error("%+v", errors.WithStack(err))
 	}
 }

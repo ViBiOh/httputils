@@ -57,7 +57,7 @@ func (e Error) Format(state fmt.State, verb rune) {
 		if state.Flag('+') {
 			safeWriteString(state, e.message)
 
-			if e.stacktrace != `` {
+			if e.stacktrace != "" {
 				safeWriteString(state, "\n")
 				safeWriteString(state, e.stacktrace)
 			}
@@ -72,7 +72,7 @@ func (e Error) Format(state fmt.State, verb rune) {
 	case 's':
 		safeWriteString(state, e.message)
 	case 'q':
-		if _, err := fmt.Fprintf(state, `%q`, e.message); err != nil {
+		if _, err := fmt.Fprintf(state, "%q", e.message); err != nil {
 			fmt.Print(err)
 		}
 	}
@@ -98,7 +98,7 @@ func stackTrace(skip, depth int) string {
 
 	for {
 		frame, more := frames.Next()
-		if strings.Contains(frame.File, `runtime/`) {
+		if strings.Contains(frame.File, "runtime/") {
 			break
 		}
 
@@ -109,7 +109,7 @@ func stackTrace(skip, depth int) string {
 	}
 
 	if len(stacktraces) == 0 {
-		return ``
+		return ""
 	}
 
 	return fmt.Sprintf("%s", strings.Join(stacktraces, "\n"))

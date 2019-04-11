@@ -7,9 +7,9 @@ import (
 )
 
 func Test_ReadBodyRequest(t *testing.T) {
-	req, err := http.NewRequest(http.MethodGet, `http://localhost`, bytes.NewBuffer([]byte(`Content from buffer`)))
+	req, err := http.NewRequest(http.MethodGet, "http://localhost", bytes.NewBuffer([]byte("Content from buffer")))
 	if err != nil {
-		t.Errorf(`Unable to create test request: %v`, err)
+		t.Errorf("Unable to create test request: %v", err)
 	}
 
 	var cases = []struct {
@@ -19,7 +19,7 @@ func Test_ReadBodyRequest(t *testing.T) {
 	}{
 		{
 			req,
-			`Content from buffer`,
+			"Content from buffer",
 			nil,
 		},
 	}
@@ -42,7 +42,7 @@ func Test_ReadBodyRequest(t *testing.T) {
 		}
 
 		if failed {
-			t.Errorf(`ReadBodyRequest(%v) = (%v, %v), want (%v, %v)`, testCase.request, result, err, testCase.want, testCase.wantErr)
+			t.Errorf("ReadBodyRequest(%v) = (%v, %v), want (%v, %v)", testCase.request, result, err, testCase.want, testCase.wantErr)
 		}
 	}
 }

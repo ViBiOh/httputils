@@ -13,20 +13,20 @@ func Test_GenerateBasicAuth(t *testing.T) {
 		want     string
 	}{
 		{
-			``,
-			``,
-			`Basic Og==`,
+			"",
+			"",
+			"Basic Og==",
 		},
 		{
-			`admin`,
-			`password`,
-			`Basic YWRtaW46cGFzc3dvcmQ=`,
+			"admin",
+			"password",
+			"Basic YWRtaW46cGFzc3dvcmQ=",
 		},
 	}
 
 	for _, testCase := range cases {
 		if result := GenerateBasicAuth(testCase.username, testCase.password); result != testCase.want {
-			t.Errorf(`GenerateBasicAuth(%v, %v) = %v, want %v`, testCase.username, testCase.password, result, testCase.want)
+			t.Errorf("GenerateBasicAuth(%v, %v) = %v, want %v", testCase.username, testCase.password, result, testCase.want)
 		}
 	}
 }
@@ -38,9 +38,9 @@ func Test_SetIP(t *testing.T) {
 		ip        string
 	}{
 		{
-			`should set header with given string`,
-			httptest.NewRequest(http.MethodGet, `/`, nil),
-			`test`,
+			"should set header with given string",
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			"test",
 		},
 	}
 
@@ -52,12 +52,12 @@ func Test_SetIP(t *testing.T) {
 }
 
 func Test_GetIP(t *testing.T) {
-	request := httptest.NewRequest(http.MethodGet, `/`, nil)
-	request.RemoteAddr = `localhost`
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.RemoteAddr = "localhost"
 
-	requestWithProxy := httptest.NewRequest(http.MethodGet, `/`, nil)
-	requestWithProxy.RemoteAddr = `localhost`
-	requestWithProxy.Header.Set(ForwardedForHeader, `proxy`)
+	requestWithProxy := httptest.NewRequest(http.MethodGet, "/", nil)
+	requestWithProxy.RemoteAddr = "localhost"
+	requestWithProxy.Header.Set(ForwardedForHeader, "proxy")
 
 	var cases = []struct {
 		r    *http.Request
@@ -65,17 +65,17 @@ func Test_GetIP(t *testing.T) {
 	}{
 		{
 			request,
-			`localhost`,
+			"localhost",
 		},
 		{
 			requestWithProxy,
-			`proxy`,
+			"proxy",
 		},
 	}
 
 	for _, testCase := range cases {
 		if result := GetIP(testCase.r); result != testCase.want {
-			t.Errorf(`GetIP(%v) = %v, want %v`, testCase.r, result, testCase.want)
+			t.Errorf("GetIP(%v) = %v, want %v", testCase.r, result, testCase.want)
 		}
 	}
 }

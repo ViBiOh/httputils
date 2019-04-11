@@ -15,18 +15,18 @@ func createTestServer() *httptest.Server {
 			w.Header().Add(key, r.Header.Get(key))
 		}
 
-		if r.URL.Path == `/ok` {
+		if r.URL.Path == "/ok" {
 			w.WriteHeader(http.StatusOK)
-		} else if r.URL.Path == `/ko` {
+		} else if r.URL.Path == "/ko" {
 			w.WriteHeader(http.StatusInternalServerError)
-		} else if r.URL.Path == `/user-agent` {
-			if r.Header.Get(`User-Agent`) != `Alcotest` {
+		} else if r.URL.Path == "/user-agent" {
+			if r.Header.Get("User-Agent") != "Alcotest" {
 				w.WriteHeader(http.StatusInternalServerError)
 			} else {
 				w.WriteHeader(http.StatusServiceUnavailable)
 			}
 		} else {
-			http.Error(w, `invalid`, http.StatusNotFound)
+			http.Error(w, "invalid", http.StatusNotFound)
 		}
 	}))
 }
@@ -43,37 +43,37 @@ func Test_GetStatusCode(t *testing.T) {
 		wantErr   error
 	}{
 		{
-			`should handle invalid request`,
-			`:`,
-			``,
+			"should handle invalid request",
+			":",
+			"",
 			0,
-			errors.New(`parse :: missing protocol scheme`),
+			errors.New("parse :: missing protocol scheme"),
 		},
 		{
-			`should handle malformed URL`,
-			``,
-			``,
+			"should handle malformed URL",
+			"",
+			"",
 			0,
-			errors.New(`Get : unsupported protocol scheme ""`),
+			errors.New("Get : unsupported protocol scheme \"\""),
 		},
 		{
-			`should return valid status from server`,
-			fmt.Sprintf(`%s/ok`, testServer.URL),
-			``,
+			"should return valid status from server",
+			fmt.Sprintf("%s/ok", testServer.URL),
+			"",
 			http.StatusOK,
 			nil,
 		},
 		{
-			`should return wrong status from server`,
-			fmt.Sprintf(`%s/ko`, testServer.URL),
-			``,
+			"should return wrong status from server",
+			fmt.Sprintf("%s/ko", testServer.URL),
+			"",
 			http.StatusInternalServerError,
 			nil,
 		},
 		{
-			`should set given User-Agent`,
-			fmt.Sprintf(`%s/user-agent`, testServer.URL),
-			`Alcotest`,
+			"should set given User-Agent",
+			fmt.Sprintf("%s/user-agent", testServer.URL),
+			"Alcotest",
 			http.StatusServiceUnavailable,
 			nil,
 		},
@@ -113,21 +113,21 @@ func Test_Do(t *testing.T) {
 		want      error
 	}{
 		{
-			`should handle error during call`,
-			`http://`,
-			`Test_Do`,
-			errors.New(`http: no Host in request URL`),
+			"should handle error during call",
+			"http://",
+			"Test_Do",
+			errors.New("http: no Host in request URL"),
 		},
 		{
-			`should handle bad status code`,
-			fmt.Sprintf(`%s/ko`, testServer.URL),
-			`Test_Do`,
-			errors.New(`alcotest failed: HTTP/500`),
+			"should handle bad status code",
+			fmt.Sprintf("%s/ko", testServer.URL),
+			"Test_Do",
+			errors.New("alcotest failed: HTTP/500"),
 		},
 		{
-			`should handle valid code`,
-			fmt.Sprintf(`%s/ok`, testServer.URL),
-			`Test_Do`,
+			"should handle valid code",
+			fmt.Sprintf("%s/ok", testServer.URL),
+			"Test_Do",
 			nil,
 		},
 	}

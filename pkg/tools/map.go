@@ -17,7 +17,7 @@ type request struct {
 
 // List map content to output channel
 func (c *ConcurrentMap) List() <-chan interface{} {
-	req := request{action: `list`, ioContent: make(chan interface{}, bufferSize)}
+	req := request{action: "list", ioContent: make(chan interface{}, bufferSize)}
 	c.req <- req
 
 	return req.ioContent
@@ -25,7 +25,7 @@ func (c *ConcurrentMap) List() <-chan interface{} {
 
 // Get entry in map
 func (c *ConcurrentMap) Get(key string) interface{} {
-	req := request{action: `get`, key: key, ioContent: make(chan interface{})}
+	req := request{action: "get", key: key, ioContent: make(chan interface{})}
 	c.req <- req
 
 	return <-req.ioContent
@@ -33,19 +33,19 @@ func (c *ConcurrentMap) Get(key string) interface{} {
 
 // Push entry in map
 func (c *ConcurrentMap) Push(key string, entry interface{}) {
-	req := request{action: `push`, key: key, content: entry}
+	req := request{action: "push", key: key, content: entry}
 	c.req <- req
 }
 
 // Remove key from map
 func (c *ConcurrentMap) Remove(key string) {
-	req := request{action: `remove`, key: key}
+	req := request{action: "remove", key: key}
 	c.req <- req
 }
 
 // Close stops concurrent map and return map
 func (c *ConcurrentMap) Close() map[string]interface{} {
-	req := request{action: `stop`, ioContent: make(chan interface{})}
+	req := request{action: "stop", ioContent: make(chan interface{})}
 	c.req <- req
 
 	<-req.ioContent
@@ -59,25 +59,25 @@ func CreateConcurrentMap(contentSize uint, channelSize uint) *ConcurrentMap {
 	go func() {
 		for request := range concurrentMap.req {
 			switch request.action {
-			case `get`:
+			case "get":
 				if entry, ok := concurrentMap.content[request.key]; ok {
 					request.ioContent <- entry
 				}
 				close(request.ioContent)
 				break
-			case `list`:
+			case "list":
 				for _, entry := range concurrentMap.content {
 					request.ioContent <- entry
 				}
 				close(request.ioContent)
 				break
-			case `push`:
+			case "push":
 				concurrentMap.content[request.key] = request.content
 				break
-			case `remove`:
+			case "remove":
 				delete(concurrentMap.content, request.key)
 				break
-			case `stop`:
+			case "stop":
 				close(request.ioContent)
 				return
 			}

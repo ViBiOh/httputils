@@ -31,8 +31,8 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		url:       fs.String(tools.ToCamel(fmt.Sprintf(`%sUrl`, prefix)), ``, `[health] URL to check`),
-		userAgent: fs.String(tools.ToCamel(fmt.Sprintf(`%sUserAgent`, prefix)), `Golang alcotest`, `[health] User-Agent for check`),
+		url:       fs.String(tools.ToCamel(fmt.Sprintf("%sUrl", prefix)), "", "[health] URL to check"),
+		userAgent: fs.String(tools.ToCamel(fmt.Sprintf("%sUserAgent", prefix)), "Golang alcotest", "[health] User-Agent for check"),
 	}
 }
 
@@ -43,8 +43,8 @@ func GetStatusCode(url, userAgent string) (int, error) {
 		return 0, errors.WithStack(err)
 	}
 
-	if userAgent != `` {
-		r.Header.Set(`User-Agent`, userAgent)
+	if userAgent != "" {
+		r.Header.Set("User-Agent", userAgent)
 	}
 
 	response, err := httpClient.Do(r)
@@ -54,7 +54,7 @@ func GetStatusCode(url, userAgent string) (int, error) {
 				return 0, errors.WithStack(closeErr)
 			}
 
-			return 0, errors.New(`%v, and also %v`, err, closeErr)
+			return 0, errors.New("%v, and also %v", err, closeErr)
 		}
 
 		return response.StatusCode, nil
@@ -75,7 +75,7 @@ func Do(url, userAgent string) error {
 	}
 
 	if statusCode != http.StatusOK {
-		return errors.New(`alcotest failed: HTTP/%d`, statusCode)
+		return errors.New("alcotest failed: HTTP/%d", statusCode)
 	}
 
 	return nil
@@ -86,9 +86,9 @@ func DoAndExit(config Config) {
 	url := strings.TrimSpace(*config.url)
 	userAgent := strings.TrimSpace(*config.userAgent)
 
-	if url != `` {
+	if url != "" {
 		if err := Do(url, userAgent); err != nil {
-			fmt.Printf(`%+v`, err)
+			fmt.Printf("%+v", err)
 			os.Exit(1)
 		} else {
 			os.Exit(0)

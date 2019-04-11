@@ -30,9 +30,9 @@ type App struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		port:       fs.Int(tools.ToCamel(fmt.Sprintf(`%sPort`, prefix)), 1080, `Listen port`),
-		tls:        fs.Bool(tools.ToCamel(fmt.Sprintf(`%sTls`, prefix)), true, `Serve TLS content`),
-		certConfig: cert.Flags(fs, tools.ToCamel(fmt.Sprintf(`%sTls`, prefix))),
+		port:       fs.Int(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), 1080, "Listen port"),
+		tls:        fs.Bool(tools.ToCamel(fmt.Sprintf("%sTls", prefix)), true, "Serve TLS content"),
+		certConfig: cert.Flags(fs, tools.ToCamel(fmt.Sprintf("%sTls", prefix))),
 	}
 }
 
@@ -50,9 +50,9 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 	healthcheckHandler := healthcheckApp.Handler()
 
 	httpServer := &http.Server{
-		Addr: fmt.Sprintf(`:%d`, a.port),
+		Addr: fmt.Sprintf(":%d", a.port),
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == `/health` {
+			if r.URL.Path == "/health" {
 				healthcheckHandler.ServeHTTP(w, r)
 			} else {
 				handler.ServeHTTP(w, r)
@@ -60,16 +60,16 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 		}),
 	}
 
-	logger.Info(`Starting HTTP server on port %s`, httpServer.Addr)
+	logger.Info("Starting HTTP server on port %s", httpServer.Addr)
 
 	var serveError = make(chan error)
 	go func() {
 		defer close(serveError)
 		if a.tls {
-			logger.Info(`Listening with TLS`)
+			logger.Info("Listening with TLS")
 			serveError <- cert.ListenAndServeTLS(a.certConfig, httpServer)
 		} else {
-			logger.Warn(`Listening without TLS`)
+			logger.Warn("Listening without TLS")
 			serveError <- httpServer.ListenAndServe()
 		}
 	}()

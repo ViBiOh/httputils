@@ -14,7 +14,7 @@ import (
 
 const (
 	// ContentTypeHeader value
-	ContentTypeHeader = `Content-Type`
+	ContentTypeHeader = "Content-Type"
 )
 
 // New prepare a request from given params
@@ -38,7 +38,7 @@ func JSON(method string, url string, body interface{}, headers http.Header) (*ht
 	if headers == nil {
 		headers = http.Header{}
 	}
-	headers.Set(ContentTypeHeader, `application/json`)
+	headers.Set(ContentTypeHeader, "application/json")
 
 	return New(method, url, bytes.NewBuffer(jsonBody), headers)
 }
@@ -48,7 +48,7 @@ func Form(method string, url string, data url.Values, headers http.Header) (*htt
 	if headers == nil {
 		headers = http.Header{}
 	}
-	headers.Set(ContentTypeHeader, `application/x-www-form-urlencoded`)
+	headers.Set(ContentTypeHeader, "application/x-www-form-urlencoded")
 
 	return New(method, url, strings.NewReader(data.Encode()), headers)
 }

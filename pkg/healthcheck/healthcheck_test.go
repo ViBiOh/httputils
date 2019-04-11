@@ -21,31 +21,31 @@ func Test_Handler(t *testing.T) {
 		wantStatus int
 	}{
 		{
-			`should reject non-GET method`,
-			httptest.NewRequest(http.MethodOptions, `/`, nil),
+			"should reject non-GET method",
+			httptest.NewRequest(http.MethodOptions, "/", nil),
 			New(),
-			``,
+			"",
 			http.StatusMethodNotAllowed,
 		},
 		{
-			`should handle closed Handler`,
-			httptest.NewRequest(http.MethodGet, `/`, nil),
+			"should handle closed Handler",
+			httptest.NewRequest(http.MethodGet, "/", nil),
 			New().Close(),
-			``,
+			"",
 			http.StatusServiceUnavailable,
 		},
 		{
-			`should handle nil subHandler`,
-			httptest.NewRequest(http.MethodGet, `/`, nil),
+			"should handle nil subHandler",
+			httptest.NewRequest(http.MethodGet, "/", nil),
 			New(),
-			``,
+			"",
 			http.StatusOK,
 		},
 		{
-			`should handle call given subHandler`,
-			httptest.NewRequest(http.MethodGet, `/`, nil),
+			"should handle call given subHandler",
+			httptest.NewRequest(http.MethodGet, "/", nil),
 			New().NextHealthcheck(subHandler),
-			``,
+			"",
 			http.StatusTeapot,
 		},
 	}

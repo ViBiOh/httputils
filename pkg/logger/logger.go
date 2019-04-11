@@ -21,9 +21,9 @@ func init() {
 }
 
 var (
-	info = log.New(os.Stdout, `INFO  `, log.LstdFlags|log.Lshortfile|log.LUTC)
-	warn = log.New(os.Stderr, `WARN  `, log.LstdFlags|log.Lshortfile|log.LUTC)
-	erro = log.New(os.Stderr, `ERROR `, log.LstdFlags|log.Lshortfile|log.LUTC)
+	info = log.New(os.Stdout, "INFO  ", log.LstdFlags|log.Lshortfile|log.LUTC)
+	warn = log.New(os.Stderr, "WARN  ", log.LstdFlags|log.Lshortfile|log.LUTC)
+	erro = log.New(os.Stderr, "ERROR ", log.LstdFlags|log.Lshortfile|log.LUTC)
 
 	reporters = make([]LogReporter, 0)
 	mutex     = sync.RWMutex{}
@@ -40,7 +40,7 @@ func AddReporter(reporter LogReporter) {
 func output(l *log.Logger, format string, a ...interface{}) string {
 	content := fmt.Sprintf(format, a...)
 	if err := l.Output(3, content); err != nil {
-		log.Printf(`%+v`, errors.WithStack(err))
+		log.Printf("%+v", errors.WithStack(err))
 	}
 
 	return content

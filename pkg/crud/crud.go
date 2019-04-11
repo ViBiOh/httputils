@@ -18,10 +18,10 @@ import (
 
 var (
 	// ErrNotFound occurs when item with given ID if not found
-	ErrNotFound = goerrors.New(`item not found`)
+	ErrNotFound = goerrors.New("item not found")
 
 	// ErrInvalid occurs when invalid action is requested
-	ErrInvalid = goerrors.New(`invalid`)
+	ErrInvalid = goerrors.New("invalid")
 )
 
 // Config of package
@@ -44,10 +44,10 @@ type App struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		path:            fs.String(tools.ToCamel(fmt.Sprintf(`%sPath`, prefix)), fmt.Sprintf(`/%s`, prefix), fmt.Sprintf(`[%s] HTTP Path prefix`, prefix)),
-		defaultPage:     fs.Uint(tools.ToCamel(fmt.Sprintf(`%sDefaultPage`, prefix)), 1, fmt.Sprintf(`[%s] Default page`, prefix)),
-		defaultPageSize: fs.Uint(tools.ToCamel(fmt.Sprintf(`%sDefaultPageSize`, prefix)), 20, fmt.Sprintf(`[%s] Default page size`, prefix)),
-		maxPageSize:     fs.Uint(tools.ToCamel(fmt.Sprintf(`%sMaxPageSize`, prefix)), 500, fmt.Sprintf(`[%s] Max page size`, prefix)),
+		path:            fs.String(tools.ToCamel(fmt.Sprintf("%sPath", prefix)), fmt.Sprintf("/%s", prefix), fmt.Sprintf("[%s] HTTP Path prefix", prefix)),
+		defaultPage:     fs.Uint(tools.ToCamel(fmt.Sprintf("%sDefaultPage", prefix)), 1, fmt.Sprintf("[%s] Default page", prefix)),
+		defaultPageSize: fs.Uint(tools.ToCamel(fmt.Sprintf("%sDefaultPageSize", prefix)), 20, fmt.Sprintf("[%s] Default page size", prefix)),
+		maxPageSize:     fs.Uint(tools.ToCamel(fmt.Sprintf("%sMaxPageSize", prefix)), 500, fmt.Sprintf("[%s] Max page size", prefix)),
 	}
 }
 
@@ -145,7 +145,7 @@ func (a App) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	obj.SetID(``)
+	obj.SetID("")
 
 	obj, err = a.service.Create(r.Context(), obj)
 	if handleError(w, err) {

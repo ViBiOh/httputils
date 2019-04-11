@@ -32,10 +32,10 @@ type Config struct {
 // Flags add flags for given prefix
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		Cert:         fs.String(tools.ToCamel(fmt.Sprintf(`%sCert`, prefix)), ``, `[tls] PEM Certificate file`),
-		Key:          fs.String(tools.ToCamel(fmt.Sprintf(`%sKey`, prefix)), ``, `[tls] PEM Key file`),
-		Organization: fs.String(tools.ToCamel(fmt.Sprintf(`%sOrganization`, prefix)), `ViBiOh`, `[tls] Self-signed certificate organization`),
-		Hosts:        fs.String(tools.ToCamel(fmt.Sprintf(`%sHosts`, prefix)), `localhost`, `[tls] Self-signed certificate hosts, comma separated`),
+		Cert:         fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", "[tls] PEM Certificate file"),
+		Key:          fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", "[tls] PEM Key file"),
+		Organization: fs.String(tools.ToCamel(fmt.Sprintf("%sOrganization", prefix)), "ViBiOh", "[tls] Self-signed certificate organization"),
+		Hosts:        fs.String(tools.ToCamel(fmt.Sprintf("%sHosts", prefix)), "localhost", "[tls] Self-signed certificate hosts, comma separated"),
 	}
 }
 
@@ -55,10 +55,10 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	}
 
 	if err = tc.SetKeepAlive(true); err != nil {
-		logger.Error(`%+v`, errors.WithStack(err))
+		logger.Error("%+v", errors.WithStack(err))
 	}
 	if err := tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
-		logger.Error(`%+v`, errors.WithStack(err))
+		logger.Error("%+v", errors.WithStack(err))
 	}
 
 	return tc, nil
@@ -78,7 +78,7 @@ func strSliceContains(slice []string, search string) bool {
 // Largely inspired by https://golang.org/src/net/http/server.go
 func ListenAndServeTLS(config Config, server *http.Server) error {
 	cert := strings.TrimSpace(*config.Cert)
-	if cert != `` {
+	if cert != "" {
 		return server.ListenAndServeTLS(cert, strings.TrimSpace(*config.Key))
 	}
 
@@ -86,17 +86,17 @@ func ListenAndServeTLS(config Config, server *http.Server) error {
 	if err != nil {
 		return err
 	}
-	logger.Info(`Self-signed certificate generated`)
+	logger.Info("Self-signed certificate generated")
 
 	addr := server.Addr
-	if addr == `` {
-		addr = `:https`
+	if addr == "" {
+		addr = ":https"
 	}
 
 	tlsConfig := &tls.Config{}
-	tlsConfig.NextProtos = append(tlsConfig.NextProtos, `h2`)
-	if !strSliceContains(tlsConfig.NextProtos, `http/1.1`) {
-		tlsConfig.NextProtos = append(tlsConfig.NextProtos, `http/1.1`)
+	tlsConfig.NextProtos = append(tlsConfig.NextProtos, "h2")
+	if !strSliceContains(tlsConfig.NextProtos, "http/1.1") {
+		tlsConfig.NextProtos = append(tlsConfig.NextProtos, "http/1.1")
 	}
 
 	tlsConfig.Certificates = make([]tls.Certificate, 1)
@@ -106,7 +106,7 @@ func ListenAndServeTLS(config Config, server *http.Server) error {
 	}
 	tlsConfig.Certificates[0] = certificate
 
-	listener, err := net.Listen(`tcp`, addr)
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -120,7 +120,7 @@ func ListenAndServeTLS(config Config, server *http.Server) error {
 
 // GenerateFromConfig generates certs from given config
 func GenerateFromConfig(config Config) ([]byte, []byte, error) {
-	return Generate(strings.TrimSpace(*config.Organization), strings.Split(strings.TrimSpace(*config.Hosts), `,`))
+	return Generate(strings.TrimSpace(*config.Organization), strings.Split(strings.TrimSpace(*config.Hosts), ","))
 }
 
 // Generate self signed with CA for use with TLS
@@ -179,5 +179,5 @@ func Generate(organization string, hosts []string) ([]byte, []byte, error) {
 		return nil, nil, errors.WithStack(err)
 	}
 
-	return pem.EncodeToMemory(&pem.Block{Type: `CERTIFICATE`, Bytes: der}), pem.EncodeToMemory(&pem.Block{Type: `EC PRIVATE KEY`, Bytes: key}), nil
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: key}), nil
 }

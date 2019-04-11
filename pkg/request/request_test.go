@@ -10,7 +10,7 @@ import (
 )
 
 func testFn() string {
-	return `toto`
+	return "toto"
 }
 
 type postStruct struct {
@@ -21,7 +21,7 @@ type postStruct struct {
 
 func Test_DoJSON(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `Hello, test`)
+		fmt.Fprint(w, "Hello, test")
 	}))
 	defer testServer.Close()
 
@@ -35,34 +35,34 @@ func Test_DoJSON(t *testing.T) {
 	}{
 		{
 			nil,
-			``,
+			"",
 			testFn,
 			nil,
-			``,
-			errors.New(`json: unsupported type: func() string`),
+			"",
+			errors.New("json: unsupported type: func() string"),
 		},
 		{
 			nil,
-			`://fail`,
+			"://fail",
 			nil,
 			nil,
-			``,
-			errors.New(`parse ://fail: missing protocol scheme`),
+			"",
+			errors.New("parse ://fail: missing protocol scheme"),
 		},
 		{
 			nil,
-			``,
+			"",
 			nil,
 			nil,
-			``,
-			errors.New(`Post : unsupported protocol scheme ""`),
+			"",
+			errors.New("Post : unsupported protocol scheme \"\""),
 		},
 		{
 			nil,
 			testServer.URL,
 			&postStruct{},
-			http.Header{`Authorization`: {`admin:password`}},
-			`Hello, test`,
+			http.Header{"Authorization": {"admin:password"}},
+			"Hello, test",
 			nil,
 		},
 	}
@@ -90,7 +90,7 @@ func Test_DoJSON(t *testing.T) {
 		}
 
 		if failed {
-			t.Errorf(`PostJSONBody(%v, %v, '') = (%s, %v), want (%s, %v)`, testCase.url, testCase.body, string(content), err, testCase.want, testCase.wantErr)
+			t.Errorf("PostJSONBody(%v, %v, '') = (%s, %v), want (%s, %v)", testCase.url, testCase.body, string(content), err, testCase.want, testCase.wantErr)
 		}
 	}
 }

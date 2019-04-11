@@ -25,7 +25,7 @@ func Test_Algorithm(t *testing.T) {
 		want      int
 	}{
 		{
-			`should work two list fully synchronized`,
+			"should work two list fully synchronized",
 			[]*Source{
 				NewSource(numberReader(-2), SourceBasicKeyer, nil),
 				NewSource(numberReader(-2), SourceBasicKeyer, nil),
@@ -34,7 +34,7 @@ func Test_Algorithm(t *testing.T) {
 			40,
 		},
 		{
-			`should work two list never synchronized at the same time`,
+			"should work two list never synchronized at the same time",
 			[]*Source{
 				NewSource(numberReader(-2), SourceBasicKeyer, nil),
 				NewSource(numberReader(-1), SourceBasicKeyer, nil),
@@ -68,31 +68,31 @@ type client struct {
 }
 
 func Test_AlgorithmWithRupture(t *testing.T) {
-	cards := []string{`MASTERCARD`, `VISA`}
+	cards := []string{"MASTERCARD", "VISA"}
 	cardKeyer := func(o interface{}) string {
-		return fmt.Sprintf(`%-10s`, o)
+		return fmt.Sprintf("%-10s", o)
 	}
-	cardRupture := NewRupture(`card`, func(i string) string {
-		return fmt.Sprintf(`%.10s`, i)
+	cardRupture := NewRupture("card", func(i string) string {
+		return fmt.Sprintf("%.10s", i)
 	})
 
 	clients := []client{
-		{`Bob`, `MASTERCARD`},
-		{`Chuck`, `MASTERCARD`},
-		{`Hulk`, `MASTERCARD`},
-		{`Hulk`, `MASTERCARD`},
-		{`Luke`, `MASTERCARD`},
-		{`Superman`, `MASTERCARD`},
-		{`Tony Stark`, `MASTERCARD`},
-		{`Vador`, `MASTERCARD`},
-		{`Yoda`, `MASTERCARD`},
-		{`Einstein`, `VISA`},
-		{`Vincent`, `VISA`},
+		{"Bob", "MASTERCARD"},
+		{"Chuck", "MASTERCARD"},
+		{"Hulk", "MASTERCARD"},
+		{"Hulk", "MASTERCARD"},
+		{"Luke", "MASTERCARD"},
+		{"Superman", "MASTERCARD"},
+		{"Tony Stark", "MASTERCARD"},
+		{"Vador", "MASTERCARD"},
+		{"Yoda", "MASTERCARD"},
+		{"Einstein", "VISA"},
+		{"Vincent", "VISA"},
 	}
 	clientKeyer := func(o interface{}) string {
 		c := o.(client)
 
-		return fmt.Sprintf(`%-10s%s`, c.card, c.name)
+		return fmt.Sprintf("%-10s%s", c.card, c.name)
 	}
 
 	interfaceCards := make([]interface{}, len(cards))
@@ -112,7 +112,7 @@ func Test_AlgorithmWithRupture(t *testing.T) {
 		want      uint
 	}{
 		{
-			`should work with basic rupture on read`,
+			"should work with basic rupture on read",
 			[]*Source{
 				NewSliceSource(interfaceClients, clientKeyer, nil),
 				NewSliceSource(interfaceCards, cardKeyer, cardRupture),

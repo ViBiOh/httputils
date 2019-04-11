@@ -38,11 +38,11 @@ func NewSliceSource(slice []interface{}, keyer func(interface{}) string, readRup
 
 // SourceBasicKeyer basic keyer for string conversion
 func SourceBasicKeyer(e interface{}) string {
-	return fmt.Sprintf(`%v`, e)
+	return fmt.Sprintf("%v", e)
 }
 
 func (s *Source) computeSynchro(key string) {
-	s.synchronized = fmt.Sprintf(`%.`+strconv.Itoa(len(s.currentKey))+`s`, key) == s.currentKey
+	s.synchronized = fmt.Sprintf("%."+strconv.Itoa(len(s.currentKey))+"s", key) == s.currentKey
 }
 
 func (s *Source) read() (interface{}, error) {

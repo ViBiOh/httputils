@@ -22,7 +22,7 @@ type pagination struct {
 
 // IsPretty determine if pretty is defined in query params
 func IsPretty(r *http.Request) bool {
-	return query.GetBool(r, `pretty`)
+	return query.GetBool(r, "pretty")
 }
 
 // ResponseJSON write marshalled obj to http.ResponseWriter with correct header
@@ -31,7 +31,7 @@ func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty boo
 	var err error
 
 	if pretty {
-		objJSON, err = json.MarshalIndent(obj, ``, `  `)
+		objJSON, err = json.MarshalIndent(obj, "", "  ")
 	} else {
 		objJSON, err = json.Marshal(obj)
 	}
@@ -40,8 +40,8 @@ func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty boo
 		return errors.WithStack(err)
 	}
 
-	w.Header().Set(`Content-Type`, `application/json; charset=utf-8`)
-	w.Header().Set(`Cache-Control`, `no-cache`)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
 	w.WriteHeader(status)
 
 	if _, err := w.Write(objJSON); err != nil {

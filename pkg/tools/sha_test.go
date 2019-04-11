@@ -11,14 +11,14 @@ func Test_Sha1(t *testing.T) {
 		want      string
 	}{
 		{
-			`should work with nil`,
+			"should work with nil",
 			nil,
-			`3a9bcf8af38962fe340baa717773bf285f95121a`,
+			"3a9bcf8af38962fe340baa717773bf285f95121a",
 		},
 		{
-			`should work with string`,
-			`Hello world`,
-			`7b502c3a1f48c8609ae212cdfb639dee39673f5e`,
+			"should work with string",
+			"Hello world",
+			"7b502c3a1f48c8609ae212cdfb639dee39673f5e",
 		},
 	}
 

@@ -19,15 +19,15 @@ func TestHttpGracefulClose(t *testing.T) {
 		wantErr error
 	}{
 		{
-			``,
+			"",
 			nil,
 			false,
 			nil,
 		},
 		{
-			`http://localhost:8000`,
+			"http://localhost:8000",
 			&http.Server{
-				Addr: `:8000`,
+				Addr: ":8000",
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 				}),
@@ -36,18 +36,18 @@ func TestHttpGracefulClose(t *testing.T) {
 			nil,
 		},
 		{
-			`http://localhost:8001`,
+			"http://localhost:8001",
 			&http.Server{
-				Addr: `:8001`,
+				Addr: ":8001",
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if r.URL.Path == `/long` {
+					if r.URL.Path == "/long" {
 						time.Sleep(time.Second * 30)
 					}
 					w.WriteHeader(http.StatusOK)
 				}),
 			},
 			true,
-			errors.New(`context deadline exceeded`),
+			errors.New("context deadline exceeded"),
 		},
 	}
 
@@ -58,19 +58,19 @@ func TestHttpGracefulClose(t *testing.T) {
 			go testCase.server.ListenAndServe()
 
 			if _, _, _, err := request.Get(nil, testCase.url, nil); err != nil {
-				t.Errorf(`httpGracefulClose(%v), unable to fetch started server: %v`, testCase.server, err)
+				t.Errorf("httpGracefulClose(%v), unable to fetch started server: %v", testCase.server, err)
 			}
 		}
 
 		if testCase.wait {
-			go request.Get(nil, fmt.Sprintf(`%s/long`, testCase.url), nil)
+			go request.Get(nil, fmt.Sprintf("%s/long", testCase.url), nil)
 			time.Sleep(time.Second)
 		}
 		err := httpGracefulClose(testCase.server)
 
 		if testCase.server != nil {
 			if _, _, _, err := request.Get(nil, testCase.url, nil); err == nil {
-				t.Errorf(`httpGracefulClose(%v), still able to fetch data`, testCase.server)
+				t.Errorf("httpGracefulClose(%v), still able to fetch data", testCase.server)
 			}
 		}
 
@@ -85,7 +85,7 @@ func TestHttpGracefulClose(t *testing.T) {
 		}
 
 		if failed {
-			t.Errorf(`httpGracefulClose(%v) = %v, want %v`, testCase.server, err, testCase.wantErr)
+			t.Errorf("httpGracefulClose(%v) = %v, want %v", testCase.server, err, testCase.wantErr)
 		}
 
 		if testCase.server != nil {
@@ -104,7 +104,7 @@ func TestGracefulClose(t *testing.T) {
 		want           int
 	}{
 		{
-			``,
+			"",
 			nil,
 			false,
 			nil,
@@ -112,9 +112,9 @@ func TestGracefulClose(t *testing.T) {
 			0,
 		},
 		{
-			`http://localhost:8100`,
+			"http://localhost:8100",
 			&http.Server{
-				Addr: `:8100`,
+				Addr: ":8100",
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 				}),
@@ -127,11 +127,11 @@ func TestGracefulClose(t *testing.T) {
 			0,
 		},
 		{
-			`http://localhost:8101`,
+			"http://localhost:8101",
 			&http.Server{
-				Addr: `:8101`,
+				Addr: ":8101",
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if r.URL.Path == `/long` {
+					if r.URL.Path == "/long" {
 						time.Sleep(time.Second * 30)
 					}
 					w.WriteHeader(http.StatusOK)
@@ -143,11 +143,11 @@ func TestGracefulClose(t *testing.T) {
 			1,
 		},
 		{
-			``,
+			"",
 			nil,
 			false,
 			func() error {
-				return errors.New(`error while shutting down`)
+				return errors.New("error while shutting down")
 			},
 			nil,
 			1,
@@ -161,12 +161,12 @@ func TestGracefulClose(t *testing.T) {
 		}
 
 		if testCase.wait {
-			go request.Get(nil, fmt.Sprintf(`%s/long`, testCase.url), nil)
+			go request.Get(nil, fmt.Sprintf("%s/long", testCase.url), nil)
 			time.Sleep(time.Second)
 		}
 
 		if result := gracefulClose(testCase.server, testCase.callback, testCase.healthcheckApp); result != testCase.want {
-			t.Errorf(`gracefulClose(%v) = %v, want %v`, testCase.server, result, testCase.want)
+			t.Errorf("gracefulClose(%v) = %v, want %v", testCase.server, result, testCase.want)
 		}
 
 		if testCase.server != nil {

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	cacheControlHeader = `Cache-Control`
+	cacheControlHeader = "Cache-Control"
 )
 
 var _ model.Middleware = &App{}
@@ -19,11 +19,11 @@ type middleware struct {
 }
 
 func (m *middleware) setHeader() {
-	if m.Header().Get(cacheControlHeader) == `` {
+	if m.Header().Get(cacheControlHeader) == "" {
 		if m.index {
-			m.Header().Set(cacheControlHeader, `no-cache`)
+			m.Header().Set(cacheControlHeader, "no-cache")
 		} else {
-			m.Header().Set(cacheControlHeader, `max-age=864000`)
+			m.Header().Set(cacheControlHeader, "max-age=864000")
 		}
 	}
 }

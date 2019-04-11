@@ -11,17 +11,17 @@ import (
 
 func Test_DoAndRead(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == `/bad` {
+		if r.URL.Path == "/bad" {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`oops`))
+			w.Write([]byte("oops"))
 		} else {
-			fmt.Fprint(w, `Hello, test`)
+			fmt.Fprint(w, "Hello, test")
 		}
 	}))
 	defer testServer.Close()
 
-	emptyRequest, _ := http.NewRequest(http.MethodGet, ``, nil)
-	bad, _ := http.NewRequest(http.MethodGet, fmt.Sprintf(`%s/bad`, testServer.URL), nil)
+	emptyRequest, _ := http.NewRequest(http.MethodGet, "", nil)
+	bad, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/bad", testServer.URL), nil)
 	test, _ := http.NewRequest(http.MethodGet, testServer.URL, nil)
 
 	var cases = []struct {
@@ -33,25 +33,25 @@ func Test_DoAndRead(t *testing.T) {
 		{
 			nil,
 			emptyRequest,
-			``,
-			errors.New(`Get : unsupported protocol scheme ""`),
+			"",
+			errors.New("Get : unsupported protocol scheme \"\""),
 		},
 		{
 			nil,
 			bad,
-			`oops`,
-			errors.New(`error status 400`),
+			"oops",
+			errors.New("error status 400"),
 		},
 		{
 			nil,
 			test,
-			`Hello, test`,
+			"Hello, test",
 			nil,
 		},
 		{
 			nil,
 			test,
-			`Hello, test`,
+			"Hello, test",
 			nil,
 		},
 	}
@@ -79,7 +79,7 @@ func Test_DoAndRead(t *testing.T) {
 		}
 
 		if failed {
-			t.Errorf(`DoAndRead(%v) = (%v, %v), want (%v, %v)`, testCase.request, string(content), err, testCase.want, testCase.wantErr)
+			t.Errorf("DoAndRead(%v) = (%v, %v), want (%v, %v)", testCase.request, string(content), err, testCase.want, testCase.wantErr)
 		}
 	}
 }

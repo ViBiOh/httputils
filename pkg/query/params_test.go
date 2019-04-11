@@ -6,10 +6,10 @@ import (
 )
 
 func Test_GetBool(t *testing.T) {
-	emptyRequest, _ := http.NewRequest(http.MethodGet, `http://localhost`, nil)
-	validRequest, _ := http.NewRequest(http.MethodGet, `http://localhost?valid`, nil)
-	validValueRequest, _ := http.NewRequest(http.MethodGet, `http://localhost?test=1&valid=false`, nil)
-	validInvalidRequest, _ := http.NewRequest(http.MethodGet, `http://localhost?test=1&valid=invalidBool`, nil)
+	emptyRequest, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
+	validRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?valid", nil)
+	validValueRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?test=1&valid=false", nil)
+	validInvalidRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?test=1&valid=invalidBool", nil)
 
 	var cases = []struct {
 		intention string
@@ -18,27 +18,27 @@ func Test_GetBool(t *testing.T) {
 		want      bool
 	}{
 		{
-			`should work with empty param`,
+			"should work with empty param",
 			emptyRequest,
-			`valid`,
+			"valid",
 			false,
 		},
 		{
-			`should work with valid param`,
+			"should work with valid param",
 			validRequest,
-			`valid`,
+			"valid",
 			true,
 		},
 		{
-			`should work with valid value`,
+			"should work with valid value",
 			validValueRequest,
-			`valid`,
+			"valid",
 			false,
 		},
 		{
-			`should work with valid value not equal to a boolean`,
+			"should work with valid value not equal to a boolean",
 			validInvalidRequest,
-			`valid`,
+			"valid",
 			false,
 		},
 	}

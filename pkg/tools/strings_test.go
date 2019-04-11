@@ -9,19 +9,19 @@ func Test_ToCamel(t *testing.T) {
 		want      string
 	}{
 		{
-			`should work with empty string`,
-			``,
-			``,
+			"should work with empty string",
+			"",
+			"",
 		},
 		{
-			`should work with lower case string`,
-			`test`,
-			`test`,
+			"should work with lower case string",
+			"test",
+			"test",
 		},
 		{
-			`should work with regular string`,
-			`OhPleaseFormatMe`,
-			`ohPleaseFormatMe`,
+			"should work with regular string",
+			"OhPleaseFormatMe",
+			"ohPleaseFormatMe",
 		},
 	}
 
@@ -40,21 +40,21 @@ func Test_IncludesString(t *testing.T) {
 		want      bool
 	}{
 		{
-			`should work with nil params`,
+			"should work with nil params",
 			nil,
-			``,
+			"",
 			false,
 		},
 		{
-			`should work with found value`,
-			[]string{`hello`, `world`},
-			`world`,
+			"should work with found value",
+			[]string{"hello", "world"},
+			"world",
 			true,
 		},
 		{
-			`should work with not found value`,
-			[]string{`hello`, `world`},
-			`bob`,
+			"should work with not found value",
+			[]string{"hello", "world"},
+			"bob",
 			false,
 		},
 	}

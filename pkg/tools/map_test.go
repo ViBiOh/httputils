@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-var entries = map[string]interface{}{`one`: `First`, `two`: `Second`, `three`: `Third`}
+var entries = map[string]interface{}{"one": "First", "two": "Second", "three": "Third"}
 
 func initConccurentMapWithValues(values map[string]interface{}) *ConcurrentMap {
 	concurrentMap := CreateConcurrentMap(5, 2)
@@ -24,13 +24,13 @@ func TestGet(t *testing.T) {
 	}{
 		{
 			entries,
-			`InvalidOne`,
+			"InvalidOne",
 			nil,
 		},
 		{
 			entries,
-			`one`,
-			entries[`one`],
+			"one",
+			entries["one"],
 		},
 	}
 
@@ -38,7 +38,7 @@ func TestGet(t *testing.T) {
 		concurrentMap := initConccurentMapWithValues(testCase.entries)
 
 		if result := concurrentMap.Get(testCase.ID); result != testCase.want {
-			t.Errorf(`Get(%v) = %v, want %v`, testCase.ID, result, testCase.want)
+			t.Errorf("Get(%v) = %v, want %v", testCase.ID, result, testCase.want)
 		}
 
 		concurrentMap.Close()
@@ -51,7 +51,7 @@ func BenchmarkGet(b *testing.B) {
 		key     string
 	}{
 		entries,
-		`one`,
+		"one",
 	}
 
 	concurrentMap := initConccurentMapWithValues(testCase.entries)
@@ -67,16 +67,16 @@ func TestPush(t *testing.T) {
 		content interface{}
 	}{
 		{
-			entries[`one`],
+			entries["one"],
 		},
 	}
 
 	for _, testCase := range cases {
 		concurrentMap := CreateConcurrentMap(5, 2)
-		concurrentMap.Push(`one`, testCase.content)
+		concurrentMap.Push("one", testCase.content)
 
-		if result := concurrentMap.Get(`one`); testCase.content != result {
-			t.Errorf(`Push(%v) = %v, want %v`, testCase.content, result, testCase.content)
+		if result := concurrentMap.Get("one"); testCase.content != result {
+			t.Errorf("Push(%v) = %v, want %v", testCase.content, result, testCase.content)
 		}
 
 		concurrentMap.Close()
@@ -88,8 +88,8 @@ func BenchmarkPush(b *testing.B) {
 		key   string
 		value interface{}
 	}{
-		`one`,
-		entries[`one`],
+		"one",
+		entries["one"],
 	}
 
 	concurrentMap := CreateConcurrentMap(5, 2)
@@ -108,12 +108,12 @@ func TestRemove(t *testing.T) {
 	}{
 		{
 			entries,
-			`one`,
+			"one",
 			true,
 		},
 		{
 			entries,
-			`Unknown`,
+			"Unknown",
 			false,
 		},
 	}
@@ -125,7 +125,7 @@ func TestRemove(t *testing.T) {
 		concurrentMap.Remove(testCase.key)
 
 		if result := concurrentMap.Get(testCase.key); (testCase.want && result == initial) || (!testCase.want && result != initial) {
-			t.Errorf(`Remove(%v) = %v, want %v`, testCase.key, result, initial)
+			t.Errorf("Remove(%v) = %v, want %v", testCase.key, result, initial)
 		}
 
 		concurrentMap.Close()
@@ -136,7 +136,7 @@ func BenchmarkRemove(b *testing.B) {
 	var testCase = struct {
 		key string
 	}{
-		`one`,
+		"one",
 	}
 
 	concurrentMap := CreateConcurrentMap(5, 2)
@@ -171,7 +171,7 @@ func TestList(t *testing.T) {
 		}
 
 		if result != testCase.want {
-			t.Errorf(`List() = %v, want %v`, result, testCase.want)
+			t.Errorf("List() = %v, want %v", result, testCase.want)
 		}
 
 		concurrentMap.Close()
@@ -197,7 +197,7 @@ func TestClose(t *testing.T) {
 		concurrentMap := initConccurentMapWithValues(testCase.entries)
 
 		if result := len(concurrentMap.Close()); result != testCase.want {
-			t.Errorf(`Close() = %v, want %v`, result, testCase.want)
+			t.Errorf("Close() = %v, want %v", result, testCase.want)
 		}
 	}
 }

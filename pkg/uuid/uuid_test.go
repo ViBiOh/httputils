@@ -11,7 +11,7 @@ func Test_New(t *testing.T) {
 		wantErr   error
 	}{
 		{
-			`should work`,
+			"should work",
 			16*2 + 4,
 			nil,
 		},

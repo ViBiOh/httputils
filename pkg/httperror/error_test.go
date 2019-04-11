@@ -17,8 +17,8 @@ func Test_BadRequest(t *testing.T) {
 		wantStatus int
 	}{
 		{
-			`should set body and status`,
-			errors.New(`bad request`),
+			"should set body and status",
+			errors.New("bad request"),
 			"bad request\n",
 			http.StatusBadRequest,
 		},
@@ -46,8 +46,8 @@ func Test_Unauthorized(t *testing.T) {
 		wantStatus int
 	}{
 		{
-			`should set body and status`,
-			errors.New(`unauthorized`),
+			"should set body and status",
+			errors.New("unauthorized"),
 			"unauthorized\n",
 			http.StatusUnauthorized,
 		},
@@ -74,7 +74,7 @@ func Test_Forbidden(t *testing.T) {
 		wantStatus int
 	}{
 		{
-			`should set body and status`,
+			"should set body and status",
 			"⛔️\n",
 			http.StatusForbidden,
 		},
@@ -101,7 +101,7 @@ func Test_NotFound(t *testing.T) {
 		wantStatus int
 	}{
 		{
-			`should set body and status`,
+			"should set body and status",
 			"¯\\_(ツ)_/¯\n",
 			http.StatusNotFound,
 		},
@@ -129,8 +129,8 @@ func Test_InternalServerError(t *testing.T) {
 		wantStatus int
 	}{
 		{
-			`should set body and status`,
-			errors.New(`failed to do something`),
+			"should set body and status",
+			errors.New("failed to do something"),
 			"failed to do something\n",
 			http.StatusInternalServerError,
 		},
