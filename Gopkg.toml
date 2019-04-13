@@ -26,10 +26,6 @@
   name = "github.com/tdewolff/minify"
   version = "2.3.6"
 
-[[constraint]]
-  name = "github.com/rollbar/rollbar-go"
-  version = "v1.0.2"
-
 [prune]
   go-tests = true
   unused-packages = true
