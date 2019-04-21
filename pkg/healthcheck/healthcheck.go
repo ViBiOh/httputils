@@ -32,6 +32,8 @@ func (a *App) Handler() http.Handler {
 				return
 			}
 
+			w.WriteHeader(http.StatusNoContent)
+
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return

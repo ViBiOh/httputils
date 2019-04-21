@@ -39,7 +39,7 @@ func Test_Handler(t *testing.T) {
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			New(),
 			"",
-			http.StatusOK,
+			http.StatusNoContent,
 		},
 		{
 			"should handle call given subHandler",
