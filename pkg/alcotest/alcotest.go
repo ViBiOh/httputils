@@ -74,7 +74,7 @@ func Do(url, userAgent string) error {
 		return err
 	}
 
-	if statusCode != http.StatusOK {
+	if statusCode > http.StatusNoContent {
 		return errors.New("alcotest failed: HTTP/%d", statusCode)
 	}
 
