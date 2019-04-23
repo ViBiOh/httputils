@@ -30,9 +30,14 @@ type Config struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
+	docPrefix := prefix
+	if prefix == "" {
+		docPrefix = "alcotest"
+	}
+
 	return Config{
-		url:       fs.String(tools.ToCamel(fmt.Sprintf("%sUrl", prefix)), "", "[health] URL to check"),
-		userAgent: fs.String(tools.ToCamel(fmt.Sprintf("%sUserAgent", prefix)), "Golang alcotest", "[health] User-Agent for check"),
+		url:       fs.String(tools.ToCamel(fmt.Sprintf("%sUrl", prefix)), "", fmt.Sprintf("[%s] URL to check", docPrefix)),
+		userAgent: fs.String(tools.ToCamel(fmt.Sprintf("%sUserAgent", prefix)), "Golang alcotest", fmt.Sprintf("[%s] User-Agent for check", docPrefix)),
 	}
 }
 

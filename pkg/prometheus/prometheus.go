@@ -25,8 +25,13 @@ type App struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
+	docPrefix := prefix
+	if prefix == "" {
+		docPrefix = "prometheus"
+	}
+
 	return Config{
-		path: fs.String(tools.ToCamel(fmt.Sprintf("%sPath", prefix)), "/metrics", "[prometheus] Path for exposing metrics"),
+		path: fs.String(tools.ToCamel(fmt.Sprintf("%sPath", prefix)), "/metrics", fmt.Sprintf("[%s] Path for exposing metrics", docPrefix)),
 	}
 }
 

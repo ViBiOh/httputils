@@ -31,11 +31,16 @@ type Config struct {
 
 // Flags add flags for given prefix
 func Flags(fs *flag.FlagSet, prefix string) Config {
+	docPrefix := prefix
+	if prefix == "" {
+		docPrefix = "tls"
+	}
+
 	return Config{
-		Cert:         fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", "[tls] PEM Certificate file"),
-		Key:          fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", "[tls] PEM Key file"),
-		Organization: fs.String(tools.ToCamel(fmt.Sprintf("%sOrganization", prefix)), "ViBiOh", "[tls] Self-signed certificate organization"),
-		Hosts:        fs.String(tools.ToCamel(fmt.Sprintf("%sHosts", prefix)), "localhost", "[tls] Self-signed certificate hosts, comma separated"),
+		Cert:         fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", fmt.Sprintf("[%s] PEM Certificate file", docPrefix)),
+		Key:          fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", fmt.Sprintf("[%s] PEM Key file", docPrefix)),
+		Organization: fs.String(tools.ToCamel(fmt.Sprintf("%sOrganization", prefix)), "ViBiOh", fmt.Sprintf("[%s] Self-signed certificate organization", docPrefix)),
+		Hosts:        fs.String(tools.ToCamel(fmt.Sprintf("%sHosts", prefix)), "localhost", fmt.Sprintf("[%s] Self-signed certificate hosts, comma separated", docPrefix)),
 	}
 }
 

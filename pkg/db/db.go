@@ -22,12 +22,17 @@ type Config struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
+	docPrefix := prefix
+	if prefix == "" {
+		docPrefix = "database"
+	}
+
 	return Config{
-		host: fs.String(tools.ToCamel(fmt.Sprintf("%sHost", prefix)), "", "[database] Host"),
-		port: fs.String(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), "5432", "[database] Port"),
-		user: fs.String(tools.ToCamel(fmt.Sprintf("%sUser", prefix)), "", "[database] User"),
-		pass: fs.String(tools.ToCamel(fmt.Sprintf("%sPass", prefix)), "", "[database] Pass"),
-		name: fs.String(tools.ToCamel(fmt.Sprintf("%sName", prefix)), "", "[database] Name"),
+		host: fs.String(tools.ToCamel(fmt.Sprintf("%sHost", prefix)), "", fmt.Sprintf("[%s] Host", docPrefix)),
+		port: fs.String(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), "5432", fmt.Sprintf("[%s] Port", docPrefix)),
+		user: fs.String(tools.ToCamel(fmt.Sprintf("%sUser", prefix)), "", fmt.Sprintf("[%s] User", docPrefix)),
+		pass: fs.String(tools.ToCamel(fmt.Sprintf("%sPass", prefix)), "", fmt.Sprintf("[%s] Pass", docPrefix)),
+		name: fs.String(tools.ToCamel(fmt.Sprintf("%sName", prefix)), "", fmt.Sprintf("[%s] Name", docPrefix)),
 	}
 }
 

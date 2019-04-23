@@ -34,9 +34,14 @@ type App struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
+	docPrefix := prefix
+	if prefix == "" {
+		docPrefix = "opentracing"
+	}
+
 	return Config{
-		name:  fs.String(tools.ToCamel(fmt.Sprintf("%sName", prefix)), "", "[opentracing] Service name"),
-		agent: fs.String(tools.ToCamel(fmt.Sprintf("%sAgent", prefix)), "jaeger:6831", "[opentracing] Jaeger Agent (e.g. host:port)"),
+		name:  fs.String(tools.ToCamel(fmt.Sprintf("%sName", prefix)), "", fmt.Sprintf("[%s] Service name", docPrefix)),
+		agent: fs.String(tools.ToCamel(fmt.Sprintf("%sAgent", prefix)), "jaeger:6831", fmt.Sprintf("[%s] Jaeger Agent (e.g. host:port)", docPrefix)),
 	}
 }
 

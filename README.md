@@ -13,12 +13,12 @@ Make your server blow into balloon for checking its health.
 ```bash
 Usage of alcotest:
   -url string
-      [health] URL to check
+        [alcotest] URL to check
   -userAgent string
-      [health] User-Agent for check (default "Golang alcotest")
+        [alcotest] User-Agent for check (default "Golang alcotest")
 ```
 
-in Dockerfile
+in `Dockerfile`
 
 ```bash
 HEALTHCHECK --retries=10 CMD /alcotest -url http://localhost/health
@@ -40,11 +40,11 @@ Generate a certificate for a web server.
 ```bash
 Usage of cert:
   -cert string
-      [tls] PEM Certificate file
+        [tls] PEM Certificate file
   -hosts string
-      [tls] Self-signed certificate hosts, comma separated (default "localhost")
+        [tls] Self-signed certificate hosts, comma separated (default "localhost")
   -key string
-      [tls] PEM Key file
+        [tls] PEM Key file
   -organization string
-      [tls] Self-signed certificate organization (default "ViBiOh")
+        [tls] Self-signed certificate organization (default "ViBiOh")
 ```

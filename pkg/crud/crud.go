@@ -40,10 +40,15 @@ type App struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
+	docPrefix := prefix
+	if prefix == "" {
+		docPrefix = "crud"
+	}
+
 	return Config{
-		defaultPage:     fs.Uint(tools.ToCamel(fmt.Sprintf("%sDefaultPage", prefix)), 1, fmt.Sprintf("[%s] Default page", prefix)),
-		defaultPageSize: fs.Uint(tools.ToCamel(fmt.Sprintf("%sDefaultPageSize", prefix)), 20, fmt.Sprintf("[%s] Default page size", prefix)),
-		maxPageSize:     fs.Uint(tools.ToCamel(fmt.Sprintf("%sMaxPageSize", prefix)), 500, fmt.Sprintf("[%s] Max page size", prefix)),
+		defaultPage:     fs.Uint(tools.ToCamel(fmt.Sprintf("%sDefaultPage", prefix)), 1, fmt.Sprintf(fmt.Sprintf("[%s] Default page", docPrefix))),
+		defaultPageSize: fs.Uint(tools.ToCamel(fmt.Sprintf("%sDefaultPageSize", prefix)), 20, fmt.Sprintf(fmt.Sprintf("[%s] Default page size", docPrefix))),
+		maxPageSize:     fs.Uint(tools.ToCamel(fmt.Sprintf("%sMaxPageSize", prefix)), 500, fmt.Sprintf(fmt.Sprintf("[%s] Max page size", docPrefix))),
 	}
 }
 

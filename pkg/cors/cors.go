@@ -29,12 +29,17 @@ type App struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
+	docPrefix := prefix
+	if prefix == "" {
+		docPrefix = "cors"
+	}
+
 	return Config{
-		origin:      fs.String(tools.ToCamel(fmt.Sprintf("%sOrigin", prefix)), "*", "[cors] Access-Control-Allow-Origin"),
-		headers:     fs.String(tools.ToCamel(fmt.Sprintf("%sHeaders", prefix)), "Content-Type", "[cors] Access-Control-Allow-Headers"),
-		methods:     fs.String(tools.ToCamel(fmt.Sprintf("%sMethods", prefix)), http.MethodGet, "[cors] Access-Control-Allow-Methods"),
-		exposes:     fs.String(tools.ToCamel(fmt.Sprintf("%sExpose", prefix)), "", "[cors] Access-Control-Expose-Headers"),
-		credentials: fs.Bool(tools.ToCamel(fmt.Sprintf("%sCredentials", prefix)), false, "[cors] Access-Control-Allow-Credentials"),
+		origin:      fs.String(tools.ToCamel(fmt.Sprintf("%sOrigin", prefix)), "*", fmt.Sprintf("[%s] Access-Control-Allow-Origin", docPrefix)),
+		headers:     fs.String(tools.ToCamel(fmt.Sprintf("%sHeaders", prefix)), "Content-Type", fmt.Sprintf("[%s] Access-Control-Allow-Headers", docPrefix)),
+		methods:     fs.String(tools.ToCamel(fmt.Sprintf("%sMethods", prefix)), http.MethodGet, fmt.Sprintf("[%s] Access-Control-Allow-Methods", docPrefix)),
+		exposes:     fs.String(tools.ToCamel(fmt.Sprintf("%sExpose", prefix)), "", fmt.Sprintf("[%s] Access-Control-Expose-Headers", docPrefix)),
+		credentials: fs.Bool(tools.ToCamel(fmt.Sprintf("%sCredentials", prefix)), false, fmt.Sprintf("[%s] Access-Control-Allow-Credentials", docPrefix)),
 	}
 }
 

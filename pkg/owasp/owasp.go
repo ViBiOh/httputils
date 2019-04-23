@@ -25,10 +25,15 @@ type App struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
+	docPrefix := prefix
+	if prefix == "" {
+		docPrefix = "owasp"
+	}
+
 	return Config{
-		csp:          fs.String(tools.ToCamel(fmt.Sprintf("%sCsp", prefix)), "default-src 'self'; base-uri 'self'", "[owasp] Content-Security-Policy"),
-		hsts:         fs.Bool(tools.ToCamel(fmt.Sprintf("%sHsts", prefix)), true, "[owasp] Indicate Strict Transport Security"),
-		frameOptions: fs.String(tools.ToCamel(fmt.Sprintf("%sFrameOptions", prefix)), "deny", "[owasp] X-Frame-Options"),
+		csp:          fs.String(tools.ToCamel(fmt.Sprintf("%sCsp", prefix)), "default-src 'self'; base-uri 'self'", fmt.Sprintf("[%s] Content-Security-Policy", docPrefix)),
+		hsts:         fs.Bool(tools.ToCamel(fmt.Sprintf("%sHsts", prefix)), true, fmt.Sprintf("[%s] Indicate Strict Transport Security", docPrefix)),
+		frameOptions: fs.String(tools.ToCamel(fmt.Sprintf("%sFrameOptions", prefix)), "deny", fmt.Sprintf("[%s] X-Frame-Options", docPrefix)),
 	}
 }
 
