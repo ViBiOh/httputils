@@ -60,8 +60,15 @@ func ParseParams(r *http.Request, defaultPage, defaultPageSize, maxPageSize uint
 	}
 
 	sortAsc = true
-	if _, ok := params["desc"]; ok {
-		sortAsc = false
+	if rawValue, ok := params["desc"]; ok {
+		if len(rawValue) == 0 {
+			sortAsc = false
+		} else if value, strconvErr := strconv.ParseBool(rawValue[0]); strconvErr != nil {
+			err = errors.WithStack(strconvErr)
+			return
+		} else {
+			sortAsc = !value
+		}
 	}
 
 	return
