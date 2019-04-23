@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/httperror"
@@ -26,7 +25,6 @@ var (
 
 // Config of package
 type Config struct {
-	path            *string
 	defaultPage     *uint
 	defaultPageSize *uint
 	maxPageSize     *uint
@@ -34,7 +32,6 @@ type Config struct {
 
 // App of package
 type App struct {
-	path            string
 	defaultPage     uint
 	defaultPageSize uint
 	maxPageSize     uint
@@ -44,7 +41,6 @@ type App struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		path:            fs.String(tools.ToCamel(fmt.Sprintf("%sPath", prefix)), fmt.Sprintf("/%s", prefix), fmt.Sprintf("[%s] HTTP Path prefix", prefix)),
 		defaultPage:     fs.Uint(tools.ToCamel(fmt.Sprintf("%sDefaultPage", prefix)), 1, fmt.Sprintf("[%s] Default page", prefix)),
 		defaultPageSize: fs.Uint(tools.ToCamel(fmt.Sprintf("%sDefaultPageSize", prefix)), 20, fmt.Sprintf("[%s] Default page size", prefix)),
 		maxPageSize:     fs.Uint(tools.ToCamel(fmt.Sprintf("%sMaxPageSize", prefix)), 500, fmt.Sprintf("[%s] Max page size", prefix)),
@@ -54,7 +50,6 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 // New creates new App from Config
 func New(config Config, service ItemService) *App {
 	return &App{
-		path:            strings.TrimSpace(*config.path),
 		defaultPage:     *config.defaultPage,
 		defaultPageSize: *config.defaultPageSize,
 		maxPageSize:     *config.maxPageSize,
@@ -202,7 +197,7 @@ func (a App) delete(w http.ResponseWriter, r *http.Request, id string) {
 
 // Handler for CRUD requests. Should be use with net/http
 func (a App) Handler() http.Handler {
-	return http.StripPrefix(a.path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		isRoot := tools.IsRoot(r)
 
 		switch r.Method {
@@ -240,5 +235,5 @@ func (a App) Handler() http.Handler {
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
-	}))
+	})
 }
