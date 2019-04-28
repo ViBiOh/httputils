@@ -1,6 +1,6 @@
 SHELL = /bin/sh
 
-APP_NAME ?= httputils
+APP_NAME ?= alcotest
 VERSION ?= $(shell git rev-parse --short HEAD)
 AUTHOR ?= $(shell git log --pretty=format:'%an' -n 1)
 
@@ -9,6 +9,12 @@ APP_PACKAGES = $(shell go list -e $(PACKAGES) | grep -v vendor | grep -v node_mo
 
 GOBIN=bin
 BINARY_PATH=$(GOBIN)/$(APP_NAME)
+
+SERVER_SOURCE = cmd/alcotest/alcotest.go
+SERVER_RUNNER = go run $(SERVER_SOURCE)
+ifeq ($(DEBUG), true)
+	SERVER_RUNNER = dlv debug $(SERVER_SOURCE) --
+endif
 
 .PHONY: help
 help: Makefile
@@ -77,4 +83,4 @@ bench:
 .PHONY: build
 build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo ./...
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo -o $(GOBIN)/alcotest cmd/alcotest/alcotest.go
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo -o $(BINARY_PATH) $(SERVER_SOURCE)

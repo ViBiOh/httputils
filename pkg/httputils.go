@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ViBiOh/httputils/pkg/cert"
 	"github.com/ViBiOh/httputils/pkg/healthcheck"
 	"github.com/ViBiOh/httputils/pkg/logger"
 	"github.com/ViBiOh/httputils/pkg/model"
@@ -15,33 +14,38 @@ import (
 
 // Config of package
 type Config struct {
-	port       *int
-	tls        *bool
-	certConfig cert.Config
+	port *int
+	cert *string
+	key  *string
 }
 
 // App of package
 type App struct {
-	port       int
-	tls        bool
-	certConfig cert.Config
+	port int
+	cert string
+	key  string
 }
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
+	docPrefix := prefix
+	if prefix == "" {
+		docPrefix = "http"
+	}
+
 	return Config{
-		port:       fs.Int(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), 1080, "Listen port"),
-		tls:        fs.Bool(tools.ToCamel(fmt.Sprintf("%sTls", prefix)), true, "Serve TLS content"),
-		certConfig: cert.Flags(fs, tools.ToCamel(fmt.Sprintf("%sTls", prefix))),
+		port: fs.Int(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), 1080, fmt.Sprintf("[%s] Listen port", docPrefix)),
+		cert: fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", fmt.Sprintf("[%s] Certificate file", docPrefix)),
+		key:  fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", fmt.Sprintf("[%s] Key file", docPrefix)),
 	}
 }
 
 // New creates new App from Config
 func New(config Config) *App {
 	return &App{
-		port:       *config.port,
-		tls:        *config.tls,
-		certConfig: config.certConfig,
+		port: *config.port,
+		cert: *config.cert,
+		key:  *config.key,
 	}
 }
 
@@ -65,9 +69,10 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 	var serveError = make(chan error)
 	go func() {
 		defer close(serveError)
-		if a.tls {
+
+		if a.cert != "" && a.key != "" {
 			logger.Info("Listening with TLS")
-			serveError <- cert.ListenAndServeTLS(a.certConfig, httpServer)
+			serveError <- httpServer.ListenAndServeTLS(a.cert, a.key)
 		} else {
 			logger.Warn("Listening without TLS")
 			serveError <- httpServer.ListenAndServe()

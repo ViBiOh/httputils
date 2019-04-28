@@ -30,21 +30,3 @@ COPY alcotest /alcotest
 
 Because main use is to healthcheck.
 Because it's a partial anagram of "ch**e**ck **stat**us **co**de ur**l**"
-
-## Certificate generator
-
-Generate a certificate for a web server.
-
-### Usage
-
-```bash
-Usage of cert:
-  -cert string
-        [tls] PEM Certificate file
-  -hosts string
-        [tls] Self-signed certificate hosts, comma separated (default "localhost")
-  -key string
-        [tls] PEM Key file
-  -organization string
-        [tls] Self-signed certificate organization (default "ViBiOh")
-```
