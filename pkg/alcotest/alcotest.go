@@ -1,7 +1,6 @@
 package alcotest
 
 import (
-	"crypto/tls"
 	"flag"
 	"fmt"
 	"net/http"
@@ -15,11 +14,6 @@ import (
 
 var httpClient = http.Client{
 	Timeout: 5 * time.Second,
-	Transport: &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	},
 }
 
 // Config of package
