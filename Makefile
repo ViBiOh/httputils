@@ -25,7 +25,7 @@ help: Makefile
 $(APP_NAME): deps go
 
 .PHONY: go
-go: format lint tst bench build
+go: format lint test bench build
 
 ## name: Output app name
 .PHONY: name
@@ -69,9 +69,9 @@ lint:
 	errcheck -ignoretests $(APP_PACKAGES)
 	go vet $(APP_PACKAGES)
 
-## tst: Test code of app with coverage
+## test: Test code of app with coverage
 .PHONY: test
-tst:
+test:
 	script/coverage
 
 ## bench: Benchmark code of app
