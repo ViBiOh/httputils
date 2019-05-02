@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_Algorithm(t *testing.T) {
+func TestAlgorithm(t *testing.T) {
 	numberReader := func(start int) func() (interface{}, error) {
 		i := start
 
@@ -67,7 +67,7 @@ type client struct {
 	card string
 }
 
-func Test_AlgorithmWithRupture(t *testing.T) {
+func TestAlgorithmWithRupture(t *testing.T) {
 	cards := []string{"MASTERCARD", "VISA"}
 	cardKeyer := func(o interface{}) string {
 		return fmt.Sprintf("%-10s", o)

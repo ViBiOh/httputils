@@ -20,7 +20,7 @@ func testFn() string {
 	return "toto"
 }
 
-func Test_IsPretty(t *testing.T) {
+func TestIsPretty(t *testing.T) {
 	emptyRequest, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
 	prettyRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?pretty", nil)
 	prettyValueRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?test=1&pretty=false", nil)
@@ -60,7 +60,7 @@ func Test_IsPretty(t *testing.T) {
 	}
 }
 
-func Test_ResponseJSON(t *testing.T) {
+func TestResponseJSON(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		obj        interface{}
@@ -195,7 +195,7 @@ func TestResponseArrayJSON(t *testing.T) {
 	}
 }
 
-func Test_ResponsePaginatedJSON(t *testing.T) {
+func TestResponsePaginatedJSON(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		page       uint

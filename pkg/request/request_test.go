@@ -19,7 +19,7 @@ type postStruct struct {
 	Amount float64
 }
 
-func Test_DoJSON(t *testing.T) {
+func TestDoJSON(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Hello, test")
 	}))

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_IsRoot(t *testing.T) {
+func TestIsRoot(t *testing.T) {
 	empty, _ := http.NewRequest(http.MethodGet, "", nil)
 	slash, _ := http.NewRequest(http.MethodGet, "/", nil)
 	content, _ := http.NewRequest(http.MethodGet, "/id", nil)
@@ -39,7 +39,7 @@ func Test_IsRoot(t *testing.T) {
 	}
 }
 
-func Test_GetID(t *testing.T) {
+func TestGetID(t *testing.T) {
 	emptyRequest, _ := http.NewRequest(http.MethodGet, "/", nil)
 	simpleRequest, _ := http.NewRequest(http.MethodGet, "/abc-1234", nil)
 	complexRequest, _ := http.NewRequest(http.MethodGet, "/def-5678/links/", nil)

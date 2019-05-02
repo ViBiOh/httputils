@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func Test_Sha1(t *testing.T) {
+func TestSha1(t *testing.T) {
 	var cases = []struct {
 		intention string
 		input     interface{}

@@ -2,7 +2,7 @@ package tools
 
 import "testing"
 
-func Test_ToCamel(t *testing.T) {
+func TestToCamel(t *testing.T) {
 	var cases = []struct {
 		intention string
 		input     string
@@ -32,7 +32,7 @@ func Test_ToCamel(t *testing.T) {
 	}
 }
 
-func Test_IncludesString(t *testing.T) {
+func TestIncludesString(t *testing.T) {
 	var cases = []struct {
 		intention string
 		array     []string

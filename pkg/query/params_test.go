@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_GetBool(t *testing.T) {
+func TestGetBool(t *testing.T) {
 	emptyRequest, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
 	validRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?valid", nil)
 	validValueRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?test=1&valid=false", nil)

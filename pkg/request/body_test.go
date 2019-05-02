@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func Test_ReadBodyRequest(t *testing.T) {
+func TestReadBodyRequest(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, "http://localhost", bytes.NewBuffer([]byte("Content from buffer")))
 	if err != nil {
 		t.Errorf("Unable to create test request: %v", err)

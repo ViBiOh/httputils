@@ -8,7 +8,7 @@ import (
 	"github.com/ViBiOh/httputils/pkg/request"
 )
 
-func Test_Handler(t *testing.T) {
+func TestHandler(t *testing.T) {
 	subHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTeapot)
 	})

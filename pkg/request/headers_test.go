@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func Test_GenerateBasicAuth(t *testing.T) {
+func TestGenerateBasicAuth(t *testing.T) {
 	var cases = []struct {
 		username string
 		password string
@@ -31,7 +31,7 @@ func Test_GenerateBasicAuth(t *testing.T) {
 	}
 }
 
-func Test_SetIP(t *testing.T) {
+func TestSetIP(t *testing.T) {
 	var cases = []struct {
 		intention string
 		request   *http.Request
@@ -51,7 +51,7 @@ func Test_SetIP(t *testing.T) {
 	}
 }
 
-func Test_GetIP(t *testing.T) {
+func TestGetIP(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	request.RemoteAddr = "localhost"
 

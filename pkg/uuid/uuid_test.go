@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func Test_New(t *testing.T) {
+func TestNew(t *testing.T) {
 	var cases = []struct {
 		intention string
 		want      int

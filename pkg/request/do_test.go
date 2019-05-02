@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_DoAndRead(t *testing.T) {
+func TestDoAndRead(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/bad" {
 			w.WriteHeader(http.StatusBadRequest)

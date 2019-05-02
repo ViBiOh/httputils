@@ -31,7 +31,7 @@ func createTestServer() *httptest.Server {
 	}))
 }
 
-func Test_GetStatusCode(t *testing.T) {
+func TestGetStatusCode(t *testing.T) {
 	testServer := createTestServer()
 	defer testServer.Close()
 
@@ -102,7 +102,7 @@ func Test_GetStatusCode(t *testing.T) {
 	}
 }
 
-func Test_Do(t *testing.T) {
+func TestDo(t *testing.T) {
 	testServer := createTestServer()
 	defer testServer.Close()
 
@@ -115,19 +115,19 @@ func Test_Do(t *testing.T) {
 		{
 			"should handle error during call",
 			"http://",
-			"Test_Do",
+			"TestDo",
 			errors.New("http: no Host in request URL"),
 		},
 		{
 			"should handle bad status code",
 			fmt.Sprintf("%s/ko", testServer.URL),
-			"Test_Do",
+			"TestDo",
 			errors.New("alcotest failed: HTTP/500"),
 		},
 		{
 			"should handle valid code",
 			fmt.Sprintf("%s/ok", testServer.URL),
-			"Test_Do",
+			"TestDo",
 			nil,
 		},
 	}

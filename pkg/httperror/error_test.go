@@ -9,7 +9,7 @@ import (
 	"github.com/ViBiOh/httputils/pkg/request"
 )
 
-func Test_BadRequest(t *testing.T) {
+func TestBadRequest(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		err        error
@@ -38,7 +38,7 @@ func Test_BadRequest(t *testing.T) {
 	}
 }
 
-func Test_Unauthorized(t *testing.T) {
+func TestUnauthorized(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		err        error
@@ -67,7 +67,7 @@ func Test_Unauthorized(t *testing.T) {
 	}
 }
 
-func Test_Forbidden(t *testing.T) {
+func TestForbidden(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		want       string
@@ -94,7 +94,7 @@ func Test_Forbidden(t *testing.T) {
 	}
 }
 
-func Test_NotFound(t *testing.T) {
+func TestNotFound(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		want       string
@@ -121,7 +121,7 @@ func Test_NotFound(t *testing.T) {
 	}
 }
 
-func Test_InternalServerError(t *testing.T) {
+func TestInternalServerError(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		err        error
