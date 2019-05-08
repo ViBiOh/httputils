@@ -23,7 +23,7 @@ in `Dockerfile`
 ```bash
 HEALTHCHECK --retries=10 CMD /alcotest -url http://localhost/health
 
-COPY alcotest /alcotest
+COPY bin/alcotest /alcotest
 ```
 
 ### Why `alcotest` ?
