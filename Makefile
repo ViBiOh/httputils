@@ -1,20 +1,11 @@
 SHELL = /bin/sh
 
-APP_NAME ?= alcotest
-VERSION ?= $(shell git rev-parse --short HEAD)
-AUTHOR ?= $(shell git log --pretty=format:'%an' -n 1)
-
+APP_NAME ?= httputils
 PACKAGES ?= ./...
 APP_PACKAGES = $(shell go list -e $(PACKAGES) | grep -v vendor | grep -v node_modules)
 
 GOBIN=bin
 BINARY_PATH=$(GOBIN)/$(APP_NAME)
-
-SERVER_SOURCE = cmd/alcotest/alcotest.go
-SERVER_RUNNER = go run $(SERVER_SOURCE)
-ifeq ($(DEBUG), true)
-	SERVER_RUNNER = dlv debug $(SERVER_SOURCE) --
-endif
 
 .PHONY: help
 help: Makefile
@@ -40,21 +31,19 @@ dist:
 ## version: Output last commit sha1
 .PHONY: version
 version:
-	@echo -n $(VERSION)
+	@echo -n $(shell git rev-parse --short HEAD)
 
 ## author: Output last commit author
 .PHONY: author
 author:
-	@python -c 'import sys; import urllib; sys.stdout.write(urllib.quote_plus(sys.argv[1]))' "$(AUTHOR)"
+	@python -c 'import sys; import urllib; sys.stdout.write(urllib.quote_plus(sys.argv[1]))' "$(shell git log --pretty=format:'%an' -n 1)"
 
 ## deps: Download dependencies
 .PHONY: deps
 deps:
-	go get github.com/golang/dep/cmd/dep
 	go get github.com/kisielk/errcheck
 	go get golang.org/x/lint/golint
 	go get golang.org/x/tools/cmd/goimports
-	dep ensure
 
 ## format: Format code of app
 .PHONY: format
@@ -83,4 +72,3 @@ bench:
 .PHONY: build
 build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo ./...
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo -o $(BINARY_PATH) $(SERVER_SOURCE)

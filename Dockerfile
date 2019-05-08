@@ -1,9 +1,6 @@
 FROM golang:1.12 as builder
 
-ENV APP_NAME httputils
-ENV WORKDIR ${GOPATH}/src/github.com/ViBiOh/httputils
+WORKDIR /app
+COPY . .
 
-WORKDIR ${WORKDIR}
-COPY ./ ${WORKDIR}/
-
-RUN make ${APP_NAME}
+RUN make httputils
