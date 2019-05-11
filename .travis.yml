@@ -5,9 +5,9 @@ jobs:
     sudo: required
     services:
     - docker
-    script: docker build -t "vibioh/$(make name):$(make version)" .
-    after_success: |
-      curl -s -X POST https://goreportcard.com/checks?repo=github.com/ViBiOh/httputils
+    script: docker build --build-arg CODECOV_TOKEN -t "vibioh/$(make name):$(make version)" .
+    after_success:
+    - curl -s -X POST https://goreportcard.com/checks?repo=github.com/ViBiOh/httputils
 
 stages:
   - Build

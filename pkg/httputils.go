@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/ViBiOh/httputils/pkg/errors"
@@ -39,7 +40,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 
 	return Config{
 		port:             fs.Int(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), 1080, fmt.Sprintf("[%s] Listen port", docPrefix)),
-		gracefulDuration: fs.String(tools.ToCamel(fmt.Sprintf("%sGracefulClose", prefix)), "35s", fmt.Sprintf("[%s] Graceful duration", docPrefix)),
+		gracefulDuration: fs.String(tools.ToCamel(fmt.Sprintf("%sGraceful", prefix)), "35s", fmt.Sprintf("[%s] Graceful close duration", docPrefix)),
 		cert:             fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", fmt.Sprintf("[%s] Certificate file", docPrefix)),
 		key:              fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", fmt.Sprintf("[%s] Key file", docPrefix)),
 	}
@@ -60,16 +61,34 @@ func New(config Config) (*App, error) {
 	}, nil
 }
 
+// VersionHandler for sending current app version from `VERSION` environment variable
+func VersionHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		if _, err := w.Write([]byte(os.Getenv("VERSION"))); err != nil {
+			logger.Error("%+v", errors.WithStack(err))
+		}
+	})
+}
+
 // ListenAndServe starts server
 func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) {
 	healthcheckHandler := healthcheckApp.Handler()
+	versionHandler := VersionHandler()
 
 	httpServer := &http.Server{
 		Addr: fmt.Sprintf(":%d", a.port),
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/health" {
+			switch r.URL.Path {
+			case "/health":
 				healthcheckHandler.ServeHTTP(w, r)
-			} else {
+			case "/version":
+				versionHandler.ServeHTTP(w, r)
+			default:
 				handler.ServeHTTP(w, r)
 			}
 		}),
