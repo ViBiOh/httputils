@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/ViBiOh/httputils/pkg/healthcheck"
 	"github.com/ViBiOh/httputils/pkg/logger"
 	"github.com/ViBiOh/httputils/pkg/model"
@@ -14,16 +16,18 @@ import (
 
 // Config of package
 type Config struct {
-	port *int
-	cert *string
-	key  *string
+	port             *int
+	gracefulDuration *string
+	cert             *string
+	key              *string
 }
 
 // App of package
 type App struct {
-	port int
-	cert string
-	key  string
+	port             int
+	gracefulDuration time.Duration
+	cert             string
+	key              string
 }
 
 // Flags adds flags for configuring package
@@ -34,19 +38,26 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 	}
 
 	return Config{
-		port: fs.Int(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), 1080, fmt.Sprintf("[%s] Listen port", docPrefix)),
-		cert: fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", fmt.Sprintf("[%s] Certificate file", docPrefix)),
-		key:  fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", fmt.Sprintf("[%s] Key file", docPrefix)),
+		port:             fs.Int(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), 1080, fmt.Sprintf("[%s] Listen port", docPrefix)),
+		gracefulDuration: fs.String(tools.ToCamel(fmt.Sprintf("%sGracefulClose", prefix)), "35s", fmt.Sprintf("[%s] Graceful duration", docPrefix)),
+		cert:             fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", fmt.Sprintf("[%s] Certificate file", docPrefix)),
+		key:              fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", fmt.Sprintf("[%s] Key file", docPrefix)),
 	}
 }
 
 // New creates new App from Config
-func New(config Config) *App {
-	return &App{
-		port: *config.port,
-		cert: *config.cert,
-		key:  *config.key,
+func New(config Config) (*App, error) {
+	gracefulDuration, err := time.ParseDuration(*config.gracefulDuration)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
+
+	return &App{
+		port:             *config.port,
+		gracefulDuration: gracefulDuration,
+		cert:             *config.cert,
+		key:              *config.key,
+	}, nil
 }
 
 // ListenAndServe starts server
@@ -79,5 +90,5 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 		}
 	}()
 
-	server.GracefulClose(httpServer, serveError, onGracefulClose, healthcheckApp, flushers...)
+	server.GracefulClose(httpServer, a.gracefulDuration, serveError, onGracefulClose, healthcheckApp, flushers...)
 }

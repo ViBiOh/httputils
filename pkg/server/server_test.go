@@ -13,18 +13,21 @@ import (
 
 func TestHttpGracefulClose(t *testing.T) {
 	var cases = []struct {
-		url     string
-		server  *http.Server
-		wait    bool
-		wantErr error
+		intention string
+		url       string
+		server    *http.Server
+		wait      bool
+		wantErr   error
 	}{
 		{
+			"nothing if no server",
 			"",
 			nil,
 			false,
 			nil,
 		},
 		{
+			"shutdown http quickly",
 			"http://localhost:8000",
 			&http.Server{
 				Addr: ":8000",
@@ -37,10 +40,11 @@ func TestHttpGracefulClose(t *testing.T) {
 		},
 		{
 			"http://localhost:8001",
+			"http://localhost:8001",
 			&http.Server{
 				Addr: ":8001",
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if r.URL.Path == "/long" {
+					if r.URL.Path == "/long_request" {
 						time.Sleep(time.Second * 30)
 					}
 					w.WriteHeader(http.StatusOK)
@@ -54,64 +58,72 @@ func TestHttpGracefulClose(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		if testCase.server != nil {
-			go testCase.server.ListenAndServe()
+		t.Run(testCase.intention, func(t *testing.T) {
+			if testCase.server != nil {
+				go testCase.server.ListenAndServe()
 
-			if _, _, _, err := request.Get(nil, testCase.url, nil); err != nil {
-				t.Errorf("httpGracefulClose(%v), unable to fetch started server: %v", testCase.server, err)
+				if _, _, _, err := request.Get(nil, testCase.url, nil); err != nil {
+					t.Errorf("unable to fetch server: %v", err)
+				}
 			}
-		}
 
-		if testCase.wait {
-			go request.Get(nil, fmt.Sprintf("%s/long", testCase.url), nil)
-			time.Sleep(time.Second)
-		}
-		err := httpGracefulClose(testCase.server)
-
-		if testCase.server != nil {
-			if _, _, _, err := request.Get(nil, testCase.url, nil); err == nil {
-				t.Errorf("httpGracefulClose(%v), still able to fetch data", testCase.server)
+			if testCase.wait {
+				go request.Get(nil, fmt.Sprintf("%s/long_request", testCase.url), nil)
+				time.Sleep(time.Second)
 			}
-		}
 
-		failed = false
+			err := httpGracefulClose(testCase.server)
 
-		if err == nil && testCase.wantErr != nil {
-			failed = true
-		} else if err != nil && testCase.wantErr == nil {
-			failed = true
-		} else if err != nil && err.Error() != testCase.wantErr.Error() {
-			failed = true
-		}
+			if testCase.server != nil {
+				if _, _, _, err := request.Get(nil, testCase.url, nil); err == nil {
+					t.Errorf("still able to fetch server")
+				}
+			}
 
-		if failed {
-			t.Errorf("httpGracefulClose(%v) = %v, want %v", testCase.server, err, testCase.wantErr)
-		}
+			failed = false
 
-		if testCase.server != nil {
-			testCase.server.Close()
-		}
+			if err == nil && testCase.wantErr != nil {
+				failed = true
+			} else if err != nil && testCase.wantErr == nil {
+				failed = true
+			} else if err != nil && err.Error() != testCase.wantErr.Error() {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("httpGracefulClose(%v) = %v, want %v", testCase.server, err, testCase.wantErr)
+			}
+
+			if testCase.server != nil {
+				testCase.server.Close()
+			}
+		})
 	}
 }
 
 func TestGracefulClose(t *testing.T) {
 	var cases = []struct {
-		url            string
-		server         *http.Server
-		wait           bool
-		callback       func() error
-		healthcheckApp *healthcheck.App
-		want           int
+		intention        string
+		url              string
+		server           *http.Server
+		gracefulDuration time.Duration
+		wait             bool
+		callback         func() error
+		healthcheckApp   *healthcheck.App
+		want             int
 	}{
 		{
+			"nothing if no server",
 			"",
 			nil,
+			0,
 			false,
 			nil,
 			nil,
 			0,
 		},
 		{
+			"nominal case",
 			"http://localhost:8100",
 			&http.Server{
 				Addr: ":8100",
@@ -119,32 +131,37 @@ func TestGracefulClose(t *testing.T) {
 					w.WriteHeader(http.StatusOK)
 				}),
 			},
+			time.Second,
 			false,
 			func() error {
 				return nil
 			},
-			nil,
+			healthcheck.New(),
 			0,
 		},
 		{
+			"fail on long request",
 			"http://localhost:8101",
 			&http.Server{
 				Addr: ":8101",
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if r.URL.Path == "/long" {
+					if r.URL.Path == "/long_request" {
 						time.Sleep(time.Second * 30)
 					}
 					w.WriteHeader(http.StatusOK)
 				}),
 			},
+			time.Second * 2,
 			true,
 			nil,
 			nil,
 			1,
 		},
 		{
+			"fail if graceful close fail",
 			"",
 			nil,
+			0,
 			false,
 			func() error {
 				return errors.New("error while shutting down")
@@ -155,22 +172,23 @@ func TestGracefulClose(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		if testCase.server != nil {
-			go testCase.server.ListenAndServe()
-			defer testCase.server.Close()
-		}
+		t.Run(testCase.intention, func(t *testing.T) {
+			if testCase.server != nil {
+				go testCase.server.ListenAndServe()
+			}
 
-		if testCase.wait {
-			go request.Get(nil, fmt.Sprintf("%s/long", testCase.url), nil)
-			time.Sleep(time.Second)
-		}
+			if testCase.wait {
+				go request.Get(nil, fmt.Sprintf("%s/long_request", testCase.url), nil)
+				time.Sleep(time.Second)
+			}
 
-		if result := gracefulClose(testCase.server, testCase.callback, testCase.healthcheckApp); result != testCase.want {
-			t.Errorf("gracefulClose(%v) = %v, want %v", testCase.server, result, testCase.want)
-		}
+			if result := gracefulClose(testCase.server, testCase.gracefulDuration, testCase.callback, testCase.healthcheckApp); result != testCase.want {
+				t.Errorf("gracefulClose() = %d, want %d", result, testCase.want)
+			}
 
-		if testCase.server != nil {
-			testCase.server.Close()
-		}
+			if testCase.server != nil {
+				testCase.server.Close()
+			}
+		})
 	}
 }

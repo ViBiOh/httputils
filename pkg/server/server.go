@@ -14,7 +14,9 @@ import (
 	"github.com/ViBiOh/httputils/pkg/model"
 )
 
-const healthcheckDuration = 35
+const (
+	httpShutdownTimeout = 10 * time.Second
+)
 
 func httpGracefulClose(server *http.Server) error {
 	if server == nil {
@@ -23,7 +25,7 @@ func httpGracefulClose(server *http.Server) error {
 
 	logger.Info("Shutting down HTTP server")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), httpShutdownTimeout)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
@@ -33,13 +35,16 @@ func httpGracefulClose(server *http.Server) error {
 	return nil
 }
 
-func gracefulClose(server *http.Server, callback func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) int {
+func gracefulClose(server *http.Server, gracefulDuration time.Duration, callback func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) int {
 	exitCode := 0
 
 	if healthcheckApp != nil {
 		healthcheckApp.Close()
-		logger.Info("Waiting %d seconds for healthcheck", healthcheckDuration)
-		time.Sleep(time.Second * healthcheckDuration)
+	}
+
+	if gracefulDuration >= time.Second {
+		logger.Info("Waiting %s for graceful close", gracefulDuration.String())
+		time.Sleep(gracefulDuration)
 	}
 
 	if err := httpGracefulClose(server); err != nil {
@@ -62,7 +67,7 @@ func gracefulClose(server *http.Server, callback func() error, healthcheckApp *h
 }
 
 // GracefulClose gracefully close net/http server
-func GracefulClose(server *http.Server, serveError <-chan error, callback func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) {
+func GracefulClose(server *http.Server, gracefulDuration time.Duration, serveError <-chan error, callback func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM)
 
@@ -73,7 +78,7 @@ func GracefulClose(server *http.Server, serveError <-chan error, callback func()
 		logger.Info("SIGTERM received")
 	}
 
-	os.Exit(gracefulClose(server, callback, healthcheckApp, flushers...))
+	os.Exit(gracefulClose(server, gracefulDuration, callback, healthcheckApp, flushers...))
 }
 
 // ChainMiddlewares chains middlewares call for easy wrapping
