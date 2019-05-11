@@ -9,8 +9,13 @@ import (
 	"github.com/ViBiOh/httputils/pkg/errors"
 )
 
-// ErrMaxPageSizeExceeded occurs when pagesize read is above defined limit
-var ErrMaxPageSizeExceeded = errors.New("maximum page size exceeded")
+var (
+	// ErrMaxPageSizeExceeded occurs when pagesize read is above defined limit
+	ErrMaxPageSizeExceeded = errors.New("maximum page size exceeded")
+
+	// ErrPageSizeEqualZero occurs when pagesize read is equal to 0
+	ErrPageSizeEqualZero = errors.New("page size must be greater than zero")
+)
 
 // ParseParams parse common pagination param from request
 func ParseParams(r *http.Request, defaultPage, defaultPageSize, maxPageSize uint) (page, pageSize uint, sortKey string, sortAsc bool, err error) {
@@ -47,6 +52,11 @@ func ParseParams(r *http.Request, defaultPage, defaultPageSize, maxPageSize uint
 
 		if parsedUint > maxPageSize {
 			err = errors.WithStack(ErrMaxPageSizeExceeded)
+			return
+		}
+
+		if parsedUint < 1 {
+			err = errors.WithStack(ErrPageSizeEqualZero)
 			return
 		}
 
