@@ -23,8 +23,10 @@ func TestSha1(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		if result := Sha1(testCase.input); result != testCase.want {
-			t.Errorf("%s\nSha1(%+v) = %+v, want %+v", testCase.intention, testCase.input, result, testCase.want)
-		}
+		t.Run(testCase.intention, func(t *testing.T) {
+			if result := Sha1(testCase.input); result != testCase.want {
+				t.Errorf("Sha1(%+v) = %+v, want %+v", testCase.input, result, testCase.want)
+			}
+		})
 	}
 }

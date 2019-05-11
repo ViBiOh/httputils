@@ -108,7 +108,6 @@ func TestGracefulClose(t *testing.T) {
 		server           *http.Server
 		gracefulDuration time.Duration
 		wait             bool
-		callback         func() error
 		healthcheckApp   *healthcheck.App
 		want             int
 	}{
@@ -118,7 +117,6 @@ func TestGracefulClose(t *testing.T) {
 			nil,
 			0,
 			false,
-			nil,
 			nil,
 			0,
 		},
@@ -133,9 +131,6 @@ func TestGracefulClose(t *testing.T) {
 			},
 			time.Second,
 			false,
-			func() error {
-				return nil
-			},
 			healthcheck.New(),
 			0,
 		},
@@ -154,19 +149,6 @@ func TestGracefulClose(t *testing.T) {
 			time.Second * 2,
 			true,
 			nil,
-			nil,
-			1,
-		},
-		{
-			"fail if graceful close fail",
-			"",
-			nil,
-			0,
-			false,
-			func() error {
-				return errors.New("error while shutting down")
-			},
-			nil,
 			1,
 		},
 	}
@@ -182,7 +164,7 @@ func TestGracefulClose(t *testing.T) {
 				time.Sleep(time.Second)
 			}
 
-			if result := gracefulClose(testCase.server, testCase.gracefulDuration, testCase.callback, testCase.healthcheckApp); result != testCase.want {
+			if result := gracefulClose(testCase.server, testCase.gracefulDuration, testCase.healthcheckApp); result != testCase.want {
 				t.Errorf("gracefulClose() = %d, want %d", result, testCase.want)
 			}
 

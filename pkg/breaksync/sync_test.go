@@ -45,20 +45,22 @@ func TestAlgorithm(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		synchronization := NewSynchronization(testCase.sources, testCase.ruptures)
+		t.Run(testCase.intention, func(t *testing.T) {
+			synchronization := NewSynchronization(testCase.sources, testCase.ruptures)
 
-		var result int
-		synchronization.Run(func(s *Synchronization) {
-			for _, source := range s.Sources {
-				if source.synchronized {
-					result = result + source.Current.(int)
+			var result int
+			synchronization.Run(func(s *Synchronization) {
+				for _, source := range s.Sources {
+					if source.synchronized {
+						result = result + source.Current.(int)
+					}
 				}
+			})
+
+			if testCase.want != result {
+				t.Errorf("BreakSync Algorithm(%v) = %v, want %v", testCase.sources, result, testCase.want)
 			}
 		})
-
-		if testCase.want != result {
-			t.Errorf("%v\nBreakSync Algorithm(%v) = %v, want %v", testCase.intention, testCase.sources, result, testCase.want)
-		}
 	}
 }
 
@@ -123,24 +125,26 @@ func TestAlgorithmWithRupture(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		synchronization := NewSynchronization(testCase.sources, testCase.ruptures)
+		t.Run(testCase.intention, func(t *testing.T) {
+			synchronization := NewSynchronization(testCase.sources, testCase.ruptures)
 
-		result := uint(0)
-		synchronization.Run(func(s *Synchronization) {
-			allSynchronized := true
-			for _, source := range s.Sources {
-				if !source.synchronized {
-					allSynchronized = false
+			result := uint(0)
+			synchronization.Run(func(s *Synchronization) {
+				allSynchronized := true
+				for _, source := range s.Sources {
+					if !source.synchronized {
+						allSynchronized = false
+					}
 				}
-			}
 
-			if allSynchronized {
-				result++
+				if allSynchronized {
+					result++
+				}
+			})
+
+			if testCase.want != result {
+				t.Errorf("BreakSync Algorithm(%v) = %v, want %v", testCase.sources, result, testCase.want)
 			}
 		})
-
-		if testCase.want != result {
-			t.Errorf("%v\nBreakSync Algorithm(%v) = %v, want %v", testCase.intention, testCase.sources, result, testCase.want)
-		}
 	}
 }

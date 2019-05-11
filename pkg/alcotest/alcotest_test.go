@@ -82,23 +82,25 @@ func TestGetStatusCode(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		result, err := GetStatusCode(testCase.url, testCase.userAgent)
+		t.Run(testCase.intention, func(t *testing.T) {
+			result, err := GetStatusCode(testCase.url, testCase.userAgent)
 
-		failed = false
+			failed = false
 
-		if err == nil && testCase.wantErr != nil {
-			failed = true
-		} else if err != nil && testCase.wantErr == nil {
-			failed = true
-		} else if err != nil && err.Error() != testCase.wantErr.Error() {
-			failed = true
-		} else if result != testCase.want {
-			failed = true
-		}
+			if err == nil && testCase.wantErr != nil {
+				failed = true
+			} else if err != nil && testCase.wantErr == nil {
+				failed = true
+			} else if err != nil && err.Error() != testCase.wantErr.Error() {
+				failed = true
+			} else if result != testCase.want {
+				failed = true
+			}
 
-		if failed {
-			t.Errorf("%s\nGetStatusCode(`%s`, `%s`) = (%d, %+v), want (%d, %+v)", testCase.intention, testCase.url, testCase.userAgent, result, err, testCase.want, testCase.wantErr)
-		}
+			if failed {
+				t.Errorf("GetStatusCode(`%s`, `%s`) = (%d, %+v), want (%d, %+v)", testCase.url, testCase.userAgent, result, err, testCase.want, testCase.wantErr)
+			}
+		})
 	}
 }
 
@@ -135,20 +137,22 @@ func TestDo(t *testing.T) {
 	var failed bool
 
 	for _, testCase := range cases {
-		failed = false
+		t.Run(testCase.intention, func(t *testing.T) {
+			failed = false
 
-		result := Do(testCase.url, testCase.userAgent)
+			result := Do(testCase.url, testCase.userAgent)
 
-		if result == nil && testCase.want != nil {
-			failed = true
-		} else if result != nil && testCase.want == nil {
-			failed = true
-		} else if result != nil && !strings.Contains(result.Error(), testCase.want.Error()) {
-			failed = true
-		}
+			if result == nil && testCase.want != nil {
+				failed = true
+			} else if result != nil && testCase.want == nil {
+				failed = true
+			} else if result != nil && !strings.Contains(result.Error(), testCase.want.Error()) {
+				failed = true
+			}
 
-		if failed {
-			t.Errorf("%s\nDo(`%s`, `%s`) = %+v, want %+v", testCase.intention, testCase.url, testCase.userAgent, result, testCase.want)
-		}
+			if failed {
+				t.Errorf("Do(`%s`, `%s`) = %+v, want %+v", testCase.url, testCase.userAgent, result, testCase.want)
+			}
+		})
 	}
 }

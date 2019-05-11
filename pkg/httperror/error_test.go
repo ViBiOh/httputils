@@ -25,16 +25,18 @@ func TestBadRequest(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		writer := httptest.NewRecorder()
-		BadRequest(writer, testCase.err)
+		t.Run(testCase.intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
+			BadRequest(writer, testCase.err)
 
-		if result := writer.Code; result != testCase.wantStatus {
-			t.Errorf("%+v\nBadRequest(%+v) = %+v, want status %+v", testCase.intention, testCase.err, result, testCase.wantStatus)
-		}
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("BadRequest(%+v) = %+v, want status %+v", testCase.err, result, testCase.wantStatus)
+			}
 
-		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-			t.Errorf("%+v\nBadRequest(%+v) = %+v, want %+v", testCase.intention, testCase.err, string(result), testCase.want)
-		}
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("BadRequest(%+v) = %+v, want %+v", testCase.err, string(result), testCase.want)
+			}
+		})
 	}
 }
 
@@ -54,16 +56,18 @@ func TestUnauthorized(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		writer := httptest.NewRecorder()
-		Unauthorized(writer, testCase.err)
+		t.Run(testCase.intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
+			Unauthorized(writer, testCase.err)
 
-		if result := writer.Code; result != testCase.wantStatus {
-			t.Errorf("%+v\nUnauthorized(%+v) = %+v, want status %+v", testCase.intention, testCase.err, result, testCase.wantStatus)
-		}
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("Unauthorized(%+v) = %+v, want status %+v", testCase.err, result, testCase.wantStatus)
+			}
 
-		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-			t.Errorf("%+v\nUnauthorized(%+v) = %+v, want %+v", testCase.intention, testCase.err, string(result), testCase.want)
-		}
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("Unauthorized(%+v) = %+v, want %+v", testCase.err, string(result), testCase.want)
+			}
+		})
 	}
 }
 
@@ -81,16 +85,18 @@ func TestForbidden(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		writer := httptest.NewRecorder()
-		Forbidden(writer)
+		t.Run(testCase.intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
+			Forbidden(writer)
 
-		if result := writer.Code; result != testCase.wantStatus {
-			t.Errorf("%+v\nForbidden() = %+v, want status %+v", testCase.intention, result, testCase.wantStatus)
-		}
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("Forbidden() = %+v, want status %+v", result, testCase.wantStatus)
+			}
 
-		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-			t.Errorf("%+v\nForbidden() = %+v, want %+v", testCase.intention, string(result), testCase.want)
-		}
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("Forbidden() = %+v, want %+v", string(result), testCase.want)
+			}
+		})
 	}
 }
 
@@ -108,16 +114,18 @@ func TestNotFound(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		writer := httptest.NewRecorder()
-		NotFound(writer)
+		t.Run(testCase.intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
+			NotFound(writer)
 
-		if result := writer.Code; result != testCase.wantStatus {
-			t.Errorf("%+v\nNotFound() = %+v, want status %+v", testCase.intention, result, testCase.wantStatus)
-		}
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("NotFound() = %+v, want status %+v", result, testCase.wantStatus)
+			}
 
-		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-			t.Errorf("%+v\nNotFound() = %+v, want %+v", testCase.intention, string(result), testCase.want)
-		}
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("NotFound() = %+v, want %+v", string(result), testCase.want)
+			}
+		})
 	}
 }
 
@@ -137,15 +145,17 @@ func TestInternalServerError(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		writer := httptest.NewRecorder()
-		InternalServerError(writer, testCase.err)
+		t.Run(testCase.intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
+			InternalServerError(writer, testCase.err)
 
-		if result := writer.Code; result != testCase.wantStatus {
-			t.Errorf("%+v\nInternalServerError(%+v) = %+v, want status %+v", testCase.intention, testCase.err, result, testCase.wantStatus)
-		}
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("InternalServerError(%+v) = %+v, want status %+v", testCase.err, result, testCase.wantStatus)
+			}
 
-		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-			t.Errorf("%+v\nInternalServerError(%+v) = %+v, want %+v", testCase.intention, testCase.err, string(result), testCase.want)
-		}
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("InternalServerError(%+v) = %+v, want %+v", testCase.err, string(result), testCase.want)
+			}
+		})
 	}
 }

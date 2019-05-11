@@ -45,9 +45,11 @@ func TestSetIP(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		if SetIP(testCase.request, testCase.ip); testCase.request.Header.Get(ForwardedForHeader) != testCase.ip {
-			t.Errorf("%s\nSetIP(%+v, %+v) = %+v, want %+v", testCase.intention, testCase.request, testCase.ip, testCase.request.Header.Get(ForwardedForHeader), testCase.ip)
-		}
+		t.Run(testCase.intention, func(t *testing.T) {
+			if SetIP(testCase.request, testCase.ip); testCase.request.Header.Get(ForwardedForHeader) != testCase.ip {
+				t.Errorf("SetIP(%+v, %+v) = %+v, want %+v", testCase.request, testCase.ip, testCase.request.Header.Get(ForwardedForHeader), testCase.ip)
+			}
+		})
 	}
 }
 

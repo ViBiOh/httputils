@@ -76,7 +76,7 @@ func VersionHandler() http.Handler {
 }
 
 // ListenAndServe starts server
-func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) {
+func (a App) ListenAndServe(handler http.Handler, onShutdown func(), healthcheckApp *healthcheck.App, flushers ...model.Flusher) {
 	healthcheckHandler := healthcheckApp.Handler()
 	versionHandler := VersionHandler()
 
@@ -94,6 +94,10 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 		}),
 	}
 
+	if onShutdown != nil {
+		httpServer.RegisterOnShutdown(onShutdown)
+	}
+
 	logger.Info("Starting HTTP server on port %s", httpServer.Addr)
 
 	var serveError = make(chan error)
@@ -109,5 +113,5 @@ func (a App) ListenAndServe(handler http.Handler, onGracefulClose func() error, 
 		}
 	}()
 
-	server.GracefulClose(httpServer, a.gracefulDuration, serveError, onGracefulClose, healthcheckApp, flushers...)
+	server.GracefulClose(httpServer, a.gracefulDuration, serveError, healthcheckApp, flushers...)
 }

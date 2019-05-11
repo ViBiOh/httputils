@@ -51,16 +51,18 @@ func TestHandler(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		writer := httptest.NewRecorder()
+		t.Run(testCase.intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
 
-		testCase.app.Handler().ServeHTTP(writer, testCase.request)
+			testCase.app.Handler().ServeHTTP(writer, testCase.request)
 
-		if result := writer.Code; result != testCase.wantStatus {
-			t.Errorf("%s\nHandler(%+v) = %+v, want status %+v", testCase.intention, testCase.request, result, testCase.wantStatus)
-		}
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("Handler(%+v) = %+v, want status %+v", testCase.request, result, testCase.wantStatus)
+			}
 
-		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-			t.Errorf("%s\nHandler(%+v) = %+v, want %+v", testCase.intention, testCase.request, string(result), testCase.want)
-		}
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("Handler(%+v) = %+v, want %+v", testCase.request, string(result), testCase.want)
+			}
+		})
 	}
 }

@@ -35,7 +35,7 @@ func httpGracefulClose(server *http.Server) error {
 	return nil
 }
 
-func gracefulClose(server *http.Server, gracefulDuration time.Duration, callback func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) int {
+func gracefulClose(server *http.Server, gracefulDuration time.Duration, healthcheckApp *healthcheck.App, flushers ...model.Flusher) int {
 	exitCode := 0
 
 	if healthcheckApp != nil {
@@ -52,13 +52,6 @@ func gracefulClose(server *http.Server, gracefulDuration time.Duration, callback
 		exitCode = 1
 	}
 
-	if callback != nil {
-		if err := callback(); err != nil {
-			logger.Error("%+v", err)
-			exitCode = 1
-		}
-	}
-
 	for _, flusher := range flushers {
 		flusher.Flush()
 	}
@@ -67,7 +60,7 @@ func gracefulClose(server *http.Server, gracefulDuration time.Duration, callback
 }
 
 // GracefulClose gracefully close net/http server
-func GracefulClose(server *http.Server, gracefulDuration time.Duration, serveError <-chan error, callback func() error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) {
+func GracefulClose(server *http.Server, gracefulDuration time.Duration, serveError <-chan error, healthcheckApp *healthcheck.App, flushers ...model.Flusher) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM)
 
@@ -78,7 +71,7 @@ func GracefulClose(server *http.Server, gracefulDuration time.Duration, serveErr
 		logger.Info("SIGTERM received")
 	}
 
-	os.Exit(gracefulClose(server, gracefulDuration, callback, healthcheckApp, flushers...))
+	os.Exit(gracefulClose(server, gracefulDuration, healthcheckApp, flushers...))
 }
 
 // ChainMiddlewares chains middlewares call for easy wrapping
