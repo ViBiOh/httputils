@@ -1,8 +1,7 @@
 SHELL = /bin/sh
 
-APP_NAME ?= httputils
+APP_NAME = httputils
 PACKAGES ?= ./...
-APP_PACKAGES = $(shell go list -e $(PACKAGES) | grep -v vendor | grep -v node_modules)
 
 GOBIN=bin
 BINARY_PATH=$(GOBIN)/$(APP_NAME)
@@ -48,15 +47,15 @@ deps:
 ## format: Format code of app
 .PHONY: format
 format:
-	goimports -w **/*.go
-	gofmt -s -w **/*.go
+	goimports -w */*.go */*/*.go
+	gofmt -s -w */*.go */*/*.go
 
 ## lint: Lint code of app
 .PHONY: lint
 lint:
-	golint $(APP_PACKAGES)
-	errcheck -ignoretests $(APP_PACKAGES)
-	go vet $(APP_PACKAGES)
+	golint $(PACKAGES)
+	errcheck -ignoretests $(PACKAGES)
+	go vet $(PACKAGES)
 
 ## test: Test code of app with coverage
 .PHONY: test
@@ -66,9 +65,9 @@ test:
 ## bench: Benchmark code of app
 .PHONY: bench
 bench:
-	go test $(APP_PACKAGES) -bench . -benchmem -run Benchmark.*
+	go test $(PACKAGES) -bench . -benchmem -run Benchmark.*
 
 ## build: Build binary of app
 .PHONY: build
 build:
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo ./...
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo $(PACKAGES)
