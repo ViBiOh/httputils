@@ -12,6 +12,11 @@ import (
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
+var (
+	// ErrRetryCanceled cancel retry loop
+	ErrRetryCanceled = errors.New("retry canceled")
+)
+
 // Config of package
 type Config struct {
 	hour     *int
@@ -107,14 +112,19 @@ func (a App) scheduler() {
 		case currentTime := <-timer.C:
 			ctx := context.Background()
 
-			if err := a.task.Do(ctx, currentTime); err != nil {
-				logger.Error(`%+v`, err)
-
-				timer.Reset(a.retry)
-				logger.Warn("Retrying in %s", a.retry)
-			} else {
+			err := a.task.Do(ctx, currentTime)
+			if err == nil {
 				return
 			}
+
+			logger.Error(`%+v`, err)
+
+			if err == ErrRetryCanceled {
+				return
+			}
+
+			timer.Reset(a.retry)
+			logger.Warn("Retrying in %s", a.retry)
 		}
 	}
 }
