@@ -47,23 +47,19 @@ func GetStatusCode(url, userAgent string) (int, error) {
 	}
 
 	response, err := httpClient.Do(r)
-	if response != nil {
-		if closeErr := response.Body.Close(); closeErr != nil {
-			if err == nil {
-				return 0, errors.WithStack(closeErr)
-			}
-
-			return 0, errors.New("%v, and also %v", err, closeErr)
-		}
-
-		return response.StatusCode, nil
-	}
-
 	if err != nil {
 		return 0, errors.WithStack(err)
 	}
 
-	return 0, nil
+	if closeErr := response.Body.Close(); closeErr != nil {
+		if err == nil {
+			return 0, errors.WithStack(closeErr)
+		}
+
+		return 0, errors.Wrap(closeErr, "%v", err)
+	}
+
+	return response.StatusCode, nil
 }
 
 // Do test status code of given URL

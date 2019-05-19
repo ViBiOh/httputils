@@ -63,6 +63,8 @@ func (a App) Handler(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Expose-Headers", a.exposes)
 		w.Header().Set("Access-Control-Allow-Credentials", a.credentials)
 
-		next.ServeHTTP(w, r)
+		if next != nil {
+			next.ServeHTTP(w, r)
+		}
 	})
 }
