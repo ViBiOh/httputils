@@ -23,6 +23,7 @@ type Config struct {
 	minute   *int
 	interval *string
 	retry    *string
+	maxRetry *int
 	timezone *string
 }
 
@@ -34,6 +35,7 @@ type App struct {
 
 	interval time.Duration
 	retry    time.Duration
+	maxRetry int
 
 	task Task
 }
@@ -51,6 +53,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 		timezone: fs.String(tools.ToCamel(fmt.Sprintf("%sTimezone", prefix)), "Europe/Paris", fmt.Sprintf("[%s] Timezone of running", docPrefix)),
 		interval: fs.String(tools.ToCamel(fmt.Sprintf("%sInterval", prefix)), "24h", fmt.Sprintf("[%s] Duration between two runs", docPrefix)),
 		retry:    fs.String(tools.ToCamel(fmt.Sprintf("%sRetry", prefix)), "10m", fmt.Sprintf("[%s] Duration between two retries", docPrefix)),
+		maxRetry: fs.Int(tools.ToCamel(fmt.Sprintf("%sMaxRetry", prefix)), 10, fmt.Sprintf("[%s] Max retry", docPrefix)),
 	}
 }
 
@@ -106,6 +109,7 @@ func (a App) getTimer() *time.Timer {
 
 func (a App) scheduler() {
 	timer := a.getTimer()
+	retryCount := 0
 
 	for {
 		select {
@@ -117,9 +121,15 @@ func (a App) scheduler() {
 				return
 			}
 
-			logger.Error(`%+v`, err)
+			logger.Error("%+v", err)
 
 			if err == ErrRetryCanceled {
+				return
+			}
+
+			retryCount++
+			if retryCount >= a.maxRetry {
+				logger.Error("max retry exceeded")
 				return
 			}
 
