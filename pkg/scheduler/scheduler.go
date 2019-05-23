@@ -79,6 +79,7 @@ func New(config Config, task Task) (*App, error) {
 		minute:   *config.minute,
 		interval: interval,
 		retry:    retry,
+		maxRetry: *config.maxRetry,
 		location: location,
 		task:     task,
 	}, nil
