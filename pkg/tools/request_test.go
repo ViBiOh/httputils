@@ -35,7 +35,7 @@ func TestIsRoot(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := IsRoot(testCase.input); result != testCase.want {
-				t.Errorf("IsRoot(`%+v`) = %+v, want %+v", testCase.input, result, testCase.want)
+				t.Errorf("IsRoot(`%#v`) = %#v, want %#v", testCase.input, result, testCase.want)
 			}
 		})
 	}
@@ -71,7 +71,7 @@ func TestGetID(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := GetID(testCase.request); result != testCase.want {
-				t.Errorf("getID(`%+v`) = %+v, want %+v", testCase.request, result, testCase.want)
+				t.Errorf("getID(`%#v`) = %#v, want %#v", testCase.request, result, testCase.want)
 			}
 		})
 	}

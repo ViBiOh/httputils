@@ -15,7 +15,7 @@ func ReadBody(body io.ReadCloser) (content []byte, err error) {
 
 		if closeErr != nil {
 			if err != nil {
-				err = errors.New("%v, and also %v", err, closeErr)
+				err = errors.New("%#v, and also %#v", err, closeErr)
 			} else {
 				err = closeErr
 			}

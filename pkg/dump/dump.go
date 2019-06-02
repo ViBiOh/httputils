@@ -33,7 +33,7 @@ func Request(r *http.Request) string {
 
 	body, err := request.ReadBodyRequest(r)
 	if err != nil {
-		logger.Error("%+v", err)
+		logger.Error("%#v", err)
 	}
 
 	var outputPattern bytes.Buffer

@@ -33,7 +33,7 @@ func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.
 	if err != nil {
 		if response != nil {
 			if closeErr := response.Body.Close(); closeErr != nil {
-				err = errors.New("%v, and also %v", err, closeErr)
+				err = errors.New("%#v, and also %#v", err, closeErr)
 			}
 		}
 		return nil, 0, nil, errors.WithStack(err)

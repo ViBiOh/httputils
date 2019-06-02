@@ -36,7 +36,7 @@ func TestNew(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("New() = (%+v, %+v), want (%+v, %+v)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("New() = (%#v, %#v), want (%#v, %#v)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}

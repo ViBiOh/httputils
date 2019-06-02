@@ -90,7 +90,7 @@ func TestDoJSON(t *testing.T) {
 		}
 
 		if failed {
-			t.Errorf("PostJSONBody(%v, %v, '') = (%s, %v), want (%s, %v)", testCase.url, testCase.body, string(content), err, testCase.want, testCase.wantErr)
+			t.Errorf("PostJSONBody(%#v, %#v, '') = (%s, %#v), want (%s, %#v)", testCase.url, testCase.body, string(content), err, testCase.want, testCase.wantErr)
 		}
 	}
 }

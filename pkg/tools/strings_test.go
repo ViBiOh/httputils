@@ -28,7 +28,7 @@ func TestToCamel(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := ToCamel(testCase.input); result != testCase.want {
-				t.Errorf("ToCamel(%v) = %v, want %v", testCase.input, result, testCase.want)
+				t.Errorf("ToCamel(%#v) = %#v, want %#v", testCase.input, result, testCase.want)
 			}
 		})
 	}
@@ -50,7 +50,7 @@ func TestIncludesString(t *testing.T) {
 		{
 			"should work with found value",
 			[]string{"hello", "world"},
-			"world",
+			"WORLD",
 			true,
 		},
 		{
@@ -64,7 +64,7 @@ func TestIncludesString(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := IncludesString(testCase.array, testCase.lookup); result != testCase.want {
-				t.Errorf("Includes(%+v, `%s`) = %+v, want %+v", testCase.array, testCase.lookup, result, testCase.want)
+				t.Errorf("Includes(%#v, `%s`) = %#v, want %#v", testCase.array, testCase.lookup, result, testCase.want)
 			}
 		})
 	}

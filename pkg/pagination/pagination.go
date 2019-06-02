@@ -33,7 +33,7 @@ func ParseParams(r *http.Request, defaultPage, defaultPageSize, maxPageSize uint
 	if rawPage != "" {
 		parsed, err = strconv.ParseUint(rawPage, 10, 32)
 		if err != nil {
-			err = errors.New("page is invalid %v", err)
+			err = errors.New("page is invalid %#v", err)
 			return
 		}
 
@@ -46,7 +46,7 @@ func ParseParams(r *http.Request, defaultPage, defaultPageSize, maxPageSize uint
 		parsed, err = strconv.ParseUint(rawPageSize, 10, 32)
 		parsedUint = uint(parsed)
 		if err != nil {
-			err = errors.New("pageSize is invalid %v", err)
+			err = errors.New("pageSize is invalid %#v", err)
 			return
 		}
 

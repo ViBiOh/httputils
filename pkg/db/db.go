@@ -83,7 +83,7 @@ func GetTx(db *sql.DB, tx *sql.Tx) (*sql.Tx, error) {
 func EndTx(tx *sql.Tx, err error) error {
 	if err != nil {
 		if endErr := tx.Rollback(); endErr != nil {
-			return errors.New("%v, and also %v", err, endErr)
+			return errors.New("%#v, and also %#v", err, endErr)
 		}
 	} else if endErr := tx.Commit(); endErr != nil {
 		return errors.WithStack(err)
@@ -98,7 +98,7 @@ func RowsClose(rows *sql.Rows, err error) error {
 		if err == nil {
 			return errors.WithStack(endErr)
 		}
-		return errors.New("%v, and also %v", err, endErr)
+		return errors.New("%#v, and also %#v", err, endErr)
 	}
 
 	return err

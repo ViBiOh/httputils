@@ -48,7 +48,7 @@ func gracefulClose(server *http.Server, gracefulDuration time.Duration, healthch
 	}
 
 	if err := httpGracefulClose(server); err != nil {
-		logger.Error("%+v", err)
+		logger.Error("%#v", err)
 		exitCode = 1
 	}
 
@@ -66,7 +66,7 @@ func GracefulClose(server *http.Server, gracefulDuration time.Duration, serveErr
 
 	select {
 	case err := <-serveError:
-		logger.Error("%+v", err)
+		logger.Error("%#v", err)
 	case <-signals:
 		logger.Info("SIGTERM received")
 	}

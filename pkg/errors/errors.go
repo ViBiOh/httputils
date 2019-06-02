@@ -54,7 +54,7 @@ func (e Error) Error() string {
 func (e Error) Format(state fmt.State, verb rune) {
 	switch verb {
 	case 'v':
-		if state.Flag('+') {
+		if state.Flag('#') {
 			safeWriteString(state, e.message)
 
 			if e.stacktrace != "" {
@@ -64,13 +64,17 @@ func (e Error) Format(state fmt.State, verb rune) {
 
 			if e.origin != nil {
 				safeWriteString(state, "\n\nfrom\n")
-				safeWriteString(state, fmt.Sprintf("%+v", e.origin))
+				safeWriteString(state, fmt.Sprintf("%#v", e.origin))
 			}
+
 			break
 		}
+
 		fallthrough
+
 	case 's':
 		safeWriteString(state, e.message)
+
 	case 'q':
 		if _, err := fmt.Fprintf(state, "%q", e.message); err != nil {
 			fmt.Print(err)

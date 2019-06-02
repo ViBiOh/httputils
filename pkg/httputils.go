@@ -70,7 +70,7 @@ func VersionHandler() http.Handler {
 		}
 
 		if _, err := w.Write([]byte(os.Getenv("VERSION"))); err != nil {
-			logger.Error("%+v", errors.WithStack(err))
+			logger.Error("%#v", errors.WithStack(err))
 		}
 	})
 }

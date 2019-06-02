@@ -40,7 +40,7 @@ func AddReporter(reporter LogReporter) {
 func output(l *log.Logger, format string, a ...interface{}) string {
 	content := fmt.Sprintf(format, a...)
 	if err := l.Output(3, content); err != nil {
-		log.Printf("%+v", errors.WithStack(err))
+		log.Printf("%#v", errors.WithStack(err))
 	}
 
 	return content

@@ -56,7 +56,7 @@ func GetStatusCode(url, userAgent string) (int, error) {
 			return 0, errors.WithStack(closeErr)
 		}
 
-		return 0, errors.Wrap(closeErr, "%v", err)
+		return 0, errors.Wrap(closeErr, "%#v", err)
 	}
 
 	return response.StatusCode, nil
@@ -83,7 +83,7 @@ func DoAndExit(config Config) {
 
 	if url != "" {
 		if err := Do(url, userAgent); err != nil {
-			fmt.Printf("%+v", err)
+			fmt.Printf("%#v", err)
 			os.Exit(1)
 		} else {
 			os.Exit(0)

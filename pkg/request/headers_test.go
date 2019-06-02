@@ -26,7 +26,7 @@ func TestGenerateBasicAuth(t *testing.T) {
 
 	for _, testCase := range cases {
 		if result := GenerateBasicAuth(testCase.username, testCase.password); result != testCase.want {
-			t.Errorf("GenerateBasicAuth(%v, %v) = %v, want %v", testCase.username, testCase.password, result, testCase.want)
+			t.Errorf("GenerateBasicAuth(%#v, %#v) = %#v, want %#v", testCase.username, testCase.password, result, testCase.want)
 		}
 	}
 }
@@ -47,7 +47,7 @@ func TestSetIP(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if SetIP(testCase.request, testCase.ip); testCase.request.Header.Get(ForwardedForHeader) != testCase.ip {
-				t.Errorf("SetIP(%+v, %+v) = %+v, want %+v", testCase.request, testCase.ip, testCase.request.Header.Get(ForwardedForHeader), testCase.ip)
+				t.Errorf("SetIP(%#v, %#v) = %#v, want %#v", testCase.request, testCase.ip, testCase.request.Header.Get(ForwardedForHeader), testCase.ip)
 			}
 		})
 	}
@@ -77,7 +77,7 @@ func TestGetIP(t *testing.T) {
 
 	for _, testCase := range cases {
 		if result := GetIP(testCase.r); result != testCase.want {
-			t.Errorf("GetIP(%v) = %v, want %v", testCase.r, result, testCase.want)
+			t.Errorf("GetIP(%#v) = %#v, want %#v", testCase.r, result, testCase.want)
 		}
 	}
 }

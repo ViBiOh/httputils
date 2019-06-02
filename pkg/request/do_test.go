@@ -79,7 +79,7 @@ func TestDoAndRead(t *testing.T) {
 		}
 
 		if failed {
-			t.Errorf("DoAndRead(%v) = (%v, %v), want (%v, %v)", testCase.request, string(content), err, testCase.want, testCase.wantErr)
+			t.Errorf("DoAndRead(%#v) = (%#v, %#v), want (%#v, %#v)", testCase.request, string(content), err, testCase.want, testCase.wantErr)
 		}
 	}
 }

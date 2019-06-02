@@ -58,7 +58,7 @@ func TestAlgorithm(t *testing.T) {
 			})
 
 			if testCase.want != result {
-				t.Errorf("BreakSync Algorithm(%v) = %v, want %v", testCase.sources, result, testCase.want)
+				t.Errorf("BreakSync Algorithm(%#v) = %#v, want %#v", testCase.sources, result, testCase.want)
 			}
 		})
 	}
@@ -143,7 +143,7 @@ func TestAlgorithmWithRupture(t *testing.T) {
 			})
 
 			if testCase.want != result {
-				t.Errorf("BreakSync Algorithm(%v) = %v, want %v", testCase.sources, result, testCase.want)
+				t.Errorf("BreakSync Algorithm(%#v) = %#v, want %#v", testCase.sources, result, testCase.want)
 			}
 		})
 	}

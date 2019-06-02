@@ -57,11 +57,11 @@ func TestHandler(t *testing.T) {
 			testCase.app.Handler().ServeHTTP(writer, testCase.request)
 
 			if result := writer.Code; result != testCase.wantStatus {
-				t.Errorf("Handler(%+v) = %+v, want status %+v", testCase.request, result, testCase.wantStatus)
+				t.Errorf("Handler(%#v) = %#v, want status %#v", testCase.request, result, testCase.wantStatus)
 			}
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("Handler(%+v) = %+v, want %+v", testCase.request, string(result), testCase.want)
+				t.Errorf("Handler(%#v) = %#v, want %#v", testCase.request, string(result), testCase.want)
 			}
 		})
 	}

@@ -98,7 +98,7 @@ func TestGetStatusCode(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("GetStatusCode(`%s`, `%s`) = (%d, %+v), want (%d, %+v)", testCase.url, testCase.userAgent, result, err, testCase.want, testCase.wantErr)
+				t.Errorf("GetStatusCode(`%s`, `%s`) = (%d, %#v), want (%d, %#v)", testCase.url, testCase.userAgent, result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -151,7 +151,7 @@ func TestDo(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("Do(`%s`, `%s`) = %+v, want %+v", testCase.url, testCase.userAgent, result, testCase.want)
+				t.Errorf("Do(`%s`, `%s`) = %#v, want %#v", testCase.url, testCase.userAgent, result, testCase.want)
 			}
 		})
 	}

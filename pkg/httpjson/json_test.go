@@ -56,7 +56,7 @@ func TestIsPretty(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := IsPretty(testCase.request); result != testCase.want {
-				t.Errorf("IsPretty(%v) = %v, want %v", testCase.request, result, testCase.want)
+				t.Errorf("IsPretty(%#v) = %#v, want %#v", testCase.request, result, testCase.want)
 			}
 		})
 	}
@@ -132,12 +132,12 @@ func TestResponseJSON(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("ResponseJSON(%+v, %+v) = (%+v, %+v), want (%+v, %+v)", testCase.obj, testCase.pretty, result, err, testCase.want, testCase.wantErr)
+				t.Errorf("ResponseJSON(%#v, %#v) = (%#v, %#v), want (%#v, %#v)", testCase.obj, testCase.pretty, result, err, testCase.want, testCase.wantErr)
 			}
 
 			for key, value := range testCase.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
-					t.Errorf("ResponseJSON(%+v).Header[%s] = %v, want %v", testCase.obj, key, strings.Join(result, ""), value)
+					t.Errorf("ResponseJSON(%#v).Header[%s] = %#v, want %#v", testCase.obj, key, strings.Join(result, ""), value)
 				}
 			}
 		})
@@ -184,16 +184,16 @@ func TestResponseArrayJSON(t *testing.T) {
 		ResponseArrayJSON(writer, http.StatusOK, testCase.obj, false)
 
 		if result := writer.Result().StatusCode; result != testCase.wantStatus {
-			t.Errorf("ResponseJSON(%v) = %v, want %v", testCase.obj, result, testCase.wantStatus)
+			t.Errorf("ResponseJSON(%#v) = %#v, want %#v", testCase.obj, result, testCase.wantStatus)
 		}
 
 		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-			t.Errorf("ResponseJSON(%v) = %v, want %v", testCase.obj, string(result), testCase.want)
+			t.Errorf("ResponseJSON(%#v) = %#v, want %#v", testCase.obj, string(result), testCase.want)
 		}
 
 		for key, value := range testCase.wantHeader {
 			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
-				t.Errorf("ResponseJSON(%v).Header[%s] = %v, want %v", testCase.obj, key, strings.Join(result, ""), value)
+				t.Errorf("ResponseJSON(%#v).Header[%s] = %#v, want %#v", testCase.obj, key, strings.Join(result, ""), value)
 			}
 		}
 	}
@@ -248,16 +248,16 @@ func TestResponsePaginatedJSON(t *testing.T) {
 			ResponsePaginatedJSON(writer, http.StatusOK, testCase.page, testCase.pageSize, testCase.total, testCase.obj, false)
 
 			if result := writer.Result().StatusCode; result != testCase.wantStatus {
-				t.Errorf("ResponsePaginatedJSON(%v, %v) = %v, want %v", testCase.total, testCase.obj, result, testCase.wantStatus)
+				t.Errorf("ResponsePaginatedJSON(%#v, %#v) = %#v, want %#v", testCase.total, testCase.obj, result, testCase.wantStatus)
 			}
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("ResponsePaginatedJSON(%v, %v) = %v, want %v", testCase.total, testCase.obj, string(result), testCase.want)
+				t.Errorf("ResponsePaginatedJSON(%#v, %#v) = %#v, want %#v", testCase.total, testCase.obj, string(result), testCase.want)
 			}
 
 			for key, value := range testCase.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
-					t.Errorf("ResponsePaginatedJSON(%v, %v).Header[%s] = %v, want %v", testCase.total, testCase.obj, key, strings.Join(result, ""), value)
+					t.Errorf("ResponsePaginatedJSON(%#v, %#v).Header[%s] = %#v, want %#v", testCase.total, testCase.obj, key, strings.Join(result, ""), value)
 				}
 			}
 		})

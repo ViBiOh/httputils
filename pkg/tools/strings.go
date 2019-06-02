@@ -1,6 +1,9 @@
 package tools
 
-import "unicode"
+import (
+	"strings"
+	"unicode"
+)
 
 // ToCamel change first letter to lowerCase
 func ToCamel(s string) string {
@@ -16,7 +19,7 @@ func ToCamel(s string) string {
 // IncludesString checks in an array includes given string
 func IncludesString(array []string, lookup string) bool {
 	for _, item := range array {
-		if item == lookup {
+		if strings.EqualFold(item, lookup) {
 			return true
 		}
 	}

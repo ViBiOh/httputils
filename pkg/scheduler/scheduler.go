@@ -103,7 +103,7 @@ func (a App) getTimer() *time.Timer {
 		nextTime = nextTime.Add(a.interval)
 	}
 
-	logger.Info("Next run at %v", nextTime)
+	logger.Info("Next run at %#v", nextTime)
 
 	return time.NewTimer(time.Until(nextTime))
 }
@@ -122,7 +122,7 @@ func (a App) scheduler() {
 				return
 			}
 
-			logger.Error("%+v", err)
+			logger.Error("%#v", err)
 
 			if err == ErrRetryCanceled {
 				return

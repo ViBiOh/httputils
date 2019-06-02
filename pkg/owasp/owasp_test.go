@@ -154,11 +154,11 @@ func TestHandler(t *testing.T) {
 			testCase.app.Handler(testCase.next).ServeHTTP(writer, testCase.request)
 
 			if writer.Code != testCase.want {
-				t.Errorf("Handler(%+v) = %d, want %d", testCase.next, writer.Code, testCase.want)
+				t.Errorf("Handler(%#v) = %d, want %d", testCase.next, writer.Code, testCase.want)
 			}
 
 			if !reflect.DeepEqual(writer.Header(), testCase.wantHeader) {
-				t.Errorf("Handler(%+v) = %#v, want %#v", testCase.next, writer.Header(), testCase.wantHeader)
+				t.Errorf("Handler(%#v) = %#v, want %#v", testCase.next, writer.Header(), testCase.wantHeader)
 			}
 		})
 	}
