@@ -26,13 +26,11 @@ func TestReadBodyRequest(t *testing.T) {
 		},
 	}
 
-	var failed bool
-
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			result, err := ReadBodyRequest(testCase.request)
 
-			failed = false
+			failed := false
 
 			if err == nil && testCase.wantErr != nil {
 				failed = true

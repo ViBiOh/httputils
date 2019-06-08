@@ -79,13 +79,11 @@ func TestGetStatusCode(t *testing.T) {
 		},
 	}
 
-	var failed bool
-
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			result, err := GetStatusCode(testCase.url, testCase.userAgent)
 
-			failed = false
+			failed := false
 
 			if err == nil && testCase.wantErr != nil {
 				failed = true
@@ -134,11 +132,9 @@ func TestDo(t *testing.T) {
 		},
 	}
 
-	var failed bool
-
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			failed = false
+			failed := false
 
 			result := Do(testCase.url, testCase.userAgent)
 

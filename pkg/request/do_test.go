@@ -56,12 +56,10 @@ func TestDoAndRead(t *testing.T) {
 		},
 	}
 
-	var failed bool
-
 	for _, testCase := range cases {
 		result, _, _, err := DoAndRead(testCase.ctx, testCase.request)
 
-		failed = false
+		failed := false
 		var content []byte
 
 		if err == nil && testCase.wantErr != nil {

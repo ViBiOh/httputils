@@ -109,8 +109,6 @@ func TestResponseJSON(t *testing.T) {
 		},
 	}
 
-	var failed bool
-
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
@@ -119,7 +117,7 @@ func TestResponseJSON(t *testing.T) {
 			rawResult, _ := request.ReadBodyResponse(writer.Result())
 			result := string(rawResult)
 
-			failed = false
+			failed := false
 
 			if err == nil && testCase.wantErr != nil {
 				failed = true

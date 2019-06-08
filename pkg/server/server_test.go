@@ -55,8 +55,6 @@ func TestHttpGracefulClose(t *testing.T) {
 		},
 	}
 
-	var failed bool
-
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if testCase.server != nil {
@@ -80,7 +78,7 @@ func TestHttpGracefulClose(t *testing.T) {
 				}
 			}
 
-			failed = false
+			failed := false
 
 			if err == nil && testCase.wantErr != nil {
 				failed = true
