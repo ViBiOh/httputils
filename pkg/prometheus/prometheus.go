@@ -8,7 +8,6 @@ import (
 
 	"github.com/ViBiOh/httputils/pkg/model"
 	"github.com/ViBiOh/httputils/pkg/tools"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -45,16 +44,13 @@ func New(config Config) *App {
 
 // Handler for net/http
 func (a App) Handler(next http.Handler) http.Handler {
-	instrumentedHandler := promhttp.InstrumentMetricHandler(
-		prometheus.DefaultRegisterer, next,
-	)
-	prometheusHandler := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{})
+	prometheusHandler := promhttp.Handler()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == a.path {
 			prometheusHandler.ServeHTTP(w, r)
 		} else {
-			instrumentedHandler.ServeHTTP(w, r)
+			next.ServeHTTP(w, r)
 		}
 	})
 }
