@@ -67,7 +67,7 @@ func instrumentHandler(next http.Handler) http.Handler {
 			Help:    "A histogram of latencies for requests.",
 			Buckets: []float64{.25, .5, 1, 2.5, 5, 10},
 		},
-		[]string{"handler", "method"}), instrumentedHandler)
+		[]string{"code", "method"}), instrumentedHandler)
 
 	instrumentedHandler = promhttp.InstrumentHandlerResponseSize(promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
