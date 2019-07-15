@@ -47,7 +47,7 @@ func GetTemplates(dir, ext string) ([]string, error) {
 func WriteHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
 	templateBuffer := &bytes.Buffer{}
 	if err := tpl.Execute(templateBuffer, content); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
