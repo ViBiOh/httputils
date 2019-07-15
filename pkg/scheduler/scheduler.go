@@ -103,7 +103,7 @@ func (a App) getTimer() *time.Timer {
 		nextTime = nextTime.Add(a.interval)
 	}
 
-	logger.Info("Next run at %#v", nextTime)
+	logger.Info("Next run at %s", nextTime.String())
 
 	return time.NewTimer(time.Until(nextTime))
 }
