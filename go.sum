@@ -73,8 +73,8 @@ github.com/tdewolff/parse/v2 v2.3.8 h1:vjTRdg0BIGQHU5TNNc9zZpJ7ZANsmvacBw3VxHZ8J
 github.com/tdewolff/parse/v2 v2.3.8/go.mod h1:HansaqmN4I/U7L6/tUp0NcwT2tFO0F4EAWYGSDzkYNk=
 github.com/tdewolff/test v1.0.0 h1:jOwzqCXr5ePXEPGJaq2ivoR6HOCi+D5TPfpoyg8yvmU=
 github.com/tdewolff/test v1.0.0/go.mod h1:DiQUlutnqlEvdvhSn2LPGy4TFwRauAaYDsL+683RNX4=
-github.com/tdewolff/test v1.0.1 h1:TZ/KO8XgfxNWYrSIw0MIPDl1F5lt9LGqxm95kk1eN/4=
-github.com/tdewolff/test v1.0.1/go.mod h1:DiQUlutnqlEvdvhSn2LPGy4TFwRauAaYDsL+683RNX4=
+github.com/tdewolff/test v1.0.3 h1:oQqvxCCoUexB1bWZzvCzWG2VTqOIvWBV1JVg2OOFQi0=
+github.com/tdewolff/test v1.0.3/go.mod h1:6DAvZliBAAnD7rhVgwaM7DE5/d9NMOAJ09SqYqeK4QE=
 github.com/uber-go/atomic v1.4.0 h1:yOuPqEq4ovnhEjpHmfFwsqBXDYbQeT6Nb0bwD6XnD5o=
 github.com/uber-go/atomic v1.4.0/go.mod h1:/Ct5t2lcmbJ4OSe/waGBoaVvVqtO0bmtfVNex1PFV8g=
 github.com/uber/jaeger-client-go v2.16.0+incompatible h1:Q2Pp6v3QYiocMxomCaJuwQGFt7E53bPYqEgug/AoBtY=

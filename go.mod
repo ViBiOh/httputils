@@ -14,7 +14,7 @@ require (
 	github.com/prometheus/common v0.6.0 // indirect
 	github.com/prometheus/procfs v0.0.3 // indirect
 	github.com/tdewolff/minify/v2 v2.5.1
-	github.com/tdewolff/test v1.0.1 // indirect
+	github.com/tdewolff/test v1.0.3 // indirect
 	github.com/uber-go/atomic v1.4.0 // indirect
 	github.com/uber/jaeger-client-go v2.16.0+incompatible
 	github.com/uber/jaeger-lib v2.0.0+incompatible // indirect
