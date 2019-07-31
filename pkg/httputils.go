@@ -1,6 +1,7 @@
 package httputils
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -8,11 +9,13 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/pkg/errors"
-	"github.com/ViBiOh/httputils/pkg/healthcheck"
 	"github.com/ViBiOh/httputils/pkg/logger"
 	"github.com/ViBiOh/httputils/pkg/model"
-	"github.com/ViBiOh/httputils/pkg/server"
 	"github.com/ViBiOh/httputils/pkg/tools"
+)
+
+const (
+	httpShutdownTimeout = 10 * time.Second
 )
 
 // Config of package
@@ -80,9 +83,49 @@ func VersionHandler() http.Handler {
 	})
 }
 
+// HealthHandler for dealing with state of app
+func HealthHandler(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			if handler != nil {
+				handler.ServeHTTP(w, r)
+				return
+			}
+
+			w.WriteHeader(http.StatusNoContent)
+
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+	})
+}
+
+// OnShutdown create a OnShutdown func from flushers and given one
+func OnShutdown(onShutdown func(), flushers ...model.Flusher) func() {
+	return func() {
+		for _, flusher := range flushers {
+			flusher.Flush()
+		}
+
+		onShutdown()
+	}
+}
+
+// ChainMiddlewares chains middlewares call for easy wrapping
+func ChainMiddlewares(handler http.Handler, middlewares ...model.Middleware) http.Handler {
+	result := handler
+
+	for i := len(middlewares) - 1; i >= 0; i-- {
+		result = middlewares[i].Handler(result)
+	}
+
+	return result
+}
+
 // ListenAndServe starts server
-func (a App) ListenAndServe(handler http.Handler, onShutdown func(), healthcheckApp *healthcheck.App, flushers ...model.Flusher) {
-	healthcheckHandler := healthcheckApp.Handler()
+func (a App) ListenAndServe(handler http.Handler, healthHandler http.Handler, onShutdown func()) {
 	versionHandler := VersionHandler()
 
 	httpServer := &http.Server{
@@ -90,7 +133,7 @@ func (a App) ListenAndServe(handler http.Handler, onShutdown func(), healthcheck
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/health":
-				healthcheckHandler.ServeHTTP(w, r)
+				healthHandler.ServeHTTP(w, r)
 			case "/version":
 				versionHandler.ServeHTTP(w, r)
 			default:
@@ -105,18 +148,24 @@ func (a App) ListenAndServe(handler http.Handler, onShutdown func(), healthcheck
 
 	logger.Info("Starting HTTP server on port %s", httpServer.Addr)
 
-	var serveError = make(chan error)
-	go func() {
-		defer close(serveError)
+	var err error
 
-		if a.cert != "" && a.key != "" {
-			logger.Info("Listening with TLS")
-			serveError <- httpServer.ListenAndServeTLS(a.cert, a.key)
-		} else {
-			logger.Warn("Listening without TLS")
-			serveError <- httpServer.ListenAndServe()
-		}
-	}()
+	if a.cert != "" && a.key != "" {
+		logger.Info("Listening with TLS")
+		err = httpServer.ListenAndServeTLS(a.cert, a.key)
+	} else {
+		logger.Warn("Listening without TLS")
+		err = httpServer.ListenAndServe()
+	}
 
-	server.GracefulClose(httpServer, a.gracefulDuration, serveError, healthcheckApp, flushers...)
+	if err != nil {
+		logger.Error("%#v", errors.WithStack(err))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), httpShutdownTimeout)
+	defer cancel()
+
+	if err = httpServer.Shutdown(ctx); err != nil {
+		logger.Error("%#v", errors.WithStack(err))
+	}
 }
