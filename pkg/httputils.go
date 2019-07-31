@@ -102,17 +102,6 @@ func HealthHandler(handler http.Handler) http.Handler {
 	})
 }
 
-// OnShutdown create a OnShutdown func from flushers and given one
-func OnShutdown(onShutdown func(), flushers ...model.Flusher) func() {
-	return func() {
-		for _, flusher := range flushers {
-			flusher.Flush()
-		}
-
-		onShutdown()
-	}
-}
-
 // ChainMiddlewares chains middlewares call for easy wrapping
 func ChainMiddlewares(handler http.Handler, middlewares ...model.Middleware) http.Handler {
 	result := handler

@@ -6,8 +6,3 @@ import "net/http"
 type Middleware interface {
 	Handler(http.Handler) http.Handler
 }
-
-// Flusher describe a struct with a Flush() method
-type Flusher interface {
-	Flush()
-}
