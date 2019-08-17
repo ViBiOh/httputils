@@ -10,10 +10,8 @@ import (
 
 	"github.com/ViBiOh/httputils/pkg/errors"
 	"github.com/tdewolff/minify/v2"
-	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/html"
-	"github.com/tdewolff/minify/v2/js"
-	"github.com/tdewolff/minify/v2/xml"
+	"github.com/tdewolff/minify/v2/svg"
 )
 
 var minifier *minify.M
@@ -21,9 +19,7 @@ var minifier *minify.M
 func init() {
 	minifier = minify.New()
 	minifier.AddFunc("text/html", html.Minify)
-	minifier.AddFunc("text/css", css.Minify)
-	minifier.AddFunc("text/javascript", js.Minify)
-	minifier.AddFunc("text/xml", xml.Minify)
+	minifier.AddFunc("text/xml", svg.Minify)
 }
 
 // GetTemplates list files by extension
