@@ -19,6 +19,7 @@ var (
 
 // Config of package
 type Config struct {
+	onStart  *bool
 	hour     *int
 	minute   *int
 	interval *string
@@ -28,7 +29,12 @@ type Config struct {
 }
 
 // App of package
-type App struct {
+type App interface {
+	Start()
+}
+
+type app struct {
+	onStart  bool
 	hour     int
 	minute   int
 	location *time.Location
@@ -48,6 +54,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 	}
 
 	return Config{
+		onStart:  fs.Bool(tools.ToCamel(fmt.Sprintf("%sOnStart", prefix)), false, fmt.Sprintf("[%s] Start scheduler on start", docPrefix)),
 		hour:     fs.Int(tools.ToCamel(fmt.Sprintf("%sHour", prefix)), 8, fmt.Sprintf("[%s] Hour of running", docPrefix)),
 		minute:   fs.Int(tools.ToCamel(fmt.Sprintf("%sMinute", prefix)), 0, fmt.Sprintf("[%s] Minute of running", docPrefix)),
 		timezone: fs.String(tools.ToCamel(fmt.Sprintf("%sTimezone", prefix)), "Europe/Paris", fmt.Sprintf("[%s] Timezone of running", docPrefix)),
@@ -58,7 +65,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 }
 
 // New creates new App from Config
-func New(config Config, task Task) (*App, error) {
+func New(config Config, task Task) (App, error) {
 	location, err := time.LoadLocation(strings.TrimSpace(*config.timezone))
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -74,7 +81,8 @@ func New(config Config, task Task) (*App, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	return &App{
+	return app{
+		onStart:  *config.onStart,
 		hour:     *config.hour,
 		minute:   *config.minute,
 		interval: interval,
@@ -86,18 +94,23 @@ func New(config Config, task Task) (*App, error) {
 }
 
 // Start scheduler
-func (a App) Start() {
+func (a app) Start() {
 	for {
 		a.scheduler()
 	}
 }
 
-func (a App) getNextTick() (time.Time, time.Time) {
+func (a app) getNextTick() (time.Time, time.Time) {
 	currentTime := time.Now().In(a.location)
+
+	if a.onStart {
+		return currentTime.Add(time.Second * 5), currentTime
+	}
+
 	return time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), a.hour, a.minute, 0, 0, a.location), currentTime
 }
 
-func (a App) getTimer() *time.Timer {
+func (a app) getTimer() *time.Timer {
 	nextTime, currentTime := a.getNextTick()
 	if !nextTime.After(currentTime) {
 		nextTime = nextTime.Add(a.interval)
@@ -108,7 +121,7 @@ func (a App) getTimer() *time.Timer {
 	return time.NewTimer(time.Until(nextTime))
 }
 
-func (a App) scheduler() {
+func (a app) scheduler() {
 	timer := a.getTimer()
 	retryCount := 0
 
