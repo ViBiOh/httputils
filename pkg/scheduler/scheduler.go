@@ -95,8 +95,36 @@ func New(config Config, task Task) (App, error) {
 
 // Start scheduler
 func (a app) Start() {
+	timer := a.getTimer()
+	retryCount := 0
+
 	for {
-		a.scheduler()
+		for {
+			currentTime := <-timer.C
+			ctx := context.Background()
+
+			err := a.task.Do(ctx, currentTime)
+			if err == nil {
+
+			}
+
+			logger.Error("%#v", err)
+
+			if err == ErrRetryCanceled {
+				break
+			}
+
+			retryCount++
+			if retryCount >= a.maxRetry {
+				logger.Error("max retry exceeded")
+				break
+			}
+
+			timer.Reset(a.retry)
+			logger.Warn("Retrying in %s", a.retry)
+		}
+
+		timer.Reset(a.interval)
 	}
 }
 
@@ -122,33 +150,4 @@ func (a app) getTimer() *time.Timer {
 }
 
 func (a app) scheduler() {
-	timer := a.getTimer()
-	retryCount := 0
-
-	for {
-		select {
-		case currentTime := <-timer.C:
-			ctx := context.Background()
-
-			err := a.task.Do(ctx, currentTime)
-			if err == nil {
-				return
-			}
-
-			logger.Error("%#v", err)
-
-			if err == ErrRetryCanceled {
-				return
-			}
-
-			retryCount++
-			if retryCount >= a.maxRetry {
-				logger.Error("max retry exceeded")
-				return
-			}
-
-			timer.Reset(a.retry)
-			logger.Warn("Retrying in %s", a.retry)
-		}
-	}
 }
