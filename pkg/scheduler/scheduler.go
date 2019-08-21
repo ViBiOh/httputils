@@ -95,10 +95,6 @@ func New(config Config, task Task) (App, error) {
 
 // Start scheduler
 func (a app) Start() {
-	go a.run()
-}
-
-func (a app) run() {
 	timer := a.getTimer()
 	retryCount := 0
 
