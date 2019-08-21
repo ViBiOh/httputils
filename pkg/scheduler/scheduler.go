@@ -95,6 +95,10 @@ func New(config Config, task Task) (App, error) {
 
 // Start scheduler
 func (a app) Start() {
+	go a.run()
+}
+
+func (a app) run() {
 	timer := a.getTimer()
 	retryCount := 0
 
@@ -105,7 +109,7 @@ func (a app) Start() {
 
 			err := a.task.Do(ctx, currentTime)
 			if err == nil {
-
+				break
 			}
 
 			logger.Error("%#v", err)
