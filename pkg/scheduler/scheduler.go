@@ -95,59 +95,77 @@ func New(config Config, task Task) (App, error) {
 
 // Start scheduler
 func (a app) Start() {
-	timer := a.getTimer()
-	retryCount := 0
+	if a.onStart {
+		a.scheduleOnStart()
+	}
+
+	a.scheduleDaily()
+}
+
+func (a app) getNow() time.Time {
+	return time.Now().In(a.location)
+}
+
+func (a app) scheduleOnStart() {
+	timer := getTimer(a.getNow().Add(time.Second * 2))
 
 	for {
-		for {
-			currentTime := <-timer.C
-			ctx := context.Background()
-
-			err := a.task.Do(ctx, currentTime)
-			if err == nil {
-				break
-			}
-
-			logger.Error("%#v", err)
-
-			if err == ErrRetryCanceled {
-				break
-			}
-
-			retryCount++
-			if retryCount >= a.maxRetry {
-				logger.Error("max retry exceeded")
-				break
-			}
-
-			timer.Reset(a.retry)
-			logger.Warn("Retrying in %s", a.retry)
-		}
-
+		a.runIteration(timer)
 		timer.Reset(a.interval)
 	}
 }
 
-func (a app) getNextTick() (time.Time, time.Time) {
-	currentTime := time.Now().In(a.location)
+func (a app) scheduleDaily() {
+	timer := getTimer(a.getNextDailyTick())
 
-	if a.onStart {
-		return currentTime.Add(time.Second * 5), currentTime
+	for {
+		a.runIteration(timer)
+		timer = getTimer(a.getNextDailyTick())
 	}
-
-	return time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), a.hour, a.minute, 0, 0, a.location), currentTime
 }
 
-func (a app) getTimer() *time.Timer {
-	nextTime, currentTime := a.getNextTick()
+func (a app) runIteration(timer *time.Timer) {
+	retryCount := 0
+
+	for {
+		currentTime := <-timer.C
+		ctx := context.Background()
+
+		err := a.task.Do(ctx, currentTime)
+		if err == nil {
+			return
+		}
+
+		logger.Error("%#v", err)
+
+		if err == ErrRetryCanceled {
+			return
+		}
+
+		retryCount++
+		if retryCount >= a.maxRetry {
+			logger.Error("max retry exceeded")
+			return
+		}
+
+		timer.Reset(a.retry)
+		logger.Warn("Retrying in %s", a.retry)
+	}
+}
+
+func (a app) getNextDailyTick() time.Time {
+	currentTime := a.getNow()
+	nextTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), a.hour, a.minute, 0, 0, a.location)
+
 	if !nextTime.After(currentTime) {
 		nextTime = nextTime.Add(a.interval)
 	}
 
-	logger.Info("Next run at %s", nextTime.String())
-
-	return time.NewTimer(time.Until(nextTime))
+	return nextTime
 }
 
-func (a app) scheduler() {
+func getTimer(tick time.Time) *time.Timer {
+	logger.Info("Next run at %s", tick.String())
+
+	return time.NewTimer(time.Until(tick))
 }
