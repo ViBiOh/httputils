@@ -7,7 +7,7 @@ jobs:
     - docker
     script: docker build --build-arg CODECOV_TOKEN -t "vibioh/$(make name):$(make version)" .
     after_success:
-    - curl -s -X POST https://goreportcard.com/checks?repo=github.com/ViBiOh/httputils
+    - curl -q -sS -X POST https://goreportcard.com/checks?repo=github.com/ViBiOh/httputils
 
   - stage: Release
 
