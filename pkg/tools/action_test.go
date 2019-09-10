@@ -16,7 +16,7 @@ func TestConcurrentAction(t *testing.T) {
 	}{
 		{
 			"simple input",
-			1,
+			0,
 			func(i interface{}) (interface{}, error) {
 				return i, nil
 			},
@@ -67,8 +67,18 @@ func TestConcurrentAction(t *testing.T) {
 				outputs = append(outputs, output)
 			}
 
-			if !reflect.DeepEqual(outputs, testCase.want) {
-				t.Errorf("ConcurrentAction() = (%#v), want (%#v)", outputs, testCase.want)
+			for _, output := range outputs {
+				found := false
+				for _, wantOutput := range testCase.want {
+					if reflect.DeepEqual(output, wantOutput) {
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					t.Errorf("ConcurrentAction() = (%#v), not found", output)
+				}
 			}
 		})
 	}
