@@ -14,20 +14,19 @@ import (
 	"github.com/ViBiOh/httputils/pkg/tools"
 )
 
-const (
-	httpShutdownTimeout = 10 * time.Second
-)
-
 // Config of package
 type Config struct {
-	port             *int
-	gracefulDuration *string
-	cert             *string
-	key              *string
+	port *int
+	cert *string
+	key  *string
 }
 
 // App of package
-type App struct {
+type App interface {
+	ListenAndServe(http.Handler, http.Handler, func())
+}
+
+type app struct {
 	port             int
 	gracefulDuration time.Duration
 	cert             string
@@ -42,26 +41,19 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 	}
 
 	return Config{
-		port:             fs.Int(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), 1080, fmt.Sprintf("[%s] Listen port", docPrefix)),
-		gracefulDuration: fs.String(tools.ToCamel(fmt.Sprintf("%sGraceful", prefix)), "35s", fmt.Sprintf("[%s] Graceful close duration", docPrefix)),
-		cert:             fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", fmt.Sprintf("[%s] Certificate file", docPrefix)),
-		key:              fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", fmt.Sprintf("[%s] Key file", docPrefix)),
+		port: fs.Int(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), 1080, fmt.Sprintf("[%s] Listen port", docPrefix)),
+		cert: fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", fmt.Sprintf("[%s] Certificate file", docPrefix)),
+		key:  fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", fmt.Sprintf("[%s] Key file", docPrefix)),
 	}
 }
 
 // New creates new App from Config
-func New(config Config) (*App, error) {
-	gracefulDuration, err := time.ParseDuration(*config.gracefulDuration)
-	if err != nil {
-		return nil, errors.WithStack(err)
+func New(config Config) App {
+	return &app{
+		port: *config.port,
+		cert: *config.cert,
+		key:  *config.key,
 	}
-
-	return &App{
-		port:             *config.port,
-		gracefulDuration: gracefulDuration,
-		cert:             *config.cert,
-		key:              *config.key,
-	}, nil
 }
 
 // VersionHandler for sending current app version from `VERSION` environment variable
@@ -114,7 +106,7 @@ func ChainMiddlewares(handler http.Handler, middlewares ...model.Middleware) htt
 }
 
 // ListenAndServe starts server
-func (a App) ListenAndServe(handler http.Handler, healthHandler http.Handler, onShutdown func()) {
+func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler, onShutdown func()) {
 	versionHandler := VersionHandler()
 
 	httpServer := &http.Server{
@@ -151,7 +143,7 @@ func (a App) ListenAndServe(handler http.Handler, healthHandler http.Handler, on
 		logger.Error("%#v", errors.WithStack(err))
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), httpShutdownTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err = httpServer.Shutdown(ctx); err != nil {
