@@ -10,9 +10,9 @@ require (
 	github.com/lib/pq v1.2.0
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20190519235532-cf7a6c988dc9
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/pkg/errors v0.8.1 // indirect
 	github.com/prometheus/client_golang v1.1.0
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
+	github.com/prometheus/common v0.7.0 // indirect
 	github.com/prometheus/procfs v0.0.4 // indirect
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/tdewolff/minify/v2 v2.5.2
@@ -20,6 +20,6 @@ require (
 	github.com/uber/jaeger-client-go v2.17.0+incompatible
 	github.com/uber/jaeger-lib v2.1.1+incompatible // indirect
 	go.uber.org/atomic v1.4.0 // indirect
-	golang.org/x/sys v0.0.0-20190910064555-bbd175535a8b // indirect
+	golang.org/x/sys v0.0.0-20190913121621-c3b328c6e5a7 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )
