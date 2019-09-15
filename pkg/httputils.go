@@ -86,6 +86,7 @@ func HealthHandler(handler http.Handler) http.Handler {
 			}
 
 			w.WriteHeader(http.StatusNoContent)
+			return
 
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
