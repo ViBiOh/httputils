@@ -16,9 +16,10 @@ import (
 
 // Config of package
 type Config struct {
-	port *int
-	cert *string
-	key  *string
+	address *string
+	port    *int
+	cert    *string
+	key     *string
 }
 
 // App of package
@@ -27,6 +28,7 @@ type App interface {
 }
 
 type app struct {
+	address          string
 	port             int
 	gracefulDuration time.Duration
 	cert             string
@@ -41,18 +43,20 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 	}
 
 	return Config{
-		port: fs.Int(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), 1080, fmt.Sprintf("[%s] Listen port", docPrefix)),
-		cert: fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", fmt.Sprintf("[%s] Certificate file", docPrefix)),
-		key:  fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", fmt.Sprintf("[%s] Key file", docPrefix)),
+		address: fs.String(tools.ToCamel(fmt.Sprintf("%sAddress", prefix)), "", fmt.Sprintf("[%s] Listen address", docPrefix)),
+		port:    fs.Int(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), 1080, fmt.Sprintf("[%s] Listen port", docPrefix)),
+		cert:    fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", fmt.Sprintf("[%s] Certificate file", docPrefix)),
+		key:     fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", fmt.Sprintf("[%s] Key file", docPrefix)),
 	}
 }
 
 // New creates new App from Config
 func New(config Config) App {
 	return &app{
-		port: *config.port,
-		cert: *config.cert,
-		key:  *config.key,
+		address: *config.address,
+		port:    *config.port,
+		cert:    *config.cert,
+		key:     *config.key,
 	}
 }
 
@@ -111,7 +115,7 @@ func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler, on
 	versionHandler := VersionHandler()
 
 	httpServer := &http.Server{
-		Addr: fmt.Sprintf(":%d", a.port),
+		Addr: fmt.Sprintf("%s:%d", a.address, a.port),
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/health":
@@ -128,7 +132,7 @@ func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler, on
 		httpServer.RegisterOnShutdown(onShutdown)
 	}
 
-	logger.Info("Starting HTTP server on port %s", httpServer.Addr)
+	logger.Info("Starting HTTP server on %s", httpServer.Addr)
 
 	var err error
 
