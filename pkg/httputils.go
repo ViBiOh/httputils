@@ -37,16 +37,11 @@ type app struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
-	docPrefix := prefix
-	if prefix == "" {
-		docPrefix = "http"
-	}
-
 	return Config{
-		address: fs.String(tools.ToCamel(fmt.Sprintf("%sAddress", prefix)), "", fmt.Sprintf("[%s] Listen address", docPrefix)),
-		port:    fs.Int(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), 1080, fmt.Sprintf("[%s] Listen port", docPrefix)),
-		cert:    fs.String(tools.ToCamel(fmt.Sprintf("%sCert", prefix)), "", fmt.Sprintf("[%s] Certificate file", docPrefix)),
-		key:     fs.String(tools.ToCamel(fmt.Sprintf("%sKey", prefix)), "", fmt.Sprintf("[%s] Key file", docPrefix)),
+		address: tools.NewFlag(prefix, "http").Name("Address").Default("").Label("Listen address").ToString(fs),
+		port:    tools.NewFlag(prefix, "http").Name("Port").Default(1080).Label("Listen port").ToInt(fs),
+		cert:    tools.NewFlag(prefix, "http").Name("Cert").Default("").Label("Certificate file").ToString(fs),
+		key:     tools.NewFlag(prefix, "http").Name("Key").Default("").Label("Key file").ToString(fs),
 	}
 }
 

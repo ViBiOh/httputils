@@ -2,7 +2,6 @@ package prometheus
 
 import (
 	"flag"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -27,13 +26,8 @@ type App struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
-	docPrefix := prefix
-	if prefix == "" {
-		docPrefix = "prometheus"
-	}
-
 	return Config{
-		path: fs.String(tools.ToCamel(fmt.Sprintf("%sPath", prefix)), "/metrics", fmt.Sprintf("[%s] Path for exposing metrics", docPrefix)),
+		path: tools.NewFlag(prefix, "prometheus").Name("Path").Default("/metrics").Label("Path for exposing metrics").ToString(fs),
 	}
 }
 

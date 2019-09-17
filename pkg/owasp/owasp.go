@@ -2,7 +2,6 @@ package owasp
 
 import (
 	"flag"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -25,15 +24,10 @@ type App struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
-	docPrefix := prefix
-	if prefix == "" {
-		docPrefix = "owasp"
-	}
-
 	return Config{
-		csp:          fs.String(tools.ToCamel(fmt.Sprintf("%sCsp", prefix)), "default-src 'self'; base-uri 'self'", fmt.Sprintf("[%s] Content-Security-Policy", docPrefix)),
-		hsts:         fs.Bool(tools.ToCamel(fmt.Sprintf("%sHsts", prefix)), true, fmt.Sprintf("[%s] Indicate Strict Transport Security", docPrefix)),
-		frameOptions: fs.String(tools.ToCamel(fmt.Sprintf("%sFrameOptions", prefix)), "deny", fmt.Sprintf("[%s] X-Frame-Options", docPrefix)),
+		csp:          tools.NewFlag(prefix, "owasp").Name("Csp").Default("default-src 'self'; base-uri 'self'").Label("Content-Security-Policy").ToString(fs),
+		hsts:         tools.NewFlag(prefix, "owasp").Name("Hsts").Default(true).Label("Indicate Strict Transport Security").ToBool(fs),
+		frameOptions: tools.NewFlag(prefix, "owasp").Name("FrameOptions").Default("deny").Label("X-Frame-Options").ToString(fs),
 	}
 }
 

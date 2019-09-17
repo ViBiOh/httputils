@@ -2,7 +2,6 @@ package cors
 
 import (
 	"flag"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -29,17 +28,12 @@ type App struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
-	docPrefix := prefix
-	if prefix == "" {
-		docPrefix = "cors"
-	}
-
 	return Config{
-		origin:      fs.String(tools.ToCamel(fmt.Sprintf("%sOrigin", prefix)), "*", fmt.Sprintf("[%s] Access-Control-Allow-Origin", docPrefix)),
-		headers:     fs.String(tools.ToCamel(fmt.Sprintf("%sHeaders", prefix)), "Content-Type", fmt.Sprintf("[%s] Access-Control-Allow-Headers", docPrefix)),
-		methods:     fs.String(tools.ToCamel(fmt.Sprintf("%sMethods", prefix)), http.MethodGet, fmt.Sprintf("[%s] Access-Control-Allow-Methods", docPrefix)),
-		exposes:     fs.String(tools.ToCamel(fmt.Sprintf("%sExpose", prefix)), "", fmt.Sprintf("[%s] Access-Control-Expose-Headers", docPrefix)),
-		credentials: fs.Bool(tools.ToCamel(fmt.Sprintf("%sCredentials", prefix)), false, fmt.Sprintf("[%s] Access-Control-Allow-Credentials", docPrefix)),
+		origin:      tools.NewFlag(prefix, "cors").Name("Origin").Default("*").Label("Access-Control-Allow-Origin").ToString(fs),
+		headers:     tools.NewFlag(prefix, "cors").Name("Headers").Default("Content-Type").Label("Access-Control-Allow-Headers").ToString(fs),
+		methods:     tools.NewFlag(prefix, "cors").Name("Methods").Default(http.MethodGet).Label("Access-Control-Allow-Methods").ToString(fs),
+		exposes:     tools.NewFlag(prefix, "cors").Name("Expose").Default("").Label("Access-Control-Expose-Headers").ToString(fs),
+		credentials: tools.NewFlag(prefix, "cors").Name("Credentials").Default(false).Label("Access-Control-Allow-Credentials").ToBool(fs),
 	}
 }
 

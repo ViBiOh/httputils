@@ -1,19 +1,52 @@
 package tools
 
 import (
+	"regexp"
 	"strings"
 	"unicode"
 )
 
-// ToCamel change first letter to lowerCase
-func ToCamel(s string) string {
+var (
+	upperCaseRegex = regexp.MustCompile(`(?m)([A-Z])([A-Z]*)`)
+)
+
+func changeFirstCase(s string, upper bool) string {
 	if len(s) == 0 {
 		return s
 	}
 
 	a := []rune(s)
-	a[0] = unicode.ToLower(a[0])
+	if upper {
+		a[0] = unicode.ToUpper(a[0])
+	} else {
+		a[0] = unicode.ToLower(a[0])
+	}
+
 	return string(a)
+}
+
+// FirstUpperCase change first letter to UpperCase
+func FirstUpperCase(s string) string {
+	return changeFirstCase(s, true)
+}
+
+// FirstLowerCase change first letter to lowerCase
+func FirstLowerCase(s string) string {
+	return changeFirstCase(s, false)
+}
+
+// SnakeCase transform camelCase to snake_case
+func SnakeCase(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+
+	snaked := upperCaseRegex.ReplaceAllString(s, "_$1$2")
+	if snaked[0] == '_' {
+		return snaked[1:]
+	}
+
+	return snaked
 }
 
 // IncludesString checks in an array includes given string

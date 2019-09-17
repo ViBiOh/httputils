@@ -3,7 +3,6 @@ package crud
 import (
 	goerrors "errors"
 	"flag"
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -40,15 +39,10 @@ type App struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
-	docPrefix := prefix
-	if prefix == "" {
-		docPrefix = "crud"
-	}
-
 	return Config{
-		defaultPage:     fs.Uint(tools.ToCamel(fmt.Sprintf("%sDefaultPage", prefix)), 1, fmt.Sprintf(fmt.Sprintf("[%s] Default page", docPrefix))),
-		defaultPageSize: fs.Uint(tools.ToCamel(fmt.Sprintf("%sDefaultPageSize", prefix)), 20, fmt.Sprintf(fmt.Sprintf("[%s] Default page size", docPrefix))),
-		maxPageSize:     fs.Uint(tools.ToCamel(fmt.Sprintf("%sMaxPageSize", prefix)), 500, fmt.Sprintf(fmt.Sprintf("[%s] Max page size", docPrefix))),
+		defaultPage:     tools.NewFlag(prefix, "crud").Name("DefaultPage").Default(1).Label("Default page").ToUint(fs),
+		defaultPageSize: tools.NewFlag(prefix, "crud").Name("DefaultPageSize").Default(20).Label("Default page size").ToUint(fs),
+		maxPageSize:     tools.NewFlag(prefix, "crud").Name("MaxPageSize").Default(500).Label("Max page size").ToUint(fs),
 	}
 }
 

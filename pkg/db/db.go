@@ -22,17 +22,12 @@ type Config struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
-	docPrefix := prefix
-	if prefix == "" {
-		docPrefix = "database"
-	}
-
 	return Config{
-		host: fs.String(tools.ToCamel(fmt.Sprintf("%sHost", prefix)), "", fmt.Sprintf("[%s] Host", docPrefix)),
-		port: fs.String(tools.ToCamel(fmt.Sprintf("%sPort", prefix)), "5432", fmt.Sprintf("[%s] Port", docPrefix)),
-		user: fs.String(tools.ToCamel(fmt.Sprintf("%sUser", prefix)), "", fmt.Sprintf("[%s] User", docPrefix)),
-		pass: fs.String(tools.ToCamel(fmt.Sprintf("%sPass", prefix)), "", fmt.Sprintf("[%s] Pass", docPrefix)),
-		name: fs.String(tools.ToCamel(fmt.Sprintf("%sName", prefix)), "", fmt.Sprintf("[%s] Name", docPrefix)),
+		host: tools.NewFlag(prefix, "database").Name("Host").Default("").Label("Host").ToString(fs),
+		port: tools.NewFlag(prefix, "database").Name("Port").Default("5432").Label("Port").ToString(fs),
+		user: tools.NewFlag(prefix, "database").Name("User").Default("").Label("User").ToString(fs),
+		pass: tools.NewFlag(prefix, "database").Name("Pass").Default("").Label("Pass").ToString(fs),
+		name: tools.NewFlag(prefix, "database").Name("Name").Default("").Label("Name").ToString(fs),
 	}
 }
 

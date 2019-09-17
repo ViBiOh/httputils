@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 	"flag"
-	"fmt"
 	"strings"
 	"time"
 
@@ -48,19 +47,14 @@ type app struct {
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
-	docPrefix := prefix
-	if prefix == "" {
-		docPrefix = "scheduler"
-	}
-
 	return Config{
-		onStart:  fs.Bool(tools.ToCamel(fmt.Sprintf("%sOnStart", prefix)), false, fmt.Sprintf("[%s] Start scheduler on start", docPrefix)),
-		hour:     fs.Int(tools.ToCamel(fmt.Sprintf("%sHour", prefix)), 8, fmt.Sprintf("[%s] Hour of running", docPrefix)),
-		minute:   fs.Int(tools.ToCamel(fmt.Sprintf("%sMinute", prefix)), 0, fmt.Sprintf("[%s] Minute of running", docPrefix)),
-		timezone: fs.String(tools.ToCamel(fmt.Sprintf("%sTimezone", prefix)), "Europe/Paris", fmt.Sprintf("[%s] Timezone of running", docPrefix)),
-		interval: fs.String(tools.ToCamel(fmt.Sprintf("%sInterval", prefix)), "24h", fmt.Sprintf("[%s] Duration between two runs", docPrefix)),
-		retry:    fs.String(tools.ToCamel(fmt.Sprintf("%sRetry", prefix)), "10m", fmt.Sprintf("[%s] Duration between two retries", docPrefix)),
-		maxRetry: fs.Int(tools.ToCamel(fmt.Sprintf("%sMaxRetry", prefix)), 10, fmt.Sprintf("[%s] Max retry", docPrefix)),
+		onStart:  tools.NewFlag(prefix, "scheduler").Name("OnStart").Default(false).Label("Start scheduler on start").ToBool(fs),
+		hour:     tools.NewFlag(prefix, "scheduler").Name("Hour").Default(8).Label("Hour of running").ToInt(fs),
+		minute:   tools.NewFlag(prefix, "scheduler").Name("Minute").Default(0).Label("Minute of running").ToInt(fs),
+		timezone: tools.NewFlag(prefix, "scheduler").Name("Timezone").Default("Europe/Paris").Label("Timezone of running").ToString(fs),
+		interval: tools.NewFlag(prefix, "scheduler").Name("Interval").Default("24h").Label("Duration between two runs").ToString(fs),
+		retry:    tools.NewFlag(prefix, "scheduler").Name("Retry").Default("10m").Label("Duration between two retries").ToString(fs),
+		maxRetry: tools.NewFlag(prefix, "scheduler").Name("MaxRetry").Default(10).Label("Max retry").ToInt(fs),
 	}
 }
 
