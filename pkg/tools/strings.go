@@ -46,7 +46,7 @@ func SnakeCase(s string) string {
 		return snaked[1:]
 	}
 
-	return snaked
+	return strings.ReplaceAll(snaked, "-", "_")
 }
 
 // IncludesString checks in an array includes given string
