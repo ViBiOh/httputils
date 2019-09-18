@@ -1,6 +1,6 @@
 package breaksync
 
-import "github.com/ViBiOh/httputils/pkg/errors"
+import "github.com/ViBiOh/httputils/v2/pkg/errors"
 
 const finalValue = "\uffff"
 

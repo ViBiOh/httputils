@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/ViBiOh/httputils/pkg/alcotest"
+	"github.com/ViBiOh/httputils/v2/pkg/alcotest"
 )
 
 func main() {

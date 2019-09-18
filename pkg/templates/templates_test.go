@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ViBiOh/httputils/pkg/request"
+	"github.com/ViBiOh/httputils/v2/pkg/request"
 )
 
 func TestWriteHTMLTemplate(t *testing.T) {

@@ -3,7 +3,7 @@ package httperror
 import (
 	"net/http"
 
-	"github.com/ViBiOh/httputils/pkg/logger"
+	"github.com/ViBiOh/httputils/v2/pkg/logger"
 )
 
 // BadRequest logs error and sets BadRequest status

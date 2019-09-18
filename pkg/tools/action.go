@@ -4,8 +4,8 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/ViBiOh/httputils/pkg/logger"
-	"github.com/ViBiOh/httputils/pkg/uuid"
+	"github.com/ViBiOh/httputils/v2/pkg/logger"
+	"github.com/ViBiOh/httputils/v2/pkg/uuid"
 )
 
 // ConcurentOutput contains input, output and error from action

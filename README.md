@@ -13,9 +13,9 @@ Make your server blow into balloon for checking its health.
 ```bash
 Usage of alcotest:
   -url string
-        [alcotest] URL to check
+        [alcotest] URL to check {ALCOTEST_URL}
   -userAgent string
-        [alcotest] User-Agent for check (default "Golang alcotest")
+        [alcotest] User-Agent for check {ALCOTEST_USER_AGENT} (default "Golang alcotest")
 ```
 
 in `Dockerfile`

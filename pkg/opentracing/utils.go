@@ -3,7 +3,7 @@ package opentracing
 import (
 	"context"
 
-	"github.com/ViBiOh/httputils/pkg/errors"
+	"github.com/ViBiOh/httputils/v2/pkg/errors"
 	opentracing "github.com/opentracing/opentracing-go"
 )
 
