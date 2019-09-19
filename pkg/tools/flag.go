@@ -74,7 +74,17 @@ func (f *Flag) ToUint(fs *flag.FlagSet) *uint {
 	name := fmt.Sprintf("%s%s", f.prefix, f.name)
 	envName := strings.ToUpper(SnakeCase(fmt.Sprintf("%s%s", fs.Name(), name)))
 
-	return fs.Uint(FirstLowerCase(name), LookupEnvUint(envName, f.defaultValue.(uint)), f.formatLabel(envName))
+	var value uint
+	switch f.defaultValue.(type) {
+	case int:
+		value = uint(f.defaultValue.(int))
+	case uint:
+		value = f.defaultValue.(uint)
+	default:
+		value = 0
+	}
+
+	return fs.Uint(FirstLowerCase(name), LookupEnvUint(envName, value), f.formatLabel(envName))
 }
 
 // ToFloat64 build Flag Set for float64

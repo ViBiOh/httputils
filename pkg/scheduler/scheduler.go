@@ -23,7 +23,7 @@ type Config struct {
 	minute   *int
 	interval *string
 	retry    *string
-	maxRetry *int
+	maxRetry *uint
 	timezone *string
 }
 
@@ -40,7 +40,7 @@ type app struct {
 
 	interval time.Duration
 	retry    time.Duration
-	maxRetry int
+	maxRetry uint
 
 	task Task
 }
@@ -54,7 +54,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 		timezone: tools.NewFlag(prefix, "scheduler").Name("Timezone").Default("Europe/Paris").Label("Timezone of running").ToString(fs),
 		interval: tools.NewFlag(prefix, "scheduler").Name("Interval").Default("24h").Label("Duration between two runs").ToString(fs),
 		retry:    tools.NewFlag(prefix, "scheduler").Name("Retry").Default("10m").Label("Duration between two retries").ToString(fs),
-		maxRetry: tools.NewFlag(prefix, "scheduler").Name("MaxRetry").Default(10).Label("Max retry").ToInt(fs),
+		maxRetry: tools.NewFlag(prefix, "scheduler").Name("MaxRetry").Default(10).Label("Max retry").ToUint(fs),
 	}
 }
 
@@ -119,7 +119,7 @@ func (a app) scheduleDaily() {
 }
 
 func (a app) runIteration(timer *time.Timer) {
-	retryCount := 0
+	retryCount := uint(0)
 
 	for {
 		currentTime := <-timer.C
