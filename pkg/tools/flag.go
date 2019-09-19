@@ -77,6 +77,14 @@ func (f *Flag) ToUint(fs *flag.FlagSet) *uint {
 	return fs.Uint(FirstLowerCase(name), LookupEnvUint(envName, f.defaultValue.(uint)), f.formatLabel(envName))
 }
 
+// ToFloat64 build Flag Set for float64
+func (f *Flag) ToFloat64(fs *flag.FlagSet) *float64 {
+	name := fmt.Sprintf("%s%s", f.prefix, f.name)
+	envName := strings.ToUpper(SnakeCase(fmt.Sprintf("%s%s", fs.Name(), name)))
+
+	return fs.Float64(FirstLowerCase(name), LookupEnvFloat64(envName, f.defaultValue.(float64)), f.formatLabel(envName))
+}
+
 // ToBool build Flag Set for bool
 func (f *Flag) ToBool(fs *flag.FlagSet) *bool {
 	name := fmt.Sprintf("%s%s", f.prefix, f.name)
@@ -130,6 +138,24 @@ func LookupEnvUint(key string, defaultValue uint) uint {
 	}
 
 	logger.Warn("%s=%s, not a valid unsigned integer: %s", key, val, err)
+
+	return defaultValue
+}
+
+// LookupEnvFloat64 search for given key in environment as float64
+func LookupEnvFloat64(key string, defaultValue float64) float64 {
+	val, ok := os.LookupEnv(key)
+
+	if !ok {
+		return defaultValue
+	}
+
+	intVal, err := strconv.ParseFloat(val, 64)
+	if err == nil {
+		return intVal
+	}
+
+	logger.Warn("%s=%s, not a valid float: %s", key, val, err)
 
 	return defaultValue
 }
