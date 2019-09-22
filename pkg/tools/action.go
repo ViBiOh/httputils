@@ -29,16 +29,21 @@ func doAction(wg *sync.WaitGroup, inputs <-chan interface{}, action func(interfa
 }
 
 // ConcurrentAction create a pool of goroutines for executing action with concurrency limits (default to NumCPU)
-func ConcurrentAction(maxConcurrent uint, action func(interface{}) (interface{}, error)) (chan<- interface{}, <-chan ConcurentOutput) {
+func ConcurrentAction(maxConcurrent uint, log bool, action func(interface{}) (interface{}, error)) (chan<- interface{}, <-chan ConcurentOutput) {
 	if maxConcurrent == 0 {
 		maxConcurrent = uint(runtime.NumCPU())
 	}
 
-	id, err := uuid.New()
-	if err != nil {
-		logger.Warn("unable to generate uuid: %#v", err)
+	var id string
+	var err error
+
+	if log {
+		id, err = uuid.New()
+		if err != nil {
+			logger.Warn("unable to generate uuid: %#v", err)
+		}
+		logger.Info("Worker %s: starting %d in parallel", id, maxConcurrent)
 	}
-	logger.Info("Worker %s: starting %d in parallel", id, maxConcurrent)
 
 	wg := sync.WaitGroup{}
 	inputs := make(chan interface{}, maxConcurrent)
@@ -52,7 +57,10 @@ func ConcurrentAction(maxConcurrent uint, action func(interface{}) (interface{},
 	go func() {
 		wg.Wait()
 		close(results)
-		logger.Info("Worker %s: ended", id)
+
+		if log {
+			logger.Info("Worker %s: ended", id)
+		}
 	}()
 
 	return inputs, results

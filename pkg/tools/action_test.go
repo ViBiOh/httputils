@@ -10,6 +10,7 @@ func TestConcurrentAction(t *testing.T) {
 	var cases = []struct {
 		intention     string
 		maxConcurrent uint
+		log           bool
 		action        func(interface{}) (interface{}, error)
 		inputs        []interface{}
 		want          []ConcurentOutput
@@ -17,6 +18,7 @@ func TestConcurrentAction(t *testing.T) {
 		{
 			"simple input",
 			0,
+			false,
 			func(i interface{}) (interface{}, error) {
 				return i, nil
 			},
@@ -30,6 +32,7 @@ func TestConcurrentAction(t *testing.T) {
 		{
 			"multiple input with error and high concurrent",
 			5,
+			true,
 			func(i interface{}) (interface{}, error) {
 				if i.(int) != 8000 {
 					return nil, errors.New("invalid value")
@@ -50,7 +53,7 @@ func TestConcurrentAction(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			inputs, results := ConcurrentAction(testCase.maxConcurrent, testCase.action)
+			inputs, results := ConcurrentAction(testCase.maxConcurrent, testCase.log, testCase.action)
 
 			for _, input := range testCase.inputs {
 				inputs <- input
