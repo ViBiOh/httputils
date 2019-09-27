@@ -17,9 +17,9 @@ require (
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/tdewolff/minify/v2 v2.5.2
 	github.com/uber-go/atomic v1.4.0 // indirect
-	github.com/uber/jaeger-client-go v2.18.1+incompatible
-	github.com/uber/jaeger-lib v2.1.1+incompatible // indirect
+	github.com/uber/jaeger-client-go v2.19.0+incompatible
+	github.com/uber/jaeger-lib v2.2.0+incompatible // indirect
 	go.uber.org/atomic v1.4.0 // indirect
-	golang.org/x/sys v0.0.0-20190920190810-ef0ce1748380 // indirect
+	golang.org/x/sys v0.0.0-20190927073244-c990c680b611 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )
