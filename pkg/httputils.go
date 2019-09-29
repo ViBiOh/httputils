@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/ViBiOh/httputils/v2/pkg/errors"
@@ -123,30 +125,39 @@ func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler, on
 		}),
 	}
 
-	if onShutdown != nil {
-		httpServer.RegisterOnShutdown(onShutdown)
-	}
-
 	logger.Info("Starting HTTP server on %s", httpServer.Addr)
 
-	var err error
+	errorOutput := make(chan error, 1)
 
-	if a.cert != "" && a.key != "" {
-		logger.Info("Listening with TLS")
-		err = httpServer.ListenAndServeTLS(a.cert, a.key)
-	} else {
-		logger.Warn("Listening without TLS")
-		err = httpServer.ListenAndServe()
-	}
+	go func() {
+		if a.cert != "" && a.key != "" {
+			logger.Info("Listening with TLS")
+			errorOutput <- errors.WithStack(httpServer.ListenAndServeTLS(a.cert, a.key))
+		} else {
+			logger.Warn("Listening without TLS")
+			errorOutput <- errors.WithStack(httpServer.ListenAndServe())
+		}
+	}()
 
-	if err != nil {
-		logger.Error("%#v", errors.WithStack(err))
-	}
+	waitForTermination(errorOutput)
+	onShutdown()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err = httpServer.Shutdown(ctx); err != nil {
+	if err := httpServer.Shutdown(ctx); err != nil {
 		logger.Error("%#v", errors.WithStack(err))
+	}
+}
+
+func waitForTermination(errorInput <-chan error) {
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
+
+	select {
+	case err := <-errorInput:
+		logger.Error("%#v", err)
+	case signal := <-signals:
+		logger.Info("%s received", signal)
 	}
 }
