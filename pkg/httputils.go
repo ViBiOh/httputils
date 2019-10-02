@@ -140,7 +140,9 @@ func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler, on
 	}()
 
 	waitForTermination(errorOutput)
-	onShutdown()
+	if onShutdown != nil {
+		onShutdown()
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
