@@ -47,8 +47,8 @@ func (f *Flag) Default(defaultValue interface{}) *Flag {
 }
 
 // Label defines label of Flag
-func (f *Flag) Label(label string) *Flag {
-	f.label = label
+func (f *Flag) Label(format string, a ...interface{}) *Flag {
+	f.label = fmt.Sprintf(format, a...)
 
 	return f
 }
