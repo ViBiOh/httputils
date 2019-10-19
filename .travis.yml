@@ -9,21 +9,8 @@ jobs:
     after_success:
     - curl -q -sS -X POST https://goreportcard.com/checks?repo=github.com/ViBiOh/httputils
 
-  - stage: Release
-
-    language: go
-    go: 1.13
-    env:
-      - GO111MODULE=on
-      - GITHUB_REPOSITORY=ViBiOh/httputils
-      - GIT_TAG=${TRAVIS_TAG}
-      - RELEASE_NAME=${TRAVIS_TAG}
-    script: ./script/release
-
 stages:
   - Build
-  - name: Release
-    if: tag =~ /^v\d+\.\d+\.\d+$/
 
 notifications:
   email: false
