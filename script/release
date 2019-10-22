@@ -35,7 +35,6 @@ get_last_tag() {
   git describe --tag 2> /dev/null | awk -F "-" '{print $1}'
 }
 
-
 clean() {
   rm -rf "${OUTPUT_DIR}"
   mkdir "${OUTPUT_DIR}"
