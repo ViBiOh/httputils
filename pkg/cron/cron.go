@@ -19,7 +19,7 @@ type Cron struct {
 	day           byte
 	dayTime       time.Time
 	interval      time.Duration
-	maxRetry      int
+	maxRetry      uint
 	retryInterval time.Duration
 
 	done   chan struct{}
@@ -35,7 +35,7 @@ func NewCron() *Cron {
 }
 
 func (c *Cron) String() string {
-	return fmt.Sprintf("day: %08b, at: %d:%d, each: %s", c.day, c.dayTime.Hour(), c.dayTime.Minute(), c.interval)
+	return fmt.Sprintf("day: %08b, at: %d:%d, each: %s, retry: %d every %s", c.day, c.dayTime.Hour(), c.dayTime.Minute(), c.interval, c.maxRetry, c.retryInterval)
 }
 
 // Days set recurence to every day
@@ -132,7 +132,7 @@ func (c *Cron) Retry(retryInterval time.Duration) *Cron {
 }
 
 // MaxRetry set maximum retry count
-func (c *Cron) MaxRetry(maxRetry int) *Cron {
+func (c *Cron) MaxRetry(maxRetry uint) *Cron {
 	c.maxRetry = maxRetry
 
 	return c
@@ -156,73 +156,67 @@ func (c *Cron) getTicker(shouldRetry bool) *time.Ticker {
 	}
 
 	now := time.Now()
-	nextTime := c.computeNextIteration(time.Date(now.Year(), now.Month(), now.Day(), c.dayTime.Hour(), c.dayTime.Minute(), 0, 0, time.Local))
 
+	nextTime := c.computeNextIteration(time.Date(now.Year(), now.Month(), now.Day(), c.dayTime.Hour(), c.dayTime.Minute(), 0, 0, time.Local))
 	if nextTime.Before(now) {
-		nextTime.AddDate(0, 0, 1)
-		nextTime = c.computeNextIteration(nextTime)
+		nextTime = c.computeNextIteration(nextTime.AddDate(0, 0, 1))
 	}
 
-	return time.NewTicker(time.Until(nextTime))
+	return time.NewTicker(nextTime.Sub(now))
 }
 
-func (c *Cron) hasError(output chan error) bool {
+func (c *Cron) hasError(onError func(error)) bool {
 	if len(c.errors) > 0 {
 		for _, err := range c.errors {
-			output <- err
+			if onError != nil {
+				onError(err)
+			}
 		}
 		return true
 	}
 
 	if c.day == 0 && c.interval == 0 {
-		output <- errors.New("no schedule configuration")
-		return true
-	}
-
-	if c.interval <= c.retryInterval {
-		output <- fmt.Errorf("interval is shorter than retry interval: %s < %s", c.interval, c.retryInterval)
+		if onError != nil {
+			onError(errors.New("no schedule configuration"))
+		}
 		return true
 	}
 
 	return false
 }
 
-// Start start cron
-func (c *Cron) Start(action func() error) <-chan error {
-	output := make(chan error, len(c.errors))
+// Start cron
+func (c *Cron) Start(action func(time.Time) error, onError func(error)) {
 	c.done = make(chan struct{})
 
-	go func() {
-		defer close(output)
-		if c.hasError(output) {
+	if c.hasError(onError) {
+		return
+	}
+
+	retryCount := uint(0)
+	shouldRetry := false
+
+	for {
+		tick := c.getTicker(shouldRetry)
+
+		select {
+		case <-c.done:
+			tick.Stop()
 			return
-		}
-
-		retryCount := 0
-		shouldRetry := false
-
-		for {
-			tick := c.getTicker(shouldRetry)
-
-			select {
-			case <-c.done:
-				tick.Stop()
-				return
-			case <-tick.C:
-				if err := action(); err != nil {
-					output <- err
-
-					retryCount++
-					shouldRetry = retryCount < c.maxRetry
-				} else {
-					retryCount = 0
-					shouldRetry = false
+		case now := <-tick.C:
+			if err := action(now); err != nil {
+				if onError != nil {
+					onError(err)
 				}
+
+				retryCount++
+				shouldRetry = retryCount <= c.maxRetry
+			} else {
+				retryCount = 0
+				shouldRetry = false
 			}
 		}
-	}()
-
-	return output
+	}
 }
 
 // Stop cron
