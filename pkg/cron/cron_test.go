@@ -68,9 +68,9 @@ func TestFindMatchingDay(t *testing.T) {
 		},
 		{
 			"shift a week",
-			NewCron().Sunday().At("12:00"),
-			time.Date(2019, 10, 21, 12, 0, 0, 0, time.Local),
-			time.Date(2019, 10, 27, 12, 0, 0, 0, time.Local),
+			NewCron().Saturday().At("12:00"),
+			time.Date(2019, 10, 20, 12, 0, 0, 0, time.Local),
+			time.Date(2019, 10, 26, 12, 0, 0, 0, time.Local),
 		},
 	}
 

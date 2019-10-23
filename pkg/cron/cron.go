@@ -139,7 +139,7 @@ func (c *Cron) MaxRetry(maxRetry uint) *Cron {
 }
 
 func (c *Cron) findMatchingDay(nextTime time.Time) time.Time {
-	for day := nextTime.Weekday(); (1<<day ^ c.day) != 0; day = (day + 1) % 7 {
+	for day := nextTime.Weekday(); (1 << day & c.day) == 0; day = (day + 1) % 7 {
 		nextTime = nextTime.AddDate(0, 0, 1)
 	}
 
