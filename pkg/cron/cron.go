@@ -29,7 +29,7 @@ type Cron struct {
 // NewCron create new cron
 func NewCron() *Cron {
 	return &Cron{
-		dayTime: time.Date(0, 0, 0, 8, 0, 0, 0, time.Local),
+		dayTime: time.Date(0, 0, 0, 8, 0, 0, 0, time.UTC),
 		errors:  make([]error, 0),
 	}
 }
@@ -57,49 +57,49 @@ func (c *Cron) Weekdays() *Cron {
 
 // Sunday set recurence to every Sunday
 func (c *Cron) Sunday() *Cron {
-	c.day = c.day & 1 << time.Sunday
+	c.day = c.day | 1<<time.Sunday
 
 	return c
 }
 
 // Monday set recurence to every Monday
 func (c *Cron) Monday() *Cron {
-	c.day = c.day & 1 << time.Monday
+	c.day = c.day | 1<<time.Monday
 
 	return c
 }
 
 // Tuesday set recurence to every Tuesday
 func (c *Cron) Tuesday() *Cron {
-	c.day = c.day & 1 << time.Tuesday
+	c.day = c.day | 1<<time.Tuesday
 
 	return c
 }
 
 // Wednesday set recurence to every Wednesday
 func (c *Cron) Wednesday() *Cron {
-	c.day = c.day & 1 << time.Wednesday
+	c.day = c.day | 1<<time.Wednesday
 
 	return c
 }
 
 // Thursday set recurence to every Thursday
 func (c *Cron) Thursday() *Cron {
-	c.day = c.day & 1 << time.Thursday
+	c.day = c.day | 1<<time.Thursday
 
 	return c
 }
 
 // Friday set recurence to every Friday
 func (c *Cron) Friday() *Cron {
-	c.day = c.day & 1 << time.Friday
+	c.day = c.day | 1<<time.Friday
 
 	return c
 }
 
 // Saturday set recurence to every Saturday
 func (c *Cron) Saturday() *Cron {
-	c.day = c.day & 1 << time.Saturday
+	c.day = c.day | 1<<time.Saturday
 
 	return c
 }
@@ -138,9 +138,9 @@ func (c *Cron) MaxRetry(maxRetry uint) *Cron {
 	return c
 }
 
-func (c *Cron) computeNextIteration(nextTime time.Time) time.Time {
-	for day := nextTime.Weekday(); (1<<day | c.day) == 0; day = (day + 1) % 7 {
-		nextTime.AddDate(0, 0, 1)
+func (c *Cron) findMatchingDay(nextTime time.Time) time.Time {
+	for day := nextTime.Weekday(); (1<<day ^ c.day) != 0; day = (day + 1) % 7 {
+		nextTime = nextTime.AddDate(0, 0, 1)
 	}
 
 	return nextTime
@@ -157,9 +157,9 @@ func (c *Cron) getTicker(shouldRetry bool) *time.Ticker {
 
 	now := time.Now()
 
-	nextTime := c.computeNextIteration(time.Date(now.Year(), now.Month(), now.Day(), c.dayTime.Hour(), c.dayTime.Minute(), 0, 0, time.Local))
+	nextTime := c.findMatchingDay(time.Date(now.Year(), now.Month(), now.Day(), c.dayTime.Hour(), c.dayTime.Minute(), 0, 0, time.Local))
 	if nextTime.Before(now) {
-		nextTime = c.computeNextIteration(nextTime.AddDate(0, 0, 1))
+		nextTime = c.findMatchingDay(nextTime.AddDate(0, 0, 1))
 	}
 
 	return time.NewTicker(nextTime.Sub(now))
