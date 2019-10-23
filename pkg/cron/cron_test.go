@@ -72,6 +72,12 @@ func TestFindMatchingDay(t *testing.T) {
 			time.Date(2019, 10, 20, 12, 0, 0, 0, time.Local),
 			time.Date(2019, 10, 26, 12, 0, 0, 0, time.Local),
 		},
+		{
+			"next week",
+			NewCron().Weekdays().At("12:00"),
+			time.Date(2019, 10, 19, 12, 0, 0, 0, time.Local),
+			time.Date(2019, 10, 21, 12, 0, 0, 0, time.Local),
+		},
 	}
 
 	for _, testCase := range cases {
