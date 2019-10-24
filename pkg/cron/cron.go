@@ -18,6 +18,7 @@ var (
 type Cron struct {
 	day           byte
 	dayTime       time.Time
+	timezone      *time.Location
 	interval      time.Duration
 	maxRetry      uint
 	retryInterval time.Duration
@@ -29,8 +30,9 @@ type Cron struct {
 // NewCron create new cron
 func NewCron() *Cron {
 	return &Cron{
-		dayTime: time.Date(0, 0, 0, 8, 0, 0, 0, time.UTC),
-		errors:  make([]error, 0),
+		dayTime:  time.Date(0, 0, 0, 8, 0, 0, 0, time.UTC),
+		timezone: time.Local,
+		errors:   make([]error, 0),
 	}
 }
 
@@ -117,6 +119,13 @@ func (c *Cron) At(hour string) *Cron {
 	return c
 }
 
+// In set timezone
+func (c *Cron) In(timezone *time.Location) *Cron {
+	c.timezone = timezone
+
+	return c
+}
+
 // Each set interval of each run
 func (c *Cron) Each(interval time.Duration) *Cron {
 	c.interval = interval
@@ -157,7 +166,7 @@ func (c *Cron) getTicker(shouldRetry bool) *time.Ticker {
 
 	now := time.Now()
 
-	nextTime := c.findMatchingDay(time.Date(now.Year(), now.Month(), now.Day(), c.dayTime.Hour(), c.dayTime.Minute(), 0, 0, time.Local))
+	nextTime := c.findMatchingDay(time.Date(now.Year(), now.Month(), now.Day(), c.dayTime.Hour(), c.dayTime.Minute(), 0, 0, c.timezone))
 	if nextTime.Before(now) {
 		nextTime = c.findMatchingDay(nextTime.AddDate(0, 0, 1))
 	}
