@@ -48,7 +48,7 @@ func New() *Cron {
 	return &Cron{
 		dayTime:  time.Date(0, 0, 0, 8, 0, 0, 0, time.UTC),
 		timezone: time.Local,
-		now:      make(chan time.Time),
+		now:      make(chan time.Time, 1),
 		errors:   make([]error, 0),
 	}
 }
