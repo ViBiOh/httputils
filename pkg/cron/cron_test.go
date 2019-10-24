@@ -157,6 +157,16 @@ func TestHasError(t *testing.T) {
 			true,
 		},
 		{
+			"empty with invalid value",
+			New().At("98:76"),
+			true,
+		},
+		{
+			"empty with invalid timezone",
+			New().In("Rainbow"),
+			true,
+		},
+		{
 			"cron with day config",
 			New().Sunday(),
 			false,

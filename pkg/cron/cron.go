@@ -37,6 +37,7 @@ type Cron struct {
 	retryInterval time.Duration
 	onStart       bool
 
+	now    chan time.Time
 	done   chan struct{}
 	errors []error
 
@@ -228,6 +229,18 @@ func (c *Cron) Start(action func(time.Time) error, onError func(error)) {
 	shouldRetry := false
 	c.done = make(chan struct{})
 
+	do := func(now time.Time) {
+		if err := action(now); err != nil {
+			onError(err)
+
+			retryCount++
+			shouldRetry = retryCount <= c.maxRetry
+		} else {
+			retryCount = 0
+			shouldRetry = false
+		}
+	}
+
 	for {
 		duration := c.getTickerDuration(shouldRetry)
 		ticker := time.NewTicker(duration)
@@ -237,17 +250,17 @@ func (c *Cron) Start(action func(time.Time) error, onError func(error)) {
 			ticker.Stop()
 			return
 		case now := <-ticker.C:
-			if err := action(now); err != nil {
-				onError(err)
-
-				retryCount++
-				shouldRetry = retryCount <= c.maxRetry
-			} else {
-				retryCount = 0
-				shouldRetry = false
-			}
+			do(now)
+		case now := <-c.now:
+			ticker.Stop()
+			do(now)
 		}
 	}
+}
+
+// Now run cron now
+func (c *Cron) Now() {
+	c.now <- c.clock.Now()
 }
 
 // Stop cron
