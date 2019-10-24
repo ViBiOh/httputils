@@ -2,6 +2,7 @@ package cron
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -16,16 +17,16 @@ func TestAt(t *testing.T) {
 	}{
 		{
 			"simple",
-			NewCron(),
+			New(),
 			"12:00",
 			time.Date(0, 1, 1, 12, 0, 0, 0, time.UTC),
 			nil,
 		},
 		{
 			"invalid pattern",
-			NewCron(),
+			New(),
 			"98:76",
-			NewCron().dayTime,
+			New().dayTime,
 			fmt.Errorf("parsing time \"98:76\": hour out of range"),
 		},
 	}
@@ -62,19 +63,19 @@ func TestFindMatchingDay(t *testing.T) {
 	}{
 		{
 			"already good",
-			NewCron().Monday().At("12:00"),
-			time.Date(2019, 10, 21, 12, 0, 0, 0, time.Local),
-			time.Date(2019, 10, 21, 12, 0, 0, 0, time.Local),
+			New().Tuesday().At("12:00"),
+			time.Date(2019, 10, 22, 12, 0, 0, 0, time.Local),
+			time.Date(2019, 10, 22, 12, 0, 0, 0, time.Local),
 		},
 		{
 			"shift a week",
-			NewCron().Saturday().At("12:00"),
+			New().Saturday().At("12:00"),
 			time.Date(2019, 10, 20, 12, 0, 0, 0, time.Local),
 			time.Date(2019, 10, 26, 12, 0, 0, 0, time.Local),
 		},
 		{
 			"next week",
-			NewCron().Weekdays().At("12:00"),
+			New().Weekdays().At("12:00"),
 			time.Date(2019, 10, 19, 12, 0, 0, 0, time.Local),
 			time.Date(2019, 10, 21, 12, 0, 0, 0, time.Local),
 		},
@@ -89,44 +90,91 @@ func TestFindMatchingDay(t *testing.T) {
 	}
 }
 
-func TestHasError(t *testing.T) {
+func TestGetTickerDuration(t *testing.T) {
 	var cases = []struct {
 		intention string
 		cron      *Cron
-		input     func(error)
-		want      bool
+		input     bool
+		want      time.Duration
 	}{
 		{
-			"empty cron",
-			NewCron(),
-			nil,
+			"retry",
+			New().Retry(time.Minute),
 			true,
+			time.Minute,
 		},
 		{
-			"call of given func",
-			NewCron(),
-			func(err error) {
-				fmt.Println(err)
-			},
-			true,
-		},
-		{
-			"cron with day config",
-			NewCron().Sunday(),
-			nil,
+			"no retry",
+			New().Each(time.Hour).Retry(time.Minute),
 			false,
+			time.Hour,
 		},
 		{
-			"cron with day config",
-			NewCron().Each(time.Minute),
-			nil,
+			"each",
+			New().Each(time.Hour),
 			false,
+			time.Hour,
+		},
+		{
+			"same day",
+			New().Days().At("13:00").In("UTC").Clock(&Clock{time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC)}),
+			false,
+			time.Hour,
+		},
+		{
+			"one week",
+			New().Monday().At("11:00").In("UTC").Clock(&Clock{time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC)}),
+			false,
+			time.Hour * 167,
+		},
+		{
+			"another timezone",
+			New().Wednesday().At("12:00").In("EST").Clock(&Clock{time.Date(2019, 10, 23, 12, 0, 0, 0, time.UTC)}),
+			false,
+			time.Hour * 5,
 		},
 	}
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			if result := testCase.cron.hasError(testCase.input); result != testCase.want {
+			result := testCase.cron.getTickerDuration(testCase.input)
+			if !reflect.DeepEqual(result, testCase.want) {
+				t.Errorf("getTickerDuration() = %#v, want %#v", result, testCase.want)
+			}
+		})
+	}
+}
+
+func TestHasError(t *testing.T) {
+	var cases = []struct {
+		intention string
+		cron      *Cron
+		want      bool
+	}{
+		{
+			"empty cron",
+			New(),
+			true,
+		},
+		{
+			"cron with day config",
+			New().Sunday(),
+			false,
+		},
+		{
+			"cron with day config",
+			New().Each(time.Minute),
+			false,
+		},
+	}
+
+	onError := func(err error) {
+		fmt.Println(err)
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			if result := testCase.cron.hasError(onError); result != testCase.want {
 				t.Errorf("hasError() = %#v, want %#v", result, testCase.want)
 			}
 		})

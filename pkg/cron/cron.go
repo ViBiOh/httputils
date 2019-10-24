@@ -11,8 +11,21 @@ const (
 )
 
 var (
-	_ fmt.Stringer = NewCron()
+	_ fmt.Stringer = New()
 )
+
+// Clock give time
+type Clock struct {
+	now time.Time
+}
+
+// Now return current time
+func (c *Clock) Now() time.Time {
+	if c == nil {
+		return time.Now()
+	}
+	return c.now
+}
 
 // Cron definition
 type Cron struct {
@@ -22,13 +35,16 @@ type Cron struct {
 	interval      time.Duration
 	maxRetry      uint
 	retryInterval time.Duration
+	onStart       bool
 
 	done   chan struct{}
 	errors []error
+
+	clock *Clock
 }
 
-// NewCron create new cron
-func NewCron() *Cron {
+// New create new cron
+func New() *Cron {
 	return &Cron{
 		dayTime:  time.Date(0, 0, 0, 8, 0, 0, 0, time.UTC),
 		timezone: time.Local,
@@ -120,8 +136,13 @@ func (c *Cron) At(hour string) *Cron {
 }
 
 // In set timezone
-func (c *Cron) In(timezone *time.Location) *Cron {
-	c.timezone = timezone
+func (c *Cron) In(tz string) *Cron {
+	timezone, err := time.LoadLocation(tz)
+	if err != nil {
+		c.errors = append(c.errors, err)
+	} else {
+		c.timezone = timezone
+	}
 
 	return c
 }
@@ -147,6 +168,13 @@ func (c *Cron) MaxRetry(maxRetry uint) *Cron {
 	return c
 }
 
+// Clock set clock that give current time, mostly for testing purpose
+func (c *Cron) Clock(clock *Clock) *Cron {
+	c.clock = clock
+
+	return c
+}
+
 func (c *Cron) findMatchingDay(nextTime time.Time) time.Time {
 	for day := nextTime.Weekday(); (1 << day & c.day) == 0; day = (day + 1) % 7 {
 		nextTime = nextTime.AddDate(0, 0, 1)
@@ -155,39 +183,35 @@ func (c *Cron) findMatchingDay(nextTime time.Time) time.Time {
 	return nextTime
 }
 
-func (c *Cron) getTicker(shouldRetry bool) *time.Ticker {
+func (c *Cron) getTickerDuration(shouldRetry bool) time.Duration {
 	if shouldRetry && c.retryInterval != 0 {
-		return time.NewTicker(c.retryInterval)
+		return c.retryInterval
 	}
 
 	if c.interval != 0 {
-		return time.NewTicker(c.interval)
+		return c.interval
 	}
 
-	now := time.Now()
+	now := c.clock.Now()
 
 	nextTime := c.findMatchingDay(time.Date(now.Year(), now.Month(), now.Day(), c.dayTime.Hour(), c.dayTime.Minute(), 0, 0, c.timezone))
 	if nextTime.Before(now) {
 		nextTime = c.findMatchingDay(nextTime.AddDate(0, 0, 1))
 	}
 
-	return time.NewTicker(nextTime.Sub(now))
+	return nextTime.Sub(now)
 }
 
 func (c *Cron) hasError(onError func(error)) bool {
 	if len(c.errors) > 0 {
 		for _, err := range c.errors {
-			if onError != nil {
-				onError(err)
-			}
+			onError(err)
 		}
 		return true
 	}
 
 	if c.day == 0 && c.interval == 0 {
-		if onError != nil {
-			onError(errors.New("no schedule configuration"))
-		}
+		onError(errors.New("no schedule configuration"))
 		return true
 	}
 
@@ -196,27 +220,25 @@ func (c *Cron) hasError(onError func(error)) bool {
 
 // Start cron
 func (c *Cron) Start(action func(time.Time) error, onError func(error)) {
-	c.done = make(chan struct{})
-
 	if c.hasError(onError) {
 		return
 	}
 
 	retryCount := uint(0)
 	shouldRetry := false
+	c.done = make(chan struct{})
 
 	for {
-		tick := c.getTicker(shouldRetry)
+		duration := c.getTickerDuration(shouldRetry)
+		ticker := time.NewTicker(duration)
 
 		select {
 		case <-c.done:
-			tick.Stop()
+			ticker.Stop()
 			return
-		case now := <-tick.C:
+		case now := <-ticker.C:
 			if err := action(now); err != nil {
-				if onError != nil {
-					onError(err)
-				}
+				onError(err)
 
 				retryCount++
 				shouldRetry = retryCount <= c.maxRetry
@@ -230,5 +252,7 @@ func (c *Cron) Start(action func(time.Time) error, onError func(error)) {
 
 // Stop cron
 func (c *Cron) Stop() {
-	close(c.done)
+	if c.done != nil {
+		close(c.done)
+	}
 }
