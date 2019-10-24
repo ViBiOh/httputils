@@ -104,7 +104,6 @@ release() {
   local OUTPUT_TXT="output.txt"
   local CLIENT_ARGS=("curl" "-q" "-sS" "-o" "${OUTPUT_TXT}" "-w" "%{http_code}" "-H" "Authorization: token ${GITHUB_OAUTH_TOKEN}")
 
-  echo
   local HTTP_STATUS
   HTTP_STATUS="$("${CLIENT_ARGS[@]}" \
     -H "Content-Type: application/json" \
@@ -128,7 +127,6 @@ release() {
 
   for asset in "${OUTPUT_DIR}"/*; do
     echo -e "${BLUE}Uploading asset ${asset}...${RESET}"
-    echo
 
     local HTTP_STATUS
   HTTP_STATUS="$("${CLIENT_ARGS[@]}" \
