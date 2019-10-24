@@ -38,7 +38,6 @@ type Cron struct {
 	onStart       bool
 
 	now    chan time.Time
-	done   chan struct{}
 	errors []error
 
 	clock *Clock
@@ -49,6 +48,7 @@ func New() *Cron {
 	return &Cron{
 		dayTime:  time.Date(0, 0, 0, 8, 0, 0, 0, time.UTC),
 		timezone: time.Local,
+		now:      make(chan time.Time),
 		errors:   make([]error, 0),
 	}
 }
@@ -219,6 +219,13 @@ func (c *Cron) hasError(onError func(error)) bool {
 	return false
 }
 
+// Now run cron now
+func (c *Cron) Now() *Cron {
+	c.now <- c.clock.Now()
+
+	return c
+}
+
 // Start cron
 func (c *Cron) Start(action func(time.Time) error, onError func(error)) {
 	if c.hasError(onError) {
@@ -227,7 +234,6 @@ func (c *Cron) Start(action func(time.Time) error, onError func(error)) {
 
 	retryCount := uint(0)
 	shouldRetry := false
-	c.done = make(chan struct{})
 
 	do := func(now time.Time) {
 		if err := action(now); err != nil {
@@ -246,26 +252,20 @@ func (c *Cron) Start(action func(time.Time) error, onError func(error)) {
 		ticker := time.NewTicker(duration)
 
 		select {
-		case <-c.done:
+		case now, ok := <-c.now:
 			ticker.Stop()
-			return
+			if ok {
+				do(now)
+			} else {
+				return
+			}
 		case now := <-ticker.C:
-			do(now)
-		case now := <-c.now:
-			ticker.Stop()
 			do(now)
 		}
 	}
 }
 
-// Now run cron now
-func (c *Cron) Now() {
-	c.now <- c.clock.Now()
-}
-
 // Stop cron
 func (c *Cron) Stop() {
-	if c.done != nil {
-		close(c.done)
-	}
+	close(c.now)
 }
