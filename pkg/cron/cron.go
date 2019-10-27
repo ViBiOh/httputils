@@ -201,7 +201,7 @@ func (c *Cron) getTickerDuration(shouldRetry bool) time.Duration {
 		return c.interval
 	}
 
-	now := c.clock.Now()
+	now := c.clock.Now().In(c.timezone)
 
 	nextTime := c.findMatchingDay(time.Date(now.Year(), now.Month(), now.Day(), c.dayTime.Hour(), c.dayTime.Minute(), 0, 0, c.timezone))
 	if nextTime.Before(now) {
