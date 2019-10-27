@@ -3,6 +3,7 @@ package cron
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -54,24 +55,27 @@ func New() *Cron {
 }
 
 func (c *Cron) String() string {
-	return fmt.Sprintf("day: %08b, at: %d:%d, each: %s, retry: %d every %s", c.day, c.dayTime.Hour(), c.dayTime.Minute(), c.interval, c.maxRetry, c.retryInterval)
+	var buffer strings.Builder
+
+	if c.interval != 0 {
+		buffer.WriteString(fmt.Sprintf("each: %s", c.interval))
+	} else {
+		buffer.WriteString(fmt.Sprintf("day: %07b, at: %02d:%02d, in: %s", c.day, c.dayTime.Hour(), c.dayTime.Minute(), c.timezone))
+	}
+
+	buffer.WriteString(fmt.Sprintf(", retry: %d times every %s", c.maxRetry, c.retryInterval))
+
+	return buffer.String()
 }
 
 // Days set recurence to every day
 func (c *Cron) Days() *Cron {
-	c.day = c.day | 0xFF
-
-	return c
+	return c.Monday().Tuesday().Wednesday().Thursday().Friday().Saturday().Sunday()
 }
 
 // Weekdays set recurence to every day except sunday and saturday
 func (c *Cron) Weekdays() *Cron {
-	c.Days()
-
-	c.day = c.day ^ 1<<time.Sunday
-	c.day = c.day ^ 1<<time.Saturday
-
-	return c
+	return c.Monday().Tuesday().Wednesday().Thursday().Friday()
 }
 
 // Sunday set recurence to every Sunday
@@ -150,6 +154,10 @@ func (c *Cron) In(tz string) *Cron {
 
 // Each set interval of each run
 func (c *Cron) Each(interval time.Duration) *Cron {
+	if c.day != 0 {
+		c.errors = append(c.errors, errors.New("cannot set interval and days on the same cron"))
+	}
+
 	c.interval = interval
 
 	return c

@@ -7,6 +7,83 @@ import (
 	"time"
 )
 
+func TestString(t *testing.T) {
+	var cases = []struct {
+		intention string
+		cron      *Cron
+		want      string
+	}{
+		{
+			"empty",
+			New(),
+			"day: 0000000, at: 08:00, in: Local, retry: 0 times every 0s",
+		},
+		{
+			"sunday",
+			New().Sunday(),
+			"day: 0000001, at: 08:00, in: Local, retry: 0 times every 0s",
+		},
+		{
+			"monday",
+			New().Monday(),
+			"day: 0000010, at: 08:00, in: Local, retry: 0 times every 0s",
+		},
+		{
+			"tuesday",
+			New().Tuesday(),
+			"day: 0000100, at: 08:00, in: Local, retry: 0 times every 0s",
+		},
+		{
+			"wednesday",
+			New().Wednesday(),
+			"day: 0001000, at: 08:00, in: Local, retry: 0 times every 0s",
+		},
+		{
+			"thursday",
+			New().Thursday(),
+			"day: 0010000, at: 08:00, in: Local, retry: 0 times every 0s",
+		},
+		{
+			"friday",
+			New().Friday(),
+			"day: 0100000, at: 08:00, in: Local, retry: 0 times every 0s",
+		},
+		{
+			"saturday",
+			New().Saturday(),
+			"day: 1000000, at: 08:00, in: Local, retry: 0 times every 0s",
+		},
+		{
+			"weekdays",
+			New().Weekdays(),
+			"day: 0111110, at: 08:00, in: Local, retry: 0 times every 0s",
+		},
+		{
+			"timezone",
+			New().Monday().At("09:00").In("Europe/Paris"),
+			"day: 0000010, at: 09:00, in: Europe/Paris, retry: 0 times every 0s",
+		},
+		{
+			"retry case",
+			New().Each(time.Minute * 10).Retry(time.Minute).MaxRetry(5),
+			"each: 10m0s, retry: 5 times every 1m0s",
+		},
+		{
+			"full case",
+			New().Weekdays().At("09:45").In("Europe/Paris").Retry(time.Minute).MaxRetry(5),
+			"day: 0111110, at: 09:45, in: Europe/Paris, retry: 5 times every 1m0s",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			if result := testCase.cron.String(); result != testCase.want {
+				t.Errorf("String() = %s, want %s", result, testCase.want)
+			}
+		})
+	}
+}
+
 func TestAt(t *testing.T) {
 	var cases = []struct {
 		intention string
@@ -170,6 +247,11 @@ func TestHasError(t *testing.T) {
 		{
 			"empty with invalid timezone",
 			New().In("Rainbow"),
+			true,
+		},
+		{
+			"days and interval",
+			New().Monday().Each(time.Minute),
 			true,
 		},
 		{
