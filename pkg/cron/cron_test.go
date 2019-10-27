@@ -212,7 +212,7 @@ func TestGetTickerDuration(t *testing.T) {
 		},
 		{
 			"hour shift",
-			New().Sunday().At("12:00").Clock(&Clock{time.Date(2019, 10, 26, 22, 0, 0, 0, time.UTC)}),
+			New().Sunday().At("12:00").In("Europe/Paris").Clock(&Clock{time.Date(2019, 10, 26, 22, 0, 0, 0, time.UTC)}),
 			false,
 			time.Hour * 13,
 		},
