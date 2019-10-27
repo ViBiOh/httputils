@@ -224,6 +224,11 @@ func (c *Cron) hasError(onError func(error)) bool {
 		return true
 	}
 
+	if c.maxRetry != 0 && c.retryInterval == 0 {
+		onError(errors.New("no retry interval for max retry"))
+		return true
+	}
+
 	return false
 }
 

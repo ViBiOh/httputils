@@ -1,8 +1,10 @@
 package cron
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 )
@@ -255,6 +257,11 @@ func TestHasError(t *testing.T) {
 			true,
 		},
 		{
+			"retry without interval",
+			New().MaxRetry(5),
+			true,
+		},
+		{
 			"cron with day config",
 			New().Friday(),
 			false,
@@ -274,6 +281,86 @@ func TestHasError(t *testing.T) {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := testCase.cron.hasError(onError); result != testCase.want {
 				t.Errorf("hasError() = %#v, want %#v", result, testCase.want)
+			}
+		})
+	}
+}
+
+func TestStart(t *testing.T) {
+	var cases = []struct {
+		intention string
+		cron      *Cron
+		action    func(*sync.WaitGroup, *Cron) func(time.Time) error
+		onError   func(err error)
+	}{
+		{
+			"run once",
+			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.Local)}),
+			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
+				return func(_ time.Time) error {
+					wg.Done()
+
+					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.Local)})
+					return nil
+				}
+			},
+			func(err error) {
+				t.Error(err)
+			},
+		},
+		{
+			"retry",
+			New().Days().At("12:00").Retry(time.Millisecond).MaxRetry(5).Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.Local)}),
+			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
+				count := 0
+				return func(_ time.Time) error {
+					count++
+					if count < 4 {
+						return errors.New("call me again")
+					}
+
+					wg.Done()
+					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.Local)})
+					return nil
+				}
+			},
+			func(err error) {},
+		},
+		{
+			"run on demand",
+			New().Days().At("12:00").Retry(time.Millisecond).MaxRetry(5).Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.Local)}),
+			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
+				cron.Now()
+
+				return func(_ time.Time) error {
+					wg.Done()
+					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.Local)})
+					return nil
+				}
+			},
+			func(err error) {},
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			var wg sync.WaitGroup
+			wg.Add(1)
+
+			go testCase.cron.Start(testCase.action(&wg, testCase.cron), testCase.onError)
+
+			done := make(chan struct{})
+			go func() {
+				wg.Wait()
+				close(done)
+			}()
+
+			select {
+			case <-time.After(time.Second * 5):
+				testCase.cron.Stop()
+				t.Errorf("Start() did not complete within a second")
+			case <-done:
+				testCase.cron.Stop()
 			}
 		})
 	}
