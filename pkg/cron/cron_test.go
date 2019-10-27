@@ -133,6 +133,12 @@ func TestGetTickerDuration(t *testing.T) {
 			false,
 			time.Hour * 5,
 		},
+		{
+			"hour shift",
+			New().Sunday().At("12:00").Clock(&Clock{time.Date(2019, 10, 26, 22, 0, 0, 0, time.UTC)}),
+			false,
+			time.Hour * 13,
+		},
 	}
 
 	for _, testCase := range cases {
@@ -168,7 +174,7 @@ func TestHasError(t *testing.T) {
 		},
 		{
 			"cron with day config",
-			New().Sunday(),
+			New().Friday(),
 			false,
 		},
 		{
