@@ -258,7 +258,7 @@ func TestHasError(t *testing.T) {
 		},
 		{
 			"retry without interval",
-			New().MaxRetry(5),
+			New().Weekdays().MaxRetry(5),
 			true,
 		},
 		{
@@ -328,7 +328,7 @@ func TestStart(t *testing.T) {
 		},
 		{
 			"run on demand",
-			New().Days().At("12:00").Retry(time.Millisecond).MaxRetry(5).Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.Local)}),
+			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.Local)}),
 			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
 				cron.Now()
 
