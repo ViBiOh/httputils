@@ -291,7 +291,7 @@ func TestStart(t *testing.T) {
 		intention string
 		cron      *Cron
 		action    func(*sync.WaitGroup, *Cron) func(time.Time) error
-		onError   func(err error)
+		onError   func(*sync.WaitGroup, *Cron) func(error)
 	}{
 		{
 			"run once",
@@ -304,8 +304,10 @@ func TestStart(t *testing.T) {
 					return nil
 				}
 			},
-			func(err error) {
-				t.Error(err)
+			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
+				return func(err error) {
+					t.Error(err)
+				}
 			},
 		},
 		{
@@ -324,7 +326,9 @@ func TestStart(t *testing.T) {
 					return nil
 				}
 			},
-			func(err error) {},
+			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
+				return func(err error) {}
+			},
 		},
 		{
 			"run on demand",
@@ -338,7 +342,26 @@ func TestStart(t *testing.T) {
 					return nil
 				}
 			},
-			func(err error) {},
+			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
+				return func(err error) {}
+			},
+		},
+		{
+			"fail if misconfigured",
+			New().Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.Local)}),
+			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
+				cron.Now()
+
+				return func(_ time.Time) error {
+					wg.Done()
+					return nil
+				}
+			},
+			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
+				return func(err error) {
+					wg.Done()
+				}
+			},
 		},
 	}
 
@@ -347,7 +370,7 @@ func TestStart(t *testing.T) {
 			var wg sync.WaitGroup
 			wg.Add(1)
 
-			go testCase.cron.Start(testCase.action(&wg, testCase.cron), testCase.onError)
+			go testCase.cron.Start(testCase.action(&wg, testCase.cron), testCase.onError(&wg, testCase.cron))
 
 			done := make(chan struct{})
 			go func() {
