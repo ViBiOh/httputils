@@ -8,7 +8,7 @@ import (
 
 	"github.com/ViBiOh/httputils/v2/pkg/httperror"
 	"github.com/ViBiOh/httputils/v2/pkg/httpjson"
-	"github.com/ViBiOh/httputils/v2/pkg/pagination"
+	"github.com/ViBiOh/httputils/v2/pkg/query"
 	"github.com/ViBiOh/httputils/v2/pkg/request"
 	"github.com/ViBiOh/httputils/v2/pkg/tools"
 )
@@ -90,7 +90,7 @@ func readFilters(r *http.Request) map[string][]string {
 }
 
 func (a App) list(w http.ResponseWriter, r *http.Request) {
-	params, err := pagination.ParseParams(r, a.defaultPage, a.defaultPageSize, a.maxPageSize)
+	params, err := query.ParsePagination(r, a.defaultPage, a.defaultPageSize, a.maxPageSize)
 	if err != nil {
 		httperror.BadRequest(w, err)
 		return

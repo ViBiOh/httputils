@@ -1,4 +1,4 @@
-package pagination
+package query
 
 import (
 	"errors"
@@ -7,8 +7,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/ViBiOh/httputils/v2/pkg/query"
 )
 
 var (
@@ -30,8 +28,8 @@ type Pagination struct {
 	Desc     bool
 }
 
-// ParseParams parse common pagination param from request
-func ParseParams(r *http.Request, defaultPage, defaultPageSize, maxPageSize uint) (pagination Pagination, err error) {
+// ParsePagination parse common pagination param from request
+func ParsePagination(r *http.Request, defaultPage, defaultPageSize, maxPageSize uint) (pagination Pagination, err error) {
 	var parsed uint64
 	var parsedUint uint
 	var params url.Values
@@ -83,7 +81,7 @@ func ParseParams(r *http.Request, defaultPage, defaultPageSize, maxPageSize uint
 		pagination.Sort = rawSortKey
 	}
 
-	pagination.Desc = query.GetBool(r, "desc")
+	pagination.Desc = GetBool(r, "desc")
 
 	return
 }

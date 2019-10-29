@@ -1,4 +1,4 @@
-package pagination
+package query
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestParseParams(t *testing.T) {
+func TestParsePagination(t *testing.T) {
 	var cases = []struct {
 		intention       string
 		request         *http.Request
@@ -133,7 +133,7 @@ func TestParseParams(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			result, err := ParseParams(testCase.request, testCase.defaultPage, testCase.defaultPageSize, testCase.maxPageSize)
+			result, err := ParsePagination(testCase.request, testCase.defaultPage, testCase.defaultPageSize, testCase.maxPageSize)
 
 			failed := false
 
@@ -144,7 +144,7 @@ func TestParseParams(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("ParseParams() = (%#v, %#v), want (%#v, %#v)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("ParsePagination() = (%#v, %#v), want (%#v, %#v)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
