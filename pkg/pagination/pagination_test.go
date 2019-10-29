@@ -31,6 +31,20 @@ func TestParseParams(t *testing.T) {
 			nil,
 		},
 		{
+			"simple value",
+			httptest.NewRequest(http.MethodGet, "/?page=2&pageSize=50&sort=name&desc", nil),
+			1,
+			20,
+			100,
+			Pagination{
+				Page:     2,
+				PageSize: 50,
+				Sort:     "name",
+				Desc:     true,
+			},
+			nil,
+		},
+		{
 			"invalid page",
 			httptest.NewRequest(http.MethodGet, "/?page=invalid", nil),
 			1,
