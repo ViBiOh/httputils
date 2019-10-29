@@ -2,10 +2,16 @@ package httpjson
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
-	"github.com/ViBiOh/httputils/v2/pkg/errors"
 	"github.com/ViBiOh/httputils/v2/pkg/query"
+)
+
+var (
+	// ErrCannotMarshall occurs when marshaller failed
+	ErrCannotMarshall = errors.New("cannot marshall json")
 )
 
 type results struct {
@@ -27,26 +33,20 @@ func IsPretty(r *http.Request) bool {
 
 // ResponseJSON write marshalled obj to http.ResponseWriter with correct header
 func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty bool) error {
-	var objJSON []byte
-	var err error
+	encoder := json.NewEncoder(w)
 
 	if pretty {
-		objJSON, err = json.MarshalIndent(obj, "", "  ")
-	} else {
-		objJSON, err = json.Marshal(obj)
-	}
-
-	if err != nil {
-		return errors.WithStack(err)
+		encoder.SetIndent("", "  ")
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.WriteHeader(status)
 
-	if _, err := w.Write(objJSON); err != nil {
-		return errors.WithStack(err)
+	if err := encoder.Encode(obj); err != nil {
+		return fmt.Errorf("%s: %w", err, ErrCannotMarshall)
 	}
+
 	return nil
 }
 

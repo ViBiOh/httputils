@@ -1,12 +1,11 @@
 package crud
 
 import (
-	goerrors "errors"
+	"errors"
 	"flag"
 	"net/http"
 	"net/url"
 
-	"github.com/ViBiOh/httputils/v2/pkg/errors"
 	"github.com/ViBiOh/httputils/v2/pkg/httperror"
 	"github.com/ViBiOh/httputils/v2/pkg/httpjson"
 	"github.com/ViBiOh/httputils/v2/pkg/pagination"
@@ -16,10 +15,10 @@ import (
 
 var (
 	// ErrNotFound occurs when item with given ID if not found
-	ErrNotFound = goerrors.New("item not found")
+	ErrNotFound = errors.New("item not found")
 
 	// ErrInvalid occurs when invalid action is requested
-	ErrInvalid = goerrors.New("invalid")
+	ErrInvalid = errors.New("invalid")
 )
 
 // Config of package
@@ -61,15 +60,9 @@ func handleError(w http.ResponseWriter, err error) bool {
 		return false
 	}
 
-	var originErr error
-
-	if wrappedError, ok := err.(errors.Error); ok {
-		originErr = wrappedError.Cause()
-	}
-
-	if err == ErrInvalid || originErr == ErrInvalid {
+	if errors.Is(err, ErrInvalid) {
 		httperror.BadRequest(w, err)
-	} else if err == ErrNotFound || originErr == ErrNotFound {
+	} else if errors.Is(err, ErrNotFound) {
 		httperror.NotFound(w)
 	} else {
 		httperror.InternalServerError(w, err)

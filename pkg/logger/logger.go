@@ -5,8 +5,6 @@ import (
 	"log"
 	"os"
 	"sync"
-
-	"github.com/ViBiOh/httputils/v2/pkg/errors"
 )
 
 func init() {
@@ -21,13 +19,10 @@ var (
 	mutex = sync.RWMutex{}
 )
 
-func output(l *log.Logger, format string, a ...interface{}) string {
-	content := fmt.Sprintf(format, a...)
-	if err := l.Output(3, content); err != nil {
-		log.Printf("%#v", errors.WithStack(err))
+func output(l *log.Logger, format string, a ...interface{}) {
+	if err := l.Output(3, fmt.Sprintf(format, a...)); err != nil {
+		log.Printf("%s", err)
 	}
-
-	return content
 }
 
 // Info log info message
@@ -51,6 +46,6 @@ func Fatal(err error) {
 		return
 	}
 
-	output(erro, "%#v", err)
+	output(erro, "%s", err)
 	os.Exit(1)
 }

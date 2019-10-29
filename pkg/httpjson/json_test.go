@@ -16,47 +16,23 @@ type testStruct struct {
 	Amount float64
 }
 
-func testFn() string {
-	return "toto"
-}
-
 func TestIsPretty(t *testing.T) {
-	emptyRequest, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
-	prettyRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?pretty", nil)
-	prettyValueRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?test=1&pretty=false", nil)
-	prettyInvalidRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?test=1&pretty=invalidBool", nil)
-
 	var cases = []struct {
 		intention string
-		request   *http.Request
+		input     *http.Request
 		want      bool
 	}{
 		{
-			"should work with empty param",
-			emptyRequest,
-			false,
-		},
-		{
-			"should work with pretty param",
-			prettyRequest,
+			"empty",
+			httptest.NewRequest(http.MethodGet, "/?pretty", nil),
 			true,
-		},
-		{
-			"should work with pretty value",
-			prettyValueRequest,
-			false,
-		},
-		{
-			"should work with pretty value not equal to a boolean",
-			prettyInvalidRequest,
-			false,
 		},
 	}
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			if result := IsPretty(testCase.request); result != testCase.want {
-				t.Errorf("IsPretty(%#v) = %#v, want %#v", testCase.request, result, testCase.want)
+			if result := IsPretty(testCase.input); result != testCase.want {
+				t.Errorf("IsPretty() = %#v, want %#v", result, testCase.want)
 			}
 		})
 	}
@@ -73,39 +49,38 @@ func TestResponseJSON(t *testing.T) {
 	}{
 
 		{
-			"should work with nil obj",
+			"nil",
 			nil,
 			false,
-			"null",
+			"null\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 			nil,
 		},
 		{
-			"should work with given obj",
+			"simple object",
 			testStruct{id: "Test"},
 			false,
-			`{"Active":false,"Amount":0}`,
+			"{\"Active\":false,\"Amount\":0}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 			nil,
 		},
 		{
-			"should work with pretty print",
+			"pretty",
 			testStruct{id: "Test", Active: true, Amount: 12.34},
 			true,
-			`{
-  "Active": true,
-  "Amount": 12.34
-}`,
+			"{\n  \"Active\": true,\n  \"Amount\": 12.34\n}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 			nil,
 		},
 		{
-			"should work with error print",
-			testFn,
+			"error",
+			func() string {
+				return "test"
+			},
 			false,
 			"",
 			nil,
-			errors.New("json: unsupported type: func() string"),
+			ErrCannotMarshall,
 		},
 	}
 
@@ -113,29 +88,23 @@ func TestResponseJSON(t *testing.T) {
 		t.Run(testCase.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			err := ResponseJSON(writer, http.StatusOK, testCase.obj, testCase.pretty)
-
-			rawResult, _ := request.ReadBodyResponse(writer.Result())
-			result := string(rawResult)
+			result, _ := request.ReadBodyResponse(writer.Result())
 
 			failed := false
 
-			if err == nil && testCase.wantErr != nil {
+			if testCase.wantErr != nil && !errors.Is(err, testCase.wantErr) {
 				failed = true
-			} else if err != nil && testCase.wantErr == nil {
-				failed = true
-			} else if err != nil && err.Error() != testCase.wantErr.Error() {
-				failed = true
-			} else if result != testCase.want {
+			} else if string(result) != testCase.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("ResponseJSON(%#v, %#v) = (%#v, %#v), want (%#v, %#v)", testCase.obj, testCase.pretty, result, err, testCase.want, testCase.wantErr)
+				t.Errorf("ResponseJSON() = (%s, %#v), want (%s, %#v)", string(result), err, testCase.want, testCase.wantErr)
 			}
 
 			for key, value := range testCase.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
-					t.Errorf("ResponseJSON(%#v).Header[%s] = %#v, want %#v", testCase.obj, key, strings.Join(result, ""), value)
+					t.Errorf("ResponseJSON().Header[%s] = %s, want %s", key, strings.Join(result, ""), value)
 				}
 			}
 		})
@@ -146,7 +115,7 @@ func BenchmarkResponseJSON(b *testing.B) {
 	var testCase = struct {
 		obj interface{}
 	}{
-		testStruct{id: "Test"},
+		testStruct{id: "Test", Active: true, Amount: 12.34},
 	}
 
 	writer := httptest.NewRecorder()
@@ -158,42 +127,40 @@ func BenchmarkResponseJSON(b *testing.B) {
 
 func TestResponseArrayJSON(t *testing.T) {
 	var cases = []struct {
+		intention  string
 		obj        interface{}
 		want       string
-		wantStatus int
 		wantHeader map[string]string
 	}{
 		{
+			"nil",
 			nil,
-			`{"results":null}`,
-			http.StatusOK,
+			"{\"results\":null}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		{
-			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}]}`,
-			http.StatusOK,
+			"simple",
+			[]testStruct{{id: "First", Active: true, Amount: 12.34}, {id: "Second", Active: true, Amount: 12.34}},
+			"{\"results\":[{\"Active\":true,\"Amount\":12.34},{\"Active\":true,\"Amount\":12.34}]}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 	}
 
 	for _, testCase := range cases {
-		writer := httptest.NewRecorder()
-		ResponseArrayJSON(writer, http.StatusOK, testCase.obj, false)
+		t.Run(testCase.intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
+			ResponseArrayJSON(writer, http.StatusOK, testCase.obj, false)
 
-		if result := writer.Result().StatusCode; result != testCase.wantStatus {
-			t.Errorf("ResponseJSON(%#v) = %#v, want %#v", testCase.obj, result, testCase.wantStatus)
-		}
-
-		if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-			t.Errorf("ResponseJSON(%#v) = %#v, want %#v", testCase.obj, string(result), testCase.want)
-		}
-
-		for key, value := range testCase.wantHeader {
-			if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
-				t.Errorf("ResponseJSON(%#v).Header[%s] = %#v, want %#v", testCase.obj, key, strings.Join(result, ""), value)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("TestResponseArrayJSON() = %s, want %s", string(result), testCase.want)
 			}
-		}
+
+			for key, value := range testCase.wantHeader {
+				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
+					t.Errorf("TestResponseArrayJSON().Header[%s] = %s, want %s", key, strings.Join(result, ""), value)
+				}
+			}
+		})
 	}
 }
 
@@ -205,37 +172,33 @@ func TestResponsePaginatedJSON(t *testing.T) {
 		total      uint
 		obj        interface{}
 		want       string
-		wantStatus int
 		wantHeader map[string]string
 	}{
 		{
-			"should work with given params",
+			"simple",
 			1,
 			2,
 			2,
 			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":2,"pageCount":1,"total":2}`,
-			http.StatusOK,
+			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"page\":1,\"pageSize\":2,\"pageCount\":1,\"total\":2}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		{
-			"should calcul page count when pageSize match total",
+			"compute page count rounded",
 			1,
 			10,
 			40,
 			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":10,"pageCount":4,"total":40}`,
-			http.StatusOK,
+			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"page\":1,\"pageSize\":10,\"pageCount\":4,\"total\":40}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		{
-			"should calcul page count when pageSize don't match total",
+			"compute page count exceed",
 			1,
 			10,
 			45,
 			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			`{"results":[{"Active":false,"Amount":0},{"Active":true,"Amount":12.34}],"page":1,"pageSize":10,"pageCount":5,"total":45}`,
-			http.StatusOK,
+			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"page\":1,\"pageSize\":10,\"pageCount\":5,\"total\":45}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 	}
@@ -245,17 +208,13 @@ func TestResponsePaginatedJSON(t *testing.T) {
 			writer := httptest.NewRecorder()
 			ResponsePaginatedJSON(writer, http.StatusOK, testCase.page, testCase.pageSize, testCase.total, testCase.obj, false)
 
-			if result := writer.Result().StatusCode; result != testCase.wantStatus {
-				t.Errorf("ResponsePaginatedJSON(%#v, %#v) = %#v, want %#v", testCase.total, testCase.obj, result, testCase.wantStatus)
-			}
-
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("ResponsePaginatedJSON(%#v, %#v) = %#v, want %#v", testCase.total, testCase.obj, string(result), testCase.want)
+				t.Errorf("ResponsePaginatedJSON() = %s, want %s", string(result), testCase.want)
 			}
 
 			for key, value := range testCase.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
-					t.Errorf("ResponsePaginatedJSON(%#v, %#v).Header[%s] = %#v, want %#v", testCase.total, testCase.obj, key, strings.Join(result, ""), value)
+					t.Errorf("ResponsePaginatedJSON().Header[%s] = %s, want %s", key, strings.Join(result, ""), value)
 				}
 			}
 		})
