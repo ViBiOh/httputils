@@ -97,13 +97,13 @@ func readFilters(r *http.Request) map[string][]string {
 }
 
 func (a App) list(w http.ResponseWriter, r *http.Request) {
-	page, pageSize, sortKey, sortAsc, err := pagination.ParseParams(r, a.defaultPage, a.defaultPageSize, a.maxPageSize)
+	params, err := pagination.ParseParams(r, a.defaultPage, a.defaultPageSize, a.maxPageSize)
 	if err != nil {
 		httperror.BadRequest(w, err)
 		return
 	}
 
-	list, total, err := a.service.List(r.Context(), page, pageSize, sortKey, sortAsc, readFilters(r))
+	list, total, err := a.service.List(r.Context(), params.Page, params.PageSize, params.Sort, params.Desc, readFilters(r))
 	if handleError(w, err) {
 		return
 	}
@@ -113,7 +113,7 @@ func (a App) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := httpjson.ResponsePaginatedJSON(w, http.StatusOK, page, pageSize, total, list, httpjson.IsPretty(r)); err != nil {
+	if err := httpjson.ResponsePaginatedJSON(w, http.StatusOK, params.Page, params.PageSize, total, list, httpjson.IsPretty(r)); err != nil {
 		httperror.InternalServerError(w, err)
 		return
 	}

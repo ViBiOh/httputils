@@ -9,20 +9,25 @@ import (
 
 // GetBool converts query params to boolean
 func GetBool(r *http.Request, name string) bool {
-	if params, err := url.ParseQuery(r.URL.RawQuery); err == nil {
-		if value, ok := params[name]; ok {
-			strValue := strings.Join(value, "")
-			if strValue == "" {
-				return true
-			}
-
-			pretty, err := strconv.ParseBool(strValue)
-			if err != nil {
-				return false
-			}
-			return pretty
-		}
+	params, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return false
 	}
 
-	return false
+	value, ok := params[name]
+	if !ok {
+		return false
+	}
+
+	strValue := strings.Join(value, "")
+	if strValue == "" {
+		return true
+	}
+
+	boolValue, err := strconv.ParseBool(strValue)
+	if err != nil {
+		return false
+	}
+
+	return boolValue
 }
