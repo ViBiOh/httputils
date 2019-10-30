@@ -3,7 +3,6 @@ package request
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,73 +10,82 @@ import (
 
 func TestDoAndRead(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/bad" {
+		if r.URL.Path == "/simple" {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("valid"))
+			return
+		}
+
+		if r.URL.Path == "/invalid" {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("oops"))
-		} else {
-			fmt.Fprint(w, "Hello, test")
+			w.Write([]byte("invalid"))
+			return
+		}
+
+		if r.URL.Path == "/internalError" {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 	}))
 	defer testServer.Close()
 
-	emptyRequest, _ := http.NewRequest(http.MethodGet, "", nil)
-	bad, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/bad", testServer.URL), nil)
-	test, _ := http.NewRequest(http.MethodGet, testServer.URL, nil)
+	simple, _ := http.NewRequest(http.MethodGet, testServer.URL+"/simple", nil)
+	invalid, _ := http.NewRequest(http.MethodGet, testServer.URL+"/invalid", nil)
+	internalError, _ := http.NewRequest(http.MethodGet, testServer.URL+"/internalError", nil)
 
 	var cases = []struct {
-		ctx     context.Context
-		request *http.Request
-		want    string
-		wantErr error
+		intention  string
+		ctx        context.Context
+		request    *http.Request
+		want       string
+		wantStatus int
+		wantErr    error
 	}{
 		{
+			"simple",
+			context.Background(),
+			simple,
+			"valid",
+			http.StatusOK,
 			nil,
-			emptyRequest,
+		},
+		{
+			"invalid",
+			context.Background(),
+			invalid,
 			"",
-			errors.New("Get : unsupported protocol scheme \"\""),
+			http.StatusBadRequest,
+			errors.New("HTTP/400\ninvalid"),
 		},
 		{
-			nil,
-			bad,
-			"oops",
-			errors.New("error status 400"),
-		},
-		{
-			nil,
-			test,
-			"Hello, test",
-			nil,
-		},
-		{
-			nil,
-			test,
-			"Hello, test",
-			nil,
+			"internalError",
+			context.Background(),
+			internalError,
+			"",
+			http.StatusInternalServerError,
+			errors.New("HTTP/500"),
 		},
 	}
 
 	for _, testCase := range cases {
-		result, _, _, err := DoAndRead(testCase.ctx, testCase.request)
+		t.Run(testCase.intention, func(t *testing.T) {
+			rawResult, status, _, err := DoAndRead(testCase.ctx, testCase.request)
 
-		failed := false
-		var content []byte
+			result, _ := ReadBody(rawResult)
 
-		if err == nil && testCase.wantErr != nil {
-			failed = true
-		} else if err != nil && testCase.wantErr == nil {
-			failed = true
-		} else if err != nil && err.Error() != testCase.wantErr.Error() {
-			failed = true
-		} else if result != nil {
-			content, _ = ReadBody(result)
+			failed := false
 
-			if string(content) != testCase.want {
+			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
+				failed = true
+			} else if string(result) != testCase.want {
+				failed = true
+			} else if status != testCase.wantStatus {
 				failed = true
 			}
-		}
 
-		if failed {
-			t.Errorf("DoAndRead(%#v) = (%#v, %#v), want (%#v, %#v)", testCase.request, string(content), err, testCase.want, testCase.wantErr)
-		}
+			if failed {
+				t.Errorf("DoAndRead() = (%s, %d, %#v), want (%s, %d, %#v)", result, status, err, testCase.want, testCase.wantStatus, testCase.wantErr)
+			}
+		})
 	}
 }

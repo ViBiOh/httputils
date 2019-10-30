@@ -51,14 +51,6 @@ func TestDoJSON(t *testing.T) {
 		},
 		{
 			nil,
-			"",
-			nil,
-			nil,
-			"",
-			errors.New("Post : unsupported protocol scheme \"\""),
-		},
-		{
-			nil,
 			testServer.URL,
 			&postStruct{},
 			http.Header{"Authorization": {"admin:password"}},
