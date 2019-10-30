@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/ViBiOh/httputils/v2/pkg/errors"
 )
 
 const (
@@ -17,73 +15,38 @@ const (
 	ContentTypeHeader = "Content-Type"
 )
 
+func setHeader(headers http.Header, key, value string) http.Header {
+	if headers == nil {
+		headers = http.Header{}
+	}
+
+	headers.Set(key, value)
+
+	return headers
+}
+
 // New prepare a request from given params
-func New(method string, url string, body io.Reader, headers http.Header) (req *http.Request, err error) {
-	req, err = http.NewRequest(method, url, body)
+func New(ctx context.Context, method string, url string, body io.Reader, headers http.Header) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	req.Header = headers
 
-	return
-}
-
-// JSON prepare a JSON request from given params
-func JSON(method string, url string, body interface{}, headers http.Header) (*http.Request, error) {
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	if headers == nil {
-		headers = http.Header{}
-	}
-	headers.Set(ContentTypeHeader, "application/json")
-
-	return New(method, url, bytes.NewBuffer(jsonBody), headers)
+	return req, nil
 }
 
 // Form prepare a Form request from given params
-func Form(method string, url string, data url.Values, headers http.Header) (*http.Request, error) {
-	if headers == nil {
-		headers = http.Header{}
-	}
-	headers.Set(ContentTypeHeader, "application/x-www-form-urlencoded")
-
-	return New(method, url, strings.NewReader(data.Encode()), headers)
+func Form(ctx context.Context, method string, url string, data url.Values, headers http.Header) (*http.Request, error) {
+	return New(ctx, method, url, strings.NewReader(data.Encode()), setHeader(headers, ContentTypeHeader, "application/x-www-form-urlencoded"))
 }
 
-// Do send given method with given content to URL with optional headers supplied
-func Do(ctx context.Context, method string, url string, body io.Reader, headers http.Header) (io.ReadCloser, int, http.Header, error) {
-	req, err := New(method, url, body, headers)
+// JSON prepare a JSON request from given params
+func JSON(ctx context.Context, method string, url string, body interface{}, headers http.Header) (*http.Request, error) {
+	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		return nil, 0, nil, err
+		return nil, err
 	}
 
-	return DoAndRead(ctx, req)
-}
-
-// DoJSON send given method with given interface{} as JSON to URL with optional headers supplied
-func DoJSON(ctx context.Context, url string, data interface{}, headers http.Header, method string) (io.ReadCloser, int, http.Header, error) {
-	req, err := JSON(method, url, data, headers)
-	if err != nil {
-		return nil, 0, nil, err
-	}
-
-	return DoAndRead(ctx, req)
-}
-
-// PostForm send form via POST with urlencoded data
-func PostForm(ctx context.Context, url string, data url.Values, headers http.Header) (io.ReadCloser, int, http.Header, error) {
-	req, err := Form(http.MethodPost, url, data, headers)
-	if err != nil {
-		return nil, 0, nil, err
-	}
-
-	return DoAndRead(ctx, req)
-}
-
-// Get send GET request to URL with optional headers supplied
-func Get(ctx context.Context, url string, headers http.Header) (io.ReadCloser, int, http.Header, error) {
-	return Do(ctx, http.MethodGet, url, nil, headers)
+	return New(ctx, method, url, bytes.NewBuffer(jsonBody), setHeader(headers, ContentTypeHeader, "application/json"))
 }

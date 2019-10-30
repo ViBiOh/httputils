@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -15,9 +16,9 @@ var defaultHTTPClient = http.Client{
 	},
 }
 
-// DoAndReadWithClient execute request and return output with given client
-func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.Request) (body io.ReadCloser, status int, headers http.Header, err error) {
-	response, doErr := client.Do(request)
+// DoWithClient execute request and return output with given client
+func DoWithClient(ctx context.Context, client http.Client, req *http.Request) (body io.ReadCloser, status int, headers http.Header, err error) {
+	response, doErr := client.Do(req)
 
 	if response != nil {
 		body = response.Body
@@ -42,7 +43,37 @@ func DoAndReadWithClient(ctx context.Context, client http.Client, request *http.
 	return
 }
 
-// DoAndRead execute request and return output
-func DoAndRead(ctx context.Context, request *http.Request) (io.ReadCloser, int, http.Header, error) {
-	return DoAndReadWithClient(ctx, defaultHTTPClient, request)
+// Do send given method with given content to URL with optional headers supplied
+func Do(ctx context.Context, req *http.Request) (io.ReadCloser, int, http.Header, error) {
+	return DoWithClient(ctx, defaultHTTPClient, req)
+}
+
+// Get send GET request to URL with optional headers supplied
+func Get(ctx context.Context, url string, headers http.Header) (io.ReadCloser, int, http.Header, error) {
+	req, err := New(ctx, http.MethodGet, url, nil, headers)
+	if err != nil {
+		return nil, 0, nil, err
+	}
+
+	return Do(ctx, req)
+}
+
+// Post send form via POST with urlencoded data
+func Post(ctx context.Context, url string, data url.Values, headers http.Header) (io.ReadCloser, int, http.Header, error) {
+	req, err := Form(ctx, http.MethodPost, url, data, headers)
+	if err != nil {
+		return nil, 0, nil, err
+	}
+
+	return Do(ctx, req)
+}
+
+// PostJSON send given method with given interface{} as JSON to URL with optional headers supplied
+func PostJSON(ctx context.Context, url string, data interface{}, headers http.Header) (io.ReadCloser, int, http.Header, error) {
+	req, err := JSON(ctx, http.MethodPost, url, data, headers)
+	if err != nil {
+		return nil, 0, nil, err
+	}
+
+	return Do(ctx, req)
 }

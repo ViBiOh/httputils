@@ -59,7 +59,7 @@ func TestWriteHTMLTemplate(t *testing.T) {
 				t.Errorf("WriteHTMLTemplate() = %#v, want error %#v", err, testCase.wantErr)
 			}
 
-			if result, _ := request.ReadBody(writer.Result().Body); string(result) != testCase.want {
+			if result, _ := request.ReadContent(writer.Result().Body); string(result) != testCase.want {
 				t.Errorf("WriteHTMLTemplate() = `%s`, want `%s`", string(result), testCase.want)
 			}
 		})

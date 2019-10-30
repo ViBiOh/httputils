@@ -43,7 +43,7 @@ func (errReaderCloser) Close() error {
 	return errors.New("close error")
 }
 
-func TestReadBody(t *testing.T) {
+func TestReadContent(t *testing.T) {
 	var cases = []struct {
 		intention string
 		reader    io.ReadCloser
@@ -90,7 +90,7 @@ func TestReadBody(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			result, err := ReadBody(testCase.reader)
+			result, err := ReadContent(testCase.reader)
 
 			failed := false
 
@@ -101,7 +101,7 @@ func TestReadBody(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("ReadBody() = (%#v, %#v), want (%#v, %#v)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("ReadContent() = (%#v, %#v), want (%#v, %#v)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
