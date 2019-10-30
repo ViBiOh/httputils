@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ViBiOh/httputils/v2/pkg/query"
 	"github.com/ViBiOh/httputils/v2/pkg/tools"
 )
 
@@ -55,7 +56,7 @@ func (a App) Handler(next http.Handler) http.Handler {
 		}
 
 		if next != nil {
-			next.ServeHTTP(&middleware{w, tools.IsRoot(r), false}, r)
+			next.ServeHTTP(&middleware{w, query.IsRoot(r), false}, r)
 		}
 	})
 }

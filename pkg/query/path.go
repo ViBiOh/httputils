@@ -1,4 +1,4 @@
-package tools
+package query
 
 import (
 	"net/http"

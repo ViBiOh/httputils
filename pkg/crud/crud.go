@@ -190,14 +190,14 @@ func (a App) delete(w http.ResponseWriter, r *http.Request, id string) {
 // Handler for CRUD requests. Should be use with net/http
 func (a App) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		isRoot := tools.IsRoot(r)
+		isRoot := query.IsRoot(r)
 
 		switch r.Method {
 		case http.MethodGet:
 			if isRoot {
 				a.list(w, r)
 			} else {
-				a.get(w, r, tools.GetID(r))
+				a.get(w, r, query.GetID(r))
 			}
 
 		case http.MethodPost:
@@ -209,14 +209,14 @@ func (a App) Handler() http.Handler {
 
 		case http.MethodPut:
 			if !isRoot {
-				a.update(w, r, tools.GetID(r))
+				a.update(w, r, query.GetID(r))
 			} else {
 				w.WriteHeader(http.StatusMethodNotAllowed)
 			}
 
 		case http.MethodDelete:
 			if !isRoot {
-				a.delete(w, r, tools.GetID(r))
+				a.delete(w, r, query.GetID(r))
 			} else {
 				w.WriteHeader(http.StatusMethodNotAllowed)
 			}
