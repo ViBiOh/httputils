@@ -1,11 +1,69 @@
 package cors
 
 import (
+	"flag"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 )
+
+func TestFlags(t *testing.T) {
+	var cases = []struct {
+		intention string
+		want      string
+	}{
+		{
+			"simple",
+			"Usage of simple:\n  -credentials\n    \t[cors] Access-Control-Allow-Credentials {SIMPLE_CREDENTIALS}\n  -expose string\n    \t[cors] Access-Control-Expose-Headers {SIMPLE_EXPOSE}\n  -headers string\n    \t[cors] Access-Control-Allow-Headers {SIMPLE_HEADERS} (default \"Content-Type\")\n  -methods string\n    \t[cors] Access-Control-Allow-Methods {SIMPLE_METHODS} (default \"GET\")\n  -origin string\n    \t[cors] Access-Control-Allow-Origin {SIMPLE_ORIGIN} (default \"*\")\n",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
+			Flags(fs, "")
+
+			var writer strings.Builder
+			fs.SetOutput(&writer)
+			fs.Usage()
+
+			result := writer.String()
+
+			if result != testCase.want {
+				t.Errorf("Flags() = %s, want %s", result, testCase.want)
+			}
+		})
+	}
+}
+
+func TestNew(t *testing.T) {
+	var cases = []struct {
+		intention string
+		want      App
+	}{
+		{
+			"simple",
+			&app{
+				origin:      "*",
+				headers:     "Content-Type",
+				methods:     http.MethodGet,
+				credentials: "false",
+			},
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
+
+			if result := New(Flags(fs, "")); !reflect.DeepEqual(result, testCase.want) {
+				t.Errorf("New() = %#v, want %#v", result, testCase.want)
+			}
+		})
+	}
+}
 
 func TestHandler(t *testing.T) {
 	var cases = []struct {

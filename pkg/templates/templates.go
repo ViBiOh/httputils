@@ -25,7 +25,11 @@ func init() {
 func GetTemplates(dir, ext string) ([]string, error) {
 	output := make([]string, 0)
 
-	if err := filepath.Walk(dir, func(walkedPath string, info os.FileInfo, _ error) error {
+	if err := filepath.Walk(dir, func(walkedPath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if path.Ext(info.Name()) == ext {
 			output = append(output, walkedPath)
 		}
@@ -54,14 +58,14 @@ func WriteHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content in
 
 // WriteXMLTemplate write template name from given template into writer for provided content with XML minification
 func WriteXMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
-	templateBuffer := &bytes.Buffer{}
+	var templateBuffer bytes.Buffer
 	templateBuffer.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-	if err := tpl.Execute(templateBuffer, content); err != nil {
+	if err := tpl.Execute(&templateBuffer, content); err != nil {
 		return err
 	}
 
 	w.Header().Set("Content-Type", "text/xml; charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.WriteHeader(status)
-	return minifier.Minify("text/xml", w, templateBuffer)
+	return minifier.Minify("text/xml", w, &templateBuffer)
 }

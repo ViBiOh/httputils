@@ -45,7 +45,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
 		defaultPage:     flags.New(prefix, "crud").Name("DefaultPage").Default(1).Label("Default page").ToUint(fs),
 		defaultPageSize: flags.New(prefix, "crud").Name("DefaultPageSize").Default(20).Label("Default page size").ToUint(fs),
-		maxPageSize:     flags.New(prefix, "crud").Name("MaxPageSize").Default(500).Label("Max page size").ToUint(fs),
+		maxPageSize:     flags.New(prefix, "crud").Name("MaxPageSize").Default(100).Label("Max page size").ToUint(fs),
 	}
 }
 

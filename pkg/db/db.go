@@ -12,21 +12,23 @@ import (
 
 // Config of package
 type Config struct {
-	host *string
-	port *string
-	user *string
-	pass *string
-	name *string
+	host    *string
+	port    *string
+	user    *string
+	pass    *string
+	name    *string
+	sslmode *string
 }
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		host: flags.New(prefix, "database").Name("Host").Default("").Label("Host").ToString(fs),
-		port: flags.New(prefix, "database").Name("Port").Default("5432").Label("Port").ToString(fs),
-		user: flags.New(prefix, "database").Name("User").Default("").Label("User").ToString(fs),
-		pass: flags.New(prefix, "database").Name("Pass").Default("").Label("Pass").ToString(fs),
-		name: flags.New(prefix, "database").Name("Name").Default("").Label("Name").ToString(fs),
+		host:    flags.New(prefix, "database").Name("Host").Default("").Label("Host").ToString(fs),
+		port:    flags.New(prefix, "database").Name("Port").Default("5432").Label("Port").ToString(fs),
+		user:    flags.New(prefix, "database").Name("User").Default("").Label("User").ToString(fs),
+		pass:    flags.New(prefix, "database").Name("Pass").Default("").Label("Pass").ToString(fs),
+		name:    flags.New(prefix, "database").Name("Name").Default("").Label("Name").ToString(fs),
+		sslmode: flags.New(prefix, "database").Name("Sslmode").Default("disable").Label("SSL Mode").ToString(fs),
 	}
 }
 
@@ -41,8 +43,9 @@ func New(config Config) (*sql.DB, error) {
 	user := strings.TrimSpace(*config.user)
 	pass := strings.TrimSpace(*config.pass)
 	name := strings.TrimSpace(*config.name)
+	sslmode := strings.TrimSpace(*config.sslmode)
 
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, pass, name))
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", host, port, user, pass, name, sslmode))
 	if err != nil {
 		return nil, err
 	}
@@ -77,10 +80,10 @@ func GetTx(db *sql.DB, tx *sql.Tx) (*sql.Tx, error) {
 func EndTx(tx *sql.Tx, err error) error {
 	if err != nil {
 		if endErr := tx.Rollback(); endErr != nil {
-			return fmt.Errorf("%s: %w", err, endErr)
+			err = fmt.Errorf("%s: %w", err, endErr)
 		}
-	} else if endErr := tx.Commit(); endErr != nil {
-		return err
+	} else {
+		err = tx.Commit()
 	}
 
 	return err
@@ -90,9 +93,10 @@ func EndTx(tx *sql.Tx, err error) error {
 func RowsClose(rows *sql.Rows, err error) error {
 	if endErr := rows.Close(); endErr != nil {
 		if err == nil {
-			return endErr
+			err = endErr
+		} else {
+			err = fmt.Errorf("%s: %w", err, endErr)
 		}
-		return fmt.Errorf("%s: %w", err, endErr)
 	}
 
 	return err

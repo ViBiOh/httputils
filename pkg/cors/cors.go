@@ -4,6 +4,7 @@ import (
 	"flag"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/ViBiOh/httputils/v2/pkg/flags"
 	"github.com/ViBiOh/httputils/v2/pkg/model"
@@ -49,10 +50,10 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 // New creates new App from Config
 func New(config Config) App {
 	return &app{
-		origin:      *config.origin,
-		headers:     *config.headers,
-		methods:     *config.methods,
-		exposes:     *config.exposes,
+		origin:      strings.TrimSpace(*config.origin),
+		headers:     strings.TrimSpace(*config.headers),
+		methods:     strings.TrimSpace(*config.methods),
+		exposes:     strings.TrimSpace(*config.exposes),
 		credentials: strconv.FormatBool(*config.credentials),
 	}
 }
