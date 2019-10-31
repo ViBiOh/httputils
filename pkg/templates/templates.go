@@ -8,7 +8,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/ViBiOh/httputils/v2/pkg/errors"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/html"
 	"github.com/tdewolff/minify/v2/svg"
@@ -33,7 +32,7 @@ func GetTemplates(dir, ext string) ([]string, error) {
 
 		return nil
 	}); err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	return output, nil
@@ -43,14 +42,14 @@ func GetTemplates(dir, ext string) ([]string, error) {
 func WriteHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
 	templateBuffer := &bytes.Buffer{}
 	if err := tpl.Execute(templateBuffer, content); err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("X-UA-Compatible", "ie=edge")
 	w.WriteHeader(status)
-	return errors.WithStack(minifier.Minify("text/html", w, templateBuffer))
+	return minifier.Minify("text/html", w, templateBuffer)
 }
 
 // WriteXMLTemplate write template name from given template into writer for provided content with XML minification
@@ -58,11 +57,11 @@ func WriteXMLTemplate(tpl *template.Template, w http.ResponseWriter, content int
 	templateBuffer := &bytes.Buffer{}
 	templateBuffer.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
 	if err := tpl.Execute(templateBuffer, content); err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	w.Header().Set("Content-Type", "text/xml; charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.WriteHeader(status)
-	return errors.WithStack(minifier.Minify("text/xml", w, templateBuffer))
+	return minifier.Minify("text/xml", w, templateBuffer)
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ViBiOh/httputils/v2/pkg/errors"
 	"github.com/ViBiOh/httputils/v2/pkg/flags"
 	_ "github.com/lib/pq" // Not referenced but needed for database/sql
 )
@@ -45,11 +44,11 @@ func New(config Config) (*sql.DB, error) {
 
 	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, pass, name))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	if err = db.Ping(); err != nil {
-		return db, errors.WithStack(err)
+		return db, err
 	}
 
 	return db, nil
@@ -66,7 +65,7 @@ func GetTx(db *sql.DB, tx *sql.Tx) (*sql.Tx, error) {
 		usedTx, err := db.Begin()
 
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		return usedTx, nil
 	}
@@ -78,10 +77,10 @@ func GetTx(db *sql.DB, tx *sql.Tx) (*sql.Tx, error) {
 func EndTx(tx *sql.Tx, err error) error {
 	if err != nil {
 		if endErr := tx.Rollback(); endErr != nil {
-			return errors.New("%#v, and also %#v", err, endErr)
+			return fmt.Errorf("%s: %w", err, endErr)
 		}
 	} else if endErr := tx.Commit(); endErr != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	return err
@@ -91,9 +90,9 @@ func EndTx(tx *sql.Tx, err error) error {
 func RowsClose(rows *sql.Rows, err error) error {
 	if endErr := rows.Close(); endErr != nil {
 		if err == nil {
-			return errors.WithStack(endErr)
+			return endErr
 		}
-		return errors.New("%#v, and also %#v", err, endErr)
+		return fmt.Errorf("%s: %w", err, endErr)
 	}
 
 	return err

@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ViBiOh/httputils/v2/pkg/errors"
 	"github.com/ViBiOh/httputils/v2/pkg/flags"
 	"github.com/ViBiOh/httputils/v2/pkg/logger"
 	"github.com/ViBiOh/httputils/v2/pkg/model"
@@ -71,7 +70,7 @@ func VersionHandler() http.Handler {
 		}
 
 		if _, err := w.Write([]byte(version)); err != nil {
-			logger.Error("%#v", errors.WithStack(err))
+			logger.Error("%s", err)
 		}
 	})
 }
@@ -132,10 +131,10 @@ func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler, on
 	go func() {
 		if a.cert != "" && a.key != "" {
 			logger.Info("Listening with TLS")
-			errorOutput <- errors.WithStack(httpServer.ListenAndServeTLS(a.cert, a.key))
+			errorOutput <- httpServer.ListenAndServeTLS(a.cert, a.key)
 		} else {
 			logger.Warn("Listening without TLS")
-			errorOutput <- errors.WithStack(httpServer.ListenAndServe())
+			errorOutput <- httpServer.ListenAndServe()
 		}
 	}()
 
@@ -148,7 +147,7 @@ func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler, on
 	defer cancel()
 
 	if err := httpServer.Shutdown(ctx); err != nil {
-		logger.Error("%#v", errors.WithStack(err))
+		logger.Error("%s", err)
 	}
 }
 
@@ -158,7 +157,7 @@ func waitForTermination(errorInput <-chan error) {
 
 	select {
 	case err := <-errorInput:
-		logger.Error("%#v", err)
+		logger.Error("%s", err)
 	case signal := <-signals:
 		logger.Info("%s received", signal)
 	}

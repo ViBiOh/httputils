@@ -1,7 +1,5 @@
 package breaksync
 
-import "github.com/ViBiOh/httputils/v2/pkg/errors"
-
 const finalValue = "\uffff"
 
 // Synchronization in a break/sync algorithm
@@ -23,7 +21,7 @@ func (s *Synchronization) read() error {
 	for _, source := range s.Sources {
 		if source.synchronized && (source.readRupture == nil || source.readRupture.last) {
 			if _, err := source.read(); err != nil {
-				return errors.WithStack(err)
+				return err
 			}
 		}
 	}
