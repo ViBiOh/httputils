@@ -1,11 +1,68 @@
 package owasp
 
 import (
+	"flag"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 )
+
+func TestFlags(t *testing.T) {
+	var cases = []struct {
+		intention string
+		want      string
+	}{
+		{
+			"simple",
+			"Usage of simple:\n  -csp string\n    \t[owasp] Content-Security-Policy {SIMPLE_CSP} (default \"default-src 'self'; base-uri 'self'\")\n  -frameOptions string\n    \t[owasp] X-Frame-Options {SIMPLE_FRAME_OPTIONS} (default \"deny\")\n  -hsts\n    \t[owasp] Indicate Strict Transport Security {SIMPLE_HSTS} (default true)\n",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
+			Flags(fs, "")
+
+			var writer strings.Builder
+			fs.SetOutput(&writer)
+			fs.Usage()
+
+			result := writer.String()
+
+			if result != testCase.want {
+				t.Errorf("Flags() = %s, want %s", result, testCase.want)
+			}
+		})
+	}
+}
+
+func TestNew(t *testing.T) {
+	var cases = []struct {
+		intention string
+		want      App
+	}{
+		{
+			"simple",
+			&app{
+				csp:          "default-src 'self'; base-uri 'self'",
+				hsts:         true,
+				frameOptions: "deny",
+			},
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
+
+			if result := New(Flags(fs, "")); !reflect.DeepEqual(result, testCase.want) {
+				t.Errorf("New() = %#v, want %#v", result, testCase.want)
+			}
+		})
+	}
+}
 
 func TestHandler(t *testing.T) {
 	var cases = []struct {
@@ -17,7 +74,7 @@ func TestHandler(t *testing.T) {
 		wantHeader http.Header
 	}{
 		{
-			"default param",
+			"simple",
 			app{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
@@ -36,7 +93,7 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		{
-			"add hsts",
+			"hsts",
 			app{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         true,
