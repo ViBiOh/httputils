@@ -14,7 +14,7 @@ func main() {
 	alcotestConfig := alcotest.Flags(fs, "")
 
 	if err := fs.Parse(os.Args[1:]); err != nil {
-		log.Fatalf("%#v", err)
+		log.Fatalf("%s", err)
 	}
 
 	alcotest.DoAndExit(alcotestConfig)
