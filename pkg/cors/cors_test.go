@@ -18,7 +18,7 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			"default param",
-			App{
+			app{
 				origin:      "*",
 				headers:     "Content-Type",
 				methods:     http.MethodGet,
@@ -38,7 +38,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			"default param",
-			App{
+			app{
 				origin:      "*",
 				headers:     "Content-Type,Authorization",
 				methods:     http.MethodPost,

@@ -21,6 +21,11 @@ var (
 	ErrInvalid = errors.New("invalid")
 )
 
+// App of package
+type App interface {
+	Handler() http.Handler
+}
+
 // Config of package
 type Config struct {
 	defaultPage     *uint
@@ -28,8 +33,7 @@ type Config struct {
 	maxPageSize     *uint
 }
 
-// App of package
-type App struct {
+type app struct {
 	defaultPage     uint
 	defaultPageSize uint
 	maxPageSize     uint
@@ -46,8 +50,8 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 }
 
 // New creates new App from Config
-func New(config Config, service ItemService) *App {
-	return &App{
+func New(config Config, service ItemService) App {
+	return &app{
 		defaultPage:     *config.defaultPage,
 		defaultPageSize: *config.defaultPageSize,
 		maxPageSize:     *config.maxPageSize,
@@ -71,7 +75,7 @@ func handleError(w http.ResponseWriter, err error) bool {
 	return true
 }
 
-func (a App) readPayload(r *http.Request) (Item, error) {
+func (a app) readPayload(r *http.Request) (Item, error) {
 	bodyBytes, err := request.ReadBodyRequest(r)
 	if err != nil {
 		return nil, err
@@ -89,7 +93,7 @@ func readFilters(r *http.Request) map[string][]string {
 	return params
 }
 
-func (a App) list(w http.ResponseWriter, r *http.Request) {
+func (a app) list(w http.ResponseWriter, r *http.Request) {
 	params, err := query.ParsePagination(r, a.defaultPage, a.defaultPageSize, a.maxPageSize)
 	if err != nil {
 		httperror.BadRequest(w, err)
@@ -112,7 +116,7 @@ func (a App) list(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a App) get(w http.ResponseWriter, r *http.Request, id string) {
+func (a app) get(w http.ResponseWriter, r *http.Request, id string) {
 	obj, err := a.service.Get(r.Context(), id)
 	if handleError(w, err) {
 		return
@@ -124,7 +128,7 @@ func (a App) get(w http.ResponseWriter, r *http.Request, id string) {
 	}
 }
 
-func (a App) create(w http.ResponseWriter, r *http.Request) {
+func (a app) create(w http.ResponseWriter, r *http.Request) {
 	obj, err := a.readPayload(r)
 
 	if err != nil {
@@ -145,7 +149,7 @@ func (a App) create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a App) update(w http.ResponseWriter, r *http.Request, id string) {
+func (a app) update(w http.ResponseWriter, r *http.Request, id string) {
 	obj, err := a.readPayload(r)
 
 	if err != nil {
@@ -172,7 +176,7 @@ func (a App) update(w http.ResponseWriter, r *http.Request, id string) {
 	}
 }
 
-func (a App) delete(w http.ResponseWriter, r *http.Request, id string) {
+func (a app) delete(w http.ResponseWriter, r *http.Request, id string) {
 	obj, err := a.service.Get(r.Context(), id)
 	if err != nil {
 		handleError(w, err)
@@ -188,7 +192,7 @@ func (a App) delete(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 // Handler for CRUD requests. Should be use with net/http
-func (a App) Handler() http.Handler {
+func (a app) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		isRoot := query.IsRoot(r)
 

@@ -16,17 +16,17 @@ import (
 	"github.com/ViBiOh/httputils/v2/pkg/model"
 )
 
+// App of package
+type App interface {
+	ListenAndServe(http.Handler, http.Handler, func())
+}
+
 // Config of package
 type Config struct {
 	address *string
 	port    *int
 	cert    *string
 	key     *string
-}
-
-// App of package
-type App interface {
-	ListenAndServe(http.Handler, http.Handler, func())
 }
 
 type app struct {

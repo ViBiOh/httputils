@@ -18,7 +18,7 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			"default param",
-			App{
+			app{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
 				frameOptions: "deny",
@@ -37,7 +37,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			"add hsts",
-			App{
+			app{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         true,
 				frameOptions: "deny",
@@ -57,7 +57,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			"add cache control for index if not set",
-			App{
+			app{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
 				frameOptions: "deny",
@@ -79,7 +79,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			"add cache control for no index if not set",
-			App{
+			app{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
 				frameOptions: "deny",
@@ -101,7 +101,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			"do no touch cache control if set",
-			App{
+			app{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
 				frameOptions: "deny",
@@ -124,7 +124,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			"write header if not done",
-			App{
+			app{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
 				frameOptions: "deny",

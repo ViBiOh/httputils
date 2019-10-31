@@ -6,8 +6,18 @@ import (
 	"strings"
 
 	"github.com/ViBiOh/httputils/v2/pkg/flags"
+	"github.com/ViBiOh/httputils/v2/pkg/model"
 	"github.com/ViBiOh/httputils/v2/pkg/query"
 )
+
+var (
+	_ model.Middleware = &app{}
+)
+
+// App of package
+type App interface {
+	Handler(http.Handler) http.Handler
+}
 
 // Config of package
 type Config struct {
@@ -16,8 +26,7 @@ type Config struct {
 	frameOptions *string
 }
 
-// App of package
-type App struct {
+type app struct {
 	csp          string
 	hsts         bool
 	frameOptions string
@@ -33,8 +42,8 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 }
 
 // New creates new App from Config
-func New(config Config) *App {
-	return &App{
+func New(config Config) App {
+	return &app{
 		csp:          strings.TrimSpace(*config.csp),
 		hsts:         *config.hsts,
 		frameOptions: strings.TrimSpace(*config.frameOptions),
@@ -42,7 +51,7 @@ func New(config Config) *App {
 }
 
 // Handler for net/http package allowing owasp header
-func (a App) Handler(next http.Handler) http.Handler {
+func (a app) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Security-Policy", a.csp)
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")

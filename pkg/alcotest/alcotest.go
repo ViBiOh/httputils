@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ViBiOh/httputils/v2/pkg/errors"
 	"github.com/ViBiOh/httputils/v2/pkg/flags"
 )
 
@@ -34,7 +33,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 func GetStatusCode(url, userAgent string) (int, error) {
 	r, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return 0, errors.WithStack(err)
+		return 0, err
 	}
 
 	if userAgent != "" {
@@ -43,15 +42,15 @@ func GetStatusCode(url, userAgent string) (int, error) {
 
 	response, err := httpClient.Do(r)
 	if err != nil {
-		return 0, errors.WithStack(err)
+		return 0, err
 	}
 
 	if closeErr := response.Body.Close(); closeErr != nil {
 		if err == nil {
-			return 0, errors.WithStack(closeErr)
+			return 0, closeErr
 		}
 
-		return 0, errors.Wrap(closeErr, "%#v", err)
+		return 0, fmt.Errorf("%s: %w", err, closeErr)
 	}
 
 	return response.StatusCode, nil
@@ -65,7 +64,7 @@ func Do(url, userAgent string) error {
 	}
 
 	if statusCode > http.StatusNoContent {
-		return errors.New("alcotest failed: HTTP/%d", statusCode)
+		return fmt.Errorf("alcotest failed: HTTP/%d", statusCode)
 	}
 
 	return nil
@@ -74,14 +73,13 @@ func Do(url, userAgent string) error {
 // DoAndExit test status code of given URL (if present) and exit program with correct status
 func DoAndExit(config Config) {
 	url := strings.TrimSpace(*config.url)
-	userAgent := strings.TrimSpace(*config.userAgent)
-
-	if url != "" {
-		if err := Do(url, userAgent); err != nil {
-			fmt.Printf("%#v", err)
-			os.Exit(1)
-		} else {
-			os.Exit(0)
-		}
+	if url == "" {
+		return
 	}
+
+	if err := Do(url, strings.TrimSpace(*config.userAgent)); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	os.Exit(0)
 }

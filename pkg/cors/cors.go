@@ -6,7 +6,17 @@ import (
 	"strconv"
 
 	"github.com/ViBiOh/httputils/v2/pkg/flags"
+	"github.com/ViBiOh/httputils/v2/pkg/model"
 )
+
+var (
+	_ model.Middleware = &app{}
+)
+
+// App of package
+type App interface {
+	Handler(http.Handler) http.Handler
+}
 
 // Config of package
 type Config struct {
@@ -17,8 +27,7 @@ type Config struct {
 	credentials *bool
 }
 
-// App of package
-type App struct {
+type app struct {
 	origin      string
 	headers     string
 	methods     string
@@ -38,8 +47,8 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 }
 
 // New creates new App from Config
-func New(config Config) *App {
-	return &App{
+func New(config Config) App {
+	return &app{
 		origin:      *config.origin,
 		headers:     *config.headers,
 		methods:     *config.methods,
@@ -49,7 +58,7 @@ func New(config Config) *App {
 }
 
 // Handler for net/http package allowing cors header
-func (a App) Handler(next http.Handler) http.Handler {
+func (a app) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", a.origin)
 		w.Header().Set("Access-Control-Allow-Headers", a.headers)

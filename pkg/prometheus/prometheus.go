@@ -12,15 +12,21 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-var _ model.Middleware = &App{}
+var (
+	_ model.Middleware = &app{}
+)
+
+// App of package
+type App interface {
+	Handler(http.Handler) http.Handler
+}
 
 // Config of package
 type Config struct {
 	path *string
 }
 
-// App of package
-type App struct {
+type app struct {
 	path string
 }
 
@@ -32,14 +38,14 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 }
 
 // New creates new App from Config
-func New(config Config) *App {
-	return &App{
+func New(config Config) App {
+	return &app{
 		path: strings.TrimSpace(*config.path),
 	}
 }
 
 // Handler for net/http
-func (a App) Handler(next http.Handler) http.Handler {
+func (a *app) Handler(next http.Handler) http.Handler {
 	prometheusHandler := promhttp.Handler()
 	instrumentedHandler := instrumentHandler(next)
 
@@ -59,7 +65,7 @@ func instrumentHandler(next http.Handler) http.Handler {
 		prometheus.HistogramOpts{
 			Name:    "http_request_duration_seconds",
 			Help:    "A histogram of latencies for requests.",
-			Buckets: []float64{.25, .5, 1, 2.5, 5, 10},
+			Buckets: []float64{0.25, 0.5, 1, 2.5, 5, 10},
 		},
 		[]string{"code", "method"}), instrumentedHandler)
 

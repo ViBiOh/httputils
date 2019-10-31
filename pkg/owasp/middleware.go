@@ -10,7 +10,7 @@ const (
 	cacheControlHeader = "Cache-Control"
 )
 
-var _ model.Middleware = &App{}
+var _ model.Middleware = &app{}
 
 type middleware struct {
 	http.ResponseWriter
