@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/NYTimes/gziphandler"
-	"github.com/ViBiOh/httputils/v2/pkg/model"
+	"github.com/ViBiOh/httputils/v3/pkg/model"
 )
 
 var _ model.Middleware = &app{}

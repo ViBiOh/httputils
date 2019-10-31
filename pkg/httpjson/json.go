@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ViBiOh/httputils/v2/pkg/query"
+	"github.com/ViBiOh/httputils/v3/pkg/query"
 )
 
 var (

@@ -1,4 +1,4 @@
-module github.com/ViBiOh/httputils/v2
+module github.com/ViBiOh/httputils/v3
 
 go 1.13
 

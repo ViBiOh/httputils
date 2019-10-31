@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ViBiOh/httputils/v2/pkg/flags"
+	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	_ "github.com/lib/pq" // Not referenced but needed for database/sql
 )
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ViBiOh/httputils/v2/pkg/request"
+	"github.com/ViBiOh/httputils/v3/pkg/request"
 )
 
 type testStruct struct {

@@ -3,7 +3,7 @@ package owasp
 import (
 	"net/http"
 
-	"github.com/ViBiOh/httputils/v2/pkg/model"
+	"github.com/ViBiOh/httputils/v3/pkg/model"
 )
 
 const (

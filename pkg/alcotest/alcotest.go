@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ViBiOh/httputils/v2/pkg/flags"
+	"github.com/ViBiOh/httputils/v3/pkg/flags"
 )
 
 var httpClient = http.Client{
