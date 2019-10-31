@@ -55,24 +55,19 @@ func (f *Flag) Label(format string, a ...interface{}) *Flag {
 
 // ToString build Flag Set for string
 func (f *Flag) ToString(fs *flag.FlagSet) *string {
-	name := fmt.Sprintf("%s%s", f.prefix, f.name)
-	envName := strings.ToUpper(SnakeCase(fmt.Sprintf("%s%s", fs.Name(), name)))
-
+	name, envName := f.getNameAndEnv(fs)
 	return fs.String(FirstLowerCase(name), LookupEnvString(envName, f.defaultValue.(string)), f.formatLabel(envName))
 }
 
 // ToInt build Flag Set for int
 func (f *Flag) ToInt(fs *flag.FlagSet) *int {
-	name := fmt.Sprintf("%s%s", f.prefix, f.name)
-	envName := strings.ToUpper(SnakeCase(fmt.Sprintf("%s%s", fs.Name(), name)))
-
+	name, envName := f.getNameAndEnv(fs)
 	return fs.Int(FirstLowerCase(name), LookupEnvInt(envName, f.defaultValue.(int)), f.formatLabel(envName))
 }
 
 // ToUint build Flag Set for uint
 func (f *Flag) ToUint(fs *flag.FlagSet) *uint {
-	name := fmt.Sprintf("%s%s", f.prefix, f.name)
-	envName := strings.ToUpper(SnakeCase(fmt.Sprintf("%s%s", fs.Name(), name)))
+	name, envName := f.getNameAndEnv(fs)
 
 	var value uint
 	switch f.defaultValue.(type) {
@@ -89,18 +84,19 @@ func (f *Flag) ToUint(fs *flag.FlagSet) *uint {
 
 // ToFloat64 build Flag Set for float64
 func (f *Flag) ToFloat64(fs *flag.FlagSet) *float64 {
-	name := fmt.Sprintf("%s%s", f.prefix, f.name)
-	envName := strings.ToUpper(SnakeCase(fmt.Sprintf("%s%s", fs.Name(), name)))
-
+	name, envName := f.getNameAndEnv(fs)
 	return fs.Float64(FirstLowerCase(name), LookupEnvFloat64(envName, f.defaultValue.(float64)), f.formatLabel(envName))
 }
 
 // ToBool build Flag Set for bool
 func (f *Flag) ToBool(fs *flag.FlagSet) *bool {
-	name := fmt.Sprintf("%s%s", f.prefix, f.name)
-	envName := strings.ToUpper(SnakeCase(fmt.Sprintf("%s%s", fs.Name(), name)))
-
+	name, envName := f.getNameAndEnv(fs)
 	return fs.Bool(FirstLowerCase(name), LookupEnvBool(envName, f.defaultValue.(bool)), f.formatLabel(envName))
+}
+
+func (f *Flag) getNameAndEnv(fs *flag.FlagSet) (string, string) {
+	name := fmt.Sprintf("%s%s", f.prefix, FirstUpperCase(f.name))
+	return name, strings.ToUpper(SnakeCase(fmt.Sprintf("%s%s", FirstUpperCase(fs.Name()), FirstUpperCase(name))))
 }
 
 func (f *Flag) formatLabel(envName string) string {
