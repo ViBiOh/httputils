@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ViBiOh/httputils/v2/pkg/tools"
+	"github.com/ViBiOh/httputils/v2/pkg/flags"
 )
 
 // Config of package
@@ -29,11 +29,11 @@ type App struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		origin:      tools.NewFlag(prefix, "cors").Name("Origin").Default("*").Label("Access-Control-Allow-Origin").ToString(fs),
-		headers:     tools.NewFlag(prefix, "cors").Name("Headers").Default("Content-Type").Label("Access-Control-Allow-Headers").ToString(fs),
-		methods:     tools.NewFlag(prefix, "cors").Name("Methods").Default(http.MethodGet).Label("Access-Control-Allow-Methods").ToString(fs),
-		exposes:     tools.NewFlag(prefix, "cors").Name("Expose").Default("").Label("Access-Control-Expose-Headers").ToString(fs),
-		credentials: tools.NewFlag(prefix, "cors").Name("Credentials").Default(false).Label("Access-Control-Allow-Credentials").ToBool(fs),
+		origin:      flags.New(prefix, "cors").Name("Origin").Default("*").Label("Access-Control-Allow-Origin").ToString(fs),
+		headers:     flags.New(prefix, "cors").Name("Headers").Default("Content-Type").Label("Access-Control-Allow-Headers").ToString(fs),
+		methods:     flags.New(prefix, "cors").Name("Methods").Default(http.MethodGet).Label("Access-Control-Allow-Methods").ToString(fs),
+		exposes:     flags.New(prefix, "cors").Name("Expose").Default("").Label("Access-Control-Expose-Headers").ToString(fs),
+		credentials: flags.New(prefix, "cors").Name("Credentials").Default(false).Label("Access-Control-Allow-Credentials").ToBool(fs),
 	}
 }
 

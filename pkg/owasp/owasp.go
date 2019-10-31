@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ViBiOh/httputils/v2/pkg/flags"
 	"github.com/ViBiOh/httputils/v2/pkg/query"
-	"github.com/ViBiOh/httputils/v2/pkg/tools"
 )
 
 // Config of package
@@ -26,9 +26,9 @@ type App struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		csp:          tools.NewFlag(prefix, "owasp").Name("Csp").Default("default-src 'self'; base-uri 'self'").Label("Content-Security-Policy").ToString(fs),
-		hsts:         tools.NewFlag(prefix, "owasp").Name("Hsts").Default(true).Label("Indicate Strict Transport Security").ToBool(fs),
-		frameOptions: tools.NewFlag(prefix, "owasp").Name("FrameOptions").Default("deny").Label("X-Frame-Options").ToString(fs),
+		csp:          flags.New(prefix, "owasp").Name("Csp").Default("default-src 'self'; base-uri 'self'").Label("Content-Security-Policy").ToString(fs),
+		hsts:         flags.New(prefix, "owasp").Name("Hsts").Default(true).Label("Indicate Strict Transport Security").ToBool(fs),
+		frameOptions: flags.New(prefix, "owasp").Name("FrameOptions").Default("deny").Label("X-Frame-Options").ToString(fs),
 	}
 }
 

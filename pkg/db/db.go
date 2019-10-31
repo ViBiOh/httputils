@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/ViBiOh/httputils/v2/pkg/errors"
-	"github.com/ViBiOh/httputils/v2/pkg/tools"
+	"github.com/ViBiOh/httputils/v2/pkg/flags"
 	_ "github.com/lib/pq" // Not referenced but needed for database/sql
 )
 
@@ -23,11 +23,11 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		host: tools.NewFlag(prefix, "database").Name("Host").Default("").Label("Host").ToString(fs),
-		port: tools.NewFlag(prefix, "database").Name("Port").Default("5432").Label("Port").ToString(fs),
-		user: tools.NewFlag(prefix, "database").Name("User").Default("").Label("User").ToString(fs),
-		pass: tools.NewFlag(prefix, "database").Name("Pass").Default("").Label("Pass").ToString(fs),
-		name: tools.NewFlag(prefix, "database").Name("Name").Default("").Label("Name").ToString(fs),
+		host: flags.New(prefix, "database").Name("Host").Default("").Label("Host").ToString(fs),
+		port: flags.New(prefix, "database").Name("Port").Default("5432").Label("Port").ToString(fs),
+		user: flags.New(prefix, "database").Name("User").Default("").Label("User").ToString(fs),
+		pass: flags.New(prefix, "database").Name("Pass").Default("").Label("Pass").ToString(fs),
+		name: flags.New(prefix, "database").Name("Name").Default("").Label("Name").ToString(fs),
 	}
 }
 

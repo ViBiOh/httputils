@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ViBiOh/httputils/v2/pkg/flags"
 	"github.com/ViBiOh/httputils/v2/pkg/model"
-	"github.com/ViBiOh/httputils/v2/pkg/tools"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -27,7 +27,7 @@ type App struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		path: tools.NewFlag(prefix, "prometheus").Name("Path").Default("/metrics").Label("Path for exposing metrics").ToString(fs),
+		path: flags.New(prefix, "prometheus").Name("Path").Default("/metrics").Label("Path for exposing metrics").ToString(fs),
 	}
 }
 

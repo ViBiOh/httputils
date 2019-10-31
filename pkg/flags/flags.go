@@ -1,4 +1,4 @@
-package tools
+package flags
 
 import (
 	"flag"
@@ -19,8 +19,8 @@ type Flag struct {
 	defaultValue interface{}
 }
 
-// NewFlag creates new instance of Flag
-func NewFlag(prefix, docPrefix string) *Flag {
+// New creates new instance of Flag
+func New(prefix, docPrefix string) *Flag {
 	docPrefixValue := prefix
 	if prefix == "" {
 		docPrefixValue = docPrefix

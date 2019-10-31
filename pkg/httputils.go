@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v2/pkg/errors"
+	"github.com/ViBiOh/httputils/v2/pkg/flags"
 	"github.com/ViBiOh/httputils/v2/pkg/logger"
 	"github.com/ViBiOh/httputils/v2/pkg/model"
-	"github.com/ViBiOh/httputils/v2/pkg/tools"
 )
 
 // Config of package
@@ -40,10 +40,10 @@ type app struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		address: tools.NewFlag(prefix, "http").Name("Address").Default("").Label("Listen address").ToString(fs),
-		port:    tools.NewFlag(prefix, "http").Name("Port").Default(1080).Label("Listen port").ToInt(fs),
-		cert:    tools.NewFlag(prefix, "http").Name("Cert").Default("").Label("Certificate file").ToString(fs),
-		key:     tools.NewFlag(prefix, "http").Name("Key").Default("").Label("Key file").ToString(fs),
+		address: flags.New(prefix, "http").Name("Address").Default("").Label("Listen address").ToString(fs),
+		port:    flags.New(prefix, "http").Name("Port").Default(1080).Label("Listen port").ToInt(fs),
+		cert:    flags.New(prefix, "http").Name("Cert").Default("").Label("Certificate file").ToString(fs),
+		key:     flags.New(prefix, "http").Name("Key").Default("").Label("Key file").ToString(fs),
 	}
 }
 

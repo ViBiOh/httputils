@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/ViBiOh/httputils/v2/pkg/flags"
 	"github.com/ViBiOh/httputils/v2/pkg/httperror"
 	"github.com/ViBiOh/httputils/v2/pkg/httpjson"
 	"github.com/ViBiOh/httputils/v2/pkg/query"
 	"github.com/ViBiOh/httputils/v2/pkg/request"
-	"github.com/ViBiOh/httputils/v2/pkg/tools"
 )
 
 var (
@@ -39,9 +39,9 @@ type App struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		defaultPage:     tools.NewFlag(prefix, "crud").Name("DefaultPage").Default(1).Label("Default page").ToUint(fs),
-		defaultPageSize: tools.NewFlag(prefix, "crud").Name("DefaultPageSize").Default(20).Label("Default page size").ToUint(fs),
-		maxPageSize:     tools.NewFlag(prefix, "crud").Name("MaxPageSize").Default(500).Label("Max page size").ToUint(fs),
+		defaultPage:     flags.New(prefix, "crud").Name("DefaultPage").Default(1).Label("Default page").ToUint(fs),
+		defaultPageSize: flags.New(prefix, "crud").Name("DefaultPageSize").Default(20).Label("Default page size").ToUint(fs),
+		maxPageSize:     flags.New(prefix, "crud").Name("MaxPageSize").Default(500).Label("Max page size").ToUint(fs),
 	}
 }
 

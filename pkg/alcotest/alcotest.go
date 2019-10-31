@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v2/pkg/errors"
-	"github.com/ViBiOh/httputils/v2/pkg/tools"
+	"github.com/ViBiOh/httputils/v2/pkg/flags"
 )
 
 var httpClient = http.Client{
@@ -25,8 +25,8 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		url:       tools.NewFlag(prefix, "alcotest").Name("Url").Default("").Label("URL to check").ToString(fs),
-		userAgent: tools.NewFlag(prefix, "alcotest").Name("UserAgent").Default("Golang alcotest").Label("User-Agent for check").ToString(fs),
+		url:       flags.New(prefix, "alcotest").Name("Url").Default("").Label("URL to check").ToString(fs),
+		userAgent: flags.New(prefix, "alcotest").Name("UserAgent").Default("Golang alcotest").Label("User-Agent for check").ToString(fs),
 	}
 }
 
