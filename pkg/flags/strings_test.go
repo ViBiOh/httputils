@@ -92,48 +92,17 @@ func TestSnakeCase(t *testing.T) {
 			"listCount",
 			"list_Count",
 		},
+		{
+			"should work with dash bestween word",
+			"List-Of_thing",
+			"List_Of_thing",
+		},
 	}
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := SnakeCase(testCase.input); result != testCase.want {
 				t.Errorf("SnakeCase(%#v) = %#v, want %#v", testCase.input, result, testCase.want)
-			}
-		})
-	}
-}
-
-func TestIncludesString(t *testing.T) {
-	var cases = []struct {
-		intention string
-		array     []string
-		lookup    string
-		want      bool
-	}{
-		{
-			"should work with nil params",
-			nil,
-			"",
-			false,
-		},
-		{
-			"should work with found value",
-			[]string{"hello", "world"},
-			"WORLD",
-			true,
-		},
-		{
-			"should work with not found value",
-			[]string{"hello", "world"},
-			"bob",
-			false,
-		},
-	}
-
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := IncludesString(testCase.array, testCase.lookup); result != testCase.want {
-				t.Errorf("Includes(%#v, `%s`) = %#v, want %#v", testCase.array, testCase.lookup, result, testCase.want)
 			}
 		})
 	}

@@ -43,19 +43,8 @@ func SnakeCase(s string) string {
 
 	snaked := upperCaseRegex.ReplaceAllString(s, "_$1$2")
 	if snaked[0] == '_' {
-		return snaked[1:]
+		snaked = snaked[1:]
 	}
 
-	return strings.ReplaceAll(snaked, "-", "_")
-}
-
-// IncludesString checks in an array includes given string
-func IncludesString(array []string, lookup string) bool {
-	for _, item := range array {
-		if strings.EqualFold(item, lookup) {
-			return true
-		}
-	}
-
-	return false
+	return strings.ReplaceAll(strings.ReplaceAll(snaked, "-", "_"), "__", "_")
 }
