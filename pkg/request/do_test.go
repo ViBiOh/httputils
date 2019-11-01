@@ -91,9 +91,8 @@ func TestDo(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			rawResult, status, _, err := Do(testCase.ctx, testCase.request)
-
-			result, _ := ReadContent(rawResult)
+			response, err := Do(testCase.ctx, testCase.request)
+			result, _ := ReadBodyResponse(response)
 
 			failed := false
 
@@ -101,12 +100,12 @@ func TestDo(t *testing.T) {
 				failed = true
 			} else if string(result) != testCase.want {
 				failed = true
-			} else if status != testCase.wantStatus {
+			} else if response.StatusCode != testCase.wantStatus {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Do() = (%s, %d, %#v), want (%s, %d, %#v)", result, status, err, testCase.want, testCase.wantStatus, testCase.wantErr)
+				t.Errorf("Do() = (%s, %d, %#v), want (%s, %d, %#v)", result, response.StatusCode, err, testCase.want, testCase.wantStatus, testCase.wantErr)
 			}
 		})
 	}
@@ -149,9 +148,8 @@ func TestGet(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			rawResult, _, _, err := Get(testCase.ctx, testCase.url, nil)
-
-			result, _ := ReadContent(rawResult)
+			response, err := Get(testCase.ctx, testCase.url, nil)
+			result, _ := ReadBodyResponse(response)
 
 			failed := false
 
@@ -211,9 +209,8 @@ func TestPost(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			rawResult, _, _, err := Post(testCase.ctx, testCase.url, testCase.data, nil)
-
-			result, _ := ReadContent(rawResult)
+			response, err := Post(testCase.ctx, testCase.url, testCase.data, nil)
+			result, _ := ReadBodyResponse(response)
 
 			failed := false
 
@@ -282,9 +279,8 @@ func TestPostJSON(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			rawResult, _, _, err := PostJSON(testCase.ctx, testCase.url, testCase.data, nil)
-
-			result, _ := ReadContent(rawResult)
+			response, err := PostJSON(testCase.ctx, testCase.url, testCase.data, nil)
+			result, _ := ReadBodyResponse(response)
 
 			failed := false
 

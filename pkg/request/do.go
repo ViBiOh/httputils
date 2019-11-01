@@ -3,7 +3,6 @@ package request
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -17,22 +16,11 @@ var defaultHTTPClient = http.Client{
 }
 
 // DoWithClient execute request and return output with given client
-func DoWithClient(ctx context.Context, client http.Client, req *http.Request) (body io.ReadCloser, status int, headers http.Header, err error) {
-	response, doErr := client.Do(req)
-
-	if response != nil {
-		body = response.Body
-		status = response.StatusCode
-		headers = response.Header
-	}
-
-	if doErr != nil {
-		err = doErr
-	}
-
-	if err != nil || status >= http.StatusBadRequest {
+func DoWithClient(ctx context.Context, client http.Client, req *http.Request) (*http.Response, error) {
+	response, err := client.Do(req)
+	if err != nil || response.StatusCode >= http.StatusBadRequest {
 		if err == nil {
-			err = fmt.Errorf("HTTP/%d", status)
+			err = fmt.Errorf("HTTP/%d", response.StatusCode)
 		}
 
 		if payload, readErr := ReadBodyResponse(response); readErr == nil && len(payload) > 0 {
@@ -40,39 +28,39 @@ func DoWithClient(ctx context.Context, client http.Client, req *http.Request) (b
 		}
 	}
 
-	return
+	return response, err
 }
 
 // Do send given method with given content to URL with optional headers supplied
-func Do(ctx context.Context, req *http.Request) (io.ReadCloser, int, http.Header, error) {
+func Do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	return DoWithClient(ctx, defaultHTTPClient, req)
 }
 
 // Get send GET request to URL with optional headers supplied
-func Get(ctx context.Context, url string, headers http.Header) (io.ReadCloser, int, http.Header, error) {
+func Get(ctx context.Context, url string, headers http.Header) (*http.Response, error) {
 	req, err := New(ctx, http.MethodGet, url, nil, headers)
 	if err != nil {
-		return nil, 0, nil, err
+		return nil, err
 	}
 
 	return Do(ctx, req)
 }
 
 // Post send form via POST with urlencoded data
-func Post(ctx context.Context, url string, data url.Values, headers http.Header) (io.ReadCloser, int, http.Header, error) {
+func Post(ctx context.Context, url string, data url.Values, headers http.Header) (*http.Response, error) {
 	req, err := Form(ctx, http.MethodPost, url, data, headers)
 	if err != nil {
-		return nil, 0, nil, err
+		return nil, err
 	}
 
 	return Do(ctx, req)
 }
 
 // PostJSON send given method with given interface{} as JSON to URL with optional headers supplied
-func PostJSON(ctx context.Context, url string, data interface{}, headers http.Header) (io.ReadCloser, int, http.Header, error) {
+func PostJSON(ctx context.Context, url string, data interface{}, headers http.Header) (*http.Response, error) {
 	req, err := JSON(ctx, http.MethodPost, url, data, headers)
 	if err != nil {
-		return nil, 0, nil, err
+		return nil, err
 	}
 
 	return Do(ctx, req)
