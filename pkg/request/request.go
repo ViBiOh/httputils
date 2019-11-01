@@ -31,6 +31,10 @@ func New(ctx context.Context, method string, url string, body io.Reader, headers
 	if err != nil {
 		return nil, err
 	}
+
+	if headers == nil {
+		headers = http.Header{}
+	}
 	req.Header = headers
 
 	return req, nil
