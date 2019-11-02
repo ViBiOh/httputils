@@ -91,8 +91,8 @@ func TestDo(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			response, err := Do(testCase.ctx, testCase.request)
-			result, _ := ReadBodyResponse(response)
+			resp, err := Do(testCase.ctx, testCase.request)
+			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 
@@ -100,12 +100,12 @@ func TestDo(t *testing.T) {
 				failed = true
 			} else if string(result) != testCase.want {
 				failed = true
-			} else if response.StatusCode != testCase.wantStatus {
+			} else if resp.StatusCode != testCase.wantStatus {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Do() = (%s, %d, %#v), want (%s, %d, %#v)", result, response.StatusCode, err, testCase.want, testCase.wantStatus, testCase.wantErr)
+				t.Errorf("Do() = (%s, %d, %#v), want (%s, %d, %#v)", result, resp.StatusCode, err, testCase.want, testCase.wantStatus, testCase.wantErr)
 			}
 		})
 	}
@@ -148,8 +148,8 @@ func TestGet(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			response, err := Get(testCase.ctx, testCase.url, nil)
-			result, _ := ReadBodyResponse(response)
+			resp, err := Get(testCase.ctx, testCase.url, nil)
+			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 
@@ -209,8 +209,8 @@ func TestPost(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			response, err := Post(testCase.ctx, testCase.url, testCase.data, nil)
-			result, _ := ReadBodyResponse(response)
+			resp, err := Post(testCase.ctx, testCase.url, testCase.data, nil)
+			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 
@@ -279,8 +279,8 @@ func TestPostJSON(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			response, err := PostJSON(testCase.ctx, testCase.url, testCase.data, nil)
-			result, _ := ReadBodyResponse(response)
+			resp, err := PostJSON(testCase.ctx, testCase.url, testCase.data, nil)
+			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 

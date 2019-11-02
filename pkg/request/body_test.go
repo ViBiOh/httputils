@@ -90,7 +90,7 @@ func TestReadContent(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			result, err := ReadContent(testCase.reader)
+			result, err := readContent(testCase.reader)
 
 			failed := false
 
@@ -101,7 +101,7 @@ func TestReadContent(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("ReadContent() = (%#v, %#v), want (%#v, %#v)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("readContent() = (%#v, %#v), want (%#v, %#v)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}

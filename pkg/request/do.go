@@ -17,18 +17,18 @@ var defaultHTTPClient = http.Client{
 
 // DoWithClient execute request and return output with given client
 func DoWithClient(ctx context.Context, client http.Client, req *http.Request) (*http.Response, error) {
-	response, err := client.Do(req)
-	if err != nil || response.StatusCode >= http.StatusBadRequest {
+	resp, err := client.Do(req)
+	if err != nil || (resp != nil && resp.StatusCode >= http.StatusBadRequest) {
 		if err == nil {
-			err = fmt.Errorf("HTTP/%d", response.StatusCode)
+			err = fmt.Errorf("HTTP/%d", resp.StatusCode)
 		}
 
-		if payload, readErr := ReadBodyResponse(response); readErr == nil && len(payload) > 0 {
+		if payload, readErr := ReadBodyResponse(resp); readErr == nil && len(payload) > 0 {
 			err = fmt.Errorf("%s\n%s", err, payload)
 		}
 	}
 
-	return response, err
+	return resp, err
 }
 
 // Do send given method with given content to URL with optional headers supplied

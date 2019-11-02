@@ -40,12 +40,12 @@ func GetStatusCode(url, userAgent string) (int, error) {
 		r.Header.Set("User-Agent", userAgent)
 	}
 
-	response, err := httpClient.Do(r)
+	resp, err := httpClient.Do(r)
 	if err != nil {
 		return 0, err
 	}
 
-	if closeErr := response.Body.Close(); closeErr != nil {
+	if closeErr := resp.Body.Close(); closeErr != nil {
 		if err == nil {
 			return 0, closeErr
 		}
@@ -53,7 +53,7 @@ func GetStatusCode(url, userAgent string) (int, error) {
 		return 0, fmt.Errorf("%s: %w", err, closeErr)
 	}
 
-	return response.StatusCode, nil
+	return resp.StatusCode, nil
 }
 
 // Do test status code of given URL
