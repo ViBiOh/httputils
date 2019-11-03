@@ -148,13 +148,10 @@ release() {
 }
 
 usage() {
-  local RELEASE_INFO
-  RELEASE_INFO="$(get_github_repository)@$(get_last_tag)"
-
   printf "Usage of %s\n" "${0}"
   printf "clean\n\tClean output dir %s\n" "${OUTPUT_DIR}"
-  printf "build\n\tBuild binary for %s\n" "${RELEASE_INFO}"
-  printf "release\n\tCreate github release for %s\n" "${RELEASE_INFO}"
+  printf "build\n\tBuild binary\n"
+  printf "release\n\tCreate GitHub release and upload output dir content\n"
 }
 
 main() {
