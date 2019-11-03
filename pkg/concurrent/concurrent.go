@@ -2,7 +2,6 @@ package concurrent
 
 import (
 	"runtime"
-	"sync"
 )
 
 // Action defines a concurrent action with takes input and return output or error
@@ -16,12 +15,8 @@ func Run(maxConcurrent uint, action Action, onSuccess func(interface{}), onError
 
 	inputs := make(chan interface{}, maxConcurrent)
 
-	var wg sync.WaitGroup
 	for i := uint(0); i < maxConcurrent; i++ {
 		go func() {
-			wg.Add(1)
-			defer wg.Done()
-
 			for input := range inputs {
 				if output, err := action(input); err != nil {
 					onError(err)
@@ -31,10 +26,6 @@ func Run(maxConcurrent uint, action Action, onSuccess func(interface{}), onError
 			}
 		}()
 	}
-
-	go func() {
-		wg.Wait()
-	}()
 
 	return inputs
 }

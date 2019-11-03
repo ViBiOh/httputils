@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 )
 
 func init() {
@@ -15,8 +14,6 @@ var (
 	info = log.New(os.Stdout, "INFO  ", log.LstdFlags|log.Lshortfile|log.LUTC)
 	warn = log.New(os.Stderr, "WARN  ", log.LstdFlags|log.Lshortfile|log.LUTC)
 	erro = log.New(os.Stderr, "ERROR ", log.LstdFlags|log.Lshortfile|log.LUTC)
-
-	mutex = sync.RWMutex{}
 )
 
 func output(l *log.Logger, format string, a ...interface{}) {
