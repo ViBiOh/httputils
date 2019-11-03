@@ -15,12 +15,14 @@ const (
 	ContentTypeHeader = "Content-Type"
 )
 
-func setHeader(headers http.Header, key, value string) http.Header {
+func getHeader(headers http.Header, key, value string) http.Header {
 	if headers == nil {
 		headers = http.Header{}
 	}
 
-	headers.Set(key, value)
+	if key != "" {
+		headers.Set(key, value)
+	}
 
 	return headers
 }
@@ -32,17 +34,14 @@ func New(ctx context.Context, method string, url string, body io.Reader, headers
 		return nil, err
 	}
 
-	if headers == nil {
-		headers = http.Header{}
-	}
-	req.Header = headers
+	req.Header = getHeader(headers, "", "")
 
 	return req, nil
 }
 
 // Form prepare a Form request from given params
 func Form(ctx context.Context, method string, url string, data url.Values, headers http.Header) (*http.Request, error) {
-	return New(ctx, method, url, strings.NewReader(data.Encode()), setHeader(headers, ContentTypeHeader, "application/x-www-form-urlencoded"))
+	return New(ctx, method, url, strings.NewReader(data.Encode()), getHeader(headers, ContentTypeHeader, "application/x-www-form-urlencoded"))
 }
 
 // JSON prepare a JSON request from given params
@@ -52,5 +51,5 @@ func JSON(ctx context.Context, method string, url string, body interface{}, head
 		return nil, err
 	}
 
-	return New(ctx, method, url, bytes.NewBuffer(jsonBody), setHeader(headers, ContentTypeHeader, "application/json"))
+	return New(ctx, method, url, bytes.NewBuffer(jsonBody), getHeader(headers, ContentTypeHeader, "application/json"))
 }

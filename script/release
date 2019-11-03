@@ -2,9 +2,7 @@
 
 set -o nounset -o pipefail -o errexit
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 readonly OUTPUT_DIR="${SCRIPT_DIR}/../release"
-readonly TARGETS=('darwin/amd64' 'linux/amd64' 'linux/arm' 'linux/arm64')
 
 read_variable_if_required() {
   if [[ -z "${!1:-}" ]]; then
@@ -37,6 +35,8 @@ get_last_tag() {
 }
 
 clean() {
+  echo -e "${BLUE}Cleaning ${OUTPUT_DIR}${RESET}"
+
   rm -rf "${OUTPUT_DIR}"
   mkdir "${OUTPUT_DIR}"
 }
@@ -47,8 +47,7 @@ build() {
     return 1
   fi
 
-  local BLUE='\033[0;34m'
-  local RESET='\033[0m'
+  local TARGETS=('darwin/amd64' 'linux/amd64' 'linux/arm' 'linux/arm64')
 
   for OS_ARCH in "${TARGETS[@]}"; do
     IFS='/' read -ra context <<< "${OS_ARCH}"
@@ -84,21 +83,17 @@ release() {
   read_variable_if_required GIT_TAG "Tag" "$(get_last_tag)"
   read_variable_if_required RELEASE_NAME "Release name" "$(get_last_tag)"
 
-  local RED='\033[0;31m'
-  local GREEN='\033[0;32m'
-  local BLUE='\033[0;34m'
-  local RESET='\033[0m'
-
   echo -e "${BLUE}Creating release ${GIT_TAG} for ${GITHUB_REPOSITORY}...${RESET}"
+
+  local HTTP_OUTPUT="output.txt"
+  local HTTP_STATUS
 
   local BODY
   BODY=$(get_release_body "${GIT_TAG}" | sed 's|"|'"'"'|g')
   echo -e "${GREEN}${BODY}${RESET}"
 
-  local OUTPUT_TXT="output.txt"
-  local CLIENT_ARGS=("curl" "-q" "-sS" "-o" "${OUTPUT_TXT}" "-w" "%{http_code}" "-H" "Authorization: token ${GITHUB_OAUTH_TOKEN}")
+  local CLIENT_ARGS=("curl" "-q" "-sS" "-o" "${HTTP_OUTPUT}" "-w" "%{http_code}" "-H" "Authorization: token ${GITHUB_OAUTH_TOKEN}")
 
-  local HTTP_STATUS
   HTTP_STATUS="$("${CLIENT_ARGS[@]}" \
     -H "Content-Type: application/json" \
     -X POST \
@@ -111,19 +106,18 @@ release() {
 
   if [[ "${HTTP_STATUS}" != "201" ]]; then
      echo -e "${RED}Failed to create release${RESET}"
-     cat "${OUTPUT_TXT}" && rm "${OUTPUT_TXT}"
+     cat "${HTTP_OUTPUT}" && rm "${HTTP_OUTPUT}"
      exit 1
   fi
 
   local RESPONSE_URL
-  RESPONSE_URL=$(python -c "import json; data = json.load(open('${OUTPUT_TXT}')); print(data['upload_url']);" | sed 's|{.*||')
-  rm "${OUTPUT_TXT}"
+  RESPONSE_URL=$(python -c "import json; data = json.load(open('${HTTP_OUTPUT}')); print(data['upload_url']);" | sed 's|{.*||')
+  rm "${HTTP_OUTPUT}"
 
   for asset in "${OUTPUT_DIR}"/*; do
     echo -e "${BLUE}Uploading asset ${asset}...${RESET}"
 
-    local HTTP_STATUS
-  HTTP_STATUS="$("${CLIENT_ARGS[@]}" \
+    HTTP_STATUS="$("${CLIENT_ARGS[@]}" \
       -H "Content-Type: application/x-executable" \
       -X POST \
       "${RESPONSE_URL}?name=$(basename "${asset}")" \
@@ -132,17 +126,48 @@ release() {
 
     if [[ "${HTTP_STATUS}" != "201" ]]; then
        echo -e "${RED}Failed to upload asset ${asset}${RESET}"
-       cat "${OUTPUT_TXT}" && rm "${OUTPUT_TXT}"
+       cat "${HTTP_OUTPUT}" && rm "${HTTP_OUTPUT}"
        exit 1
     fi
 
-    rm "${OUTPUT_TXT}"
-
+    rm "${HTTP_OUTPUT}"
   done
 
   echo -e "${GREEN}Done!${RESET}"
 }
 
-clean
-build "alcotest" "cmd/alcotest/alcotest.go"
-release
+usage() {
+  local RELEASE_INFO
+  RELEASE_INFO="$(get_github_repository)@$(get_last_tag)"
+
+  printf "Usage of %s\n" "${0}"
+  printf "clean\n\tClean output dir %s\n" "${OUTPUT_DIR}"
+  printf "build\n\tBuild binary for %s\n" "${RELEASE_INFO}"
+  printf "release\n\tCreate github release for %s\n" "${RELEASE_INFO}"
+}
+
+main() {
+  local BLUE='\033[0;34m'
+  local GREEN='\033[0;32m'
+  local RED='\033[0;31m'
+  local RESET='\033[0m'
+
+  for arg in "${@}"; do
+    case "${arg}" in
+      "clean")
+        clean
+        ;;
+      "build")
+        build "alcotest" "cmd/alcotest/alcotest.go"
+        ;;
+      "release")
+        release
+        ;;
+      *)
+        usage
+        ;;
+    esac
+  done
+}
+
+main "${@:-}"
