@@ -16,7 +16,7 @@ var defaultHTTPClient = http.Client{
 }
 
 // DoWithClient execute request and return output with given client
-func DoWithClient(ctx context.Context, client http.Client, req *http.Request) (*http.Response, error) {
+func DoWithClient(client http.Client, req *http.Request) (*http.Response, error) {
 	resp, err := client.Do(req)
 	if err != nil || (resp != nil && resp.StatusCode >= http.StatusBadRequest) {
 		if err == nil {
@@ -32,8 +32,8 @@ func DoWithClient(ctx context.Context, client http.Client, req *http.Request) (*
 }
 
 // Do send given method with given content to URL with optional headers supplied
-func Do(ctx context.Context, req *http.Request) (*http.Response, error) {
-	return DoWithClient(ctx, defaultHTTPClient, req)
+func Do(req *http.Request) (*http.Response, error) {
+	return DoWithClient(defaultHTTPClient, req)
 }
 
 // Get send GET request to URL with optional headers supplied
@@ -43,7 +43,7 @@ func Get(ctx context.Context, url string, headers http.Header) (*http.Response, 
 		return nil, err
 	}
 
-	return Do(ctx, req)
+	return Do(req)
 }
 
 // Post send form via POST with urlencoded data
@@ -53,7 +53,7 @@ func Post(ctx context.Context, url string, data url.Values, headers http.Header)
 		return nil, err
 	}
 
-	return Do(ctx, req)
+	return Do(req)
 }
 
 // PostJSON send given method with given interface{} as JSON to URL with optional headers supplied
@@ -63,5 +63,5 @@ func PostJSON(ctx context.Context, url string, data interface{}, headers http.He
 		return nil, err
 	}
 
-	return Do(ctx, req)
+	return Do(req)
 }

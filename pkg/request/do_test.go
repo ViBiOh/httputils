@@ -49,7 +49,6 @@ func TestDo(t *testing.T) {
 
 	var cases = []struct {
 		intention  string
-		ctx        context.Context
 		request    *http.Request
 		want       string
 		wantStatus int
@@ -57,7 +56,6 @@ func TestDo(t *testing.T) {
 	}{
 		{
 			"simple",
-			context.Background(),
 			simple,
 			"valid",
 			http.StatusOK,
@@ -65,7 +63,6 @@ func TestDo(t *testing.T) {
 		},
 		{
 			"invalid",
-			context.Background(),
 			invalid,
 			"",
 			http.StatusBadRequest,
@@ -73,7 +70,6 @@ func TestDo(t *testing.T) {
 		},
 		{
 			"internalError",
-			context.Background(),
 			internalError,
 			"",
 			http.StatusInternalServerError,
@@ -81,7 +77,6 @@ func TestDo(t *testing.T) {
 		},
 		{
 			"redirect",
-			context.Background(),
 			redirect,
 			"",
 			http.StatusPermanentRedirect,
@@ -91,7 +86,7 @@ func TestDo(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			resp, err := Do(testCase.ctx, testCase.request)
+			resp, err := Do(testCase.request)
 			result, _ := ReadBodyResponse(resp)
 
 			failed := false
