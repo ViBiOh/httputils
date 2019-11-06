@@ -144,7 +144,7 @@ func TestParsePagination(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("ParsePagination() = (%#v, %#v), want (%#v, %#v)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("ParsePagination() = (%#v, %s), want (%#v, %s)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}

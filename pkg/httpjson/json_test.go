@@ -99,7 +99,7 @@ func TestResponseJSON(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("ResponseJSON() = (%s, %#v), want (%s, %#v)", string(result), err, testCase.want, testCase.wantErr)
+				t.Errorf("ResponseJSON() = (%s, %s), want (%s, %s)", string(result), err, testCase.want, testCase.wantErr)
 			}
 
 			for key, value := range testCase.wantHeader {

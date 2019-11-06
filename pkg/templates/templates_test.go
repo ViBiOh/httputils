@@ -47,7 +47,7 @@ func TestGetTemplates(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("GetTemplates() = (%#v, %#v), want (%#v, %#v)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("GetTemplates() = (%#v, %s), want (%#v, %s)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -99,7 +99,7 @@ func TestWriteHTMLTemplate(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("WriteHTMLTemplate() = (%s, %#v), want error (%s, %#v)", string(result), err, testCase.want, testCase.wantErr)
+				t.Errorf("WriteHTMLTemplate() = (%s, %s), want error (%s, %s)", string(result), err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -142,7 +142,7 @@ func TestWriteXMLTemplate(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("WriteXMLTemplate() = (%s, %#v), want error (%s, %#v)", string(result), err, testCase.want, testCase.wantErr)
+				t.Errorf("WriteXMLTemplate() = (%s, %s), want error (%s, %s)", string(result), err, testCase.want, testCase.wantErr)
 			}
 		})
 	}

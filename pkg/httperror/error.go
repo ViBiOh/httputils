@@ -8,13 +8,13 @@ import (
 
 // BadRequest logs error and sets BadRequest status
 func BadRequest(w http.ResponseWriter, err error) {
-	logger.Warn("HTTP/400 %s: %#v", err.Error(), err)
+	logger.Warn("HTTP/400 %s: %s", err.Error(), err)
 	http.Error(w, err.Error(), http.StatusBadRequest)
 }
 
 // Unauthorized logs error and sets Unauthorized status
 func Unauthorized(w http.ResponseWriter, err error) {
-	logger.Warn("HTTP/401 %s: %#v", err.Error(), err)
+	logger.Warn("HTTP/401 %s: %s", err.Error(), err)
 	http.Error(w, err.Error(), http.StatusUnauthorized)
 }
 
@@ -30,6 +30,6 @@ func NotFound(w http.ResponseWriter) {
 
 // InternalServerError logs error and sets InternalServerError status
 func InternalServerError(w http.ResponseWriter, err error) {
-	logger.Error("HTTP/500 %s: %#v", err.Error(), err)
+	logger.Error("HTTP/500 %s: %s", err.Error(), err)
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }

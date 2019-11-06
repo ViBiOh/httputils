@@ -96,7 +96,7 @@ func TestGetStatusCode(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("GetStatusCode(`%s`, `%s`) = (%d, %#v), want (%d, %#v)", testCase.url, testCase.userAgent, result, err, testCase.want, testCase.wantErr)
+				t.Errorf("GetStatusCode() = (%d, %s), want (%d, %s)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
