@@ -10,6 +10,6 @@ require (
 	github.com/prometheus/client_golang v1.2.1
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/tdewolff/minify/v2 v2.5.2
-	golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c // indirect
+	golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )
