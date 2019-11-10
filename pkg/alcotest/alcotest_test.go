@@ -2,6 +2,7 @@ package alcotest
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -31,6 +32,35 @@ func createTestServer() *httptest.Server {
 			http.Error(w, "invalid", http.StatusNotFound)
 		}
 	}))
+}
+
+func TestFlags(t *testing.T) {
+	var cases = []struct {
+		intention string
+		want      string
+	}{
+		{
+			"simple",
+			"Usage of simple:\n  -url string\n    \t[alcotest] URL to check {SIMPLE_URL}\n  -userAgent string\n    \t[alcotest] User-Agent for check {SIMPLE_USER_AGENT} (default \"Alcotest\")\n",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
+			Flags(fs, "")
+
+			var writer strings.Builder
+			fs.SetOutput(&writer)
+			fs.Usage()
+
+			result := writer.String()
+
+			if result != testCase.want {
+				t.Errorf("Flags() = %s, want %s", result, testCase.want)
+			}
+		})
+	}
 }
 
 func TestGetStatusCode(t *testing.T) {
@@ -156,6 +186,62 @@ func TestDo(t *testing.T) {
 
 			if failed {
 				t.Errorf("Do() = %s, want %s", result, testCase.want)
+			}
+		})
+	}
+}
+
+func TestDoAndExit(t *testing.T) {
+	testServer := createTestServer()
+	defer testServer.Close()
+
+	emptyString := ""
+	healthy := testServer.URL + "/ok"
+	unhealthy := testServer.URL + "/ko"
+	userAgent := "TestDoAndExit"
+
+	var cases = []struct {
+		intention string
+		input     Config
+		want      int
+	}{
+		{
+			"nothing to do",
+			Config{
+				url:       &emptyString,
+				userAgent: &userAgent,
+			},
+			-1,
+		},
+		{
+			"valid",
+			Config{
+				url:       &healthy,
+				userAgent: &userAgent,
+			},
+			0,
+		},
+		{
+			"invalid",
+			Config{
+				url:       &unhealthy,
+				userAgent: &userAgent,
+			},
+			1,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			result := -1
+			exitFunc = func(code int) {
+				result = code
+			}
+
+			DoAndExit(testCase.input)
+
+			if result != testCase.want {
+				t.Errorf("DoAndExit() = %d, want %d", result, testCase.want)
 			}
 		})
 	}

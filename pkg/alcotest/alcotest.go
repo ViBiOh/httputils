@@ -13,12 +13,13 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/request"
 )
 
-var httpClient = http.Client{
-	Timeout: 5 * time.Second,
-	CheckRedirect: func(*http.Request, []*http.Request) error {
-		return http.ErrUseLastResponse
-	},
-}
+var (
+	httpClient = http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	exitFunc = os.Exit
+)
 
 // Config of package
 type Config struct {
@@ -67,7 +68,9 @@ func DoAndExit(config Config) {
 
 	if err := Do(url, strings.TrimSpace(*config.userAgent)); err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		exitFunc(1)
+		return
 	}
-	os.Exit(0)
+
+	exitFunc(0)
 }
