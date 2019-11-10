@@ -8,7 +8,6 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/model"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -46,8 +45,13 @@ func New(config Config) App {
 
 // Handler for net/http
 func (a *app) Handler(next http.Handler) http.Handler {
-	prometheusHandler := promhttp.Handler()
-	instrumentedHandler := instrumentHandler(next)
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(prometheus.NewGoCollector())
+
+	prometheusHandler := promhttp.InstrumentMetricHandler(
+		registry, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}),
+	)
+	instrumentedHandler := instrumentHandler(registry, next)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == a.path {
@@ -58,31 +62,33 @@ func (a *app) Handler(next http.Handler) http.Handler {
 	})
 }
 
-func instrumentHandler(next http.Handler) http.Handler {
+func instrumentHandler(registerer prometheus.Registerer, next http.Handler) http.Handler {
 	instrumentedHandler := next
 
-	instrumentedHandler = promhttp.InstrumentHandlerDuration(promauto.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "http_request_duration_seconds",
-			Help:    "A histogram of latencies for requests.",
-			Buckets: []float64{0.25, 0.5, 1, 2.5, 5, 10},
-		},
-		[]string{"code", "method"}), instrumentedHandler)
+	durationVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "http_request_duration_seconds",
+		Help:    "A histogram of latencies for requests.",
+		Buckets: []float64{0.25, 0.5, 1, 2.5, 5, 10},
+	}, []string{"code", "method"})
+	registerer.MustRegister(durationVec)
+	instrumentedHandler = promhttp.InstrumentHandlerDuration(durationVec, instrumentedHandler)
 
-	instrumentedHandler = promhttp.InstrumentHandlerResponseSize(promauto.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "http_response_size_bytes",
-			Help:    "A histogram of response sizes for requests.",
-			Buckets: []float64{200, 500, 900, 1500},
-		},
-		[]string{}), instrumentedHandler)
+	sizeVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "http_response_size_bytes",
+		Help:    "A histogram of response sizes for requests.",
+		Buckets: []float64{200, 500, 900, 1500},
+	},
+		[]string{})
+	registerer.MustRegister(sizeVec)
+	instrumentedHandler = promhttp.InstrumentHandlerResponseSize(sizeVec, instrumentedHandler)
 
-	instrumentedHandler = promhttp.InstrumentHandlerCounter(promauto.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "http_requests_total",
-			Help: "A counter for requests to the wrapped handler.",
-		},
-		[]string{"code", "method"}), instrumentedHandler)
+	counterVec := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "A counter for requests to the wrapped handler.",
+	},
+		[]string{"code", "method"})
+	registerer.MustRegister(counterVec)
+	instrumentedHandler = promhttp.InstrumentHandlerCounter(counterVec, instrumentedHandler)
 
 	return instrumentedHandler
 }
