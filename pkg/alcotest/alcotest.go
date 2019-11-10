@@ -1,6 +1,7 @@
 package alcotest
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -9,10 +10,14 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
+	"github.com/ViBiOh/httputils/v3/pkg/request"
 )
 
 var httpClient = http.Client{
 	Timeout: 5 * time.Second,
+	CheckRedirect: func(*http.Request, []*http.Request) error {
+		return http.ErrUseLastResponse
+	},
 }
 
 // Config of package
@@ -25,35 +30,18 @@ type Config struct {
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
 		url:       flags.New(prefix, "alcotest").Name("Url").Default("").Label("URL to check").ToString(fs),
-		userAgent: flags.New(prefix, "alcotest").Name("UserAgent").Default("Golang alcotest").Label("User-Agent for check").ToString(fs),
+		userAgent: flags.New(prefix, "alcotest").Name("UserAgent").Default("Alcotest").Label("User-Agent for check").ToString(fs),
 	}
 }
 
 // GetStatusCode return status code of a GET on given url
 func GetStatusCode(url, userAgent string) (int, error) {
-	r, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
+	resp, err := request.New().Get(url).Header("User-Agent", userAgent).WithClient(httpClient).Send(context.Background(), nil)
+	if resp == nil {
 		return 0, err
 	}
 
-	if userAgent != "" {
-		r.Header.Set("User-Agent", userAgent)
-	}
-
-	resp, err := httpClient.Do(r)
-	if err != nil {
-		return 0, err
-	}
-
-	if closeErr := resp.Body.Close(); closeErr != nil {
-		if err == nil {
-			return 0, closeErr
-		}
-
-		return 0, fmt.Errorf("%s: %w", err, closeErr)
-	}
-
-	return resp.StatusCode, nil
+	return resp.StatusCode, err
 }
 
 // Do test status code of given URL

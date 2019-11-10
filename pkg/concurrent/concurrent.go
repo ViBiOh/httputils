@@ -29,8 +29,3 @@ func Run(maxConcurrent uint, action Action, onSuccess func(interface{}), onError
 
 	return inputs
 }
-
-// FireAndForget run concurrent action without taking care of output
-func FireAndForget(maxConcurrent uint, action Action) chan<- interface{} {
-	return Run(maxConcurrent, action, func(interface{}) {}, func(error) {})
-}

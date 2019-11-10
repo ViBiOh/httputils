@@ -19,6 +19,8 @@ func createTestServer() *httptest.Server {
 			w.WriteHeader(http.StatusOK)
 		} else if r.URL.Path == "/ko" {
 			w.WriteHeader(http.StatusInternalServerError)
+		} else if r.URL.Path == "/reset" {
+			w.WriteHeader(http.StatusResetContent)
 		} else if r.URL.Path == "/user-agent" {
 			if r.Header.Get("User-Agent") != "Alcotest" {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -68,14 +70,14 @@ func TestGetStatusCode(t *testing.T) {
 			fmt.Sprintf("%s/ko", testServer.URL),
 			"",
 			http.StatusInternalServerError,
-			nil,
+			errors.New("HTTP/500"),
 		},
 		{
 			"should set given User-Agent",
 			fmt.Sprintf("%s/user-agent", testServer.URL),
 			"Alcotest",
 			http.StatusServiceUnavailable,
-			nil,
+			errors.New("HTTP/503"),
 		},
 	}
 
@@ -122,7 +124,13 @@ func TestDo(t *testing.T) {
 			"should handle bad status code",
 			fmt.Sprintf("%s/ko", testServer.URL),
 			"TestDo",
-			errors.New("alcotest failed: HTTP/500"),
+			errors.New("HTTP/500"),
+		},
+		{
+			"should handle bad status code",
+			fmt.Sprintf("%s/reset", testServer.URL),
+			"TestDo",
+			errors.New("alcotest failed: HTTP/205"),
 		},
 		{
 			"should handle valid code",
@@ -147,7 +155,7 @@ func TestDo(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("Do(`%s`, `%s`) = %#v, want %#v", testCase.url, testCase.userAgent, result, testCase.want)
+				t.Errorf("Do() = %s, want %s", result, testCase.want)
 			}
 		})
 	}

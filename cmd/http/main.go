@@ -31,7 +31,5 @@ func main() {
 
 	handler := httputils.ChainMiddlewares(nil, prometheusApp, owaspApp, corsApp)
 
-	httputils.New(serverConfig).ListenAndServe(handler, httputils.HealthHandler(nil), func() {
-		logger.Info("I'm collapsing")
-	})
+	httputils.New(serverConfig).ListenServeWait(handler, nil)
 }

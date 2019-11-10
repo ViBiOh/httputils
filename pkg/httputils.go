@@ -1,7 +1,6 @@
 package httputils
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -17,7 +16,8 @@ import (
 
 // App of package
 type App interface {
-	ListenAndServe(http.Handler, http.Handler, func())
+	ListenAndServe(http.Handler, http.Handler) (*http.Server, <-chan error)
+	ListenServeWait(http.Handler, http.Handler)
 }
 
 // Config of package
@@ -56,8 +56,7 @@ func New(config Config) App {
 	}
 }
 
-// VersionHandler for sending current app version from `VERSION` environment variable
-func VersionHandler() http.Handler {
+func versionHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -107,8 +106,11 @@ func ChainMiddlewares(handler http.Handler, middlewares ...model.Middleware) htt
 }
 
 // ListenAndServe starts server
-func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler, onShutdown func()) {
-	versionHandler := VersionHandler()
+func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler) (*http.Server, <-chan error) {
+	versionHandler := versionHandler()
+	if healthHandler == nil {
+		healthHandler = HealthHandler(nil)
+	}
 
 	httpServer := &http.Server{
 		Addr: fmt.Sprintf("%s:%d", a.address, a.port),
@@ -126,37 +128,34 @@ func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler, on
 
 	logger.Info("Starting HTTP server on %s", httpServer.Addr)
 
-	errorOutput := make(chan error, 1)
+	err := make(chan error, 1)
 
 	go func() {
 		if a.cert != "" && a.key != "" {
 			logger.Info("Listening with TLS")
-			errorOutput <- httpServer.ListenAndServeTLS(a.cert, a.key)
+			err <- httpServer.ListenAndServeTLS(a.cert, a.key)
 		} else {
 			logger.Warn("Listening without TLS")
-			errorOutput <- httpServer.ListenAndServe()
+			err <- httpServer.ListenAndServe()
 		}
 	}()
 
-	waitForTermination(errorOutput)
-	if onShutdown != nil {
-		onShutdown()
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := httpServer.Shutdown(ctx); err != nil {
-		logger.Error("%s", err)
-	}
+	return httpServer, err
 }
 
-func waitForTermination(errorInput <-chan error) {
+// ListenServeWait starts server and wait for its termination
+func (a app) ListenServeWait(handler http.Handler, healthHandler http.Handler) {
+	_, err := a.ListenAndServe(handler, healthHandler)
+	WaitForTermination(err)
+}
+
+// WaitForTermination wait for error or SIGTERM/SIGINT signal
+func WaitForTermination(err <-chan error) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
 
 	select {
-	case err := <-errorInput:
+	case err := <-err:
 		logger.Error("%s", err)
 	case signal := <-signals:
 		logger.Info("%s received", signal)
