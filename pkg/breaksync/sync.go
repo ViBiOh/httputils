@@ -14,25 +14,35 @@ type Synchronization struct {
 
 // NewSynchronization creates and initializes Synchronization
 func NewSynchronization(sources []*Source, ruptures []*Rupture) *Synchronization {
-	return &Synchronization{Sources: sources, ruptures: ruptures, end: false}
+	return &Synchronization{
+		Sources:  sources,
+		ruptures: ruptures,
+		end:      false,
+	}
 }
 
 func (s *Synchronization) read() error {
 	for _, source := range s.Sources {
-		if source.synchronized && (source.readRupture == nil || source.readRupture.last) {
-			if _, err := source.read(); err != nil {
-				return err
-			}
+		if !source.synchronized {
+			continue
+		}
+
+		if !(source.readRupture == nil || source.readRupture.last) {
+			continue
+		}
+
+		if err := source.read(); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-func (s *Synchronization) computeKeys() {
+func (s *Synchronization) computeKey() {
 	s.currentKey = s.nextKey
-
 	s.nextKey = finalValue
+
 	for _, source := range s.Sources {
 		if source.synchronized {
 			if source.nextKey < s.nextKey {
@@ -60,18 +70,12 @@ func (s *Synchronization) computeRuptures() {
 	}
 }
 
-func (s *Synchronization) computeSynchros() {
-	for _, source := range s.Sources {
-		source.computeSynchro(s.currentKey)
-	}
-}
-
 // Run start break/sync algorithm
-func (s *Synchronization) Run(business func(*Synchronization)) error {
+func (s *Synchronization) Run(business func(*Synchronization) error) error {
 	if err := s.read(); err != nil {
 		return err
 	}
-	s.computeKeys()
+	s.computeKey()
 
 	for !s.end {
 		if err := s.read(); err != nil {
@@ -79,10 +83,12 @@ func (s *Synchronization) Run(business func(*Synchronization)) error {
 		}
 
 		s.computeSynchro()
-		s.computeKeys()
+		s.computeKey()
 		s.computeRuptures()
 
-		business(s)
+		if err := business(s); err != nil {
+			return err
+		}
 	}
 
 	return nil

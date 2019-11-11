@@ -49,12 +49,14 @@ func TestAlgorithm(t *testing.T) {
 			synchronization := NewSynchronization(testCase.sources, testCase.ruptures)
 
 			var result int
-			synchronization.Run(func(s *Synchronization) {
+			synchronization.Run(func(s *Synchronization) error {
 				for _, source := range s.Sources {
 					if source.synchronized {
 						result = result + source.Current.(int)
 					}
 				}
+
+				return nil
 			})
 
 			if testCase.want != result {
@@ -129,7 +131,7 @@ func TestAlgorithmWithRupture(t *testing.T) {
 			synchronization := NewSynchronization(testCase.sources, testCase.ruptures)
 
 			result := uint(0)
-			synchronization.Run(func(s *Synchronization) {
+			synchronization.Run(func(s *Synchronization) error {
 				allSynchronized := true
 				for _, source := range s.Sources {
 					if !source.synchronized {
@@ -140,6 +142,8 @@ func TestAlgorithmWithRupture(t *testing.T) {
 				if allSynchronized {
 					result++
 				}
+
+				return nil
 			})
 
 			if testCase.want != result {
