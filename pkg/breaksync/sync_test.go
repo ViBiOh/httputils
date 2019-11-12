@@ -1,46 +1,143 @@
 package breaksync
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 )
 
-func TestAlgorithm(t *testing.T) {
-	numberReader := func(start int) func() (interface{}, error) {
+type client struct {
+	name string
+	card string
+}
+
+func TestRun(t *testing.T) {
+	cards := []interface{}{
+		"MASTERCARD",
+		"VISA",
+	}
+	cardKeyer := func(o interface{}) string {
+		return fmt.Sprintf("%-10s", o)
+	}
+
+	clients := []interface{}{
+		client{"Bob", "MASTERCARD"},
+		client{"Chuck", "MASTERCARD"},
+		client{"Hulk", "MASTERCARD"},
+		client{"Hulk", "MASTERCARD"},
+		client{"Luke", "MASTERCARD"},
+		client{"Superman", "MASTERCARD"},
+		client{"Tony Stark", "MASTERCARD"},
+		client{"Vador", "MASTERCARD"},
+		client{"Yoda", "MASTERCARD"},
+		client{"Einstein", "VISA"},
+		client{"Vincent", "VISA"},
+	}
+	clientKeyer := func(o interface{}) string {
+		c := o.(client)
+		return fmt.Sprintf("%-10s%s", c.card, c.name)
+	}
+
+	cardRupture := NewRupture("card", func(i string) string {
+		return fmt.Sprintf("%.10s", i)
+	})
+
+	errRead := errors.New("test error")
+	numberReader := func(start int, failure bool) func() (interface{}, error) {
 		i := start
 
 		return func() (interface{}, error) {
-			i = i + 2
-			if i < 10 {
+			i++
+
+			if i < 0 {
+				return 0, errRead
+			}
+
+			if i <= 5 {
 				return i, nil
 			}
+
+			if failure {
+				return 0, errRead
+			}
+
 			return nil, nil
 		}
 	}
 
 	var cases = []struct {
-		intention string
-		sources   []*Source
-		ruptures  []*Rupture
-		want      int
+		intention    string
+		sources      []*Source
+		ruptures     []*Rupture
+		businessFail bool
+		want         int
+		wantErr      error
 	}{
 		{
-			"should work two list fully synchronized",
+			"fully synchronized",
 			[]*Source{
-				NewSource(numberReader(-2), sourceBasicKeyer, nil),
-				NewSource(numberReader(-2), sourceBasicKeyer, nil),
+				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
+				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
 			},
-			[]*Rupture{},
-			40,
+			nil,
+			false,
+			5,
+			nil,
 		},
 		{
-			"should work two list never synchronized at the same time",
+			"desynchronized once",
 			[]*Source{
-				NewSource(numberReader(-2), sourceBasicKeyer, nil),
-				NewSource(numberReader(-1), sourceBasicKeyer, nil),
+				NewSource(numberReader(1, false), sourceBasicKeyer, nil),
+				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
 			},
-			[]*Rupture{},
-			45,
+			nil,
+			false,
+			4,
+			nil,
+		},
+		{
+			"read first error",
+			[]*Source{
+				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
+				NewSource(numberReader(-2, false), sourceBasicKeyer, nil),
+			},
+			nil,
+			false,
+			0,
+			errRead,
+		},
+		{
+			"read later error",
+			[]*Source{
+				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
+				NewSource(numberReader(0, true), sourceBasicKeyer, nil),
+			},
+			nil,
+			false,
+			4,
+			errRead,
+		},
+		{
+			"business error",
+			[]*Source{
+				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
+				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
+			},
+			nil,
+			true,
+			4,
+			errRead,
+		},
+		{
+			"should work with basic rupture on read",
+			[]*Source{
+				newSliceSource(clients, clientKeyer, nil),
+				newSliceSource(cards, cardKeyer, cardRupture),
+			},
+			[]*Rupture{cardRupture},
+			false,
+			11,
+			nil,
 		},
 	}
 
@@ -49,105 +146,25 @@ func TestAlgorithm(t *testing.T) {
 			synchronization := NewSynchronization(testCase.sources, testCase.ruptures)
 
 			var result int
-			synchronization.Run(func(s *Synchronization) error {
-				for _, source := range s.Sources {
-					if source.synchronized {
-						result = result + source.Current.(int)
-					}
-				}
-
-				return nil
-			})
-
-			if testCase.want != result {
-				t.Errorf("BreakSync Algorithm(%#v) = %#v, want %#v", testCase.sources, result, testCase.want)
-			}
-		})
-	}
-}
-
-type client struct {
-	name string
-	card string
-}
-
-func TestAlgorithmWithRupture(t *testing.T) {
-	cards := []string{"MASTERCARD", "VISA"}
-	cardKeyer := func(o interface{}) string {
-		return fmt.Sprintf("%-10s", o)
-	}
-	cardRupture := NewRupture("card", func(i string) string {
-		return fmt.Sprintf("%.10s", i)
-	})
-
-	clients := []client{
-		{"Bob", "MASTERCARD"},
-		{"Chuck", "MASTERCARD"},
-		{"Hulk", "MASTERCARD"},
-		{"Hulk", "MASTERCARD"},
-		{"Luke", "MASTERCARD"},
-		{"Superman", "MASTERCARD"},
-		{"Tony Stark", "MASTERCARD"},
-		{"Vador", "MASTERCARD"},
-		{"Yoda", "MASTERCARD"},
-		{"Einstein", "VISA"},
-		{"Vincent", "VISA"},
-	}
-	clientKeyer := func(o interface{}) string {
-		c := o.(client)
-
-		return fmt.Sprintf("%-10s%s", c.card, c.name)
-	}
-
-	interfaceCards := make([]interface{}, len(cards))
-	for i, d := range cards {
-		interfaceCards[i] = d
-	}
-
-	interfaceClients := make([]interface{}, len(clients))
-	for i, d := range clients {
-		interfaceClients[i] = d
-	}
-
-	var cases = []struct {
-		intention string
-		sources   []*Source
-		ruptures  []*Rupture
-		want      uint
-	}{
-		{
-			"should work with basic rupture on read",
-			[]*Source{
-				newSliceSource(interfaceClients, clientKeyer, nil),
-				newSliceSource(interfaceCards, cardKeyer, cardRupture),
-			},
-			[]*Rupture{cardRupture},
-			11,
-		},
-	}
-
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			synchronization := NewSynchronization(testCase.sources, testCase.ruptures)
-
-			result := uint(0)
-			synchronization.Run(func(s *Synchronization) error {
-				allSynchronized := true
+			err := synchronization.Run(func(s *Synchronization) error {
 				for _, source := range s.Sources {
 					if !source.synchronized {
-						allSynchronized = false
+						return nil
 					}
 				}
 
-				if allSynchronized {
-					result++
+				if result > 3 && testCase.businessFail {
+					return errRead
 				}
 
+				result++
 				return nil
 			})
 
-			if testCase.want != result {
-				t.Errorf("BreakSync Algorithm(%#v) = %#v, want %#v", testCase.sources, result, testCase.want)
+			if testCase.wantErr != nil && !errors.Is(err, testCase.wantErr) {
+				t.Errorf("Read() = %#v, want %#v", err, testCase.wantErr)
+			} else if testCase.want != result {
+				t.Errorf("Run() = %d, want %d", result, testCase.want)
 			}
 		})
 	}

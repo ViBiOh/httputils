@@ -52,7 +52,7 @@ func TestComputeSynchro(t *testing.T) {
 	}
 }
 
-func TestRead(t *testing.T) {
+func TestSourceRead(t *testing.T) {
 	var errRead = errors.New("read error")
 
 	copyErr := NewSource(func() (interface{}, error) {
