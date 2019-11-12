@@ -27,8 +27,8 @@ func TestAlgorithm(t *testing.T) {
 		{
 			"should work two list fully synchronized",
 			[]*Source{
-				NewSource(numberReader(-2), SourceBasicKeyer, nil),
-				NewSource(numberReader(-2), SourceBasicKeyer, nil),
+				NewSource(numberReader(-2), sourceBasicKeyer, nil),
+				NewSource(numberReader(-2), sourceBasicKeyer, nil),
 			},
 			[]*Rupture{},
 			40,
@@ -36,8 +36,8 @@ func TestAlgorithm(t *testing.T) {
 		{
 			"should work two list never synchronized at the same time",
 			[]*Source{
-				NewSource(numberReader(-2), SourceBasicKeyer, nil),
-				NewSource(numberReader(-1), SourceBasicKeyer, nil),
+				NewSource(numberReader(-2), sourceBasicKeyer, nil),
+				NewSource(numberReader(-1), sourceBasicKeyer, nil),
 			},
 			[]*Rupture{},
 			45,
@@ -118,8 +118,8 @@ func TestAlgorithmWithRupture(t *testing.T) {
 		{
 			"should work with basic rupture on read",
 			[]*Source{
-				NewSliceSource(interfaceClients, clientKeyer, nil),
-				NewSliceSource(interfaceCards, cardKeyer, cardRupture),
+				newSliceSource(interfaceClients, clientKeyer, nil),
+				newSliceSource(interfaceCards, cardKeyer, cardRupture),
 			},
 			[]*Rupture{cardRupture},
 			11,

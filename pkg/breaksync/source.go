@@ -1,9 +1,5 @@
 package breaksync
 
-import (
-	"fmt"
-)
-
 // Source of data in a break/sync algorithm
 type Source struct {
 	synchronized bool
@@ -49,22 +45,4 @@ func (s *Source) read() error {
 	}
 
 	return nil
-}
-
-// NewSliceSource creates source from given slice
-func NewSliceSource(slice []interface{}, keyer func(interface{}) string, readRupture *Rupture) *Source {
-	index := -1
-
-	return NewSource(func() (interface{}, error) {
-		index++
-		if index < len(slice) {
-			return slice[index], nil
-		}
-		return nil, nil
-	}, keyer, readRupture)
-}
-
-// SourceBasicKeyer basic keyer for string conversion
-func SourceBasicKeyer(e interface{}) string {
-	return fmt.Sprintf("%#v", e)
 }

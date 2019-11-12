@@ -29,8 +29,3 @@ func (a *Rupture) compute(current, next string, force bool) bool {
 
 	return a.last
 }
-
-// RuptureExtractSimple is a basic extracter that return input
-func RuptureExtractSimple(a string) string {
-	return a
-}
