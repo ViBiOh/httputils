@@ -3,14 +3,15 @@ jobs:
   - stage: Build
 
     sudo: required
+    language: minimal
     services:
     - docker
-    script: docker build --build-arg CODECOV_TOKEN -t "vibioh/$(make name):$(make version)" .
+    script: docker build --build-arg CODECOV_TOKEN -t "${DOCKER_USER}/$(make name):$(make version)" .
     after_success:
-    - curl -sSqL --max-time 10 -X POST https://goreportcard.com/checks?repo=github.com/ViBiOh/httputils
+    - curl -q -sSL --max-time 10 -X POST https://goreportcard.com/checks?repo=github.com/ViBiOh/httputils
 
 stages:
-  - Build
+- Build
 
 notifications:
   email: false
