@@ -6,7 +6,7 @@ jobs:
     language: minimal
     services:
     - docker
-    script: docker build --build-arg CODECOV_TOKEN -t "${DOCKER_USER}/$(make name):$(make version)" .
+    script: docker build --build-arg CODECOV_TOKEN .
     after_success:
     - curl -q -sSL --max-time 10 -X POST https://goreportcard.com/checks?repo=github.com/ViBiOh/httputils
 
