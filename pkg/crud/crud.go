@@ -55,7 +55,8 @@ func New(config Config, service ItemService) App {
 		defaultPage:     *config.defaultPage,
 		defaultPageSize: *config.defaultPageSize,
 		maxPageSize:     *config.maxPageSize,
-		service:         service,
+
+		service: service,
 	}
 }
 

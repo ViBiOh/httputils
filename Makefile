@@ -11,7 +11,7 @@ GO_FILES ?= $(shell find . -name "*.go")
 
 BINARY_PATH=bin/$(APP_NAME)
 
-MAIN_SOURCE = cmd/alcotest/alcotest.go
+MAIN_SOURCE = cmd/http/http.go
 MAIN_RUNNER = go run $(MAIN_SOURCE)
 ifeq ($(DEBUG), true)
 	MAIN_RUNNER = dlv debug $(MAIN_SOURCE) --

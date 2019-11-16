@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
@@ -16,8 +15,10 @@ import (
 
 // App of package
 type App interface {
-	ListenAndServe(http.Handler, http.Handler) (*http.Server, <-chan error)
-	ListenServeWait(http.Handler, http.Handler)
+	Health(http.Handler) App
+	Middleware(model.Middleware) App
+	ListenAndServe(http.Handler) (*http.Server, <-chan error)
+	ListenServeWait(http.Handler)
 }
 
 // Config of package
@@ -29,11 +30,13 @@ type Config struct {
 }
 
 type app struct {
-	address          string
-	port             int
-	gracefulDuration time.Duration
-	cert             string
-	key              string
+	address string
+	port    int
+	cert    string
+	key     string
+
+	middlewares []model.Middleware
+	health      http.Handler
 }
 
 // Flags adds flags for configuring package
@@ -53,6 +56,9 @@ func New(config Config) App {
 		port:    *config.port,
 		cert:    *config.cert,
 		key:     *config.key,
+
+		health:      HealthHandler(nil),
+		middlewares: make([]model.Middleware, 0),
 	}
 }
 
@@ -105,23 +111,35 @@ func ChainMiddlewares(handler http.Handler, middlewares ...model.Middleware) htt
 	return result
 }
 
+// Health set health http handler
+func (a *app) Health(health http.Handler) App {
+	a.health = health
+
+	return a
+}
+
+// Middleware add given middleware to list
+func (a *app) Middleware(middleware model.Middleware) App {
+	a.middlewares = append(a.middlewares, middleware)
+
+	return a
+}
+
 // ListenAndServe starts server
-func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler) (*http.Server, <-chan error) {
+func (a *app) ListenAndServe(handler http.Handler) (*http.Server, <-chan error) {
 	versionHandler := versionHandler()
-	if healthHandler == nil {
-		healthHandler = HealthHandler(nil)
-	}
+	defaultHandler := ChainMiddlewares(handler, a.middlewares...)
 
 	httpServer := &http.Server{
 		Addr: fmt.Sprintf("%s:%d", a.address, a.port),
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/health":
-				healthHandler.ServeHTTP(w, r)
+				a.health.ServeHTTP(w, r)
 			case "/version":
 				versionHandler.ServeHTTP(w, r)
 			default:
-				handler.ServeHTTP(w, r)
+				defaultHandler.ServeHTTP(w, r)
 			}
 		}),
 	}
@@ -144,8 +162,8 @@ func (a app) ListenAndServe(handler http.Handler, healthHandler http.Handler) (*
 }
 
 // ListenServeWait starts server and wait for its termination
-func (a app) ListenServeWait(handler http.Handler, healthHandler http.Handler) {
-	_, err := a.ListenAndServe(handler, healthHandler)
+func (a *app) ListenServeWait(handler http.Handler) {
+	_, err := a.ListenAndServe(handler)
 	WaitForTermination(err)
 }
 
