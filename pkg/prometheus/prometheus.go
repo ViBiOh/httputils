@@ -41,20 +41,21 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 
 // New creates new App from Config
 func New(config Config) App {
+
 	return &app{
-		path: strings.TrimSpace(*config.path),
+		path:     strings.TrimSpace(*config.path),
+		registry: prometheus.NewRegistry(),
 	}
 }
 
 // Handler for net/http
 func (a *app) Handler(next http.Handler) http.Handler {
-	a.registry = prometheus.NewRegistry()
 	a.registry.MustRegister(prometheus.NewGoCollector())
 
 	prometheusHandler := promhttp.InstrumentMetricHandler(
 		a.registry, promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{}),
 	)
-	instrumentedHandler := instrumentHandler(a.registry, next)
+	instrumentedHandler := a.instrumentHandler(next)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == a.path {
@@ -70,7 +71,7 @@ func (a *app) Registerer() prometheus.Registerer {
 	return a.registry
 }
 
-func instrumentHandler(registerer prometheus.Registerer, next http.Handler) http.Handler {
+func (a *app) instrumentHandler(next http.Handler) http.Handler {
 	instrumentedHandler := next
 
 	durationVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -78,7 +79,7 @@ func instrumentHandler(registerer prometheus.Registerer, next http.Handler) http
 		Help:    "A histogram of latencies for requests.",
 		Buckets: []float64{0.25, 0.5, 1, 2.5, 5, 10},
 	}, []string{"code", "method"})
-	registerer.MustRegister(durationVec)
+	a.registry.MustRegister(durationVec)
 	instrumentedHandler = promhttp.InstrumentHandlerDuration(durationVec, instrumentedHandler)
 
 	sizeVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -87,7 +88,7 @@ func instrumentHandler(registerer prometheus.Registerer, next http.Handler) http
 		Buckets: []float64{200, 500, 900, 1500},
 	},
 		[]string{})
-	registerer.MustRegister(sizeVec)
+	a.registry.MustRegister(sizeVec)
 	instrumentedHandler = promhttp.InstrumentHandlerResponseSize(sizeVec, instrumentedHandler)
 
 	counterVec := prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -95,7 +96,7 @@ func instrumentHandler(registerer prometheus.Registerer, next http.Handler) http
 		Help: "A counter for requests to the wrapped handler.",
 	},
 		[]string{"code", "method"})
-	registerer.MustRegister(counterVec)
+	a.registry.MustRegister(counterVec)
 	instrumentedHandler = promhttp.InstrumentHandlerCounter(counterVec, instrumentedHandler)
 
 	return instrumentedHandler
