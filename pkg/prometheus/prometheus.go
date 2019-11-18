@@ -18,6 +18,7 @@ var (
 // App of package
 type App interface {
 	Handler(http.Handler) http.Handler
+	Registerer() prometheus.Registerer
 }
 
 // Config of package
@@ -27,6 +28,8 @@ type Config struct {
 
 type app struct {
 	path string
+
+	registry *prometheus.Registry
 }
 
 // Flags adds flags for configuring package
@@ -45,13 +48,13 @@ func New(config Config) App {
 
 // Handler for net/http
 func (a *app) Handler(next http.Handler) http.Handler {
-	registry := prometheus.NewRegistry()
-	registry.MustRegister(prometheus.NewGoCollector())
+	a.registry = prometheus.NewRegistry()
+	a.registry.MustRegister(prometheus.NewGoCollector())
 
 	prometheusHandler := promhttp.InstrumentMetricHandler(
-		registry, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}),
+		a.registry, promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{}),
 	)
-	instrumentedHandler := instrumentHandler(registry, next)
+	instrumentedHandler := instrumentHandler(a.registry, next)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == a.path {
@@ -60,6 +63,11 @@ func (a *app) Handler(next http.Handler) http.Handler {
 			instrumentedHandler.ServeHTTP(w, r)
 		}
 	})
+}
+
+// Registerer return served registerer
+func (a *app) Registerer() prometheus.Registerer {
+	return a.registry
 }
 
 func instrumentHandler(registerer prometheus.Registerer, next http.Handler) http.Handler {
