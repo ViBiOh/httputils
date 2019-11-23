@@ -41,7 +41,6 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 
 // New creates new App from Config
 func New(config Config) App {
-
 	return &app{
 		path:     strings.TrimSpace(*config.path),
 		registry: prometheus.NewRegistry(),

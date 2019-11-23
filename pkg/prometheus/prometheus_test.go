@@ -4,10 +4,12 @@ import (
 	"flag"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/ViBiOh/httputils/v3/pkg/request"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestFlags(t *testing.T) {
@@ -97,6 +99,32 @@ func TestHandler(t *testing.T) {
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); !strings.Contains(string(result), testCase.want) {
 				t.Errorf("Handler() = `%s`, want `%s`", string(result), testCase.want)
+			}
+		})
+	}
+}
+
+func TestRegisterer(t *testing.T) {
+	registry := prometheus.NewRegistry()
+
+	var cases = []struct {
+		intention string
+		instance  app
+		want      prometheus.Registerer
+	}{
+		{
+			"default",
+			app{
+				registry: registry,
+			},
+			registry,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			if result := testCase.instance.Registerer(); !reflect.DeepEqual(result, testCase.want) {
+				t.Errorf("Registerer() = %#v, want %#v", result, testCase.want)
 			}
 		})
 	}
