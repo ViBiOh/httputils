@@ -117,7 +117,7 @@ func (a app) list(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a app) get(w http.ResponseWriter, r *http.Request, id string) {
+func (a app) get(w http.ResponseWriter, r *http.Request, id uint64) {
 	obj, err := a.service.Get(r.Context(), id)
 	if handleError(w, err) {
 		return
@@ -137,7 +137,7 @@ func (a app) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	obj.SetID("")
+	obj.SetID(0)
 
 	obj, err = a.service.Create(r.Context(), obj)
 	if handleError(w, err) {
@@ -150,7 +150,7 @@ func (a app) create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a app) update(w http.ResponseWriter, r *http.Request, id string) {
+func (a app) update(w http.ResponseWriter, r *http.Request, id uint64) {
 	obj, err := a.readPayload(r)
 
 	if err != nil {
@@ -177,7 +177,7 @@ func (a app) update(w http.ResponseWriter, r *http.Request, id string) {
 	}
 }
 
-func (a app) delete(w http.ResponseWriter, r *http.Request, id string) {
+func (a app) delete(w http.ResponseWriter, r *http.Request, id uint64) {
 	obj, err := a.service.Get(r.Context(), id)
 	if err != nil {
 		handleError(w, err)
@@ -201,8 +201,10 @@ func (a app) Handler() http.Handler {
 		case http.MethodGet:
 			if isRoot {
 				a.list(w, r)
+			} else if id, err := query.GetUintID(r); err != nil {
+				httperror.BadRequest(w, err)
 			} else {
-				a.get(w, r, query.GetID(r))
+				a.get(w, r, id)
 			}
 
 		case http.MethodPost:
@@ -213,17 +215,21 @@ func (a app) Handler() http.Handler {
 			}
 
 		case http.MethodPut:
-			if !isRoot {
-				a.update(w, r, query.GetID(r))
-			} else {
+			if isRoot {
 				w.WriteHeader(http.StatusMethodNotAllowed)
+			} else if id, err := query.GetUintID(r); err != nil {
+				httperror.BadRequest(w, err)
+			} else {
+				a.update(w, r, id)
 			}
 
 		case http.MethodDelete:
-			if !isRoot {
-				a.delete(w, r, query.GetID(r))
-			} else {
+			if isRoot {
 				w.WriteHeader(http.StatusMethodNotAllowed)
+			} else if id, err := query.GetUintID(r); err != nil {
+				httperror.BadRequest(w, err)
+			} else {
+				a.delete(w, r, id)
 			}
 
 		case http.MethodOptions:
