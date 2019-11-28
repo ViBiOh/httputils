@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
+	"github.com/ViBiOh/httputils/v3/pkg/logger"
 	_ "github.com/lib/pq" // Not referenced but needed for database/sql
 )
 
@@ -36,6 +37,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 func New(config Config) (*sql.DB, error) {
 	host := strings.TrimSpace(*config.host)
 	if host == "" {
+		logger.Warn("no host for database connection")
 		return nil, nil
 	}
 
