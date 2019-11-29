@@ -6,5 +6,5 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/lib/pq v1.2.0
 	github.com/prometheus/client_golang v1.2.1
-	github.com/tdewolff/minify/v2 v2.5.2
+	github.com/tdewolff/minify/v2 v2.6.1
 )
