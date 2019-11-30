@@ -66,26 +66,21 @@ func Ping(db *sql.DB) bool {
 
 // GetTx return given transaction if not nil or create a new one
 func GetTx(db *sql.DB, tx *sql.Tx) (*sql.Tx, error) {
-	if db != nil && tx == nil {
-		usedTx, err := db.Begin()
-
-		if err != nil {
-			return nil, err
-		}
-		return usedTx, nil
+	if db == nil || tx != nil {
+		return tx, nil
 	}
 
-	return tx, nil
+	return db.Begin()
 }
 
 // EndTx ends transaction according error without shadowing given error
 func EndTx(tx *sql.Tx, err error) error {
-	if err != nil {
-		if endErr := tx.Rollback(); endErr != nil {
-			err = fmt.Errorf("%s: %w", err, endErr)
-		}
-	} else {
-		err = tx.Commit()
+	if err == nil {
+		return tx.Commit()
+	}
+
+	if rollbackErr := tx.Rollback(); rollbackErr != nil {
+		return fmt.Errorf("%s: %w", err.Error(), rollbackErr)
 	}
 
 	return err
@@ -93,12 +88,12 @@ func EndTx(tx *sql.Tx, err error) error {
 
 // RowsClose closes rows without shadowing error
 func RowsClose(rows *sql.Rows, err error) error {
-	if endErr := rows.Close(); endErr != nil {
+	if closeErr := rows.Close(); closeErr != nil {
 		if err == nil {
-			err = endErr
-		} else {
-			err = fmt.Errorf("%s: %w", err, endErr)
+			return closeErr
 		}
+
+		return fmt.Errorf("%s: %w", err.Error(), closeErr)
 	}
 
 	return err
