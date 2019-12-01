@@ -158,7 +158,9 @@ func (a app) update(w http.ResponseWriter, r *http.Request, id uint64) {
 		return
 	}
 
-	_, err = a.service.Get(r.Context(), id)
+	ctx := r.Context()
+
+	_, err = a.service.Get(ctx, id)
 	if err != nil {
 		handleError(w, err)
 		return
@@ -166,7 +168,7 @@ func (a app) update(w http.ResponseWriter, r *http.Request, id uint64) {
 
 	obj.SetID(id)
 
-	obj, err = a.service.Update(r.Context(), obj)
+	obj, err = a.service.Update(ctx, obj)
 	if handleError(w, err) {
 		return
 	}
@@ -178,13 +180,15 @@ func (a app) update(w http.ResponseWriter, r *http.Request, id uint64) {
 }
 
 func (a app) delete(w http.ResponseWriter, r *http.Request, id uint64) {
-	obj, err := a.service.Get(r.Context(), id)
+	ctx := r.Context()
+
+	obj, err := a.service.Get(ctx, id)
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	err = a.service.Delete(r.Context(), obj)
+	err = a.service.Delete(ctx, obj)
 	if handleError(w, err) {
 		return
 	}
