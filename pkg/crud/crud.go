@@ -9,16 +9,20 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/httperror"
 	"github.com/ViBiOh/httputils/v3/pkg/httpjson"
+	"github.com/ViBiOh/httputils/v3/pkg/logger"
 	"github.com/ViBiOh/httputils/v3/pkg/query"
 	"github.com/ViBiOh/httputils/v3/pkg/request"
 )
 
 var (
-	// ErrNotFound occurs when item with given ID if not found
-	ErrNotFound = errors.New("item not found")
+	// ErrNotFound occurs when item is not found
+	ErrNotFound = errors.New("not found")
 
 	// ErrInvalid occurs when invalid action is requested
 	ErrInvalid = errors.New("invalid")
+
+	// ErrInternal occurs when unhandled behavior occurs
+	ErrInternal = errors.New("internal server error")
 )
 
 // App of package
@@ -37,7 +41,7 @@ type app struct {
 	defaultPage     uint
 	defaultPageSize uint
 	maxPageSize     uint
-	service         ItemService
+	service         Service
 }
 
 // Flags adds flags for configuring package
@@ -50,7 +54,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 }
 
 // New creates new App from Config
-func New(config Config, service ItemService) App {
+func New(config Config, service Service) App {
 	return &app{
 		defaultPage:     *config.defaultPage,
 		defaultPageSize: *config.defaultPageSize,
@@ -70,7 +74,8 @@ func handleError(w http.ResponseWriter, err error) bool {
 	} else if errors.Is(err, ErrNotFound) {
 		httperror.NotFound(w)
 	} else {
-		httperror.InternalServerError(w, err)
+		logger.Error(err.Error())
+		httperror.InternalServerError(w, ErrInternal)
 	}
 
 	return true
