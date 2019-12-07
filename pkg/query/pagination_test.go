@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"testing"
 )
@@ -128,6 +129,19 @@ func TestParsePagination(t *testing.T) {
 				PageSize: 20,
 			},
 			nil,
+		},
+		{
+			"error",
+			&http.Request{
+				URL: &url.URL{
+					RawQuery: "/%1",
+				},
+			},
+			0,
+			0,
+			0,
+			Pagination{},
+			ErrInvalidValue,
 		},
 	}
 

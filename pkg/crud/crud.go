@@ -3,6 +3,7 @@ package crud
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -15,6 +16,9 @@ import (
 )
 
 var (
+	// ErrServiceIsRequired occurs when underlying service is not provided
+	ErrServiceIsRequired = errors.New("service is required")
+
 	// ErrNotFound occurs when item is not found
 	ErrNotFound = errors.New("not found")
 
@@ -23,6 +27,8 @@ var (
 
 	// ErrInternal occurs when unhandled behavior occurs
 	ErrInternal = errors.New("internal server error")
+
+	reservedQueryParams = []string{"page", "pageSize", "sort", "desc"}
 )
 
 // App of package
@@ -54,14 +60,67 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 }
 
 // New creates new App from Config
-func New(config Config, service Service) App {
+func New(config Config, service Service) (App, error) {
+	if service == nil {
+		return nil, ErrServiceIsRequired
+	}
+
 	return &app{
 		defaultPage:     *config.defaultPage,
 		defaultPageSize: *config.defaultPageSize,
 		maxPageSize:     *config.maxPageSize,
 
 		service: service,
-	}
+	}, nil
+}
+
+// Handler for CRUD requests. Should be use with net/http
+func (a app) Handler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		isRoot := query.IsRoot(r)
+
+		switch r.Method {
+		case http.MethodGet:
+			if isRoot {
+				a.list(w, r)
+			} else if id, err := query.GetUintID(r); err != nil {
+				httperror.BadRequest(w, err)
+			} else {
+				a.get(w, r, id)
+			}
+
+		case http.MethodPost:
+			if isRoot {
+				a.create(w, r)
+			} else {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+			}
+
+		case http.MethodPut:
+			if isRoot {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+			} else if id, err := query.GetUintID(r); err != nil {
+				httperror.BadRequest(w, err)
+			} else {
+				a.update(w, r, id)
+			}
+
+		case http.MethodDelete:
+			if isRoot {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+			} else if id, err := query.GetUintID(r); err != nil {
+				httperror.BadRequest(w, err)
+			} else {
+				a.delete(w, r, id)
+			}
+
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusNoContent)
+
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	})
 }
 
 func handleError(w http.ResponseWriter, err error) bool {
@@ -81,22 +140,32 @@ func handleError(w http.ResponseWriter, err error) bool {
 	return true
 }
 
-func (a app) readPayload(r *http.Request) (Item, error) {
-	bodyBytes, err := request.ReadBodyRequest(r)
-	if err != nil {
-		return nil, err
-	}
-
-	return a.service.Unmarsall(bodyBytes)
-}
-
 func readFilters(r *http.Request) map[string][]string {
 	params, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
+		logger.Warn(err.Error())
 		return nil
 	}
 
+	for _, reservedParam := range reservedQueryParams {
+		delete(params, reservedParam)
+	}
+
 	return params
+}
+
+func (a app) readPayload(r *http.Request) (Item, error) {
+	bodyBytes, err := request.ReadBodyRequest(r)
+	if err != nil {
+		return nil, fmt.Errorf("body read error: %w", err)
+	}
+
+	item, err := a.service.Unmarsall(bodyBytes)
+	if err != nil {
+		return item, fmt.Errorf("unmarshall error: %w", err)
+	}
+
+	return item, nil
 }
 
 func (a app) list(w http.ResponseWriter, r *http.Request) {
@@ -199,53 +268,4 @@ func (a app) delete(w http.ResponseWriter, r *http.Request, id uint64) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-}
-
-// Handler for CRUD requests. Should be use with net/http
-func (a app) Handler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		isRoot := query.IsRoot(r)
-
-		switch r.Method {
-		case http.MethodGet:
-			if isRoot {
-				a.list(w, r)
-			} else if id, err := query.GetUintID(r); err != nil {
-				httperror.BadRequest(w, err)
-			} else {
-				a.get(w, r, id)
-			}
-
-		case http.MethodPost:
-			if isRoot {
-				a.create(w, r)
-			} else {
-				w.WriteHeader(http.StatusMethodNotAllowed)
-			}
-
-		case http.MethodPut:
-			if isRoot {
-				w.WriteHeader(http.StatusMethodNotAllowed)
-			} else if id, err := query.GetUintID(r); err != nil {
-				httperror.BadRequest(w, err)
-			} else {
-				a.update(w, r, id)
-			}
-
-		case http.MethodDelete:
-			if isRoot {
-				w.WriteHeader(http.StatusMethodNotAllowed)
-			} else if id, err := query.GetUintID(r); err != nil {
-				httperror.BadRequest(w, err)
-			} else {
-				a.delete(w, r, id)
-			}
-
-		case http.MethodOptions:
-			w.WriteHeader(http.StatusNoContent)
-
-		default:
-			w.WriteHeader(http.StatusMethodNotAllowed)
-		}
-	})
 }

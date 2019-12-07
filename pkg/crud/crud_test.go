@@ -1,0 +1,202 @@
+package crud
+
+import (
+	"errors"
+	"flag"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"reflect"
+	"strings"
+	"testing"
+)
+
+type errReader int
+
+func (errReader) Read(p []byte) (int, error) {
+	return 0, errors.New("read error")
+}
+
+func TestFlags(t *testing.T) {
+	var cases = []struct {
+		intention string
+		want      string
+	}{
+		{
+			"simple",
+			"Usage of simple:\n  -defaultPage uint\n    \t[crud] Default page {SIMPLE_DEFAULT_PAGE} (default 1)\n  -defaultPageSize uint\n    \t[crud] Default page size {SIMPLE_DEFAULT_PAGE_SIZE} (default 20)\n  -maxPageSize uint\n    \t[crud] Max page size {SIMPLE_MAX_PAGE_SIZE} (default 100)\n",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
+			Flags(fs, "")
+
+			var writer strings.Builder
+			fs.SetOutput(&writer)
+			fs.Usage()
+
+			result := writer.String()
+
+			if result != testCase.want {
+				t.Errorf("Flags() = %s, want %s", result, testCase.want)
+			}
+		})
+	}
+}
+
+func TestHandleError(t *testing.T) {
+	var cases = []struct {
+		intention   string
+		error       error
+		want        bool
+		wantStatus  int
+		wantContent string
+	}{
+		{
+			"no error",
+			nil,
+			false,
+			http.StatusOK,
+			"",
+		},
+		{
+			"invalid",
+			ErrInvalid,
+			true,
+			http.StatusBadRequest,
+			"invalid\n",
+		},
+		{
+			"invalid",
+			ErrNotFound,
+			true,
+			http.StatusNotFound,
+			"¯\\_(ツ)_/¯\n",
+		},
+		{
+			"invalid",
+			errors.New("unable to handle request"),
+			true,
+			http.StatusInternalServerError,
+			"internal server error\n",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+
+			if result := handleError(recorder, testCase.error); result != testCase.want {
+				t.Errorf("HandleError() = %t, want %t", result, testCase.want)
+			}
+
+			if result := recorder.Result().StatusCode; result != testCase.wantStatus {
+				t.Errorf("HandleError() = %d, want %d", result, testCase.wantStatus)
+			}
+
+			if result, _ := ioutil.ReadAll(recorder.Body); string(result) != testCase.wantContent {
+				t.Errorf("HandleError() = %s, want %s", result, testCase.wantContent)
+			}
+		})
+	}
+}
+
+func TestReadFilters(t *testing.T) {
+	var cases = []struct {
+		intention string
+		input     *http.Request
+		want      map[string][]string
+	}{
+		{
+			"empty",
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			make(map[string][]string, 0),
+		},
+		{
+			"parse error",
+			&http.Request{
+				URL: &url.URL{
+					RawQuery: "/%1",
+				},
+			},
+			nil,
+		},
+		{
+			"remove reserved params",
+			httptest.NewRequest(http.MethodGet, "/?page=1&pageSize=10&name=Test", nil),
+			map[string][]string{
+				"name": {"Test"},
+			},
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			if result := readFilters(testCase.input); !reflect.DeepEqual(result, testCase.want) {
+				t.Errorf("ReadFilters() = %#v, want %#v", result, testCase.want)
+			}
+		})
+	}
+}
+
+func TestReadPayload(t *testing.T) {
+	var cases = []struct {
+		intention string
+		input     *http.Request
+		want      Item
+		wantErr   error
+	}{
+		{
+			"read error",
+			&http.Request{
+				Body: ioutil.NopCloser(errReader(0)),
+			},
+			nil,
+			errors.New("body read error"),
+		},
+		{
+			"nil",
+			nil,
+			testItem{},
+			errors.New("unmarshall error"),
+		},
+		{
+			"valid",
+			httptest.NewRequest(http.MethodGet, "/", strings.NewReader(`{"id": 1, "name": "test"}`)),
+			testItem{
+				ID:   1,
+				Name: "test",
+			},
+			nil,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			instance := app{
+				service: testService{},
+			}
+
+			result, err := instance.readPayload(testCase.input)
+
+			failed := false
+
+			if testCase.wantErr != nil && err == nil {
+				failed = true
+			} else if testCase.wantErr == nil && err != nil {
+				failed = true
+			} else if testCase.wantErr != nil && !strings.HasPrefix(err.Error(), testCase.wantErr.Error()) {
+				failed = true
+			} else if result != testCase.want {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("ReadPayload() = (%v, %s), want (%v, %s)", result, err, testCase.want, testCase.wantErr)
+			}
+		})
+	}
+}

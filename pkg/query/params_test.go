@@ -2,15 +2,12 @@ package query
 
 import (
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
 func TestGetBool(t *testing.T) {
-	emptyRequest, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
-	validRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?valid", nil)
-	validValueRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?test=1&valid=false", nil)
-	validInvalidRequest, _ := http.NewRequest(http.MethodGet, "http://localhost?test=1&valid=invalidBool", nil)
-
 	var cases = []struct {
 		intention string
 		request   *http.Request
@@ -18,26 +15,36 @@ func TestGetBool(t *testing.T) {
 		want      bool
 	}{
 		{
+			"error",
+			&http.Request{
+				URL: &url.URL{
+					RawQuery: "/%1",
+				},
+			},
+			"",
+			false,
+		},
+		{
 			"should work with empty param",
-			emptyRequest,
+			httptest.NewRequest(http.MethodGet, "http://localhost", nil),
 			"valid",
 			false,
 		},
 		{
 			"should work with valid param",
-			validRequest,
+			httptest.NewRequest(http.MethodGet, "http://localhost?valid", nil),
 			"valid",
 			true,
 		},
 		{
 			"should work with valid value",
-			validValueRequest,
+			httptest.NewRequest(http.MethodGet, "http://localhost?test=1&valid=false", nil),
 			"valid",
 			false,
 		},
 		{
 			"should work with valid value not equal to a boolean",
-			validInvalidRequest,
+			httptest.NewRequest(http.MethodGet, "http://localhost?test=1&valid=invalidBool", nil),
 			"valid",
 			false,
 		},

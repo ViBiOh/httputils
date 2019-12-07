@@ -12,7 +12,7 @@ func httpError(w http.ResponseWriter, status int, payload string) {
 }
 
 func logError(status int, err error) {
-	logger.Warn("HTTP/%d %s: %#v", status, err.Error(), err)
+	logger.Warn("HTTP/%d: %s", status, err.Error())
 }
 
 // BadRequest logs error and sets BadRequest status
