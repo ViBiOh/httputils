@@ -49,6 +49,168 @@ func TestFlags(t *testing.T) {
 	}
 }
 
+func TestNew(t *testing.T) {
+	one := uint(1)
+
+	var cases = []struct {
+		intention string
+		config    Config
+		service   Service
+		want      App
+		wantErr   error
+	}{
+		{
+			"missing service",
+			Config{},
+			nil,
+			nil,
+			ErrServiceIsRequired,
+		},
+		{
+			"missing service",
+			Config{
+				defaultPage:     &one,
+				defaultPageSize: &one,
+				maxPageSize:     &one,
+			},
+			testService{},
+			&app{
+				defaultPage:     1,
+				defaultPageSize: 1,
+				maxPageSize:     1,
+				service:         testService{},
+			},
+			nil,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			result, err := New(testCase.config, testCase.service)
+
+			failed := false
+
+			if testCase.wantErr != nil && !errors.Is(err, testCase.wantErr) {
+				failed = true
+			} else if !reflect.DeepEqual(result, testCase.want) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("New() = (%v, %s), want (%v, %s)", result, err, testCase.want, testCase.wantErr)
+			}
+		})
+	}
+}
+
+func TestHandler(t *testing.T) {
+	var cases = []struct {
+		intention  string
+		request    *http.Request
+		want       string
+		wantStatus int
+	}{
+		{
+			"not allowed",
+			httptest.NewRequest(http.MethodHead, "/", nil),
+			"",
+			http.StatusMethodNotAllowed,
+		},
+		{
+			"list",
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			"{\"results\":[{\"id\":1,\"name\":\"First\"},{\"id\":2,\"name\":\"First\"}],\"page\":0,\"pageSize\":2,\"pageCount\":5,\"total\":10}\n",
+			http.StatusOK,
+		},
+		{
+			"get invalid uint",
+			httptest.NewRequest(http.MethodGet, "/-40", nil),
+			"invalid unsigned integer value for ID\n",
+			http.StatusBadRequest,
+		},
+		{
+			"get",
+			httptest.NewRequest(http.MethodGet, "/8000", nil),
+			"{\"id\":8000,\"name\":\"Test\"}\n",
+			http.StatusOK,
+		},
+		{
+			"create",
+			httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"name": "success"}`)),
+			"{\"id\":1,\"name\":\"success\"}\n",
+			http.StatusCreated,
+		},
+		{
+			"create with id",
+			httptest.NewRequest(http.MethodPost, "/8000", nil),
+			"",
+			http.StatusMethodNotAllowed,
+		},
+		{
+			"update root",
+			httptest.NewRequest(http.MethodPut, "/", nil),
+			"",
+			http.StatusMethodNotAllowed,
+		},
+		{
+			"update invalid uint",
+			httptest.NewRequest(http.MethodPut, "/-40", nil),
+			"invalid unsigned integer value for ID\n",
+			http.StatusBadRequest,
+		},
+		{
+			"update",
+			httptest.NewRequest(http.MethodPut, "/8000", strings.NewReader(`{"name": "success"}`)),
+			"{\"id\":8000,\"name\":\"success\"}\n",
+			http.StatusOK,
+		},
+		{
+			"delete root",
+			httptest.NewRequest(http.MethodDelete, "/", nil),
+			"",
+			http.StatusMethodNotAllowed,
+		},
+		{
+			"delete invalid uint",
+			httptest.NewRequest(http.MethodDelete, "/-40", nil),
+			"invalid unsigned integer value for ID\n",
+			http.StatusBadRequest,
+		},
+		{
+			"delete",
+			httptest.NewRequest(http.MethodDelete, "/8000", nil),
+			"",
+			http.StatusNoContent,
+		},
+		{
+			"options",
+			httptest.NewRequest(http.MethodOptions, "/", nil),
+			"",
+			http.StatusNoContent,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			instance := app{
+				service:         testService{},
+				defaultPageSize: 2,
+			}
+
+			writer := httptest.NewRecorder()
+			instance.Handler().ServeHTTP(writer, testCase.request)
+
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("Handler() = %d, want %d", result, testCase.wantStatus)
+			}
+
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("Handler() = `%s`, want `%s`", string(result), testCase.want)
+			}
+		})
+	}
+}
+
 func TestHandleError(t *testing.T) {
 	var cases = []struct {
 		intention   string
@@ -243,6 +405,60 @@ func TestReadPayload(t *testing.T) {
 	}
 }
 
+func TestList(t *testing.T) {
+	var cases = []struct {
+		intention  string
+		request    *http.Request
+		want       string
+		wantStatus int
+	}{
+		{
+			"invalid pagination",
+			httptest.NewRequest(http.MethodGet, "/?page=-1", nil),
+			"page is invalid strconv.ParseUint: parsing \"-1\": invalid syntax: invalid value\n",
+			http.StatusBadRequest,
+		},
+		{
+			"error",
+			httptest.NewRequest(http.MethodGet, "/?page=2", nil),
+			"internal server error\n",
+			http.StatusInternalServerError,
+		},
+		{
+			"too far",
+			httptest.NewRequest(http.MethodGet, "/?page=3", nil),
+			"",
+			http.StatusRequestedRangeNotSatisfiable,
+		},
+		{
+			"valid",
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			"{\"results\":[{\"id\":1,\"name\":\"First\"},{\"id\":2,\"name\":\"First\"}],\"page\":0,\"pageSize\":2,\"pageCount\":5,\"total\":10}\n",
+			http.StatusOK,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			instance := app{
+				service:         testService{},
+				defaultPageSize: 2,
+			}
+
+			recorder := httptest.NewRecorder()
+			instance.list(recorder, testCase.request)
+
+			if result, _ := request.ReadBodyResponse(recorder.Result()); string(result) != testCase.want {
+				t.Errorf("list() = %s, want %s", result, testCase.want)
+			}
+
+			if result := recorder.Result().StatusCode; result != testCase.wantStatus {
+				t.Errorf("list() = %d, want %d", result, testCase.wantStatus)
+			}
+		})
+	}
+}
+
 func TestGet(t *testing.T) {
 	var cases = []struct {
 		intention  string
@@ -409,11 +625,62 @@ func TestUpdate(t *testing.T) {
 			instance.update(writer, testCase.request, testCase.id)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("get() = %s, want %s", result, testCase.want)
+				t.Errorf("update() = %s, want %s", result, testCase.want)
 			}
 
 			if result := writer.Result().StatusCode; result != testCase.wantStatus {
-				t.Errorf("get() = %d, want %d", result, testCase.wantStatus)
+				t.Errorf("update() = %d, want %d", result, testCase.wantStatus)
+			}
+		})
+	}
+}
+
+func TestDelete(t *testing.T) {
+	var cases = []struct {
+		intention  string
+		request    *http.Request
+		id         uint64
+		want       string
+		wantStatus int
+	}{
+		{
+			"not found",
+			httptest.NewRequest(http.MethodDelete, "/", nil),
+			2000,
+			"¯\\_(ツ)_/¯\n",
+			http.StatusNotFound,
+		},
+		{
+			"error",
+			httptest.NewRequest(http.MethodDelete, "/", nil),
+			6000,
+			"internal server error\n",
+			http.StatusInternalServerError,
+		},
+		{
+			"delete success",
+			httptest.NewRequest(http.MethodDelete, "/", nil),
+			8000,
+			"",
+			http.StatusNoContent,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			instance := app{
+				service: testService{},
+			}
+
+			writer := httptest.NewRecorder()
+			instance.delete(writer, testCase.request, testCase.id)
+
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("delete() = %s, want %s", result, testCase.want)
+			}
+
+			if result := writer.Result().StatusCode; result != testCase.wantStatus {
+				t.Errorf("delete() = %d, want %d", result, testCase.wantStatus)
 			}
 		})
 	}

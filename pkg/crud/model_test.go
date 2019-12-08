@@ -43,13 +43,22 @@ func (t testService) Check(o Item) []error {
 }
 
 func (t testService) List(ctx context.Context, page, pageSize uint, sortKey string, sortDesc bool, filters map[string][]string) ([]Item, uint, error) {
-	return nil, 0, nil
+	if page == 2 {
+		return nil, 0, errors.New("error while reading")
+	} else if page == 3 {
+		return nil, 10, nil
+	} else {
+		return []Item{
+			&testItem{ID: 1, Name: "First"},
+			&testItem{ID: 2, Name: "First"},
+		}, 10, nil
+	}
 }
 
 func (t testService) Get(ctx context.Context, ID uint64) (Item, error) {
-	if ID == 8000 {
+	if ID == 8000 || ID == 6000 {
 		return &testItem{
-			ID:   8000,
+			ID:   ID,
 			Name: "Test",
 		}, nil
 	} else if ID == 4000 {
@@ -84,5 +93,11 @@ func (t testService) Update(ctx context.Context, o Item) (Item, error) {
 }
 
 func (t testService) Delete(ctx context.Context, o Item) error {
+	value := o.(*testItem)
+
+	if value.ID == 6000 {
+		return errors.New("error while deleting")
+	}
+
 	return nil
 }
