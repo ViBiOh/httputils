@@ -10,6 +10,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/ViBiOh/httputils/v3/pkg/request"
 )
 
 type errReader int
@@ -99,6 +101,46 @@ func TestHandleError(t *testing.T) {
 
 			if result, _ := ioutil.ReadAll(recorder.Body); string(result) != testCase.wantContent {
 				t.Errorf("HandleError() = %s, want %s", result, testCase.wantContent)
+			}
+		})
+	}
+}
+
+func TestWriteErrors(t *testing.T) {
+	var cases = []struct {
+		intention  string
+		input      []error
+		want       string
+		wantStatus int
+	}{
+		{
+			"empty",
+			nil,
+			"invalid payload:\n",
+			http.StatusBadRequest,
+		},
+		{
+			"multiple errors",
+			[]error{
+				errors.New("invalid name"),
+				errors.New("invalid email"),
+			},
+			"invalid payload:\n\tinvalid name\n\tinvalid email\n",
+			http.StatusBadRequest,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
+			writeErrors(writer, testCase.input)
+
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("writeErrors = %d, want %d", result, testCase.wantStatus)
+			}
+
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("writeErrors = %s, want %s", string(result), testCase.want)
 			}
 		})
 	}
@@ -196,6 +238,64 @@ func TestReadPayload(t *testing.T) {
 
 			if failed {
 				t.Errorf("ReadPayload() = (%v, %s), want (%v, %s)", result, err, testCase.want, testCase.wantErr)
+			}
+		})
+	}
+}
+
+func TestGet(t *testing.T) {
+	var cases = []struct {
+		intention  string
+		request    *http.Request
+		id         uint64
+		want       string
+		wantStatus int
+	}{
+		{
+			"null",
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			0,
+			"null\n",
+			http.StatusOK,
+		},
+		{
+			"not found",
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			2000,
+			"¯\\_(ツ)_/¯\n",
+			http.StatusNotFound,
+		},
+		{
+			"internal error",
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			4000,
+			"internal server error\n",
+			http.StatusInternalServerError,
+		},
+		{
+			"valid",
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			8000,
+			"{\"id\":8000,\"name\":\"Test\"}\n",
+			http.StatusOK,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			instance := app{
+				service: testService{},
+			}
+
+			recorder := httptest.NewRecorder()
+			instance.get(recorder, testCase.request, testCase.id)
+
+			if result, _ := request.ReadBodyResponse(recorder.Result()); string(result) != testCase.want {
+				t.Errorf("get() = %s, want %s", result, testCase.want)
+			}
+
+			if result := recorder.Result().StatusCode; result != testCase.wantStatus {
+				t.Errorf("get() = %d, want %d", result, testCase.wantStatus)
 			}
 		})
 	}

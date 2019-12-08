@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ViBiOh/httputils/v3/pkg/httperror"
 	"github.com/ViBiOh/httputils/v3/pkg/query"
 )
 
@@ -32,9 +33,8 @@ func IsPretty(r *http.Request) bool {
 }
 
 // ResponseJSON write marshalled obj to http.ResponseWriter with correct header
-func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty bool) error {
+func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty bool) {
 	encoder := json.NewEncoder(w)
-
 	if pretty {
 		encoder.SetIndent("", "  ")
 	}
@@ -44,23 +44,21 @@ func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty boo
 	w.WriteHeader(status)
 
 	if err := encoder.Encode(obj); err != nil {
-		return fmt.Errorf("%s: %w", err, ErrCannotMarshall)
+		httperror.InternalServerError(w, fmt.Errorf("%s: %w", err, ErrCannotMarshall))
 	}
-
-	return nil
 }
 
 // ResponseArrayJSON write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func ResponseArrayJSON(w http.ResponseWriter, status int, array interface{}, pretty bool) error {
-	return ResponseJSON(w, status, results{array}, pretty)
+func ResponseArrayJSON(w http.ResponseWriter, status int, array interface{}, pretty bool) {
+	ResponseJSON(w, status, results{array}, pretty)
 }
 
 // ResponsePaginatedJSON write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func ResponsePaginatedJSON(w http.ResponseWriter, status int, page uint, pageSize uint, total uint, array interface{}, pretty bool) error {
+func ResponsePaginatedJSON(w http.ResponseWriter, status int, page uint, pageSize uint, total uint, array interface{}, pretty bool) {
 	pageCount := uint(total / pageSize)
 	if total%pageSize != 0 {
 		pageCount++
 	}
 
-	return ResponseJSON(w, status, pagination{Results: array, Page: page, PageSize: pageSize, PageCount: pageCount, Total: total}, pretty)
+	ResponseJSON(w, status, pagination{Results: array, Page: page, PageSize: pageSize, PageCount: pageCount, Total: total}, pretty)
 }

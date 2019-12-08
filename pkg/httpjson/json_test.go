@@ -1,7 +1,6 @@
 package httpjson
 
 import (
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -44,8 +43,8 @@ func TestResponseJSON(t *testing.T) {
 		obj        interface{}
 		pretty     bool
 		want       string
+		wantStatus int
 		wantHeader map[string]string
-		wantErr    error
 	}{
 
 		{
@@ -53,24 +52,24 @@ func TestResponseJSON(t *testing.T) {
 			nil,
 			false,
 			"null\n",
+			http.StatusOK,
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
-			nil,
 		},
 		{
 			"simple object",
 			testStruct{id: "Test"},
 			false,
 			"{\"Active\":false,\"Amount\":0}\n",
+			http.StatusOK,
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
-			nil,
 		},
 		{
 			"pretty",
 			testStruct{id: "Test", Active: true, Amount: 12.34},
 			true,
 			"{\n  \"Active\": true,\n  \"Amount\": 12.34\n}\n",
+			http.StatusOK,
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
-			nil,
 		},
 		{
 			"error",
@@ -78,28 +77,23 @@ func TestResponseJSON(t *testing.T) {
 				return "test"
 			},
 			false,
-			"",
-			nil,
-			ErrCannotMarshall,
+			"json: unsupported type: func() string: cannot marshall json\n",
+			http.StatusOK, // might not occur in real life
+			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 	}
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			err := ResponseJSON(writer, http.StatusOK, testCase.obj, testCase.pretty)
-			result, _ := request.ReadBodyResponse(writer.Result())
+			ResponseJSON(writer, http.StatusOK, testCase.obj, testCase.pretty)
 
-			failed := false
-
-			if testCase.wantErr != nil && !errors.Is(err, testCase.wantErr) {
-				failed = true
-			} else if string(result) != testCase.want {
-				failed = true
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("ResponseJSON() = %s, want %s", string(result), testCase.want)
 			}
 
-			if failed {
-				t.Errorf("ResponseJSON() = (%s, %s), want (%s, %s)", string(result), err, testCase.want, testCase.wantErr)
+			if result := writer.Result().StatusCode; result != testCase.wantStatus {
+				t.Errorf("ResponseJSON() = %d, want %d", result, testCase.wantStatus)
 			}
 
 			for key, value := range testCase.wantHeader {

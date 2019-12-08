@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/httperror"
@@ -140,6 +141,18 @@ func handleError(w http.ResponseWriter, err error) bool {
 	return true
 }
 
+func writeErrors(w http.ResponseWriter, errors []error) {
+	output := strings.Builder{}
+	output.WriteString("invalid payload:")
+
+	for _, err := range errors {
+		output.WriteString("\n\t")
+		output.WriteString(err.Error())
+	}
+
+	httperror.BadRequest(w, fmt.Errorf(output.String()))
+}
+
 func readFilters(r *http.Request) map[string][]string {
 	params, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
@@ -185,10 +198,7 @@ func (a app) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := httpjson.ResponsePaginatedJSON(w, http.StatusOK, params.Page, params.PageSize, total, list, httpjson.IsPretty(r)); err != nil {
-		httperror.InternalServerError(w, err)
-		return
-	}
+	httpjson.ResponsePaginatedJSON(w, http.StatusOK, params.Page, params.PageSize, total, list, httpjson.IsPretty(r))
 }
 
 func (a app) get(w http.ResponseWriter, r *http.Request, id uint64) {
@@ -197,31 +207,28 @@ func (a app) get(w http.ResponseWriter, r *http.Request, id uint64) {
 		return
 	}
 
-	if err := httpjson.ResponseJSON(w, http.StatusOK, obj, httpjson.IsPretty(r)); err != nil {
-		httperror.InternalServerError(w, err)
-		return
-	}
+	httpjson.ResponseJSON(w, http.StatusOK, obj, httpjson.IsPretty(r))
 }
 
 func (a app) create(w http.ResponseWriter, r *http.Request) {
 	obj, err := a.readPayload(r)
-
 	if err != nil {
 		httperror.BadRequest(w, err)
 		return
 	}
 
 	obj.SetID(0)
+	if errors := a.service.Check(obj); len(errors) != 0 {
+		writeErrors(w, errors)
+		return
+	}
 
 	obj, err = a.service.Create(r.Context(), obj)
 	if handleError(w, err) {
 		return
 	}
 
-	if err := httpjson.ResponseJSON(w, http.StatusCreated, obj, httpjson.IsPretty(r)); err != nil {
-		httperror.InternalServerError(w, err)
-		return
-	}
+	httpjson.ResponseJSON(w, http.StatusCreated, obj, httpjson.IsPretty(r))
 }
 
 func (a app) update(w http.ResponseWriter, r *http.Request, id uint64) {
@@ -247,10 +254,7 @@ func (a app) update(w http.ResponseWriter, r *http.Request, id uint64) {
 		return
 	}
 
-	if err := httpjson.ResponseJSON(w, http.StatusOK, obj, httpjson.IsPretty(r)); err != nil {
-		httperror.InternalServerError(w, err)
-		return
-	}
+	httpjson.ResponseJSON(w, http.StatusOK, obj, httpjson.IsPretty(r))
 }
 
 func (a app) delete(w http.ResponseWriter, r *http.Request, id uint64) {
