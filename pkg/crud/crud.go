@@ -233,21 +233,23 @@ func (a app) create(w http.ResponseWriter, r *http.Request) {
 
 func (a app) update(w http.ResponseWriter, r *http.Request, id uint64) {
 	obj, err := a.readPayload(r)
-
 	if err != nil {
 		httperror.BadRequest(w, err)
 		return
 	}
 
-	ctx := r.Context()
-
-	_, err = a.service.Get(ctx, id)
-	if err != nil {
-		handleError(w, err)
+	obj.SetID(id)
+	if errors := a.service.Check(obj); len(errors) != 0 {
+		writeErrors(w, errors)
 		return
 	}
 
-	obj.SetID(id)
+	ctx := r.Context()
+
+	if _, err = a.service.Get(ctx, id); err != nil {
+		handleError(w, err)
+		return
+	}
 
 	obj, err = a.service.Update(ctx, obj)
 	if handleError(w, err) {

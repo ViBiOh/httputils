@@ -202,13 +202,13 @@ func TestReadPayload(t *testing.T) {
 		{
 			"nil",
 			nil,
-			testItem{},
+			&testItem{},
 			errors.New("unmarshall error"),
 		},
 		{
 			"valid",
 			httptest.NewRequest(http.MethodGet, "/", strings.NewReader(`{"id": 1, "name": "test"}`)),
-			testItem{
+			&testItem{
 				ID:   1,
 				Name: "test",
 			},
@@ -232,7 +232,7 @@ func TestReadPayload(t *testing.T) {
 				failed = true
 			} else if testCase.wantErr != nil && !strings.HasPrefix(err.Error(), testCase.wantErr.Error()) {
 				failed = true
-			} else if result != testCase.want {
+			} else if !reflect.DeepEqual(result, testCase.want) {
 				failed = true
 			}
 
@@ -295,6 +295,124 @@ func TestGet(t *testing.T) {
 			}
 
 			if result := recorder.Result().StatusCode; result != testCase.wantStatus {
+				t.Errorf("get() = %d, want %d", result, testCase.wantStatus)
+			}
+		})
+	}
+}
+
+func TestCreate(t *testing.T) {
+	var cases = []struct {
+		intention  string
+		request    *http.Request
+		want       string
+		wantStatus int
+	}{
+		{
+			"unmarshall error",
+			httptest.NewRequest(http.MethodPost, "/", nil),
+			"unmarshall error: unexpected end of JSON input\n",
+			http.StatusBadRequest,
+		},
+		{
+			"invalid payload",
+			httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"name":"invalid"}`)),
+			"invalid payload:\n\tinvalid name\n",
+			http.StatusBadRequest,
+		},
+		{
+			"create error",
+			httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"name":"error"}`)),
+			"internal server error\n",
+			http.StatusInternalServerError,
+		},
+		{
+			"create success",
+			httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"name":"success"}`)),
+			"{\"id\":1,\"name\":\"success\"}\n",
+			http.StatusCreated,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			instance := app{
+				service: testService{},
+			}
+
+			writer := httptest.NewRecorder()
+			instance.create(writer, testCase.request)
+
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("get() = %s, want %s", result, testCase.want)
+			}
+
+			if result := writer.Result().StatusCode; result != testCase.wantStatus {
+				t.Errorf("get() = %d, want %d", result, testCase.wantStatus)
+			}
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	var cases = []struct {
+		intention  string
+		request    *http.Request
+		id         uint64
+		want       string
+		wantStatus int
+	}{
+		{
+			"unmarshall error",
+			httptest.NewRequest(http.MethodPut, "/", nil),
+			0,
+			"unmarshall error: unexpected end of JSON input\n",
+			http.StatusBadRequest,
+		},
+		{
+			"invalid payload",
+			httptest.NewRequest(http.MethodPut, "/", strings.NewReader(`{"name":"invalid"}`)),
+			0,
+			"invalid payload:\n\tinvalid name\n",
+			http.StatusBadRequest,
+		},
+		{
+			"update error",
+			httptest.NewRequest(http.MethodPut, "/", strings.NewReader(`{"name":"error"}`)),
+			0,
+			"internal server error\n",
+			http.StatusInternalServerError,
+		},
+		{
+			"not found",
+			httptest.NewRequest(http.MethodPut, "/", strings.NewReader(`{"name":"success"}`)),
+			2000,
+			"¯\\_(ツ)_/¯\n",
+			http.StatusNotFound,
+		},
+		{
+			"update success",
+			httptest.NewRequest(http.MethodPut, "/", strings.NewReader(`{"name":"success"}`)),
+			8000,
+			"{\"id\":8000,\"name\":\"success\"}\n",
+			http.StatusOK,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			instance := app{
+				service: testService{},
+			}
+
+			writer := httptest.NewRecorder()
+			instance.update(writer, testCase.request, testCase.id)
+
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("get() = %s, want %s", result, testCase.want)
+			}
+
+			if result := writer.Result().StatusCode; result != testCase.wantStatus {
 				t.Errorf("get() = %d, want %d", result, testCase.wantStatus)
 			}
 		})

@@ -11,7 +11,7 @@ type testItem struct {
 	Name string `json:"name"`
 }
 
-func (t testItem) SetID(id uint64) {
+func (t *testItem) SetID(id uint64) {
 	t.ID = id
 }
 
@@ -22,11 +22,11 @@ func (t testService) Unmarsall(data []byte) (Item, error) {
 	var item testItem
 
 	err := json.Unmarshal(data, &item)
-	return item, err
+	return &item, err
 }
 
-func (t testService) Check(item Item) []error {
-	value := item.(testItem)
+func (t testService) Check(o Item) []error {
+	value := o.(*testItem)
 
 	if value.ID == 6000 {
 		return []error{
@@ -48,7 +48,7 @@ func (t testService) List(ctx context.Context, page, pageSize uint, sortKey stri
 
 func (t testService) Get(ctx context.Context, ID uint64) (Item, error) {
 	if ID == 8000 {
-		return testItem{
+		return &testItem{
 			ID:   8000,
 			Name: "Test",
 		}, nil
@@ -61,11 +61,26 @@ func (t testService) Get(ctx context.Context, ID uint64) (Item, error) {
 }
 
 func (t testService) Create(ctx context.Context, o Item) (Item, error) {
-	return nil, nil
+	value := o.(*testItem)
+
+	if value.Name == "error" {
+		return nil, errors.New("error while creating")
+	}
+
+	return &testItem{
+		ID:   1,
+		Name: value.Name,
+	}, nil
 }
 
 func (t testService) Update(ctx context.Context, o Item) (Item, error) {
-	return nil, nil
+	value := o.(*testItem)
+
+	if value.Name == "error" {
+		return nil, errors.New("error while updating")
+	}
+
+	return o, nil
 }
 
 func (t testService) Delete(ctx context.Context, o Item) error {
