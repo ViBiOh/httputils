@@ -25,8 +25,13 @@ func (t testService) Unmarsall(data []byte) (Item, error) {
 	return &item, err
 }
 
-func (t testService) Check(o Item) []error {
-	value := o.(*testItem)
+func (t testService) Check(old, new Item) []error {
+	var value *testItem
+	if new != nil {
+		value = new.(*testItem)
+	} else {
+		value = old.(*testItem)
+	}
 
 	if value.ID == 6000 {
 		return []error{
@@ -56,7 +61,7 @@ func (t testService) List(ctx context.Context, page, pageSize uint, sortKey stri
 }
 
 func (t testService) Get(ctx context.Context, ID uint64) (Item, error) {
-	if ID == 8000 || ID == 6000 {
+	if ID == 8000 || ID == 6000 || ID == 7000 {
 		return &testItem{
 			ID:   ID,
 			Name: "Test",
@@ -69,17 +74,17 @@ func (t testService) Get(ctx context.Context, ID uint64) (Item, error) {
 	return nil, nil
 }
 
-func (t testService) Create(ctx context.Context, o Item) (Item, error) {
+func (t testService) Create(ctx context.Context, o Item) (Item, uint64, error) {
 	value := o.(*testItem)
 
 	if value.Name == "error" {
-		return nil, errors.New("error while creating")
+		return nil, 0, errors.New("error while creating")
 	}
 
 	return &testItem{
 		ID:   1,
 		Name: value.Name,
-	}, nil
+	}, 1, nil
 }
 
 func (t testService) Update(ctx context.Context, o Item) (Item, error) {
@@ -95,7 +100,7 @@ func (t testService) Update(ctx context.Context, o Item) (Item, error) {
 func (t testService) Delete(ctx context.Context, o Item) error {
 	value := o.(*testItem)
 
-	if value.ID == 6000 {
+	if value.ID == 8000 {
 		return errors.New("error while deleting")
 	}
 

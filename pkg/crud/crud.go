@@ -26,6 +26,12 @@ var (
 	// ErrInvalid occurs when invalid action is requested
 	ErrInvalid = errors.New("invalid")
 
+	// ErrUnauthorized occurs when authentication not provided
+	ErrUnauthorized = errors.New("authentication required")
+
+	// ErrForbidden occurs when action is forbidden
+	ErrForbidden = errors.New("forbidden")
+
 	// ErrInternal occurs when unhandled behavior occurs
 	ErrInternal = errors.New("internal server error")
 
@@ -131,6 +137,10 @@ func handleError(w http.ResponseWriter, err error) bool {
 
 	if errors.Is(err, ErrInvalid) {
 		httperror.BadRequest(w, err)
+	} else if errors.Is(err, ErrUnauthorized) {
+		httperror.Unauthorized(w, err)
+	} else if errors.Is(err, ErrForbidden) {
+		httperror.Forbidden(w)
 	} else if errors.Is(err, ErrNotFound) {
 		httperror.NotFound(w)
 	} else {
@@ -217,46 +227,50 @@ func (a app) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	obj.SetID(0)
-	if errors := a.service.Check(obj); len(errors) != 0 {
+	id := uint64(0)
+	obj.SetID(id)
+
+	if errors := a.service.Check(nil, obj); len(errors) != 0 {
 		writeErrors(w, errors)
 		return
 	}
 
-	obj, err = a.service.Create(r.Context(), obj)
+	obj, id, err = a.service.Create(r.Context(), obj)
 	if handleError(w, err) {
 		return
 	}
+	obj.SetID(id)
 
 	httpjson.ResponseJSON(w, http.StatusCreated, obj, httpjson.IsPretty(r))
 }
 
 func (a app) update(w http.ResponseWriter, r *http.Request, id uint64) {
-	obj, err := a.readPayload(r)
+	new, err := a.readPayload(r)
 	if err != nil {
 		httperror.BadRequest(w, err)
 		return
 	}
 
-	obj.SetID(id)
-	if errors := a.service.Check(obj); len(errors) != 0 {
-		writeErrors(w, errors)
-		return
-	}
-
 	ctx := r.Context()
 
-	if _, err = a.service.Get(ctx, id); err != nil {
+	old, err := a.service.Get(ctx, id)
+	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	obj, err = a.service.Update(ctx, obj)
+	new.SetID(id)
+	if errors := a.service.Check(old, new); len(errors) != 0 {
+		writeErrors(w, errors)
+		return
+	}
+
+	new, err = a.service.Update(ctx, new)
 	if handleError(w, err) {
 		return
 	}
 
-	httpjson.ResponseJSON(w, http.StatusOK, obj, httpjson.IsPretty(r))
+	httpjson.ResponseJSON(w, http.StatusOK, new, httpjson.IsPretty(r))
 }
 
 func (a app) delete(w http.ResponseWriter, r *http.Request, id uint64) {
@@ -265,6 +279,11 @@ func (a app) delete(w http.ResponseWriter, r *http.Request, id uint64) {
 	obj, err := a.service.Get(ctx, id)
 	if err != nil {
 		handleError(w, err)
+		return
+	}
+
+	if errors := a.service.Check(obj, nil); len(errors) != 0 {
+		writeErrors(w, errors)
 		return
 	}
 
