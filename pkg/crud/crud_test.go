@@ -160,7 +160,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			"update",
-			httptest.NewRequest(http.MethodPut, "/8000", strings.NewReader(`{"name": "success"}`)),
+			httptest.NewRequest(http.MethodPut, "/8000", strings.NewReader(`{"id":8000,"name": "success"}`)),
 			"{\"id\":8000,\"name\":\"success\"}\n",
 			http.StatusOK,
 		},
@@ -364,7 +364,7 @@ func TestReadPayload(t *testing.T) {
 	var cases = []struct {
 		intention string
 		input     *http.Request
-		want      Item
+		want      interface{}
 		wantErr   error
 	}{
 		{
@@ -622,7 +622,7 @@ func TestUpdate(t *testing.T) {
 		},
 		{
 			"update success",
-			httptest.NewRequest(http.MethodPut, "/", strings.NewReader(`{"name":"success"}`)),
+			httptest.NewRequest(http.MethodPut, "/", strings.NewReader(`{"id":8000,"name":"success"}`)),
 			8000,
 			"{\"id\":8000,\"name\":\"success\"}\n",
 			http.StatusOK,

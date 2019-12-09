@@ -177,7 +177,7 @@ func readFilters(r *http.Request) map[string][]string {
 	return params
 }
 
-func (a app) readPayload(r *http.Request) (Item, error) {
+func (a app) readPayload(r *http.Request) (interface{}, error) {
 	bodyBytes, err := request.ReadBodyRequest(r)
 	if err != nil {
 		return nil, fmt.Errorf("body read error: %w", err)
@@ -227,19 +227,15 @@ func (a app) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := uint64(0)
-	obj.SetID(id)
-
 	if errors := a.service.Check(nil, obj); len(errors) != 0 {
 		writeErrors(w, errors)
 		return
 	}
 
-	obj, id, err = a.service.Create(r.Context(), obj)
+	obj, err = a.service.Create(r.Context(), obj)
 	if handleError(w, err) {
 		return
 	}
-	obj.SetID(id)
 
 	httpjson.ResponseJSON(w, http.StatusCreated, obj, httpjson.IsPretty(r))
 }
@@ -259,7 +255,6 @@ func (a app) update(w http.ResponseWriter, r *http.Request, id uint64) {
 		return
 	}
 
-	new.SetID(id)
 	if errors := a.service.Check(old, new); len(errors) != 0 {
 		writeErrors(w, errors)
 		return
