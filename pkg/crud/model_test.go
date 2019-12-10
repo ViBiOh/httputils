@@ -20,7 +20,7 @@ func (t testService) Unmarsall(data []byte) (interface{}, error) {
 	return &item, err
 }
 
-func (t testService) Check(old, new interface{}) []error {
+func (t testService) Check(_ context.Context, old, new interface{}) []error {
 	var value *testItem
 	if new != nil {
 		value = new.(*testItem)
