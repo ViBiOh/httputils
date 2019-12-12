@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/httperror"
@@ -151,16 +150,8 @@ func handleError(w http.ResponseWriter, err error) bool {
 	return true
 }
 
-func writeErrors(w http.ResponseWriter, errors []error) {
-	output := strings.Builder{}
-	output.WriteString("invalid payload:")
-
-	for _, err := range errors {
-		output.WriteString("\n\t")
-		output.WriteString(err.Error())
-	}
-
-	httperror.BadRequest(w, fmt.Errorf(output.String()))
+func writeErrors(w http.ResponseWriter, errors []Error) {
+	httpjson.ResponseArrayJSON(w, http.StatusBadRequest, errors, false)
 }
 
 func readFilters(r *http.Request) map[string][]string {
@@ -183,9 +174,9 @@ func (a app) readPayload(r *http.Request) (interface{}, error) {
 		return nil, fmt.Errorf("body read error: %w", err)
 	}
 
-	item, err := a.service.Unmarsall(bodyBytes)
+	item, err := a.service.Unmarshal(bodyBytes)
 	if err != nil {
-		return item, fmt.Errorf("unmarshall error: %w", err)
+		return item, fmt.Errorf("unmarshal error: %w", err)
 	}
 
 	return item, nil

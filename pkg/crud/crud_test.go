@@ -282,46 +282,6 @@ func TestHandleError(t *testing.T) {
 	}
 }
 
-func TestWriteErrors(t *testing.T) {
-	var cases = []struct {
-		intention  string
-		input      []error
-		want       string
-		wantStatus int
-	}{
-		{
-			"empty",
-			nil,
-			"invalid payload:\n",
-			http.StatusBadRequest,
-		},
-		{
-			"multiple errors",
-			[]error{
-				errors.New("invalid name"),
-				errors.New("invalid email"),
-			},
-			"invalid payload:\n\tinvalid name\n\tinvalid email\n",
-			http.StatusBadRequest,
-		},
-	}
-
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			writeErrors(writer, testCase.input)
-
-			if result := writer.Code; result != testCase.wantStatus {
-				t.Errorf("writeErrors = %d, want %d", result, testCase.wantStatus)
-			}
-
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("writeErrors = %s, want %s", string(result), testCase.want)
-			}
-		})
-	}
-}
-
 func TestReadFilters(t *testing.T) {
 	var cases = []struct {
 		intention string
@@ -379,7 +339,7 @@ func TestReadPayload(t *testing.T) {
 			"nil",
 			nil,
 			&testItem{},
-			errors.New("unmarshall error"),
+			errors.New("unmarshal error"),
 		},
 		{
 			"valid",
@@ -539,15 +499,15 @@ func TestCreate(t *testing.T) {
 		wantStatus int
 	}{
 		{
-			"unmarshall error",
+			"unmarshal error",
 			httptest.NewRequest(http.MethodPost, "/", nil),
-			"unmarshall error: unexpected end of JSON input\n",
+			"unmarshal error: unexpected end of JSON input\n",
 			http.StatusBadRequest,
 		},
 		{
 			"invalid payload",
 			httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"name":"invalid"}`)),
-			"invalid payload:\n\tinvalid name\n",
+			"{\"results\":[{\"field\":\"name\",\"label\":\"invalid name\"}]}\n",
 			http.StatusBadRequest,
 		},
 		{
@@ -593,17 +553,17 @@ func TestUpdate(t *testing.T) {
 		wantStatus int
 	}{
 		{
-			"unmarshall error",
+			"unmarshal error",
 			httptest.NewRequest(http.MethodPut, "/", nil),
 			0,
-			"unmarshall error: unexpected end of JSON input\n",
+			"unmarshal error: unexpected end of JSON input\n",
 			http.StatusBadRequest,
 		},
 		{
 			"invalid payload",
 			httptest.NewRequest(http.MethodPut, "/", strings.NewReader(`{"name":"invalid"}`)),
 			0,
-			"invalid payload:\n\tinvalid name\n",
+			"{\"results\":[{\"field\":\"name\",\"label\":\"invalid name\"}]}\n",
 			http.StatusBadRequest,
 		},
 		{
@@ -668,7 +628,7 @@ func TestDelete(t *testing.T) {
 			"error",
 			httptest.NewRequest(http.MethodDelete, "/", nil),
 			6000,
-			"invalid payload:\n\tinvalid name\n\tinvalid value\n",
+			"{\"results\":[{\"field\":\"name\",\"label\":\"invalid name\"},{\"field\":\"value\",\"label\":\"invalid value\"}]}\n",
 			http.StatusBadRequest,
 		},
 		{

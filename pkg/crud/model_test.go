@@ -13,14 +13,14 @@ type testItem struct {
 
 type testService struct{}
 
-func (t testService) Unmarsall(data []byte) (interface{}, error) {
+func (t testService) Unmarshal(data []byte) (interface{}, error) {
 	var item testItem
 
 	err := json.Unmarshal(data, &item)
 	return &item, err
 }
 
-func (t testService) Check(_ context.Context, old, new interface{}) []error {
+func (t testService) Check(_ context.Context, old, new interface{}) []Error {
 	var value *testItem
 	if new != nil {
 		value = new.(*testItem)
@@ -29,13 +29,13 @@ func (t testService) Check(_ context.Context, old, new interface{}) []error {
 	}
 
 	if value.ID == 6000 {
-		return []error{
-			errors.New("invalid name"),
-			errors.New("invalid value"),
+		return []Error{
+			NewError("name", "invalid name"),
+			NewError("value", "invalid value"),
 		}
 	} else if value.Name == "invalid" {
-		return []error{
-			errors.New("invalid name"),
+		return []Error{
+			NewError("name", "invalid name"),
 		}
 	}
 
