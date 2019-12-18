@@ -57,7 +57,7 @@ func New(config Config) App {
 		cert:    *config.cert,
 		key:     *config.key,
 
-		health:      HealthHandler(nil),
+		health:      HealthHandler(),
 		middlewares: make([]model.Middleware, 0),
 	}
 }
@@ -81,15 +81,10 @@ func versionHandler() http.Handler {
 }
 
 // HealthHandler for dealing with state of app
-func HealthHandler(handler http.Handler) http.Handler {
+func HealthHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			if handler != nil {
-				handler.ServeHTTP(w, r)
-				return
-			}
-
 			w.WriteHeader(http.StatusNoContent)
 			return
 
