@@ -7,22 +7,9 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/model"
 )
 
-var _ model.Middleware = &app{}
+var _ model.Middleware = Middleware
 
-// App stores informations
-type App interface {
-	Handler(http.Handler) http.Handler
-}
-
-type app struct {
-}
-
-// New creates new App
-func New() App {
-	return &app{}
-}
-
-// Handler for request. Should be use with net/http
-func (a app) Handler(next http.Handler) http.Handler {
+// Middleware for request. Should be use with net/http
+func Middleware(next http.Handler) http.Handler {
 	return gziphandler.GzipHandler(next)
 }

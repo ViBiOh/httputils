@@ -2,15 +2,11 @@ package owasp
 
 import (
 	"net/http"
-
-	"github.com/ViBiOh/httputils/v3/pkg/model"
 )
 
 const (
 	cacheControlHeader = "Cache-Control"
 )
-
-var _ model.Middleware = &app{}
 
 type middleware struct {
 	http.ResponseWriter

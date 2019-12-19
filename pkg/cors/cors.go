@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	_ model.Middleware = &app{}
+	_ model.Middleware = app{}.Middleware
 )
 
 // App of package
 type App interface {
-	Handler(http.Handler) http.Handler
+	Middleware(http.Handler) http.Handler
 }
 
 // Config of package
@@ -58,8 +58,8 @@ func New(config Config) App {
 	}
 }
 
-// Handler for net/http package allowing cors header
-func (a app) Handler(next http.Handler) http.Handler {
+// Middleware for net/http package allowing cors header
+func (a app) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", a.origin)
 		w.Header().Set("Access-Control-Allow-Headers", a.headers)

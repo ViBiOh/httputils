@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	_ model.Middleware = &app{}
+	_ model.Middleware = app{}.Middleware
 )
 
 // App of package
 type App interface {
-	Handler(http.Handler) http.Handler
+	Middleware(http.Handler) http.Handler
 }
 
 // Config of package
@@ -50,8 +50,8 @@ func New(config Config) App {
 	}
 }
 
-// Handler for net/http package allowing owasp header
-func (a app) Handler(next http.Handler) http.Handler {
+// Middleware for net/http package allowing owasp header
+func (a app) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Security-Policy", a.csp)
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")

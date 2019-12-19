@@ -64,7 +64,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestHandler(t *testing.T) {
+func TestMiddleware(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		app        App
@@ -208,14 +208,14 @@ func TestHandler(t *testing.T) {
 		t.Run(testCase.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 
-			testCase.app.Handler(testCase.next).ServeHTTP(writer, testCase.request)
+			testCase.app.Middleware(testCase.next).ServeHTTP(writer, testCase.request)
 
 			if writer.Code != testCase.want {
-				t.Errorf("Handler(%#v) = %d, want %d", testCase.next, writer.Code, testCase.want)
+				t.Errorf("Middleware() = %d, want %d", writer.Code, testCase.want)
 			}
 
 			if !reflect.DeepEqual(writer.Header(), testCase.wantHeader) {
-				t.Errorf("Handler(%#v) = %#v, want %#v", testCase.next, writer.Header(), testCase.wantHeader)
+				t.Errorf("Middleware() = %#v, want %#v", writer.Header(), testCase.wantHeader)
 			}
 		})
 	}

@@ -100,7 +100,7 @@ func ChainMiddlewares(handler http.Handler, middlewares ...model.Middleware) htt
 	result := handler
 
 	for i := len(middlewares) - 1; i >= 0; i-- {
-		result = middlewares[i].Handler(result)
+		result = middlewares[i](result)
 	}
 
 	return result

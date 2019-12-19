@@ -41,7 +41,7 @@ func TestFlags(t *testing.T) {
 	}
 }
 
-func TestHandler(t *testing.T) {
+func TestMiddleware(t *testing.T) {
 	metricsPath := "/metrics"
 
 	var cases = []struct {
@@ -86,7 +86,7 @@ func TestHandler(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			handler := testCase.instance.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler := testCase.instance.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 			}))
 
@@ -98,7 +98,7 @@ func TestHandler(t *testing.T) {
 			handler.ServeHTTP(writer, httptest.NewRequest(http.MethodGet, "/metrics", nil))
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); !strings.Contains(string(result), testCase.want) {
-				t.Errorf("Handler() = `%s`, want `%s`", string(result), testCase.want)
+				t.Errorf("Middleware() = `%s`, want `%s`", string(result), testCase.want)
 			}
 		})
 	}

@@ -26,8 +26,8 @@ func main() {
 	alcotest.DoAndExit(alcotestConfig)
 
 	server := httputils.New(serverConfig)
-	server.Middleware(prometheus.New(prometheusConfig))
-	server.Middleware(owasp.New(owaspConfig))
-	server.Middleware(cors.New(corsConfig))
+	server.Middleware(prometheus.New(prometheusConfig).Middleware)
+	server.Middleware(owasp.New(owaspConfig).Middleware)
+	server.Middleware(cors.New(corsConfig).Middleware)
 	server.ListenServeWait(nil)
 }

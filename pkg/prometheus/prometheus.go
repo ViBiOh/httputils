@@ -12,12 +12,12 @@ import (
 )
 
 var (
-	_ model.Middleware = &app{}
+	_ model.Middleware = (&app{}).Middleware
 )
 
 // App of package
 type App interface {
-	Handler(http.Handler) http.Handler
+	Middleware(http.Handler) http.Handler
 	Registerer() prometheus.Registerer
 }
 
@@ -47,8 +47,8 @@ func New(config Config) App {
 	}
 }
 
-// Handler for net/http
-func (a *app) Handler(next http.Handler) http.Handler {
+// Middleware for net/http
+func (a *app) Middleware(next http.Handler) http.Handler {
 	a.registry.MustRegister(prometheus.NewGoCollector())
 
 	prometheusHandler := promhttp.InstrumentMetricHandler(
