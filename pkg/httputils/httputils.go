@@ -86,15 +86,12 @@ func versionHandler() http.Handler {
 // HealthHandler for dealing with state of app
 func HealthHandler(okStatus int) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			w.WriteHeader(okStatus)
-			return
-
-		default:
+		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
+
+		w.WriteHeader(okStatus)
 	})
 }
 
