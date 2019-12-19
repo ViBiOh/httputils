@@ -123,7 +123,7 @@ func TestSourceRead(t *testing.T) {
 			err := testCase.instance.read()
 
 			if testCase.want != nil && !errors.Is(err, testCase.want) {
-				t.Errorf("Read() = %#v, want %#v", err, testCase.want)
+				t.Errorf("Read() = %v, want %v", err, testCase.want)
 			} else if !reflect.DeepEqual(testCase.wantCurrent, testCase.instance.Current) {
 				t.Errorf("Read().Current = %s, want %s", testCase.wantCurrent, testCase.instance.Current)
 			} else if testCase.wantCurrentKey != testCase.instance.currentKey {

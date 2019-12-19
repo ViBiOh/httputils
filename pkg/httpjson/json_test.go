@@ -31,7 +31,7 @@ func TestIsPretty(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := IsPretty(testCase.input); result != testCase.want {
-				t.Errorf("IsPretty() = %#v, want %#v", result, testCase.want)
+				t.Errorf("IsPretty() = %t, want %t", result, testCase.want)
 			}
 		})
 	}

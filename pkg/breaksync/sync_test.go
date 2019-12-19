@@ -162,7 +162,7 @@ func TestRun(t *testing.T) {
 			})
 
 			if testCase.wantErr != nil && !errors.Is(err, testCase.wantErr) {
-				t.Errorf("Read() = %#v, want %#v", err, testCase.wantErr)
+				t.Errorf("Read() = %v, want %v", err, testCase.wantErr)
 			} else if testCase.want != result {
 				t.Errorf("Run() = %d, want %d", result, testCase.want)
 			}

@@ -30,11 +30,11 @@ func TestBadRequest(t *testing.T) {
 			BadRequest(writer, testCase.err)
 
 			if result := writer.Code; result != testCase.wantStatus {
-				t.Errorf("BadRequest(%#v) = %#v, want status %#v", testCase.err, result, testCase.wantStatus)
+				t.Errorf("BadRequest() = %d, want status %d", result, testCase.wantStatus)
 			}
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("BadRequest(%#v) = %#v, want %#v", testCase.err, string(result), testCase.want)
+				t.Errorf("BadRequest() = %s, want %s", string(result), testCase.want)
 			}
 		})
 	}
@@ -61,11 +61,11 @@ func TestUnauthorized(t *testing.T) {
 			Unauthorized(writer, testCase.err)
 
 			if result := writer.Code; result != testCase.wantStatus {
-				t.Errorf("Unauthorized(%#v) = %#v, want status %#v", testCase.err, result, testCase.wantStatus)
+				t.Errorf("Unauthorized() = %d, want status %d", result, testCase.wantStatus)
 			}
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("Unauthorized(%#v) = %#v, want %#v", testCase.err, string(result), testCase.want)
+				t.Errorf("Unauthorized() = %s, want %s", string(result), testCase.want)
 			}
 		})
 	}
@@ -90,11 +90,11 @@ func TestForbidden(t *testing.T) {
 			Forbidden(writer)
 
 			if result := writer.Code; result != testCase.wantStatus {
-				t.Errorf("Forbidden() = %#v, want status %#v", result, testCase.wantStatus)
+				t.Errorf("Forbidden() = %d, want status %d", result, testCase.wantStatus)
 			}
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("Forbidden() = %#v, want %#v", string(result), testCase.want)
+				t.Errorf("Forbidden() = %s, want %s", string(result), testCase.want)
 			}
 		})
 	}
@@ -119,11 +119,11 @@ func TestNotFound(t *testing.T) {
 			NotFound(writer)
 
 			if result := writer.Code; result != testCase.wantStatus {
-				t.Errorf("NotFound() = %#v, want status %#v", result, testCase.wantStatus)
+				t.Errorf("NotFound() = %d, want status %d", result, testCase.wantStatus)
 			}
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("NotFound() = %#v, want %#v", string(result), testCase.want)
+				t.Errorf("NotFound() = %s, want %s", string(result), testCase.want)
 			}
 		})
 	}
@@ -150,11 +150,11 @@ func TestInternalServerError(t *testing.T) {
 			InternalServerError(writer, testCase.err)
 
 			if result := writer.Code; result != testCase.wantStatus {
-				t.Errorf("InternalServerError(%#v) = %#v, want status %#v", testCase.err, result, testCase.wantStatus)
+				t.Errorf("InternalServerError() = %d, want status %d", result, testCase.wantStatus)
 			}
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("InternalServerError(%#v) = %#v, want %#v", testCase.err, string(result), testCase.want)
+				t.Errorf("InternalServerError() = %s, want %s", string(result), testCase.want)
 			}
 		})
 	}

@@ -33,7 +33,7 @@ func TestIsRoot(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := IsRoot(testCase.input); result != testCase.want {
-				t.Errorf("IsRoot() = %#v, want %#v", result, testCase.want)
+				t.Errorf("IsRoot() = %t, want %t", result, testCase.want)
 			}
 		})
 	}
@@ -65,7 +65,7 @@ func TestGetID(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := GetID(testCase.input); result != testCase.want {
-				t.Errorf("getID() = %#v, want %#v", result, testCase.want)
+				t.Errorf("getID() = %s, want %s", result, testCase.want)
 			}
 		})
 	}
@@ -117,7 +117,7 @@ func TestGetUintID(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("GetUintID() = (%d, %#v), want (%d, %#v)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("GetUintID() = (%d, %v), want (%d, %v)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}

@@ -224,7 +224,7 @@ func TestGetTickerDuration(t *testing.T) {
 		t.Run(testCase.intention, func(t *testing.T) {
 			result := testCase.cron.getTickerDuration(testCase.input)
 			if !reflect.DeepEqual(result, testCase.want) {
-				t.Errorf("getTickerDuration() = %#v, want %#v", result, testCase.want)
+				t.Errorf("getTickerDuration() = %s, want %s", result, testCase.want)
 			}
 		})
 	}
@@ -280,7 +280,7 @@ func TestHasError(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := testCase.cron.hasError(onError); result != testCase.want {
-				t.Errorf("hasError() = %#v, want %#v", result, testCase.want)
+				t.Errorf("hasError() = %t, want %t", result, testCase.want)
 			}
 		})
 	}
