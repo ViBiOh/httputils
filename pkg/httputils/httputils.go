@@ -23,17 +23,19 @@ type App interface {
 
 // Config of package
 type Config struct {
-	address *string
-	port    *int
-	cert    *string
-	key     *string
+	address  *string
+	port     *int
+	cert     *string
+	key      *string
+	okStatus *int
 }
 
 type app struct {
-	address string
-	port    int
-	cert    string
-	key     string
+	address  string
+	port     int
+	cert     string
+	key      string
+	okStatus int
 
 	middlewares []model.Middleware
 	health      http.Handler
@@ -42,10 +44,11 @@ type app struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		address: flags.New(prefix, "http").Name("Address").Default("").Label("Listen address").ToString(fs),
-		port:    flags.New(prefix, "http").Name("Port").Default(1080).Label("Listen port").ToInt(fs),
-		cert:    flags.New(prefix, "http").Name("Cert").Default("").Label("Certificate file").ToString(fs),
-		key:     flags.New(prefix, "http").Name("Key").Default("").Label("Key file").ToString(fs),
+		address:  flags.New(prefix, "http").Name("Address").Default("").Label("Listen address").ToString(fs),
+		port:     flags.New(prefix, "http").Name("Port").Default(1080).Label("Listen port").ToInt(fs),
+		cert:     flags.New(prefix, "http").Name("Cert").Default("").Label("Certificate file").ToString(fs),
+		key:      flags.New(prefix, "http").Name("Key").Default("").Label("Key file").ToString(fs),
+		okStatus: flags.New(prefix, "http").Name("OkStatus").Default(http.StatusNoContent).Label("Healthy HTTP Status code").ToInt(fs),
 	}
 }
 
@@ -57,7 +60,7 @@ func New(config Config) App {
 		cert:    *config.cert,
 		key:     *config.key,
 
-		health:      HealthHandler(),
+		health:      HealthHandler(*config.okStatus),
 		middlewares: make([]model.Middleware, 0),
 	}
 }
@@ -81,11 +84,11 @@ func versionHandler() http.Handler {
 }
 
 // HealthHandler for dealing with state of app
-func HealthHandler() http.Handler {
+func HealthHandler(okStatus int) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			w.WriteHeader(http.StatusNoContent)
+			w.WriteHeader(okStatus)
 			return
 
 		default:
