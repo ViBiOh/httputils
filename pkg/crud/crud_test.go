@@ -43,7 +43,7 @@ func TestFlags(t *testing.T) {
 			result := writer.String()
 
 			if result != testCase.want {
-				t.Errorf("Flags() = %s, want %s", result, testCase.want)
+				t.Errorf("Flags() =`%s`, want`%s`", result, testCase.want)
 			}
 		})
 	}
@@ -97,7 +97,7 @@ func TestNew(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("New() = (%v, %s), want (%v, %s)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("New() = (%v,`%s`), want (%v,`%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -276,7 +276,7 @@ func TestHandleError(t *testing.T) {
 			}
 
 			if result, _ := ioutil.ReadAll(recorder.Body); string(result) != testCase.wantContent {
-				t.Errorf("HandleError() = %s, want %s", result, testCase.wantContent)
+				t.Errorf("HandleError() =`%s`, want`%s`", result, testCase.wantContent)
 			}
 		})
 	}
@@ -373,7 +373,7 @@ func TestReadPayload(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("ReadPayload() = (%v, %s), want (%v, %s)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("ReadPayload() = (%v,`%s`), want (%v,`%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -423,7 +423,7 @@ func TestList(t *testing.T) {
 			instance.list(recorder, testCase.request)
 
 			if result, _ := request.ReadBodyResponse(recorder.Result()); string(result) != testCase.want {
-				t.Errorf("list() = %s, want %s", result, testCase.want)
+				t.Errorf("list() =`%s`, want`%s`", result, testCase.want)
 			}
 
 			if result := recorder.Result().StatusCode; result != testCase.wantStatus {
@@ -481,7 +481,7 @@ func TestGet(t *testing.T) {
 			instance.get(recorder, testCase.request, testCase.id)
 
 			if result, _ := request.ReadBodyResponse(recorder.Result()); string(result) != testCase.want {
-				t.Errorf("get() = %s, want %s", result, testCase.want)
+				t.Errorf("get() =`%s`, want`%s`", result, testCase.want)
 			}
 
 			if result := recorder.Result().StatusCode; result != testCase.wantStatus {
@@ -534,7 +534,7 @@ func TestCreate(t *testing.T) {
 			instance.create(writer, testCase.request)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("get() = %s, want %s", result, testCase.want)
+				t.Errorf("get() =`%s`, want`%s`", result, testCase.want)
 			}
 
 			if result := writer.Result().StatusCode; result != testCase.wantStatus {
@@ -599,7 +599,7 @@ func TestUpdate(t *testing.T) {
 			instance.update(writer, testCase.request, testCase.id)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("update() = %s, want %s", result, testCase.want)
+				t.Errorf("update() =`%s`, want`%s`", result, testCase.want)
 			}
 
 			if result := writer.Result().StatusCode; result != testCase.wantStatus {
@@ -657,7 +657,7 @@ func TestDelete(t *testing.T) {
 			instance.delete(writer, testCase.request, testCase.id)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("delete() = %s, want %s", result, testCase.want)
+				t.Errorf("delete() =`%s`, want`%s`", result, testCase.want)
 			}
 
 			if result := writer.Result().StatusCode; result != testCase.wantStatus {

@@ -65,7 +65,7 @@ func TestGetID(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := GetID(testCase.input); result != testCase.want {
-				t.Errorf("getID() = %s, want %s", result, testCase.want)
+				t.Errorf("getID() =`%s`, want`%s`", result, testCase.want)
 			}
 		})
 	}

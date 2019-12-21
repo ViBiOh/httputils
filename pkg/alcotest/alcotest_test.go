@@ -57,7 +57,7 @@ func TestFlags(t *testing.T) {
 			result := writer.String()
 
 			if result != testCase.want {
-				t.Errorf("Flags() = %s, want %s", result, testCase.want)
+				t.Errorf("Flags() =`%s`, want`%s`", result, testCase.want)
 			}
 		})
 	}
@@ -128,7 +128,7 @@ func TestGetStatusCode(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("GetStatusCode() = (%d, %s), want (%d, %s)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("GetStatusCode() = (%d,`%s`), want (%d,`%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -185,7 +185,7 @@ func TestDo(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("Do() = %s, want %s", result, testCase.want)
+				t.Errorf("Do() =`%s`, want`%s`", result, testCase.want)
 			}
 		})
 	}

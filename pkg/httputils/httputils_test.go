@@ -35,7 +35,7 @@ func TestFlags(t *testing.T) {
 			result := writer.String()
 
 			if result != testCase.want {
-				t.Errorf("Flags() = %s, want %s", result, testCase.want)
+				t.Errorf("Flags() =`%s`, want`%s`", result, testCase.want)
 			}
 		})
 	}
@@ -165,7 +165,7 @@ func TestChainMiddlewares(t *testing.T) {
 			for key := range testCase.wantHeader {
 				want := testCase.wantHeader.Get(key)
 				if result := writer.Header().Get(key); result != want {
-					t.Errorf("%s Header = `%s`, want `%s`", key, result, want)
+					t.Errorf("`%s` Header = `%s`, want `%s`", key, result, want)
 				}
 			}
 		})

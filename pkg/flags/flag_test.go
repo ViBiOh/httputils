@@ -96,7 +96,7 @@ func TestToString(t *testing.T) {
 			fs.Usage()
 
 			if result := writer.String(); result != testCase.want {
-				t.Errorf("ToString() = %s, want %s", result, testCase.want)
+				t.Errorf("ToString() =`%s`, want`%s`", result, testCase.want)
 			}
 		})
 	}
@@ -164,7 +164,7 @@ func TestToInt(t *testing.T) {
 			fs.Usage()
 
 			if result := writer.String(); result != testCase.want {
-				t.Errorf("ToInt() = %s, want %s", result, testCase.want)
+				t.Errorf("ToInt() =`%s`, want`%s`", result, testCase.want)
 			}
 		})
 	}
@@ -250,7 +250,7 @@ func TestToUint(t *testing.T) {
 			fs.Usage()
 
 			if result := writer.String(); result != testCase.want {
-				t.Errorf("ToUint() = %s, want %s", result, testCase.want)
+				t.Errorf("ToUint() =`%s`, want`%s`", result, testCase.want)
 			}
 		})
 	}
@@ -318,7 +318,7 @@ func TestToFloat64(t *testing.T) {
 			fs.Usage()
 
 			if result := writer.String(); result != testCase.want {
-				t.Errorf("ToFloat64() = %s, want %s", result, testCase.want)
+				t.Errorf("ToFloat64() =`%s`, want`%s`", result, testCase.want)
 			}
 		})
 	}
@@ -386,7 +386,7 @@ func TestToBool(t *testing.T) {
 			fs.Usage()
 
 			if result := writer.String(); result != testCase.want {
-				t.Errorf("ToBool() = %s, want %s", result, testCase.want)
+				t.Errorf("ToBool() =`%s`, want`%s`", result, testCase.want)
 			}
 		})
 	}

@@ -194,7 +194,7 @@ func TestSend(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("Send() = (%s, %s), want (%s, %s)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -251,7 +251,7 @@ func TestForm(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("Send() = (%s, %s), want (%s, %s)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -315,7 +315,7 @@ func TestJSON(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("Send() = (%s, %s), want (%s, %s)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
