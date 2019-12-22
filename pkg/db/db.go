@@ -2,19 +2,24 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"strings"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
-	"github.com/ViBiOh/httputils/v3/pkg/logger"
 	_ "github.com/lib/pq" // Not referenced but needed for database/sql
+)
+
+var (
+	// ErrNoHost occurs when host is not provided in configuration
+	ErrNoHost = errors.New("no host for database connection")
 )
 
 // Config of package
 type Config struct {
 	host    *string
-	port    *string
+	port    *uint
 	user    *string
 	pass    *string
 	name    *string
@@ -25,7 +30,7 @@ type Config struct {
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
 		host:    flags.New(prefix, "database").Name("Host").Default("").Label("Host").ToString(fs),
-		port:    flags.New(prefix, "database").Name("Port").Default("5432").Label("Port").ToString(fs),
+		port:    flags.New(prefix, "database").Name("Port").Default(5432).Label("Port").ToUint(fs),
 		user:    flags.New(prefix, "database").Name("User").Default("").Label("User").ToString(fs),
 		pass:    flags.New(prefix, "database").Name("Pass").Default("").Label("Pass").ToString(fs),
 		name:    flags.New(prefix, "database").Name("Name").Default("").Label("Name").ToString(fs),
@@ -37,17 +42,15 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 func New(config Config) (*sql.DB, error) {
 	host := strings.TrimSpace(*config.host)
 	if host == "" {
-		logger.Warn("no host for database connection")
-		return nil, nil
+		return nil, ErrNoHost
 	}
 
-	port := strings.TrimSpace(*config.port)
 	user := strings.TrimSpace(*config.user)
 	pass := strings.TrimSpace(*config.pass)
 	name := strings.TrimSpace(*config.name)
 	sslmode := strings.TrimSpace(*config.sslmode)
 
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", host, port, user, pass, name, sslmode))
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, *config.port, user, pass, name, sslmode))
 	if err != nil {
 		return nil, err
 	}
