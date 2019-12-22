@@ -19,7 +19,7 @@ func TestFlags(t *testing.T) {
 	}{
 		{
 			"simple",
-			"Usage of simple:\n  -address string\n    \t[http] Listen address {SIMPLE_ADDRESS}\n  -cert string\n    \t[http] Certificate file {SIMPLE_CERT}\n  -key string\n    \t[http] Key file {SIMPLE_KEY}\n  -okStatus int\n    \t[http] Healthy HTTP Status code {SIMPLE_OK_STATUS} (default 204)\n  -port int\n    \t[http] Listen port {SIMPLE_PORT} (default 1080)\n",
+			"Usage of simple:\n  -address string\n    \t[http] Listen address {SIMPLE_ADDRESS}\n  -cert string\n    \t[http] Certificate file {SIMPLE_CERT}\n  -key string\n    \t[http] Key file {SIMPLE_KEY}\n  -okStatus int\n    \t[http] Healthy HTTP Status code {SIMPLE_OK_STATUS} (default 204)\n  -port uint\n    \t[http] Listen port {SIMPLE_PORT} (default 1080)\n",
 		},
 	}
 

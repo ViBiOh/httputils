@@ -24,18 +24,16 @@ type App interface {
 // Config of package
 type Config struct {
 	address  *string
-	port     *int
+	port     *uint
 	cert     *string
 	key      *string
 	okStatus *int
 }
 
 type app struct {
-	address  string
-	port     int
-	cert     string
-	key      string
-	okStatus int
+	listenAddress string
+	cert          string
+	key           string
 
 	middlewares []model.Middleware
 	health      http.Handler
@@ -45,7 +43,7 @@ type app struct {
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
 		address:  flags.New(prefix, "http").Name("Address").Default("").Label("Listen address").ToString(fs),
-		port:     flags.New(prefix, "http").Name("Port").Default(1080).Label("Listen port").ToInt(fs),
+		port:     flags.New(prefix, "http").Name("Port").Default(1080).Label("Listen port").ToUint(fs),
 		cert:     flags.New(prefix, "http").Name("Cert").Default("").Label("Certificate file").ToString(fs),
 		key:      flags.New(prefix, "http").Name("Key").Default("").Label("Key file").ToString(fs),
 		okStatus: flags.New(prefix, "http").Name("OkStatus").Default(http.StatusNoContent).Label("Healthy HTTP Status code").ToInt(fs),
@@ -55,10 +53,9 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 // New creates new App from Config
 func New(config Config) App {
 	return &app{
-		address: *config.address,
-		port:    *config.port,
-		cert:    *config.cert,
-		key:     *config.key,
+		listenAddress: fmt.Sprintf("%s:%d", *config.address, *config.port),
+		cert:          *config.cert,
+		key:           *config.key,
 
 		health:      HealthHandler(*config.okStatus),
 		middlewares: make([]model.Middleware, 0),
@@ -126,7 +123,7 @@ func (a *app) ListenAndServe(handler http.Handler) (*http.Server, <-chan error) 
 	defaultHandler := ChainMiddlewares(handler, a.middlewares...)
 
 	httpServer := &http.Server{
-		Addr: fmt.Sprintf("%s:%d", a.address, a.port),
+		Addr: a.listenAddress,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/health":
