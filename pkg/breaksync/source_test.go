@@ -125,13 +125,13 @@ func TestSourceRead(t *testing.T) {
 			if testCase.want != nil && !errors.Is(err, testCase.want) {
 				t.Errorf("Read() = %v, want %v", err, testCase.want)
 			} else if !reflect.DeepEqual(testCase.wantCurrent, testCase.instance.Current) {
-				t.Errorf("Read().Current =`%s`, want`%s`", testCase.wantCurrent, testCase.instance.Current)
+				t.Errorf("Read().Current = `%s`, want `%s`", testCase.wantCurrent, testCase.instance.Current)
 			} else if testCase.wantCurrentKey != testCase.instance.currentKey {
-				t.Errorf("Read().currentKey =`%s`, want`%s`", testCase.wantCurrentKey, testCase.instance.currentKey)
+				t.Errorf("Read().currentKey = `%s`, want `%s`", testCase.wantCurrentKey, testCase.instance.currentKey)
 			} else if !reflect.DeepEqual(testCase.wantNext, testCase.instance.next) {
-				t.Errorf("Read().next =`%s`, want`%s`", testCase.wantNext, testCase.instance.next)
+				t.Errorf("Read().next = `%s`, want `%s`", testCase.wantNext, testCase.instance.next)
 			} else if testCase.wantNextKey != testCase.instance.nextKey {
-				t.Errorf("Read().nextKey =`%s`, want`%s`", testCase.wantNextKey, testCase.instance.nextKey)
+				t.Errorf("Read().nextKey = `%s`, want `%s`", testCase.wantNextKey, testCase.instance.nextKey)
 			}
 		})
 	}

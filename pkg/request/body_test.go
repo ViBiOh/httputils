@@ -101,7 +101,7 @@ func TestReadContent(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("readContent() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("readContent() = (`%s`, `%s`), want (`%s`, `%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -141,7 +141,7 @@ func TestReadBodyRequest(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("ReadBodyRequest() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("ReadBodyRequest() = (`%s`, `%s`), want (`%s`, `%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -183,7 +183,7 @@ func TestReadBodyResponse(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("ReadBodyResponse() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("ReadBodyResponse() = (`%s`, `%s`), want (`%s`, `%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}

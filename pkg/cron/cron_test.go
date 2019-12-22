@@ -80,7 +80,7 @@ func TestString(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := testCase.cron.String(); result != testCase.want {
-				t.Errorf("String() =`%s`, want`%s`", result, testCase.want)
+				t.Errorf("String() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -127,7 +127,7 @@ func TestAt(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("At() = (`%s`,`%s`), want (`%s`,`%s`)", testCase.cron.dayTime, testCase.cron.errors, testCase.want, testCase.wantErr)
+				t.Errorf("At() = (`%s`, `%s`), want (`%s`, `%s`)", testCase.cron.dayTime, testCase.cron.errors, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -163,7 +163,7 @@ func TestFindMatchingDay(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := testCase.cron.findMatchingDay(testCase.input); result.String() != testCase.want.String() {
-				t.Errorf("findMatchingDay() =`%s`, want`%s`", result, testCase.want)
+				t.Errorf("findMatchingDay() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -224,7 +224,7 @@ func TestGetTickerDuration(t *testing.T) {
 		t.Run(testCase.intention, func(t *testing.T) {
 			result := testCase.cron.getTickerDuration(testCase.input)
 			if !reflect.DeepEqual(result, testCase.want) {
-				t.Errorf("getTickerDuration() =`%s`, want`%s`", result, testCase.want)
+				t.Errorf("getTickerDuration() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
