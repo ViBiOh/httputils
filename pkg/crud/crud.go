@@ -40,6 +40,7 @@ var (
 // App of package
 type App interface {
 	Handler() http.Handler
+	Swagger() (string, string, error)
 }
 
 // Config of package
@@ -47,13 +48,18 @@ type Config struct {
 	defaultPage     *uint
 	defaultPageSize *uint
 	maxPageSize     *uint
+	path            *string
+	name            *string
 }
 
 type app struct {
 	defaultPage     uint
 	defaultPageSize uint
 	maxPageSize     uint
-	service         Service
+	path            string
+	name            string
+
+	service Service
 }
 
 // Flags adds flags for configuring package
@@ -62,6 +68,8 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 		defaultPage:     flags.New(prefix, "crud").Name("DefaultPage").Default(1).Label("Default page").ToUint(fs),
 		defaultPageSize: flags.New(prefix, "crud").Name("DefaultPageSize").Default(20).Label("Default page size").ToUint(fs),
 		maxPageSize:     flags.New(prefix, "crud").Name("MaxPageSize").Default(100).Label("Max page size").ToUint(fs),
+		path:            flags.New(prefix, "crud").Name("Path").Default("").Label("HTTP Path").ToString(fs),
+		name:            flags.New(prefix, "crud").Name("Name").Default("").Label("Resource's name").ToString(fs),
 	}
 }
 

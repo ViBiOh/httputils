@@ -1,15 +1,14 @@
----
+package crud
 
-openapi: 3.0.0
-info:
-  description: Replace "Item" with name of your ressource
-  title: Crud example
-  version: '1.0.0'
+import (
+	"errors"
+	"testing"
+)
 
-paths:
-  /crud:
+var (
+	expectedOutput = `  /crud:
     get:
-      description: List Items with pagination
+      description: List Item with pagination
       parameters:
         - name: page
           in: query
@@ -38,7 +37,7 @@ paths:
 
       responses:
         '200':
-          description: Paginated list of Items
+          description: Paginated list of Item
           content:
             application/json:
               schema:
@@ -59,9 +58,9 @@ paths:
                   total:
                     type: integer
                     format: int64
-                    description: Total count of Items
+                    description: Total count of Item
                   results:
-                    $ref: '#/components/schemas/Items'
+                    $ref: '#/components/schemas/Item'
 
         '400':
           $ref: '#/components/schemas/Error'
@@ -77,21 +76,17 @@ paths:
 
       responses:
         '204':
-          description: Headers for Items
+          description: Headers for Item
 
     post:
-      description: Create a Item
+      description: Create Item
       requestBody:
         description: Item to create
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Item's name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
 
       responses:
         '201':
@@ -114,10 +109,11 @@ paths:
         description: Item's ID
         required: true
         schema:
-          type: string
+          type: integer
+          format: int64
 
     get:
-      description: Retrieve a Item
+      description: Retrieve Item
 
       responses:
         '200':
@@ -138,12 +134,12 @@ paths:
 
       responses:
         '204':
-          description: Headers for Items
+          description: Headers for Item
 
     put:
-      description: Update a Item
+      description: Update Item
       requestBody:
-        description: Item data
+        description: Item datas
         required: true
         content:
           application/json:
@@ -168,7 +164,7 @@ paths:
           $ref: '#/components/schemas/Error'
 
     delete:
-      description: Delete a Item
+      description: Delete Item
 
       responses:
         '204':
@@ -179,32 +175,64 @@ paths:
                 $ref: '#/components/schemas/Item'
 
         '404':
-          description: Item not found
-          content:
-            text/plain:
-              schema:
-                type: string
-
-        '500':
           $ref: '#/components/schemas/Error'
 
-components:
-  schemas:
-    Item:
+        '500':
+          $ref: '#/components/schemas/Error'`
+
+	expectedOutputComponents = `    Item:
       type: object
       properties:
         id:
-          type: string
+          type: integer
+          format: int64
           description: Item's identifier
 
     Items:
       type: array
       items:
-        $ref: '#/components/schemas/Item'
+        $ref: '#/components/schemas/Item'`
+)
 
-    Error:
-      description: Error
-      content:
-        text/plain:
-          schema:
-            type: string
+func TestSwagger(t *testing.T) {
+	var cases = []struct {
+		intention      string
+		path           string
+		itemName       string
+		want           string
+		wantComponents string
+		wantErr        error
+	}{
+		{
+			"simple",
+			"crud",
+			"Item",
+			expectedOutput,
+			expectedOutputComponents,
+			nil,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			result, resultComponents, err := app{
+				path: testCase.path,
+				name: testCase.itemName,
+			}.Swagger()
+
+			failed := false
+
+			if testCase.wantErr != nil && !errors.Is(err, testCase.wantErr) {
+				failed = true
+			} else if result != testCase.want {
+				failed = true
+			} else if resultComponents != testCase.wantComponents {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("Swagger() = (`%s`, `%s`, `%s`), want (`%s`, `%s`, `%s`)", result, resultComponents, err, testCase.want, testCase.wantComponents, testCase.wantErr)
+			}
+		})
+	}
+}

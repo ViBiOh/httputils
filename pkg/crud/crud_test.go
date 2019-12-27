@@ -27,7 +27,7 @@ func TestFlags(t *testing.T) {
 	}{
 		{
 			"simple",
-			"Usage of simple:\n  -defaultPage uint\n    \t[crud] Default page {SIMPLE_DEFAULT_PAGE} (default 1)\n  -defaultPageSize uint\n    \t[crud] Default page size {SIMPLE_DEFAULT_PAGE_SIZE} (default 20)\n  -maxPageSize uint\n    \t[crud] Max page size {SIMPLE_MAX_PAGE_SIZE} (default 100)\n",
+			"Usage of simple:\n  -defaultPage uint\n    \t[crud] Default page {SIMPLE_DEFAULT_PAGE} (default 1)\n  -defaultPageSize uint\n    \t[crud] Default page size {SIMPLE_DEFAULT_PAGE_SIZE} (default 20)\n  -maxPageSize uint\n    \t[crud] Max page size {SIMPLE_MAX_PAGE_SIZE} (default 100)\n  -name string\n    \t[crud] Resource's name {SIMPLE_NAME}\n  -path string\n    \t[crud] HTTP Path {SIMPLE_PATH}\n",
 		},
 	}
 

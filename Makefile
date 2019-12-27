@@ -79,4 +79,5 @@ build:
 ## run: Run app
 .PHONY: run
 run:
-	$(MAIN_RUNNER)
+	$(MAIN_RUNNER) \
+		-csp "default-src 'self'; base-uri 'self'; script-src 'self' 'unsafe-inline' unpkg.com/swagger-ui-dist@3/; style-src 'self' 'unsafe-inline' unpkg.com/swagger-ui-dist@3/; img-src 'self' data:; connect-src 'self'"
