@@ -11,6 +11,11 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
 	"github.com/ViBiOh/httputils/v3/pkg/model"
+	"github.com/ViBiOh/httputils/v3/pkg/swagger"
+)
+
+var (
+	_ swagger.Provider = &app{}
 )
 
 // App of package
@@ -19,6 +24,7 @@ type App interface {
 	Middleware(model.Middleware) App
 	ListenAndServe(http.Handler) (*http.Server, <-chan error)
 	ListenServeWait(http.Handler)
+	Swagger() (swagger.Configuration, error)
 }
 
 // Config of package
@@ -34,6 +40,7 @@ type app struct {
 	listenAddress string
 	cert          string
 	key           string
+	okStatus      int
 
 	middlewares []model.Middleware
 	health      http.Handler
@@ -56,6 +63,7 @@ func New(config Config) App {
 		listenAddress: fmt.Sprintf("%s:%d", *config.address, *config.port),
 		cert:          *config.cert,
 		key:           *config.key,
+		okStatus:      *config.okStatus,
 
 		health:      HealthHandler(*config.okStatus),
 		middlewares: make([]model.Middleware, 0),
@@ -115,6 +123,38 @@ func (a *app) Middleware(middleware model.Middleware) App {
 	a.middlewares = append(a.middlewares, middleware)
 
 	return a
+}
+
+func (a *app) Swagger() (swagger.Configuration, error) {
+	paths := fmt.Sprintf(`
+/health:
+  get:
+    description: Healthcheck of app
+    responses:
+      %d:
+        description: Everything is fine
+
+/version:
+  get:
+    description: Version of app
+
+    responses:
+      200:
+        description: Version of app
+        content:
+          text/plain:
+            schema:
+              type: string`, a.okStatus)
+
+	return swagger.Configuration{
+		Paths: paths,
+		Components: `Error:
+  description: Plain text Error
+  content:
+    text/plain:
+      schema:
+        type: string`,
+	}, nil
 }
 
 // ListenAndServe starts server

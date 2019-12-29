@@ -13,6 +13,7 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
 	"github.com/ViBiOh/httputils/v3/pkg/query"
 	"github.com/ViBiOh/httputils/v3/pkg/request"
+	"github.com/ViBiOh/httputils/v3/pkg/swagger"
 )
 
 var (
@@ -40,7 +41,7 @@ var (
 // App of package
 type App interface {
 	Handler() http.Handler
-	Swagger() (string, string, error)
+	Swagger() (swagger.Configuration, error)
 }
 
 // Config of package

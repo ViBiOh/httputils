@@ -1,12 +1,11 @@
 package crud
 
 import (
-	"errors"
-	"regexp"
 	"strings"
 	"text/template"
 
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
+	"github.com/ViBiOh/httputils/v3/pkg/swagger"
 )
 
 const (
@@ -199,12 +198,8 @@ const (
 )
 
 var (
-	// ErrNoSwaggerConfiguration occurs when swagger configuration not provided
-	ErrNoSwaggerConfiguration = errors.New("no path or name provided for swagger")
-
 	pathsTemplate      *template.Template
 	componentsTemplate *template.Template
-	prefixer           = regexp.MustCompile(`(?m)^(.+)$`)
 )
 
 func init() {
@@ -217,9 +212,9 @@ func init() {
 	pathsTemplate = tpl
 }
 
-func (a app) Swagger() (string, string, error) {
+func (a app) Swagger() (swagger.Configuration, error) {
 	if len(a.path) == 0 || len(a.name) == 0 {
-		return "", "", ErrNoSwaggerConfiguration
+		return swagger.EmptyConfiguration, nil
 	}
 
 	data := map[string]string{
@@ -231,12 +226,15 @@ func (a app) Swagger() (string, string, error) {
 	components := strings.Builder{}
 
 	if err := pathsTemplate.Execute(&paths, data); err != nil {
-		return "", "", err
+		return swagger.EmptyConfiguration, err
 	}
 
 	if err := componentsTemplate.Execute(&components, data); err != nil {
-		return "", "", err
+		return swagger.EmptyConfiguration, err
 	}
 
-	return prefixer.ReplaceAllString(paths.String(), "  $1"), prefixer.ReplaceAllString(components.String(), "    $1"), nil
+	return swagger.Configuration{
+		Paths:      paths.String(),
+		Components: components.String(),
+	}, nil
 }

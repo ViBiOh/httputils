@@ -27,10 +27,11 @@ func main() {
 
 	alcotest.DoAndExit(alcotestConfig)
 
-	swaggerApp, err := swagger.New(swaggerConfig)
+	server := httputils.New(serverConfig)
+
+	swaggerApp, err := swagger.New(swaggerConfig, server)
 	logger.Fatal(err)
 
-	server := httputils.New(serverConfig)
 	server.Middleware(prometheus.New(prometheusConfig).Middleware)
 	server.Middleware(owasp.New(owaspConfig).Middleware)
 	server.Middleware(cors.New(corsConfig).Middleware)

@@ -6,13 +6,25 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"regexp"
 	"strings"
 
-	"github.com/ViBiOh/httputils/v3/pkg/crud"
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
+	"github.com/ViBiOh/httputils/v3/pkg/query"
 	"github.com/ViBiOh/httputils/v3/pkg/templates"
 )
+
+// Configuration holds configuration parts
+type Configuration struct {
+	Paths      string
+	Components string
+}
+
+// Provider provides configuration
+type Provider interface {
+	Swagger() (Configuration, error)
+}
 
 const (
 	indexTemplateStr = `<!doctype html>
@@ -44,43 +56,24 @@ openapi: 3.0.0
 info:
   description: API for {{ .Title }}
   title: {{ .Title }}
-  version: '1.0.0'
+  version: '{{ .Version }}'
 
 paths:
-  /health:
-    get:
-      description: Healthcheck of app
-      responses:
-        '204':
-          description: Everything is fine
-
-  /version:
-    get:
-      description: Version of app
-
-      responses:
-        '200':
-          description: Version of app
-          content:
-            text/plain:
-              schema:
-                type: string
 {{ .Paths }}
 components:
   schemas:
 {{ .Components }}
-    Error:
-      description: Request Error
-      content:
-        text/plain:
-          schema:
-            type: string
 `
 )
 
 var (
+	// EmptyConfiguration is an empty configuration
+	EmptyConfiguration = Configuration{}
+
 	indextTemplate  *template.Template
 	swaggerTemplate *template.Template
+
+	prefixer = regexp.MustCompile(`(?m)^(.+)$`)
 )
 
 func init() {
@@ -100,7 +93,8 @@ type App interface {
 
 // Config of package
 type Config struct {
-	title *string
+	title   *string
+	version *string
 }
 
 type app struct {
@@ -111,35 +105,35 @@ type app struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		title: flags.New(prefix, "swagger").Name("Title").Default("API").Label("API Title").ToString(fs),
+		title:   flags.New(prefix, "swagger").Name("Title").Default("API").Label("API Title").ToString(fs),
+		version: flags.New(prefix, "swagger").Name("Version").Default("1.0.0").Label("API Version").ToString(fs),
 	}
 }
 
 // New creates new App from Config
-func New(config Config, cruds ...crud.App) (App, error) {
-	paths := strings.Builder{}
-	components := strings.Builder{}
+func New(config Config, providers ...Provider) (App, error) {
+	paths := make([]string, 0)
+	components := make([]string, 0)
 
-	for _, crudApp := range cruds {
-		path, component, err := crudApp.Swagger()
-		if err == crud.ErrNoSwaggerConfiguration {
+	for _, provider := range providers {
+		configuration, err := provider.Swagger()
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate swagger for %v: %s", provider, err)
+		}
+
+		if configuration == EmptyConfiguration {
 			continue
 		}
 
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate swagger for %v: %s", crudApp, err)
-		}
-
-		paths.WriteString(path)
-		paths.WriteString("\n")
-		components.WriteString(component)
-		components.WriteString("\n")
+		paths = append(paths, prefixer.ReplaceAllString(configuration.Paths, "  $1"))
+		components = append(components, prefixer.ReplaceAllString(configuration.Components, "    $1"))
 	}
 
 	data := map[string]string{
 		"Title":      strings.TrimSpace(*config.title),
-		"Paths":      paths.String(),
-		"Components": components.String(),
+		"Version":    strings.TrimSpace(*config.version),
+		"Paths":      strings.Join(paths, "\n"),
+		"Components": strings.Join(components, "\n"),
 	}
 
 	swaggerContent := bytes.Buffer{}
@@ -156,18 +150,19 @@ func New(config Config, cruds ...crud.App) (App, error) {
 // Handler for request. Should be use with net/http
 func (a app) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/swagger.yaml") {
-			w.Header().Set("Content-Type", "application/x-yaml; charset=UTF-8")
-			w.WriteHeader(http.StatusOK)
-
-			if _, err := w.Write(a.swaggerContent); err != nil {
-				logger.Error("unable to write swagger: %s", err)
+		if query.IsRoot(r) {
+			if err := templates.WriteHTMLTemplate(indextTemplate, w, a.data, http.StatusOK); err != nil {
+				logger.Error("unable to write index: %s", err)
 			}
 			return
 		}
 
-		if err := templates.WriteHTMLTemplate(indextTemplate, w, a.data, http.StatusOK); err != nil {
-			logger.Error("unable to write index: %s", err)
+		w.Header().Set("Content-Type", "application/x-yaml; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+
+		if _, err := w.Write(a.swaggerContent); err != nil {
+			logger.Error("unable to write swagger: %s", err)
 		}
+		return
 	})
 }
