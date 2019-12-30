@@ -206,6 +206,20 @@ func TestSwagger(t *testing.T) {
 		wantErr   error
 	}{
 		{
+			"no path",
+			"",
+			"",
+			swagger.EmptyConfiguration,
+			nil,
+		},
+		{
+			"no name",
+			"crud",
+			"",
+			swagger.EmptyConfiguration,
+			nil,
+		},
+		{
 			"simple",
 			"crud",
 			"Item",

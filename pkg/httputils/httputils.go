@@ -126,8 +126,7 @@ func (a *app) Middleware(middleware model.Middleware) App {
 }
 
 func (a *app) Swagger() (swagger.Configuration, error) {
-	paths := fmt.Sprintf(`
-/health:
+	paths := fmt.Sprintf(`/health:
   get:
     description: Healthcheck of app
     responses:

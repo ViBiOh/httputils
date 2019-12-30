@@ -28,7 +28,7 @@ type Provider interface {
 
 const (
 	indexTemplateStr = `<!doctype html>
-<html class="no-js" lang="">
+<html class="no-js" lang="en">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -56,14 +56,13 @@ openapi: 3.0.0
 info:
   description: API for {{ .Title }}
   title: {{ .Title }}
-  version: '{{ .Version }}'
+  version: {{ .Version }}
 
 paths:
 {{ .Paths }}
 components:
   schemas:
-{{ .Components }}
-`
+{{ .Components }}`
 )
 
 var (
@@ -72,8 +71,7 @@ var (
 
 	indextTemplate  *template.Template
 	swaggerTemplate *template.Template
-
-	prefixer = regexp.MustCompile(`(?m)^(.+)$`)
+	prefixer        = regexp.MustCompile(`(?m)^(.+)$`)
 )
 
 func init() {
@@ -118,7 +116,7 @@ func New(config Config, providers ...Provider) (App, error) {
 	for _, provider := range providers {
 		configuration, err := provider.Swagger()
 		if err != nil {
-			return nil, fmt.Errorf("unable to generate swagger for %v: %s", provider, err)
+			return nil, fmt.Errorf("unable to generate swagger for %T: %w", provider, err)
 		}
 
 		if configuration == EmptyConfiguration {
@@ -138,12 +136,14 @@ func New(config Config, providers ...Provider) (App, error) {
 
 	swaggerContent := bytes.Buffer{}
 	if err := swaggerTemplate.Execute(&swaggerContent, data); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to execute swagger template: %s", err)
 	}
 
 	return &app{
 		swaggerContent: swaggerContent.Bytes(),
-		data:           data,
+		data: map[string]string{
+			"Title": strings.TrimSpace(*config.title),
+		},
 	}, nil
 }
 
