@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"html/template"
+	htmlTemplate "html/template"
 	"net/http"
 	"regexp"
 	"strings"
+	textTemplate "text/template"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
@@ -67,19 +68,19 @@ var (
 	// EmptyConfiguration is an empty configuration
 	EmptyConfiguration = Configuration{}
 
-	indextTemplate  *template.Template
-	swaggerTemplate *template.Template
+	indextTemplate  *htmlTemplate.Template
+	swaggerTemplate *textTemplate.Template
 	prefixer        = regexp.MustCompile(`(?m)^(.+)$`)
 )
 
 func init() {
-	tpl, err := template.New("index").Parse(indexTemplateStr)
+	index, err := htmlTemplate.New("index").Parse(indexTemplateStr)
 	logger.Fatal(err)
-	indextTemplate = tpl
+	indextTemplate = index
 
-	tpl, err = template.New("swagger").Parse(swaggerTemplateStr)
+	swagger, err := textTemplate.New("swagger").Parse(swaggerTemplateStr)
 	logger.Fatal(err)
-	swaggerTemplate = tpl
+	swaggerTemplate = swagger
 }
 
 // App of package

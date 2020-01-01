@@ -30,7 +30,7 @@ func swaggerBasic() (Configuration, error) {
   get:
     description: Healthcheck of app
     responses:
-      200:
+      '200':
         description: Everything is fine`,
 		Components: `Error:
   description: Plain text Error
@@ -139,7 +139,7 @@ paths:
     get:
       description: Healthcheck of app
       responses:
-        200:
+        '200':
           description: Everything is fine
 components:
   schemas:
