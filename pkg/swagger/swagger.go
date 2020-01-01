@@ -22,9 +22,7 @@ type Configuration struct {
 }
 
 // Provider provides configuration
-type Provider interface {
-	Swagger() (Configuration, error)
-}
+type Provider func() (Configuration, error)
 
 const (
 	indexTemplateStr = `<!doctype html>
@@ -114,7 +112,7 @@ func New(config Config, providers ...Provider) (App, error) {
 	components := make([]string, 0)
 
 	for _, provider := range providers {
-		configuration, err := provider.Swagger()
+		configuration, err := provider()
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate swagger for %T: %w", provider, err)
 		}

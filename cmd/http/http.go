@@ -29,7 +29,7 @@ func main() {
 
 	server := httputils.New(serverConfig)
 
-	swaggerApp, err := swagger.New(swaggerConfig, server)
+	swaggerApp, err := swagger.New(swaggerConfig, server.Swagger)
 	logger.Fatal(err)
 
 	server.Middleware(prometheus.New(prometheusConfig).Middleware)

@@ -16,21 +16,15 @@ var (
 	errSwagger = errors.New("unable to generate config")
 )
 
-type swaggerError struct{}
-
-func (s swaggerError) Swagger() (Configuration, error) {
+func swaggerError() (Configuration, error) {
 	return EmptyConfiguration, errSwagger
 }
 
-type swaggerEmpty struct{}
-
-func (s swaggerEmpty) Swagger() (Configuration, error) {
+func swaggerEmpty() (Configuration, error) {
 	return EmptyConfiguration, nil
 }
 
-type swaggerBasic struct{}
-
-func (s swaggerBasic) Swagger() (Configuration, error) {
+func swaggerBasic() (Configuration, error) {
 	return Configuration{
 		Paths: `/health:
   get:
@@ -119,7 +113,7 @@ components:
 				title:   &input,
 				version: &input,
 			},
-			[]Provider{swaggerError{}},
+			[]Provider{swaggerError},
 			nil,
 			errSwagger,
 		},
@@ -129,7 +123,7 @@ components:
 				title:   &input,
 				version: &input,
 			},
-			[]Provider{swaggerEmpty{}, swaggerBasic{}},
+			[]Provider{swaggerEmpty, swaggerBasic},
 
 			&app{
 				swaggerContent: []byte(`---

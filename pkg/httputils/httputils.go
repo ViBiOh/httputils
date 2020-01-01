@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	_ swagger.Provider = &app{}
+	_ swagger.Provider = (&app{}).Swagger
 )
 
 // App of package
