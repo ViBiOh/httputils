@@ -129,3 +129,37 @@ func TestRegisterer(t *testing.T) {
 		})
 	}
 }
+
+func TestSwagger(t *testing.T) {
+	var cases = []struct {
+		intention string
+		instance  app
+		want      string
+	}{
+		{
+			"simple",
+			app{
+				path: "/metrics",
+			},
+			`/metrics:
+  get:
+    description: Retrieves metrics of app
+
+    responses:
+      200:
+        description: Metrics of app
+        content:
+          text/plain:
+            schema:
+              type: string`,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			if result, _ := testCase.instance.Swagger(); result.Paths != testCase.want {
+				t.Errorf("Swagger() = `%s`, want `%s`", result.Paths, testCase.want)
+			}
+		})
+	}
+}

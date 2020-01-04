@@ -2,23 +2,27 @@ package prometheus
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/model"
+	"github.com/ViBiOh/httputils/v3/pkg/swagger"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
 	_ model.Middleware = (&app{}).Middleware
+	_ swagger.Provider = (&app{}).Swagger
 )
 
 // App of package
 type App interface {
 	Middleware(http.Handler) http.Handler
 	Registerer() prometheus.Registerer
+	Swagger() (swagger.Configuration, error)
 }
 
 // Config of package
@@ -48,7 +52,7 @@ func New(config Config) App {
 }
 
 // Middleware for net/http
-func (a *app) Middleware(next http.Handler) http.Handler {
+func (a app) Middleware(next http.Handler) http.Handler {
 	a.registry.MustRegister(prometheus.NewGoCollector())
 
 	prometheusHandler := promhttp.InstrumentMetricHandler(
@@ -66,11 +70,28 @@ func (a *app) Middleware(next http.Handler) http.Handler {
 }
 
 // Registerer return served registerer
-func (a *app) Registerer() prometheus.Registerer {
+func (a app) Registerer() prometheus.Registerer {
 	return a.registry
 }
 
-func (a *app) instrumentHandler(next http.Handler) http.Handler {
+// Registerer return served registerer
+func (a app) Swagger() (swagger.Configuration, error) {
+	return swagger.Configuration{
+		Paths: fmt.Sprintf(`%s:
+  get:
+    description: Retrieves metrics of app
+
+    responses:
+      200:
+        description: Metrics of app
+        content:
+          text/plain:
+            schema:
+              type: string`, a.path),
+	}, nil
+}
+
+func (a app) instrumentHandler(next http.Handler) http.Handler {
 	instrumentedHandler := next
 
 	durationVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{

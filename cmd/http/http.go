@@ -28,11 +28,12 @@ func main() {
 	alcotest.DoAndExit(alcotestConfig)
 
 	server := httputils.New(serverConfig)
+	prometheusApp := prometheus.New(prometheusConfig)
 
-	swaggerApp, err := swagger.New(swaggerConfig, server.Swagger)
+	swaggerApp, err := swagger.New(swaggerConfig, server.Swagger, prometheusApp.Swagger)
 	logger.Fatal(err)
 
-	server.Middleware(prometheus.New(prometheusConfig).Middleware)
+	server.Middleware(prometheusApp.Middleware)
 	server.Middleware(owasp.New(owaspConfig).Middleware)
 	server.Middleware(cors.New(corsConfig).Middleware)
 	server.ListenServeWait(swaggerApp.Handler())
