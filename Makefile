@@ -9,9 +9,9 @@ APP_NAME = alcotest
 PACKAGES ?= ./...
 GO_FILES ?= $(shell find . -name "*.go")
 
-BINARY_PATH=bin/$(APP_NAME)
-
+MAIN_BINARY = bin/$(APP_NAME)
 MAIN_SOURCE = cmd/http/http.go
+
 MAIN_RUNNER = go run $(MAIN_SOURCE)
 ifeq ($(DEBUG), true)
 	MAIN_RUNNER = dlv debug $(MAIN_SOURCE) --
@@ -74,7 +74,7 @@ test:
 .PHONY: build
 build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo $(PACKAGES)
-	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo -o $(BINARY_PATH) $(MAIN_SOURCE)
+	CGO_ENABLED=0 go build -ldflags="-s -w" -installsuffix nocgo -o $(MAIN_BINARY) $(MAIN_SOURCE)
 
 ## run: Run app
 .PHONY: run
