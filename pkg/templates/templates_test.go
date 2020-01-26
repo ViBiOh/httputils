@@ -1,6 +1,7 @@
 package templates
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"net/http/httptest"
@@ -53,7 +54,50 @@ func TestGetTemplates(t *testing.T) {
 	}
 }
 
-func TestWriteHTMLTemplate(t *testing.T) {
+func TestWriteTemplate(t *testing.T) {
+	var cases = []struct {
+		intention string
+		tpl       *template.Template
+		want      string
+		wantErr   error
+	}{
+		{
+			"simple",
+			template.Must(template.New("css_template.html").ParseFiles("css_template.html")),
+			"html{height:100vh;width:100vw}",
+			nil,
+		},
+		{
+			"error",
+			template.Must(template.New("invalidName").ParseFiles("html5_template.html")),
+			"",
+			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			writer := bytes.Buffer{}
+			err := WriteTemplate(testCase.tpl, &writer, nil, "text/css")
+
+			result := writer.String()
+
+			failed := false
+
+			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
+				failed = true
+			} else if string(result) != testCase.want {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("WriteTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
+			}
+		})
+	}
+}
+
+func TestResponseHTMLTemplate(t *testing.T) {
 	var cases = []struct {
 		intention string
 		tpl       *template.Template
@@ -63,16 +107,7 @@ func TestWriteHTMLTemplate(t *testing.T) {
 		{
 			"simple",
 			template.Must(template.New("html5_template.html").ParseFiles("html5_template.html")),
-			`<!doctype html><html lang=fr><meta charset=utf-8><title>Golang Testing</title><meta name=description content="Golang Testing"><meta name=author content="ViBiOh"><script>
-    function helloWorld() {
-      console.info('Hello world!');
-    }
-  </script><style>
-    html {
-      height: 100vh;
-      width: 100vw;
-    }
-  </style><body onload=helloWorld()><h1>It works!</h1>`,
+			`<!doctype html><html lang=fr><meta charset=utf-8><title>Golang Testing</title><meta name=description content="Golang Testing"><meta name=author content="ViBiOh"><script>function helloWorld(){console.info('Hello world!');}</script><style>html{height:100vh;width:100vw}</style><body onload=helloWorld()><h1>It works!</h1>`,
 			nil,
 		},
 		{
@@ -86,7 +121,7 @@ func TestWriteHTMLTemplate(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			err := WriteHTMLTemplate(testCase.tpl, writer, nil, 200)
+			err := ResponseHTMLTemplate(testCase.tpl, writer, nil, 200)
 
 			result, _ := request.ReadBodyResponse(writer.Result())
 
@@ -99,13 +134,13 @@ func TestWriteHTMLTemplate(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("WriteHTMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
+				t.Errorf("ResponseHTMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
 }
 
-func TestWriteXMLTemplate(t *testing.T) {
+func TestResponseXMLTemplate(t *testing.T) {
 	var cases = []struct {
 		intention string
 		tpl       *template.Template
@@ -129,7 +164,7 @@ func TestWriteXMLTemplate(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			err := WriteXMLTemplate(testCase.tpl, writer, nil, 200)
+			err := ResponseXMLTemplate(testCase.tpl, writer, nil, 200)
 
 			result, _ := request.ReadBodyResponse(writer.Result())
 
@@ -142,7 +177,7 @@ func TestWriteXMLTemplate(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("WriteXMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
+				t.Errorf("ResponseXMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
 			}
 		})
 	}

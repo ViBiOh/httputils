@@ -150,7 +150,7 @@ func New(config Config, providers ...Provider) (App, error) {
 func (a app) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if query.IsRoot(r) {
-			if err := templates.WriteHTMLTemplate(indextTemplate, w, a.data, http.StatusOK); err != nil {
+			if err := templates.ResponseHTMLTemplate(indextTemplate, w, a.data, http.StatusOK); err != nil {
 				logger.Error("unable to write index: %s", err)
 			}
 			return

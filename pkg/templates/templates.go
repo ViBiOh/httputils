@@ -3,13 +3,17 @@ package templates
 import (
 	"bytes"
 	"html/template"
+	"io"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 
 	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/html"
+	"github.com/tdewolff/minify/v2/js"
 	"github.com/tdewolff/minify/v2/svg"
 )
 
@@ -18,6 +22,8 @@ var minifier *minify.M
 func init() {
 	minifier = minify.New()
 	minifier.AddFunc("text/html", html.Minify)
+	minifier.AddFunc("text/css", css.Minify)
+	minifier.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
 	minifier.AddFunc("text/xml", svg.Minify)
 }
 
@@ -42,8 +48,18 @@ func GetTemplates(dir, ext string) ([]string, error) {
 	return output, nil
 }
 
-// WriteHTMLTemplate write template name from given template into writer for provided content with HTML minification
-func WriteHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
+// WriteTemplate write template name from given template into writer for provided content with given minification
+func WriteTemplate(tpl *template.Template, w io.Writer, content interface{}, mediatype string) error {
+	templateBuffer := &bytes.Buffer{}
+	if err := tpl.Execute(templateBuffer, content); err != nil {
+		return err
+	}
+
+	return minifier.Minify(mediatype, w, templateBuffer)
+}
+
+// ResponseHTMLTemplate write template name from given template into writer for provided content with HTML minification
+func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
 	templateBuffer := &bytes.Buffer{}
 	if err := tpl.Execute(templateBuffer, content); err != nil {
 		return err
@@ -56,8 +72,8 @@ func WriteHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content in
 	return minifier.Minify("text/html", w, templateBuffer)
 }
 
-// WriteXMLTemplate write template name from given template into writer for provided content with XML minification
-func WriteXMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
+// ResponseXMLTemplate write template name from given template into writer for provided content with XML minification
+func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
 	var templateBuffer bytes.Buffer
 	templateBuffer.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
 	if err := tpl.Execute(&templateBuffer, content); err != nil {

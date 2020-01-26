@@ -194,13 +194,7 @@ func TestHandler(t *testing.T) {
 			"index",
 			instance,
 			httptest.NewRequest(http.MethodGet, "/", nil),
-			`<!doctype html><html class=no-js lang=en><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Swagger hello</title><meta name=description content="Swagger UI of hello"><meta name=viewport content="width=device-width,initial-scale=1"><link rel=stylesheet href=//unpkg.com/swagger-ui-dist@3/swagger-ui.css><div id=swagger-ui></div><script src=//unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js></script><script>
-      SwaggerUIBundle({
-        url: "swagger.yaml",
-        dom_id: '#swagger-ui',
-        presets: [SwaggerUIBundle.presets.apis]
-      })
-    </script>`,
+			`<!doctype html><html class=no-js lang=en><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Swagger hello</title><meta name=description content="Swagger UI of hello"><meta name=viewport content="width=device-width,initial-scale=1"><link rel=stylesheet href=//unpkg.com/swagger-ui-dist@3/swagger-ui.css><div id=swagger-ui></div><script src=//unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js></script><script>SwaggerUIBundle({url:"swagger.yaml",dom_id:'#swagger-ui',presets:[SwaggerUIBundle.presets.apis]})</script>`,
 			http.StatusOK,
 		},
 		{
