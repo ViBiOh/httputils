@@ -4,6 +4,7 @@
 [![codecov](https://codecov.io/gh/ViBiOh/httputils/branch/master/graph/badge.svg)](https://codecov.io/gh/ViBiOh/httputils)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ViBiOh/httputils)](https://goreportcard.com/report/github.com/ViBiOh/httputils)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=ViBiOh/httputils)](https://dependabot.com)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ViBiOh_httputils&metric=alert_status)](https://sonarcloud.io/dashboard?id=ViBiOh_httputils)
 
 Golang HTTP Utils func
 
