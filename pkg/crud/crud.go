@@ -92,47 +92,36 @@ func New(config Config, service Service) (App, error) {
 // Handler for CRUD requests. Should be use with net/http
 func (a app) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		isRoot := query.IsRoot(r)
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 
-		switch r.Method {
-		case http.MethodGet:
-			if isRoot {
+		if query.IsRoot(r) {
+			if r.Method == http.MethodGet {
 				a.list(w, r)
-			} else if id, err := query.GetUintID(r); err != nil {
-				httperror.BadRequest(w, err)
-			} else {
-				a.get(w, r, id)
-			}
-
-		case http.MethodPost:
-			if isRoot {
+			} else if r.Method == http.MethodPost {
 				a.create(w, r)
 			} else {
 				w.WriteHeader(http.StatusMethodNotAllowed)
 			}
 
-		case http.MethodPut:
-			if isRoot {
-				w.WriteHeader(http.StatusMethodNotAllowed)
-			} else if id, err := query.GetUintID(r); err != nil {
-				httperror.BadRequest(w, err)
-			} else {
-				a.update(w, r, id)
-			}
+			return
+		}
 
-		case http.MethodDelete:
-			if isRoot {
-				w.WriteHeader(http.StatusMethodNotAllowed)
-			} else if id, err := query.GetUintID(r); err != nil {
-				httperror.BadRequest(w, err)
-			} else {
-				a.delete(w, r, id)
-			}
+		id, err := query.GetUintID(r)
+		if err != nil {
+			httperror.BadRequest(w, err)
+			return
+		}
 
-		case http.MethodOptions:
-			w.WriteHeader(http.StatusNoContent)
-
-		default:
+		if r.Method == http.MethodGet {
+			a.get(w, r, id)
+		} else if r.Method == http.MethodPut {
+			a.update(w, r, id)
+		} else if r.Method == http.MethodDelete {
+			a.delete(w, r, id)
+		} else {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	})

@@ -1,7 +1,6 @@
 package request
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,6 +9,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/ViBiOh/httputils/v3/pkg/logger"
 )
 
 var defaultHTTPClient = http.Client{
@@ -147,18 +148,25 @@ func (r *Request) Form(ctx context.Context, data url.Values) (*http.Response, er
 
 // JSON send request with given context and given interface as JSON payload
 func (r *Request) JSON(ctx context.Context, body interface{}) (*http.Response, error) {
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
+	reader, writer := io.Pipe()
 
-	return r.ContentJSON().Send(ctx, bytes.NewBuffer(jsonBody))
+	go func() {
+		if err := json.NewEncoder(writer).Encode(body); err != nil {
+			logger.Error("unable to send json: %s", err)
+		}
+
+		if err := writer.Close(); err != nil {
+			logger.Error("unable to close json writer: %s", err)
+		}
+	}()
+
+	return r.ContentJSON().Send(ctx, reader)
 }
 
 // DoWithClient send request with given client
 func DoWithClient(client http.Client, req *http.Request) (*http.Response, error) {
 	resp, err := client.Do(req)
-	if err != nil || (resp != nil && resp.StatusCode >= http.StatusBadRequest) {
+	if err != nil || resp.StatusCode >= http.StatusBadRequest {
 		if err == nil {
 			err = fmt.Errorf("HTTP/%d", resp.StatusCode)
 		}

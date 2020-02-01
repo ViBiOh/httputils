@@ -261,7 +261,7 @@ func TestJSON(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		payload, _ := ReadBodyRequest(r)
 
-		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == "{\"Active\":true,\"Amount\":12.34}" && r.Header.Get("Content-Type") == "application/json" {
+		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == "{\"Active\":true,\"Amount\":12.34}\n" && r.Header.Get("Content-Type") == "application/json" {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("valid"))
 			return
@@ -293,7 +293,7 @@ func TestJSON(t *testing.T) {
 			context.Background(),
 			func() {},
 			"",
-			errors.New("json: unsupported type: func()"),
+			errors.New("HTTP/500"),
 		},
 	}
 
