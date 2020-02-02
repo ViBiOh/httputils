@@ -1,12 +1,14 @@
 package httputils
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
@@ -194,8 +196,15 @@ func (a *app) ListenAndServe(handler http.Handler) (*http.Server, <-chan error) 
 
 // ListenServeWait starts server and wait for its termination
 func (a *app) ListenServeWait(handler http.Handler) {
-	_, err := a.ListenAndServe(handler)
+	server, err := a.ListenAndServe(handler)
 	WaitForTermination(err)
+
+	ctx, cancelFn := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelFn()
+
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Error("unable to shutdown HTTP server: %s", err)
+	}
 }
 
 // WaitForTermination wait for error or SIGTERM/SIGINT signal
