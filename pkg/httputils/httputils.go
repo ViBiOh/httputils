@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -31,11 +32,12 @@ type App interface {
 
 // Config of package
 type Config struct {
-	address  *string
-	port     *uint
-	cert     *string
-	key      *string
-	okStatus *int
+	address       *string
+	port          *uint
+	cert          *string
+	key           *string
+	graceDuration *string
+	okStatus      *int
 }
 
 type app struct {
@@ -43,7 +45,9 @@ type app struct {
 	cert          string
 	key           string
 	okStatus      int
+	graceDuration time.Duration
 
+	shutdown    bool
 	middlewares []model.Middleware
 	health      http.Handler
 }
@@ -51,21 +55,29 @@ type app struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		address:  flags.New(prefix, "http").Name("Address").Default("").Label("Listen address").ToString(fs),
-		port:     flags.New(prefix, "http").Name("Port").Default(1080).Label("Listen port").ToUint(fs),
-		cert:     flags.New(prefix, "http").Name("Cert").Default("").Label("Certificate file").ToString(fs),
-		key:      flags.New(prefix, "http").Name("Key").Default("").Label("Key file").ToString(fs),
-		okStatus: flags.New(prefix, "http").Name("OkStatus").Default(http.StatusNoContent).Label("Healthy HTTP Status code").ToInt(fs),
+		address:       flags.New(prefix, "http").Name("Address").Default("").Label("Listen address").ToString(fs),
+		port:          flags.New(prefix, "http").Name("Port").Default(1080).Label("Listen port").ToUint(fs),
+		cert:          flags.New(prefix, "http").Name("Cert").Default("").Label("Certificate file").ToString(fs),
+		key:           flags.New(prefix, "http").Name("Key").Default("").Label("Key file").ToString(fs),
+		graceDuration: flags.New(prefix, "http").Name("GraceDuration").Default("15s").Label("Grace duration when SIGTERM received").ToString(fs),
+		okStatus:      flags.New(prefix, "http").Name("OkStatus").Default(http.StatusNoContent).Label("Healthy HTTP Status code").ToInt(fs),
 	}
 }
 
 // New creates new App from Config
 func New(config Config) App {
+	graceDurationValue := strings.TrimSpace(*config.graceDuration)
+	graceDuration, err := time.ParseDuration(graceDurationValue)
+	if err != nil {
+		logger.Warn("invalid graceDuration `%s`: %s", graceDurationValue, err)
+	}
+
 	return &app{
 		listenAddress: fmt.Sprintf("%s:%d", *config.address, *config.port),
 		cert:          *config.cert,
 		key:           *config.key,
 		okStatus:      *config.okStatus,
+		graceDuration: graceDuration,
 
 		health:      HealthHandler(*config.okStatus),
 		middlewares: make([]model.Middleware, 0),
@@ -168,9 +180,15 @@ func (a *app) ListenAndServe(handler http.Handler) (*http.Server, <-chan error) 
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/health":
+				if a.shutdown {
+					w.WriteHeader(http.StatusServiceUnavailable)
+					return
+				}
 				a.health.ServeHTTP(w, r)
+
 			case "/version":
 				versionHandler.ServeHTTP(w, r)
+
 			default:
 				defaultHandler.ServeHTTP(w, r)
 			}
@@ -197,7 +215,7 @@ func (a *app) ListenAndServe(handler http.Handler) (*http.Server, <-chan error) 
 // ListenServeWait starts server and wait for its termination
 func (a *app) ListenServeWait(handler http.Handler) {
 	server, err := a.ListenAndServe(handler)
-	WaitForTermination(err)
+	a.WaitForTermination(err)
 
 	ctx, cancelFn := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelFn()
@@ -208,7 +226,7 @@ func (a *app) ListenServeWait(handler http.Handler) {
 }
 
 // WaitForTermination wait for error or SIGTERM/SIGINT signal
-func WaitForTermination(err <-chan error) {
+func (a *app) WaitForTermination(err <-chan error) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
 
@@ -217,5 +235,11 @@ func WaitForTermination(err <-chan error) {
 		logger.Error("%s", err)
 	case signal := <-signals:
 		logger.Info("%s received", signal)
+		a.shutdown = true
+
+		if a.graceDuration != 0 {
+			logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
+			time.Sleep(a.graceDuration)
+		}
 	}
 }
