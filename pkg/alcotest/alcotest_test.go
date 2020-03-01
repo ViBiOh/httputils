@@ -79,14 +79,14 @@ func TestGetStatusCode(t *testing.T) {
 			":",
 			"",
 			0,
-			errors.New("parse :: missing protocol scheme"),
+			errors.New(`parse ":": missing protocol scheme`),
 		},
 		{
 			"should handle malformed URL",
 			"",
 			"",
 			0,
-			errors.New("Get : unsupported protocol scheme \"\""),
+			errors.New(`Get "": unsupported protocol scheme ""`),
 		},
 		{
 			"should return valid status from server",
