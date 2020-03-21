@@ -228,7 +228,7 @@ func (a *app) ListenServeWait(handler http.Handler) {
 // WaitForTermination wait for error or SIGTERM/SIGINT signal
 func (a *app) WaitForTermination(err <-chan error) {
 	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
+	signal.Notify(signals, syscall.SIGTERM)
 
 	select {
 	case err := <-err:
