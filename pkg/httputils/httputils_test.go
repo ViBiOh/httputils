@@ -89,43 +89,6 @@ func TestVersionHandler(t *testing.T) {
 	}
 }
 
-func TestHealthHandler(t *testing.T) {
-	var cases = []struct {
-		intention  string
-		request    *http.Request
-		want       string
-		wantStatus int
-	}{
-		{
-			"simple",
-			httptest.NewRequest(http.MethodGet, "/", nil),
-			"",
-			http.StatusNoContent,
-		},
-		{
-			"invalid method",
-			httptest.NewRequest(http.MethodOptions, "/", nil),
-			"",
-			http.StatusMethodNotAllowed,
-		},
-	}
-
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			HealthHandler(http.StatusNoContent).ServeHTTP(writer, testCase.request)
-
-			if result := writer.Code; result != testCase.wantStatus {
-				t.Errorf("HealthHandler = %d, want %d", result, testCase.wantStatus)
-			}
-
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("HealthHandler = `%s`, want `%s`", string(result), testCase.want)
-			}
-		})
-	}
-}
-
 func TestChainMiddlewares(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("handler"))
