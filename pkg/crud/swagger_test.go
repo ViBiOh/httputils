@@ -86,10 +86,10 @@ var (
     requestBody:
       description: Item to create
       required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Item'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Item'
 
     responses:
       '201':

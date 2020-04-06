@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/httperror"
@@ -63,14 +64,16 @@ type app struct {
 	service Service
 }
 
-// Flags adds flags for configuring package
-func Flags(fs *flag.FlagSet, prefix string) Config {
-	return Config{
-		defaultPage:     flags.New(prefix, "crud").Name("DefaultPage").Default(1).Label("Default page").ToUint(fs),
-		defaultPageSize: flags.New(prefix, "crud").Name("DefaultPageSize").Default(20).Label("Default page size").ToUint(fs),
-		maxPageSize:     flags.New(prefix, "crud").Name("MaxPageSize").Default(100).Label("Max page size").ToUint(fs),
-		path:            flags.New(prefix, "crud").Name("Path").Default("").Label("HTTP Path").ToString(fs),
-		name:            flags.New(prefix, "crud").Name("Name").Default("").Label("Resource's name").ToString(fs),
+// GetConfiguredFlags adds flags for configuring package
+func GetConfiguredFlags(path, name string) func(*flag.FlagSet, string) Config {
+	return func(fs *flag.FlagSet, prefix string) Config {
+		return Config{
+			defaultPage:     flags.New(prefix, "crud").Name("DefaultPage").Default(1).Label("Default page").ToUint(fs),
+			defaultPageSize: flags.New(prefix, "crud").Name("DefaultPageSize").Default(20).Label("Default page size").ToUint(fs),
+			maxPageSize:     flags.New(prefix, "crud").Name("MaxPageSize").Default(100).Label("Max page size").ToUint(fs),
+			path:            flags.New(prefix, "crud").Name("Path").Default(path).Label("HTTP Path").ToString(fs),
+			name:            flags.New(prefix, "crud").Name("Name").Default(name).Label("Resource's name").ToString(fs),
+		}
 	}
 }
 
@@ -84,6 +87,8 @@ func New(config Config, service Service) (App, error) {
 		defaultPage:     *config.defaultPage,
 		defaultPageSize: *config.defaultPageSize,
 		maxPageSize:     *config.maxPageSize,
+		path:            strings.TrimSpace(*config.path),
+		name:            strings.TrimSpace(*config.name),
 
 		service: service,
 	}, nil

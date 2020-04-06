@@ -86,10 +86,10 @@ const (
     requestBody:
       description: {{ .ItemName }} to create
       required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/{{ .ItemName }}'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/{{ .ItemName }}'
 
     responses:
       '201':
