@@ -34,7 +34,7 @@ func TestFlags(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
-			Flags(fs, "")
+			GetConfiguredFlags("", "")(fs, "")
 
 			var writer strings.Builder
 			fs.SetOutput(&writer)
@@ -51,6 +51,7 @@ func TestFlags(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	one := uint(1)
+	name := "test"
 
 	var cases = []struct {
 		intention string
@@ -72,12 +73,16 @@ func TestNew(t *testing.T) {
 				defaultPage:     &one,
 				defaultPageSize: &one,
 				maxPageSize:     &one,
+				name:            &name,
+				path:            &name,
 			},
 			testService{},
 			&app{
 				defaultPage:     1,
 				defaultPageSize: 1,
 				maxPageSize:     1,
+				name:            "test",
+				path:            "test",
 				service:         testService{},
 			},
 			nil,
