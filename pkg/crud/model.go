@@ -18,7 +18,7 @@ func NewError(field, label string) Error {
 
 // Service retrieves item
 type Service interface {
-	Unmarshal(data []byte) (interface{}, error)
+	Unmarshal(data []byte, contentType string) (interface{}, error)
 	Check(ctx context.Context, old, new interface{}) []Error
 	List(ctx context.Context, page, pageSize uint, sortKey string, sortDesc bool, filters map[string][]string) ([]interface{}, uint, error)
 	Get(ctx context.Context, ID uint64) (interface{}, error)

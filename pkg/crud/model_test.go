@@ -13,7 +13,7 @@ type testItem struct {
 
 type testService struct{}
 
-func (t testService) Unmarshal(data []byte) (interface{}, error) {
+func (t testService) Unmarshal(data []byte, contentType string) (interface{}, error) {
 	var item testItem
 
 	err := json.Unmarshal(data, &item)

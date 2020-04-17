@@ -172,12 +172,16 @@ func readFilters(r *http.Request) map[string][]string {
 }
 
 func (a app) readPayload(r *http.Request) (interface{}, error) {
+	if r == nil {
+		return nil, errors.New("nil request")
+	}
+
 	bodyBytes, err := request.ReadBodyRequest(r)
 	if err != nil {
 		return nil, fmt.Errorf("body read error: %w", err)
 	}
 
-	item, err := a.service.Unmarshal(bodyBytes)
+	item, err := a.service.Unmarshal(bodyBytes, r.Header.Get("Content-Type"))
 	if err != nil {
 		return item, fmt.Errorf("unmarshal error: %w", err)
 	}

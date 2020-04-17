@@ -333,18 +333,19 @@ func TestReadPayload(t *testing.T) {
 		wantErr   error
 	}{
 		{
+			"nil",
+			nil,
+			nil,
+			errors.New("nil request"),
+		},
+		{
 			"read error",
 			&http.Request{
-				Body: ioutil.NopCloser(errReader(0)),
+				Body:   ioutil.NopCloser(errReader(0)),
+				Header: http.Header{},
 			},
 			nil,
 			errors.New("body read error"),
-		},
-		{
-			"nil",
-			nil,
-			&testItem{},
-			errors.New("unmarshal error"),
 		},
 		{
 			"valid",
