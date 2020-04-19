@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"testing"
 )
 
 type testItem struct {
@@ -100,4 +101,31 @@ func (t testService) Delete(ctx context.Context, o interface{}) error {
 	}
 
 	return nil
+}
+
+func TestError(t *testing.T) {
+	var cases = []struct {
+		intention string
+		input     Error
+		want      string
+	}{
+		{
+			"empty",
+			Error{},
+			"",
+		},
+		{
+			"value",
+			NewError("name", "name is required"),
+			"name is required",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			if result := testCase.input.Error(); result != testCase.want {
+				t.Errorf("Error() = %s, want %s", result, testCase.want)
+			}
+		})
+	}
 }
