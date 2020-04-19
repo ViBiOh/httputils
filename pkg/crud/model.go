@@ -2,10 +2,19 @@ package crud
 
 import "context"
 
+var (
+	_ error = Error{}
+)
+
 // Error describes a crud error
 type Error struct {
 	Field string `json:"field"`
 	Label string `json:"label"`
+}
+
+// Error format error to string
+func (e Error) Error() string {
+	return e.Label
 }
 
 // NewError creates a new error
