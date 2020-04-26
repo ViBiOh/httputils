@@ -13,6 +13,12 @@ import (
 	_ "github.com/lib/pq" // Not referenced but needed for database/sql
 )
 
+type key int
+
+const (
+	ctxTxKey key = iota
+)
+
 var (
 	// ErrNoHost occurs when host is not provided in configuration
 	ErrNoHost = errors.New("no host for database connection")
@@ -46,7 +52,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 // New creates new App from Config
 func New(config Config) (*sql.DB, error) {
 	host := strings.TrimSpace(*config.host)
-	if host == "" {
+	if len(host) == 0 {
 		return nil, ErrNoHost
 	}
 
@@ -75,13 +81,22 @@ func Ping(db *sql.DB) bool {
 	return db != nil && db.PingContext(ctx) == nil
 }
 
-// GetTx return given transaction if not nil or create a new one
-func GetTx(db *sql.DB, tx *sql.Tx) (*sql.Tx, error) {
-	if db == nil || tx != nil {
-		return tx, nil
+// StoreTx stores given transaction in context
+func StoreTx(ctx context.Context, tx *sql.Tx) context.Context {
+	return context.WithValue(ctx, ctxTxKey, tx)
+}
+
+func readTx(ctx context.Context) *sql.Tx {
+	value := ctx.Value(ctxTxKey)
+	if value == nil {
+		return nil
 	}
 
-	return db.Begin()
+	if tx, ok := value.(*sql.Tx); ok {
+		return tx
+	}
+
+	return nil
 }
 
 // EndTx ends transaction according error without shadowing given error
@@ -111,49 +126,49 @@ func RowsClose(rows *sql.Rows, err error) error {
 }
 
 // GetRow execute single row query
-func GetRow(db *sql.DB, query string, args ...interface{}) *sql.Row {
-	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
+func GetRow(ctx context.Context, db *sql.DB, query string, args ...interface{}) *sql.Row {
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
 	return db.QueryRowContext(ctx, query, args...)
 }
 
 // Create execute query with a RETURNING id
-func Create(db *sql.DB, tx *sql.Tx, query string, args ...interface{}) (newID uint64, err error) {
-	var usedTx *sql.Tx
-	if usedTx, err = GetTx(db, tx); err != nil {
-		return
-	}
+func Create(ctx context.Context, db *sql.DB, query string, args ...interface{}) (newID uint64, err error) {
+	tx := readTx(ctx)
+	if tx == nil {
+		if tx, err = db.Begin(); err != nil {
+			return
+		}
 
-	if usedTx != tx {
 		defer func() {
-			err = EndTx(usedTx, err)
+			err = EndTx(tx, err)
 		}()
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	err = usedTx.QueryRowContext(ctx, query, args...).Scan(&newID)
+	err = tx.QueryRowContext(ctx, query, args...).Scan(&newID)
 	return
 }
 
 // Exec execute query with specified timeout, disregarding result
-func Exec(db *sql.DB, tx *sql.Tx, query string, args ...interface{}) (err error) {
-	var usedTx *sql.Tx
-	if usedTx, err = GetTx(db, tx); err != nil {
-		return
-	}
+func Exec(ctx context.Context, db *sql.DB, query string, args ...interface{}) (err error) {
+	tx := readTx(ctx)
+	if tx == nil {
+		if tx, err = db.Begin(); err != nil {
+			return
+		}
 
-	if usedTx != tx {
 		defer func() {
-			err = EndTx(usedTx, err)
+			err = EndTx(tx, err)
 		}()
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	_, err = usedTx.ExecContext(ctx, query, args...)
+	_, err = tx.ExecContext(ctx, query, args...)
 	return
 }
