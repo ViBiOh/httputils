@@ -40,7 +40,109 @@ func TestFlags(t *testing.T) {
 	}
 }
 
-func TestCreateWithTimeout(t *testing.T) {
+func TestPing(t *testing.T) {
+	var cases = []struct {
+		intention string
+		want      bool
+	}{
+		{
+			"simple",
+			true,
+		},
+		{
+			"timeout",
+			false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+			if err != nil {
+				t.Fatalf("unable to create mock database: %s", err)
+			}
+			defer db.Close()
+
+			expectedPing := mock.ExpectPing()
+
+			if tc.intention == "timeout" {
+				savedSQLTimeout := SQLTimeout
+				SQLTimeout = time.Second
+				defer func() {
+					SQLTimeout = savedSQLTimeout
+				}()
+
+				expectedPing.WillDelayFor(time.Second * 2)
+			}
+
+			if got := Ping(db); got != tc.want {
+				t.Errorf("Ping() = %t, want %t", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestGetRow(t *testing.T) {
+	var cases = []struct {
+		intention string
+		want      uint64
+		wantErr   error
+	}{
+		{
+			"simple",
+			1,
+			nil,
+		},
+		{
+			"timeout",
+			0,
+			sqlmock.ErrCancelled,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("unable to create mock database: %s", err)
+			}
+			defer db.Close()
+
+			expectedQuery := mock.ExpectQuery("SELECT id FROM item WHERE id = ").WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+			if tc.intention == "timeout" {
+				savedSQLTimeout := SQLTimeout
+				SQLTimeout = time.Second
+				defer func() {
+					SQLTimeout = savedSQLTimeout
+				}()
+
+				expectedQuery.WillDelayFor(time.Second * 2)
+			}
+
+			var got uint64
+			gotErr := GetRow(db, "SELECT id FROM item WHERE id = $1", 1).Scan(&got)
+
+			failed := false
+
+			if tc.wantErr != nil && !errors.Is(gotErr, tc.wantErr) {
+				failed = true
+			} else if got != tc.want {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("GetRow() = (%d, `%s`), want (%d, `%s`)", got, gotErr, tc.want, tc.wantErr)
+			}
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("sqlmock unfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
+func TestCreate(t *testing.T) {
 	type args struct {
 		tx bool
 	}
@@ -111,10 +213,16 @@ func TestCreateWithTimeout(t *testing.T) {
 			}
 
 			if tc.intention == "timeout" {
+				savedSQLTimeout := SQLTimeout
+				SQLTimeout = time.Second
+				defer func() {
+					SQLTimeout = savedSQLTimeout
+				}()
+
 				expectedQuery.WillDelayFor(time.Second * 2)
 			}
 
-			got, gotErr := CreateWithTimeout(db, tx, time.Second, "INSERT INTO item VALUES ($1)", 1)
+			got, gotErr := Create(db, tx, "INSERT INTO item VALUES ($1)", 1)
 
 			failed := false
 
@@ -125,7 +233,7 @@ func TestCreateWithTimeout(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("CreateWithTimeout() = (%d, `%s`), want (%d, `%s`)", got, gotErr, tc.want, tc.wantErr)
+				t.Errorf("Create() = (%d, `%s`), want (%d, `%s`)", got, gotErr, tc.want, tc.wantErr)
 			}
 
 			if err := mock.ExpectationsWereMet(); err != nil {
@@ -135,7 +243,7 @@ func TestCreateWithTimeout(t *testing.T) {
 	}
 }
 
-func TestExecWithTimeout(t *testing.T) {
+func TestExec(t *testing.T) {
 	type args struct {
 		tx bool
 	}
@@ -202,10 +310,16 @@ func TestExecWithTimeout(t *testing.T) {
 			}
 
 			if tc.intention == "timeout" {
+				savedSQLTimeout := SQLTimeout
+				SQLTimeout = time.Second
+				defer func() {
+					SQLTimeout = savedSQLTimeout
+				}()
+
 				expectedQuery.WillDelayFor(time.Second * 2)
 			}
 
-			gotErr := ExecWithTimeout(db, tx, time.Second, "DELETE FROM item WHERE id = $1", 1)
+			gotErr := Exec(db, tx, "DELETE FROM item WHERE id = $1", 1)
 
 			failed := false
 
@@ -214,7 +328,7 @@ func TestExecWithTimeout(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("ExecWithTimeout() = `%s`, want `%s`", gotErr, tc.wantErr)
+				t.Errorf("Exec() = `%s`, want `%s`", gotErr, tc.wantErr)
 			}
 
 			if err := mock.ExpectationsWereMet(); err != nil {
