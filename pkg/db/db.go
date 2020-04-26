@@ -1,11 +1,13 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	_ "github.com/lib/pq" // Not referenced but needed for database/sql
@@ -100,4 +102,44 @@ func RowsClose(rows *sql.Rows, err error) error {
 	}
 
 	return err
+}
+
+// CreateWithTimeout execute query with a RETURNING id
+func CreateWithTimeout(db *sql.DB, tx *sql.Tx, sqlTimeout time.Duration, query string, args ...interface{}) (newID uint64, err error) {
+	var usedTx *sql.Tx
+	if usedTx, err = GetTx(db, tx); err != nil {
+		return
+	}
+
+	if usedTx != tx {
+		defer func() {
+			err = EndTx(usedTx, err)
+		}()
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), sqlTimeout)
+	defer cancel()
+
+	err = usedTx.QueryRowContext(ctx, query, args...).Scan(&newID)
+	return
+}
+
+// ExecWithTimeout execute query with specified timeout, disregarding result
+func ExecWithTimeout(db *sql.DB, tx *sql.Tx, sqlTimeout time.Duration, query string, args ...interface{}) (err error) {
+	var usedTx *sql.Tx
+	if usedTx, err = GetTx(db, tx); err != nil {
+		return
+	}
+
+	if usedTx != tx {
+		defer func() {
+			err = EndTx(usedTx, err)
+		}()
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), sqlTimeout)
+	defer cancel()
+
+	_, err = usedTx.ExecContext(ctx, query, args...)
+	return
 }
