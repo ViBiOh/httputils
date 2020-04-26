@@ -75,7 +75,7 @@ var (
         $ref: '#/components/schemas/Error'
 
   options:
-    description: Show crud headers
+    description: Show /crud headers
 
     responses:
       '204':
@@ -133,7 +133,7 @@ var (
         $ref: '#/components/schemas/Error'
 
   options:
-    description: Show crud headers
+    description: Show /crud headers
 
     responses:
       '204':
@@ -214,14 +214,14 @@ func TestSwagger(t *testing.T) {
 		},
 		{
 			"no name",
-			"crud",
+			"/crud",
 			"",
 			swagger.EmptyConfiguration,
 			nil,
 		},
 		{
 			"simple",
-			"crud",
+			"/crud",
 			"Item",
 			swagger.Configuration{
 				Paths:      expectedOutput,
