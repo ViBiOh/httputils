@@ -16,6 +16,9 @@ import (
 var (
 	// ErrNoHost occurs when host is not provided in configuration
 	ErrNoHost = errors.New("no host for database connection")
+
+	// SQLTimeout when running queries
+	SQLTimeout = time.Second * 5
 )
 
 // Config of package
@@ -66,7 +69,10 @@ func New(config Config) (*sql.DB, error) {
 
 // Ping indicate if database is ready or not
 func Ping(db *sql.DB) bool {
-	return db != nil && db.Ping() == nil
+	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
+	defer cancel()
+
+	return db != nil && db.PingContext(ctx) == nil
 }
 
 // GetTx return given transaction if not nil or create a new one
@@ -104,8 +110,16 @@ func RowsClose(rows *sql.Rows, err error) error {
 	return err
 }
 
-// CreateWithTimeout execute query with a RETURNING id
-func CreateWithTimeout(db *sql.DB, tx *sql.Tx, sqlTimeout time.Duration, query string, args ...interface{}) (newID uint64, err error) {
+// GetRow execute single row query
+func GetRow(db *sql.DB, query string, args ...interface{}) *sql.Row {
+	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
+	defer cancel()
+
+	return db.QueryRowContext(ctx, query, args...)
+}
+
+// Create execute query with a RETURNING id
+func Create(db *sql.DB, tx *sql.Tx, query string, args ...interface{}) (newID uint64, err error) {
 	var usedTx *sql.Tx
 	if usedTx, err = GetTx(db, tx); err != nil {
 		return
@@ -117,15 +131,15 @@ func CreateWithTimeout(db *sql.DB, tx *sql.Tx, sqlTimeout time.Duration, query s
 		}()
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), sqlTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
 	defer cancel()
 
 	err = usedTx.QueryRowContext(ctx, query, args...).Scan(&newID)
 	return
 }
 
-// ExecWithTimeout execute query with specified timeout, disregarding result
-func ExecWithTimeout(db *sql.DB, tx *sql.Tx, sqlTimeout time.Duration, query string, args ...interface{}) (err error) {
+// Exec execute query with specified timeout, disregarding result
+func Exec(db *sql.DB, tx *sql.Tx, query string, args ...interface{}) (err error) {
 	var usedTx *sql.Tx
 	if usedTx, err = GetTx(db, tx); err != nil {
 		return
@@ -137,7 +151,7 @@ func ExecWithTimeout(db *sql.DB, tx *sql.Tx, sqlTimeout time.Duration, query str
 		}()
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), sqlTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
 	defer cancel()
 
 	_, err = usedTx.ExecContext(ctx, query, args...)
