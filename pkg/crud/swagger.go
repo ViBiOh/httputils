@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	pathsTemplateStr = `/{{ .Path }}:
+	pathsTemplateStr = `{{ .Path }}:
   get:
     description: List {{ .ItemName }} with pagination
     parameters:
@@ -105,7 +105,7 @@ const (
       '500':
         $ref: '#/components/schemas/Error'
 
-/{{ .Path }}/{id}:
+{{ .Path }}/{id}:
   parameters:
     - name: id
       in: path
