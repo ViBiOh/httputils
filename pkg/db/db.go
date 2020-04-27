@@ -86,7 +86,8 @@ func StoreTx(ctx context.Context, tx *sql.Tx) context.Context {
 	return context.WithValue(ctx, ctxTxKey, tx)
 }
 
-func readTx(ctx context.Context) *sql.Tx {
+// ReadTx read transaction stored in context
+func ReadTx(ctx context.Context) *sql.Tx {
 	value := ctx.Value(ctxTxKey)
 	if value == nil {
 		return nil
@@ -135,7 +136,7 @@ func GetRow(ctx context.Context, db *sql.DB, query string, args ...interface{}) 
 
 // Create execute query with a RETURNING id
 func Create(ctx context.Context, db *sql.DB, query string, args ...interface{}) (newID uint64, err error) {
-	tx := readTx(ctx)
+	tx := ReadTx(ctx)
 	if tx == nil {
 		if tx, err = db.Begin(); err != nil {
 			return
@@ -155,7 +156,7 @@ func Create(ctx context.Context, db *sql.DB, query string, args ...interface{}) 
 
 // Exec execute query with specified timeout, disregarding result
 func Exec(ctx context.Context, db *sql.DB, query string, args ...interface{}) (err error) {
-	tx := readTx(ctx)
+	tx := ReadTx(ctx)
 	if tx == nil {
 		if tx, err = db.Begin(); err != nil {
 			return
