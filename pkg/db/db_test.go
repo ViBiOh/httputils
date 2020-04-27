@@ -130,8 +130,8 @@ func TestReadTx(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			if got := readTx(tc.args.ctx); got != tc.want {
-				t.Errorf("readTx() = %v, want %v", got, tc.want)
+			if got := ReadTx(tc.args.ctx); got != tc.want {
+				t.Errorf("ReadTx() = %v, want %v", got, tc.want)
 			}
 		})
 	}
