@@ -128,9 +128,14 @@ func RowsClose(rows *sql.Rows, err error) error {
 
 // GetRow execute single row query
 func GetRow(ctx context.Context, db *sql.DB, query string, args ...interface{}) *sql.Row {
+	tx := ReadTx(ctx)
+
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
+	if tx != nil {
+		return tx.QueryRowContext(ctx, query, args...)
+	}
 	return db.QueryRowContext(ctx, query, args...)
 }
 

@@ -84,14 +84,14 @@ func TestPing(t *testing.T) {
 }
 
 func TestReadTx(t *testing.T) {
-	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+	mockDb, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 	if err != nil {
 		t.Fatalf("unable to create mock database: %s", err)
 	}
-	defer db.Close()
+	defer mockDb.Close()
 
 	mock.ExpectBegin()
-	tx, err := db.Begin()
+	tx, err := mockDb.Begin()
 	if err != nil {
 		t.Errorf("unable to create tx: %v", err)
 	}
@@ -153,15 +153,31 @@ func TestGetRow(t *testing.T) {
 			0,
 			sqlmock.ErrCancelled,
 		},
+		{
+			"tx",
+			1,
+			nil,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			db, mock, err := sqlmock.New()
+			mockDb, mock, err := sqlmock.New()
 			if err != nil {
 				t.Fatalf("unable to create mock database: %s", err)
 			}
-			defer db.Close()
+			defer mockDb.Close()
+
+			ctx := context.Background()
+
+			if tc.intention == "tx" {
+				mock.ExpectBegin()
+				if tx, err := mockDb.Begin(); err != nil {
+					t.Errorf("unable to create tx: %v", err)
+				} else {
+					ctx = StoreTx(ctx, tx)
+				}
+			}
 
 			expectedQuery := mock.ExpectQuery("SELECT id FROM item WHERE id = ").WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
@@ -176,7 +192,7 @@ func TestGetRow(t *testing.T) {
 			}
 
 			var got uint64
-			gotErr := GetRow(context.Background(), db, "SELECT id FROM item WHERE id = $1", 1).Scan(&got)
+			gotErr := GetRow(ctx, mockDb, "SELECT id FROM item WHERE id = $1", 1).Scan(&got)
 
 			failed := false
 
@@ -243,17 +259,17 @@ func TestCreate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			db, mock, err := sqlmock.New()
+			mockDb, mock, err := sqlmock.New()
 			if err != nil {
 				t.Fatalf("unable to create mock database: %s", err)
 			}
-			defer db.Close()
+			defer mockDb.Close()
 
 			ctx := context.Background()
 
 			if tc.args.addTxOnContext {
 				mock.ExpectBegin()
-				if tx, err := db.Begin(); err != nil {
+				if tx, err := mockDb.Begin(); err != nil {
 					t.Errorf("unable to create tx: %v", err)
 				} else {
 					ctx = StoreTx(ctx, tx)
@@ -284,7 +300,7 @@ func TestCreate(t *testing.T) {
 				}
 			}
 
-			got, gotErr := Create(ctx, db, "INSERT INTO item VALUES ($1)", 1)
+			got, gotErr := Create(ctx, mockDb, "INSERT INTO item VALUES ($1)", 1)
 
 			failed := false
 
@@ -348,17 +364,17 @@ func TestExec(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			db, mock, err := sqlmock.New()
+			mockDb, mock, err := sqlmock.New()
 			if err != nil {
 				t.Fatalf("unable to create mock database: %s", err)
 			}
-			defer db.Close()
+			defer mockDb.Close()
 
 			ctx := context.Background()
 
 			if tc.args.addTxOnContext {
 				mock.ExpectBegin()
-				if tx, err := db.Begin(); err != nil {
+				if tx, err := mockDb.Begin(); err != nil {
 					t.Errorf("unable to create tx: %v", err)
 				} else {
 					ctx = StoreTx(ctx, tx)
@@ -389,7 +405,7 @@ func TestExec(t *testing.T) {
 				}
 			}
 
-			gotErr := Exec(ctx, db, "DELETE FROM item WHERE id = $1", 1)
+			gotErr := Exec(ctx, mockDb, "DELETE FROM item WHERE id = $1", 1)
 
 			failed := false
 
