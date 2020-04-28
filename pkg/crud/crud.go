@@ -142,8 +142,10 @@ func handleError(w http.ResponseWriter, err error) bool {
 	} else if errors.Is(err, ErrUnauthorized) {
 		httperror.Unauthorized(w, err)
 	} else if errors.Is(err, ErrForbidden) {
+		logger.Error(err.Error())
 		httperror.Forbidden(w)
 	} else if errors.Is(err, ErrNotFound) {
+		logger.Error(err.Error())
 		httperror.NotFound(w)
 	} else {
 		logger.Error(err.Error())
