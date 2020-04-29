@@ -127,16 +127,16 @@ func RowsClose(rows *sql.Rows, err error) error {
 }
 
 // GetRow execute single row query
-func GetRow(ctx context.Context, db *sql.DB, query string, args ...interface{}) *sql.Row {
+func GetRow(ctx context.Context, db *sql.DB, scanner func(RowScanner) error, query string, args ...interface{}) error {
 	tx := ReadTx(ctx)
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
 	if tx != nil {
-		return tx.QueryRowContext(ctx, query, args...)
+		return scanner(tx.QueryRowContext(ctx, query, args...))
 	}
-	return db.QueryRowContext(ctx, query, args...)
+	return scanner(db.QueryRowContext(ctx, query, args...))
 }
 
 // Create execute query with a RETURNING id
