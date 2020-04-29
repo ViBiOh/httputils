@@ -192,7 +192,10 @@ func TestGetRow(t *testing.T) {
 			}
 
 			var got uint64
-			gotErr := GetRow(ctx, mockDb, "SELECT id FROM item WHERE id = $1", 1).Scan(&got)
+			testScanItem := func(row RowScanner) error {
+				return row.Scan(&got)
+			}
+			gotErr := GetRow(ctx, mockDb, testScanItem, "SELECT id FROM item WHERE id = $1", 1)
 
 			failed := false
 
