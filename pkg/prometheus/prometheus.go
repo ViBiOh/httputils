@@ -53,7 +53,9 @@ func New(config Config) App {
 
 // Middleware for net/http
 func (a app) Middleware(next http.Handler) http.Handler {
+	a.registry.MustRegister(prometheus.NewBuildInfoCollector())
 	a.registry.MustRegister(prometheus.NewGoCollector())
+	a.registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
 
 	prometheusHandler := promhttp.InstrumentMetricHandler(
 		a.registry, promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{}),
