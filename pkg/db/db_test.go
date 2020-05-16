@@ -484,7 +484,7 @@ func TestExec(t *testing.T) {
 				}
 			}
 
-			gotErr := Exec(ctx, mockDb, "DELETE FROM item WHERE id = $1", 1)
+			gotErr := Exec(ctx, "DELETE FROM item WHERE id = $1", 1)
 
 			failed := false
 
