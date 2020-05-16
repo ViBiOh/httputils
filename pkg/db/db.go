@@ -81,7 +81,8 @@ func Ping(db *sql.DB) bool {
 	return db != nil && db.PingContext(ctx) == nil
 }
 
-func storeTx(ctx context.Context, tx *sql.Tx) context.Context {
+// StoreTx stores given transaction in context
+func StoreTx(ctx context.Context, tx *sql.Tx) context.Context {
 	return context.WithValue(ctx, ctxTxKey, tx)
 }
 
@@ -113,7 +114,7 @@ func DoAtomic(ctx context.Context, db *sql.DB, action func(context.Context) erro
 		return err
 	}
 
-	err = action(storeTx(ctx, tx))
+	err = action(StoreTx(ctx, tx))
 	if err == nil {
 		return tx.Commit()
 	}
