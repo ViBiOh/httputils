@@ -115,7 +115,7 @@ func TestReadTx(t *testing.T) {
 		{
 			"with tx",
 			args{
-				ctx: StoreTx(context.Background(), tx),
+				ctx: storeTx(context.Background(), tx),
 			},
 			tx,
 		},
@@ -130,8 +130,130 @@ func TestReadTx(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			if got := ReadTx(tc.args.ctx); got != tc.want {
-				t.Errorf("ReadTx() = %v, want %v", got, tc.want)
+			if got := readTx(tc.args.ctx); got != tc.want {
+				t.Errorf("readTx() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestDoAtomic(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		db     *sql.DB
+		action func(context.Context) error
+	}
+
+	var cases = []struct {
+		intention string
+		args      args
+		wantErr   error
+	}{
+		{
+			"no action",
+			args{},
+			errors.New("no action provided"),
+		},
+		{
+			"already",
+			args{
+				ctx: context.Background(),
+				action: func(ctx context.Context) error {
+					return nil
+				},
+			},
+			nil,
+		},
+		{
+			"error",
+			args{
+				ctx: context.Background(),
+				action: func(ctx context.Context) error {
+					return nil
+				},
+			},
+			errors.New("no transaction available"),
+		},
+		{
+			"begin",
+			args{
+				ctx: context.Background(),
+				action: func(ctx context.Context) error {
+					return nil
+				},
+			},
+			nil,
+		},
+		{
+			"rollback",
+			args{
+				ctx: context.Background(),
+				action: func(ctx context.Context) error {
+					return errors.New("invalid")
+				},
+			},
+			errors.New("invalid"),
+		},
+		{
+			"rollback error",
+			args{
+				ctx: context.Background(),
+				action: func(ctx context.Context) error {
+					return errors.New("invalid")
+				},
+			},
+			errors.New("invalid: cannot close transaction"),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			mockDb, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("unable to create mock database: %s", err)
+			}
+			defer mockDb.Close()
+
+			ctx := tc.args.ctx
+
+			if tc.intention == "error" {
+				mock.ExpectBegin().WillReturnError(errors.New("no transaction available"))
+			} else if tc.intention == "already" {
+				mock.ExpectBegin()
+				if tx, err := mockDb.Begin(); err != nil {
+					t.Errorf("unable to create tx: %v", err)
+				} else {
+					ctx = storeTx(ctx, tx)
+				}
+			} else if tc.intention == "begin" {
+				mock.ExpectBegin()
+				mock.ExpectCommit()
+			} else if tc.intention == "rollback" {
+				mock.ExpectBegin()
+				mock.ExpectRollback()
+			} else if tc.intention == "rollback error" {
+				mock.ExpectBegin()
+				mock.ExpectRollback().WillReturnError(errors.New("cannot close transaction"))
+			}
+
+			gotErr := DoAtomic(ctx, mockDb, tc.args.action)
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("DoAtomic() = `%s`, want `%s`", gotErr, tc.wantErr)
+			}
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("sqlmock unfilled expectations: %s", err)
 			}
 		})
 	}
@@ -158,6 +280,11 @@ func TestGetRow(t *testing.T) {
 			1,
 			nil,
 		},
+		{
+			"no db",
+			0,
+			errors.New("no transaction or database provided"),
+		},
 	}
 
 	for _, tc := range cases {
@@ -175,33 +302,42 @@ func TestGetRow(t *testing.T) {
 				if tx, err := mockDb.Begin(); err != nil {
 					t.Errorf("unable to create tx: %v", err)
 				} else {
-					ctx = StoreTx(ctx, tx)
+					ctx = storeTx(ctx, tx)
 				}
 			}
 
-			expectedQuery := mock.ExpectQuery("SELECT id FROM item WHERE id = ").WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+			if tc.intention != "no db" {
+				expectedQuery := mock.ExpectQuery("SELECT id FROM item WHERE id = ").WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-			if tc.intention == "timeout" {
-				savedSQLTimeout := SQLTimeout
-				SQLTimeout = time.Second
-				defer func() {
-					SQLTimeout = savedSQLTimeout
-				}()
+				if tc.intention == "timeout" {
+					savedSQLTimeout := SQLTimeout
+					SQLTimeout = time.Second
+					defer func() {
+						SQLTimeout = savedSQLTimeout
+					}()
 
-				expectedQuery.WillDelayFor(time.Second * 2)
+					expectedQuery.WillDelayFor(time.Second * 2)
+				}
+			}
+
+			usedDb := mockDb
+			if tc.intention == "no db" {
+				usedDb = nil
 			}
 
 			var got uint64
 			testScanItem := func(row RowScanner) error {
 				return row.Scan(&got)
 			}
-			gotErr := GetRow(ctx, mockDb, testScanItem, "SELECT id FROM item WHERE id = $1", 1)
+			gotErr := GetRow(ctx, usedDb, testScanItem, "SELECT id FROM item WHERE id = $1", 1)
 
 			failed := false
 
 			if tc.wantErr == nil && gotErr != nil {
 				failed = true
-			} else if tc.wantErr != nil && !errors.Is(gotErr, tc.wantErr) {
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
 				failed = true
 			} else if got != tc.want {
 				failed = true
@@ -219,44 +355,26 @@ func TestGetRow(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	type args struct {
-		addTxOnContext  bool
-		errorOnCreateTx bool
-	}
 
 	var cases = []struct {
 		intention string
-		args      args
 		want      uint64
 		wantErr   error
 	}{
 		{
-			"simple",
-			args{},
-			1,
-			nil,
+			"no tx",
+			0,
+			errors.New("no transaction in context, please wrap with DoAtomic()"),
 		},
 		{
 			"timeout",
-			args{},
 			0,
 			sqlmock.ErrCancelled,
 		},
 		{
-			"with tx",
-			args{
-				addTxOnContext: true,
-			},
+			"valid",
 			1,
 			nil,
-		},
-		{
-			"with tx error",
-			args{
-				errorOnCreateTx: true,
-			},
-			0,
-			errors.New("call to database transaction Begin was not expected"),
 		},
 	}
 
@@ -270,18 +388,14 @@ func TestCreate(t *testing.T) {
 
 			ctx := context.Background()
 
-			if tc.args.addTxOnContext {
+			if tc.intention != "no tx" {
 				mock.ExpectBegin()
 				if tx, err := mockDb.Begin(); err != nil {
 					t.Errorf("unable to create tx: %v", err)
 				} else {
-					ctx = StoreTx(ctx, tx)
+					ctx = storeTx(ctx, tx)
 				}
-			} else if !tc.args.errorOnCreateTx {
-				mock.ExpectBegin()
-			}
 
-			if !tc.args.errorOnCreateTx {
 				expectedQuery := mock.ExpectQuery("INSERT INTO item VALUES").WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 				if tc.intention == "timeout" {
@@ -295,15 +409,7 @@ func TestCreate(t *testing.T) {
 				}
 			}
 
-			if !tc.args.addTxOnContext && !tc.args.errorOnCreateTx {
-				if tc.wantErr != nil {
-					mock.ExpectRollback()
-				} else {
-					mock.ExpectCommit()
-				}
-			}
-
-			got, gotErr := Create(ctx, mockDb, "INSERT INTO item VALUES ($1)", 1)
+			got, gotErr := Create(ctx, "INSERT INTO item VALUES ($1)", 1)
 
 			failed := false
 
@@ -329,39 +435,21 @@ func TestCreate(t *testing.T) {
 }
 
 func TestExec(t *testing.T) {
-	type args struct {
-		addTxOnContext  bool
-		errorOnCreateTx bool
-	}
-
 	var cases = []struct {
 		intention string
-		args      args
 		wantErr   error
 	}{
 		{
-			"simple",
-			args{},
-			nil,
+			"no tx",
+			errors.New("no transaction in context, please wrap with DoAtomic()"),
 		},
 		{
 			"timeout",
-			args{},
 			sqlmock.ErrCancelled,
 		},
 		{
-			"with tx",
-			args{
-				addTxOnContext: true,
-			},
+			"valid",
 			nil,
-		},
-		{
-			"with tx error",
-			args{
-				errorOnCreateTx: true,
-			},
-			errors.New("call to database transaction Begin was not expected"),
 		},
 	}
 
@@ -375,18 +463,14 @@ func TestExec(t *testing.T) {
 
 			ctx := context.Background()
 
-			if tc.args.addTxOnContext {
+			if tc.intention != "no tx" {
 				mock.ExpectBegin()
 				if tx, err := mockDb.Begin(); err != nil {
 					t.Errorf("unable to create tx: %v", err)
 				} else {
-					ctx = StoreTx(ctx, tx)
+					ctx = storeTx(ctx, tx)
 				}
-			} else if !tc.args.errorOnCreateTx {
-				mock.ExpectBegin()
-			}
 
-			if !tc.args.errorOnCreateTx {
 				expectedQuery := mock.ExpectExec("DELETE FROM item WHERE id = (.+)").WithArgs(1).WillReturnResult(sqlmock.NewResult(0, 1))
 
 				if tc.intention == "timeout" {
@@ -397,14 +481,6 @@ func TestExec(t *testing.T) {
 					}()
 
 					expectedQuery.WillDelayFor(time.Second * 2)
-				}
-			}
-
-			if !tc.args.addTxOnContext && !tc.args.errorOnCreateTx {
-				if tc.wantErr != nil {
-					mock.ExpectRollback()
-				} else {
-					mock.ExpectCommit()
 				}
 			}
 
