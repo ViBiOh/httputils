@@ -115,7 +115,7 @@ func TestReadTx(t *testing.T) {
 		{
 			"with tx",
 			args{
-				ctx: storeTx(context.Background(), tx),
+				ctx: StoreTx(context.Background(), tx),
 			},
 			tx,
 		},
@@ -223,7 +223,7 @@ func TestDoAtomic(t *testing.T) {
 				if tx, err := mockDb.Begin(); err != nil {
 					t.Errorf("unable to create tx: %v", err)
 				} else {
-					ctx = storeTx(ctx, tx)
+					ctx = StoreTx(ctx, tx)
 				}
 			} else if tc.intention == "begin" {
 				mock.ExpectBegin()
@@ -302,7 +302,7 @@ func TestGetRow(t *testing.T) {
 				if tx, err := mockDb.Begin(); err != nil {
 					t.Errorf("unable to create tx: %v", err)
 				} else {
-					ctx = storeTx(ctx, tx)
+					ctx = StoreTx(ctx, tx)
 				}
 			}
 
@@ -393,7 +393,7 @@ func TestCreate(t *testing.T) {
 				if tx, err := mockDb.Begin(); err != nil {
 					t.Errorf("unable to create tx: %v", err)
 				} else {
-					ctx = storeTx(ctx, tx)
+					ctx = StoreTx(ctx, tx)
 				}
 
 				expectedQuery := mock.ExpectQuery("INSERT INTO item VALUES").WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
@@ -468,7 +468,7 @@ func TestExec(t *testing.T) {
 				if tx, err := mockDb.Begin(); err != nil {
 					t.Errorf("unable to create tx: %v", err)
 				} else {
-					ctx = storeTx(ctx, tx)
+					ctx = StoreTx(ctx, tx)
 				}
 
 				expectedQuery := mock.ExpectExec("DELETE FROM item WHERE id = (.+)").WithArgs(1).WillReturnResult(sqlmock.NewResult(0, 1))
