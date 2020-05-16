@@ -81,13 +81,11 @@ func Ping(db *sql.DB) bool {
 	return db != nil && db.PingContext(ctx) == nil
 }
 
-// StoreTx stores given transaction in context
-func StoreTx(ctx context.Context, tx *sql.Tx) context.Context {
+func storeTx(ctx context.Context, tx *sql.Tx) context.Context {
 	return context.WithValue(ctx, ctxTxKey, tx)
 }
 
-// ReadTx read transaction stored in context
-func ReadTx(ctx context.Context) *sql.Tx {
+func readTx(ctx context.Context) *sql.Tx {
 	value := ctx.Value(ctxTxKey)
 	if value == nil {
 		return nil
@@ -100,8 +98,22 @@ func ReadTx(ctx context.Context) *sql.Tx {
 	return nil
 }
 
-// EndTx ends transaction according error without shadowing given error
-func EndTx(tx *sql.Tx, err error) error {
+// DoAtomic execute given action in a transactionnal context
+func DoAtomic(ctx context.Context, db *sql.DB, action func(context.Context) error) error {
+	if action == nil {
+		return errors.New("no action provided")
+	}
+
+	if readTx(ctx) != nil {
+		return action(ctx)
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	err = action(storeTx(ctx, tx))
 	if err == nil {
 		return tx.Commit()
 	}
@@ -128,53 +140,42 @@ func RowsClose(rows *sql.Rows, err error) error {
 
 // GetRow execute single row query
 func GetRow(ctx context.Context, db *sql.DB, scanner func(RowScanner) error, query string, args ...interface{}) error {
-	tx := ReadTx(ctx)
-
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	if tx != nil {
+	if tx := readTx(ctx); tx != nil {
 		return scanner(tx.QueryRowContext(ctx, query, args...))
+	} else if db != nil {
+		return scanner(db.QueryRowContext(ctx, query, args...))
 	}
-	return scanner(db.QueryRowContext(ctx, query, args...))
+
+	return errors.New("no transaction or database provided")
 }
 
 // Create execute query with a RETURNING id
-func Create(ctx context.Context, db *sql.DB, query string, args ...interface{}) (newID uint64, err error) {
-	tx := ReadTx(ctx)
+func Create(ctx context.Context, query string, args ...interface{}) (uint64, error) {
+	tx := readTx(ctx)
 	if tx == nil {
-		if tx, err = db.Begin(); err != nil {
-			return
-		}
-
-		defer func() {
-			err = EndTx(tx, err)
-		}()
+		return 0, errors.New("no transaction in context, please wrap with DoAtomic()")
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	err = tx.QueryRowContext(ctx, query, args...).Scan(&newID)
-	return
+	var newID uint64
+	return newID, tx.QueryRowContext(ctx, query, args...).Scan(&newID)
 }
 
 // Exec execute query with specified timeout, disregarding result
-func Exec(ctx context.Context, db *sql.DB, query string, args ...interface{}) (err error) {
-	tx := ReadTx(ctx)
+func Exec(ctx context.Context, db *sql.DB, query string, args ...interface{}) error {
+	tx := readTx(ctx)
 	if tx == nil {
-		if tx, err = db.Begin(); err != nil {
-			return
-		}
-
-		defer func() {
-			err = EndTx(tx, err)
-		}()
+		return errors.New("no transaction in context, please wrap with DoAtomic()")
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	_, err = tx.ExecContext(ctx, query, args...)
-	return
+	_, err := tx.ExecContext(ctx, query, args...)
+	return err
 }
