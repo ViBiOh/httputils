@@ -168,7 +168,7 @@ func Create(ctx context.Context, query string, args ...interface{}) (uint64, err
 }
 
 // Exec execute query with specified timeout, disregarding result
-func Exec(ctx context.Context, db *sql.DB, query string, args ...interface{}) error {
+func Exec(ctx context.Context, query string, args ...interface{}) error {
 	tx := readTx(ctx)
 	if tx == nil {
 		return errors.New("no transaction in context, please wrap with DoAtomic()")
