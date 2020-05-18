@@ -126,21 +126,44 @@ func DoAtomic(ctx context.Context, db *sql.DB, action func(context.Context) erro
 	return err
 }
 
-// RowsClose closes rows without shadowing error
-func RowsClose(rows *sql.Rows, err error) error {
-	if closeErr := rows.Close(); closeErr != nil {
-		if err == nil {
-			return closeErr
-		}
+// List execute multiple rows query
+func List(ctx context.Context, db *sql.DB, scanner func(*sql.Rows) error, query string, args ...interface{}) error {
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
 
-		return fmt.Errorf("%s: %w", err.Error(), closeErr)
+	var rows *sql.Rows
+	var err error
+
+	if tx := readTx(ctx); tx != nil {
+		rows, err = tx.QueryContext(ctx, query, args...)
+	} else if db != nil {
+		rows, err = db.QueryContext(ctx, query, args...)
+	} else {
+		return errors.New("no transaction or database provided")
 	}
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() && err == nil {
+		err = scanner(rows)
+	}
+
+	closeErr := rows.Close()
+	if err == nil {
+		return closeErr
+	}
+
+	if closeErr == nil {
+		return err
+	}
+
+	return fmt.Errorf("%s: %w", err.Error(), closeErr)
 }
 
-// GetRow execute single row query
-func GetRow(ctx context.Context, db *sql.DB, scanner func(RowScanner) error, query string, args ...interface{}) error {
+// Get execute single row query
+func Get(ctx context.Context, db *sql.DB, scanner func(*sql.Row) error, query string, args ...interface{}) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 

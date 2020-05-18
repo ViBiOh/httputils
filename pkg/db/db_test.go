@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"flag"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -259,7 +260,133 @@ func TestDoAtomic(t *testing.T) {
 	}
 }
 
-func TestGetRow(t *testing.T) {
+func TestList(t *testing.T) {
+	var cases = []struct {
+		intention string
+		want      []uint64
+		wantErr   error
+	}{
+		{
+			"simple",
+			[]uint64{1, 2},
+			nil,
+		},
+		{
+			"timeout",
+			nil,
+			sqlmock.ErrCancelled,
+		},
+		{
+			"tx",
+			[]uint64{1, 2},
+			nil,
+		},
+		{
+			"no db",
+			nil,
+			errors.New("no transaction or database provided"),
+		},
+		{
+			"scan error",
+			[]uint64{1, 2},
+			errors.New(`converting driver.Value type string ("a") to a uint64: invalid syntax`),
+		},
+		{
+			"close error",
+			[]uint64{1, 2},
+			errors.New("fetch again"),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			mockDb, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("unable to create mock database: %s", err)
+			}
+			defer mockDb.Close()
+
+			ctx := context.Background()
+
+			if tc.intention == "tx" {
+				mock.ExpectBegin()
+				if tx, err := mockDb.Begin(); err != nil {
+					t.Errorf("unable to create tx: %v", err)
+				} else {
+					ctx = StoreTx(ctx, tx)
+				}
+			}
+
+			if tc.intention != "no db" {
+				rows := sqlmock.NewRows([]string{"id"}).AddRow(1).AddRow(2)
+				expectedQuery := mock.ExpectQuery("SELECT id FROM item").WillReturnRows(rows)
+
+				if tc.intention == "scan error" {
+					rows.AddRow("a")
+				}
+
+				if tc.intention == "close error" {
+					rows.AddRow("b")
+					rows.AddRow(3)
+					rows.CloseError(errors.New("fetch again"))
+				}
+
+				if tc.intention == "timeout" {
+					savedSQLTimeout := SQLTimeout
+					SQLTimeout = time.Second
+					defer func() {
+						SQLTimeout = savedSQLTimeout
+					}()
+
+					expectedQuery.WillDelayFor(time.Second * 2)
+				}
+			}
+
+			usedDb := mockDb
+			if tc.intention == "no db" {
+				usedDb = nil
+			}
+
+			var got []uint64
+			testScanItem := func(row *sql.Rows) error {
+				var item uint64
+				if err := row.Scan(&item); err != nil {
+					return err
+				}
+
+				if got == nil {
+					got = make([]uint64, 0)
+				}
+				got = append(got, item)
+				return nil
+			}
+
+			gotErr := List(ctx, usedDb, testScanItem, "SELECT id FROM item", 1)
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			} else if !reflect.DeepEqual(got, tc.want) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("Get() = (%+v, `%s`), want (%+v, `%s`)", got, gotErr, tc.want, tc.wantErr)
+			}
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("sqlmock unfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
+func TestGet(t *testing.T) {
 	var cases = []struct {
 		intention string
 		want      uint64
@@ -326,10 +453,10 @@ func TestGetRow(t *testing.T) {
 			}
 
 			var got uint64
-			testScanItem := func(row RowScanner) error {
+			testScanItem := func(row *sql.Row) error {
 				return row.Scan(&got)
 			}
-			gotErr := GetRow(ctx, usedDb, testScanItem, "SELECT id FROM item WHERE id = $1", 1)
+			gotErr := Get(ctx, usedDb, testScanItem, "SELECT id FROM item WHERE id = $1", 1)
 
 			failed := false
 
@@ -344,7 +471,7 @@ func TestGetRow(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("GetRow() = (%d, `%s`), want (%d, `%s`)", got, gotErr, tc.want, tc.wantErr)
+				t.Errorf("Get() = (%d, `%s`), want (%d, `%s`)", got, gotErr, tc.want, tc.wantErr)
 			}
 
 			if err := mock.ExpectationsWereMet(); err != nil {
