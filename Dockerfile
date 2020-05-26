@@ -1,11 +1,4 @@
-FROM golang:1.14 as builder
+FROM scratch
 
-WORKDIR /app
-COPY . .
-
-RUN make \
- && git diff -- *.go \
- && git diff --quiet -- *.go
-
-ARG CODECOV_TOKEN
-RUN curl -q -sSL --max-time 10 https://codecov.io/bash | bash
+COPY passwd /etc/passwd
+USER app
