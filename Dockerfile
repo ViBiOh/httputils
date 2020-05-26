@@ -1,4 +1,4 @@
 FROM scratch
 
 COPY passwd /etc/passwd
-USER app
+USER 1000
