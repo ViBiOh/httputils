@@ -10,4 +10,4 @@ jobs:
     steps:
       - name: Merge pull request
         run: |
-          echo "${{ github.event }}"
+          echo "${{ github.event.state }}"
