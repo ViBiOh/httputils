@@ -1,6 +1,6 @@
 ---
 
-name: Automerge
+name: Merge on success
 on:
   status
 jobs:
