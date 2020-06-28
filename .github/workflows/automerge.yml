@@ -5,12 +5,9 @@ on:
   status
 jobs:
   build:
-    name: Automerge
+    name: Github
     runs-on: ubuntu-latest
     steps:
       - name: Merge pull request
         run: |
-          if [[ "${{ github.event.state }}" -eq "success" ]]; then
-            curl -q -sSL "https://raw.githubusercontent.com/ViBiOh/scripts/master/bootstrap" | bash -s "github"
-            GITHUB_OAUTH_TOKEN="${{ github.token }}" github_merge ${{ github.repository }}" "${{ github.event.commit.author.login }}:${{ github.event.branches[0].name }}"
-          fi
+          echo "${{ github.event }}"
