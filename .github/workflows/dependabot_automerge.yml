@@ -11,9 +11,11 @@ jobs:
     steps:
       - name: Add comment
         run: |
+          echo "${{ github.event.repository }}"
+          echo "${{ github.event.pull_request }}"
           curl -q -sSL --max-time 10 \
             -X POST \
             -H "Authorization: token ${{ github.token }}" \
             -H "Content-Type: application/json" \
-            https://api.github.com/${{ github.event.pull_request.repository.full_name }}/commits/{{ github.event.pull_request.head.sha }}/comments \
-            -d '{"body": "@dependabot merge"}'
+            -d '{"body":"@dependabot merge"}' \
+            "https://api.github.com/${{ github.event.repository.full_name }}/commits/{{ github.event.pull_request.head.sha }}/comments"
