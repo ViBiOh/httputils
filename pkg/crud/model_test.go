@@ -14,7 +14,7 @@ type testItem struct {
 
 type testService struct{}
 
-func (t testService) Unmarshal(data []byte, contentType string) (interface{}, error) {
+func (t testService) Unmarshal(data []byte, _ string) (interface{}, error) {
 	var item testItem
 
 	err := json.Unmarshal(data, &item)
@@ -43,7 +43,7 @@ func (t testService) Check(_ context.Context, old, new interface{}) []Error {
 	return nil
 }
 
-func (t testService) List(ctx context.Context, page, pageSize uint, sortKey string, sortDesc bool, filters map[string][]string) ([]interface{}, uint, error) {
+func (t testService) List(_ context.Context, page, _ uint, _ string, _ bool, _ map[string][]string) ([]interface{}, uint, error) {
 	if page == 2 {
 		return nil, 0, errors.New("error while reading")
 	} else if page == 3 {
@@ -56,7 +56,7 @@ func (t testService) List(ctx context.Context, page, pageSize uint, sortKey stri
 	}
 }
 
-func (t testService) Get(ctx context.Context, ID uint64) (interface{}, error) {
+func (t testService) Get(_ context.Context, ID uint64) (interface{}, error) {
 	if ID == 8000 || ID == 6000 || ID == 7000 {
 		return &testItem{
 			ID:   ID,
@@ -70,7 +70,7 @@ func (t testService) Get(ctx context.Context, ID uint64) (interface{}, error) {
 	return nil, nil
 }
 
-func (t testService) Create(ctx context.Context, o interface{}) (interface{}, error) {
+func (t testService) Create(_ context.Context, o interface{}) (interface{}, error) {
 	value := o.(*testItem)
 
 	if value.Name == "error" {
@@ -83,7 +83,7 @@ func (t testService) Create(ctx context.Context, o interface{}) (interface{}, er
 	}, nil
 }
 
-func (t testService) Update(ctx context.Context, o interface{}) (interface{}, error) {
+func (t testService) Update(_ context.Context, o interface{}) (interface{}, error) {
 	value := o.(*testItem)
 
 	if value.Name == "error" {
@@ -93,7 +93,7 @@ func (t testService) Update(ctx context.Context, o interface{}) (interface{}, er
 	return o, nil
 }
 
-func (t testService) Delete(ctx context.Context, o interface{}) error {
+func (t testService) Delete(_ context.Context, o interface{}) error {
 	value := o.(*testItem)
 
 	if value.ID == 8000 {

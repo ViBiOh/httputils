@@ -55,7 +55,7 @@ func ResponseArrayJSON(w http.ResponseWriter, status int, array interface{}, pre
 
 // ResponsePaginatedJSON write marshalled obj wrapped into an object to http.ResponseWriter with correct header
 func ResponsePaginatedJSON(w http.ResponseWriter, status int, page uint, pageSize uint, total uint, array interface{}, pretty bool) {
-	pageCount := uint(total / pageSize)
+	pageCount := total / pageSize
 	if total%pageSize != 0 {
 		pageCount++
 	}

@@ -227,8 +227,8 @@ func (a app) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if errors := a.service.Check(r.Context(), nil, obj); len(errors) != 0 {
-		writeErrors(w, errors)
+	if errs := a.service.Check(r.Context(), nil, obj); len(errs) != 0 {
+		writeErrors(w, errs)
 		return
 	}
 
@@ -241,7 +241,7 @@ func (a app) create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a app) update(w http.ResponseWriter, r *http.Request, id uint64) {
-	new, err := a.readPayload(r)
+	newObject, err := a.readPayload(r)
 	if err != nil {
 		httperror.BadRequest(w, err)
 		return
@@ -255,17 +255,17 @@ func (a app) update(w http.ResponseWriter, r *http.Request, id uint64) {
 		return
 	}
 
-	if errors := a.service.Check(ctx, old, new); len(errors) != 0 {
-		writeErrors(w, errors)
+	if errs := a.service.Check(ctx, old, newObject); len(errs) != 0 {
+		writeErrors(w, errs)
 		return
 	}
 
-	new, err = a.service.Update(ctx, new)
+	newObject, err = a.service.Update(ctx, newObject)
 	if handleError(w, err) {
 		return
 	}
 
-	httpjson.ResponseJSON(w, http.StatusOK, new, httpjson.IsPretty(r))
+	httpjson.ResponseJSON(w, http.StatusOK, newObject, httpjson.IsPretty(r))
 }
 
 func (a app) delete(w http.ResponseWriter, r *http.Request, id uint64) {

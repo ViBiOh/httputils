@@ -185,7 +185,7 @@ func TestToUint(t *testing.T) {
 			"",
 			"cli",
 			"test",
-			int(0),
+			0,
 			"Test flag",
 			"Usage of ToUint:\n  -test uint\n    \t[cli] Test flag {TO_UINT_TEST}\n",
 		},

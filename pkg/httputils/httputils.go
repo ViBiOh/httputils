@@ -247,8 +247,8 @@ func (a *app) WaitForTermination(err <-chan error) {
 	select {
 	case err := <-err:
 		logger.Error("%s", err)
-	case signal := <-signals:
-		logger.Info("%s received", signal)
+	case sig := <-signals:
+		logger.Info("%s received", sig)
 		a.shutdown = true
 
 		if a.graceDuration != 0 {

@@ -86,12 +86,12 @@ func TestWriteTemplate(t *testing.T) {
 
 			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
 				failed = true
-			} else if string(result) != testCase.want {
+			} else if result != testCase.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("WriteTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
+				t.Errorf("WriteTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
