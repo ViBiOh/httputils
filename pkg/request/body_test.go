@@ -19,13 +19,13 @@ var (
 
 type errReader int
 
-func (errReader) Read(p []byte) (int, error) {
+func (errReader) Read(_ []byte) (int, error) {
 	return 0, errors.New("read error")
 }
 
 type errCloser int
 
-func (errCloser) Read(p []byte) (int, error) {
+func (errCloser) Read(_ []byte) (int, error) {
 	return 0, io.EOF
 }
 
@@ -35,7 +35,7 @@ func (errCloser) Close() error {
 
 type errReaderCloser int
 
-func (errReaderCloser) Read(p []byte) (int, error) {
+func (errReaderCloser) Read(_ []byte) (int, error) {
 	return 0, errors.New("read error")
 }
 
