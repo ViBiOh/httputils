@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq" // Not referenced but needed for database/sql
 )
 
@@ -22,6 +23,12 @@ const (
 var (
 	// ErrNoHost occurs when host is not provided in configuration
 	ErrNoHost = errors.New("no host for database connection")
+
+	// ErrNoTransaction occurs when no transaction is provided but needed
+	ErrNoTransaction = errors.New("no transaction in context, please wrap with DoAtomic()")
+
+	// ErrBulkEnded occurs when bulk creation is over
+	ErrBulkEnded = errors.New("no more data to copy")
 
 	// SQLTimeout when running queries
 	SQLTimeout = time.Second * 5
@@ -180,7 +187,7 @@ func Get(ctx context.Context, db *sql.DB, scanner func(*sql.Row) error, query st
 func Create(ctx context.Context, query string, args ...interface{}) (uint64, error) {
 	tx := readTx(ctx)
 	if tx == nil {
-		return 0, errors.New("no transaction in context, please wrap with DoAtomic()")
+		return 0, ErrNoTransaction
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
@@ -194,7 +201,7 @@ func Create(ctx context.Context, query string, args ...interface{}) (uint64, err
 func Exec(ctx context.Context, query string, args ...interface{}) error {
 	tx := readTx(ctx)
 	if tx == nil {
-		return errors.New("no transaction in context, please wrap with DoAtomic()")
+		return ErrNoTransaction
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
@@ -202,4 +209,38 @@ func Exec(ctx context.Context, query string, args ...interface{}) error {
 
 	_, err := tx.ExecContext(ctx, query, args...)
 	return err
+}
+
+// Bulk load data into schema and table by batch
+func Bulk(ctx context.Context, feeder func(*sql.Stmt) error, schema, table string, columns ...string) error {
+	tx := readTx(ctx)
+	if tx == nil {
+		return ErrNoTransaction
+	}
+
+	stmt, err := tx.Prepare(pq.CopyInSchema(schema, table, columns...))
+	if err != nil {
+		return fmt.Errorf("unable to prepare context: %s", err)
+	}
+
+	for err == nil {
+		err = feeder(stmt)
+	}
+
+	if err != ErrBulkEnded {
+		return fmt.Errorf("unable to feed bulk creation: %s", err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+
+	if _, err := stmt.ExecContext(ctx); err != nil {
+		return fmt.Errorf("unable to exec bulk creation: %s", err)
+	}
+
+	if err := stmt.Close(); err != nil {
+		return fmt.Errorf("unable to close bulk creation: %s", err)
+	}
+
+	return nil
 }

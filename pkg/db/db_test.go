@@ -491,7 +491,7 @@ func TestCreate(t *testing.T) {
 		{
 			"no tx",
 			0,
-			errors.New("no transaction in context, please wrap with DoAtomic()"),
+			ErrNoTransaction,
 		},
 		{
 			"timeout",
@@ -568,7 +568,7 @@ func TestExec(t *testing.T) {
 	}{
 		{
 			"no tx",
-			errors.New("no transaction in context, please wrap with DoAtomic()"),
+			ErrNoTransaction,
 		},
 		{
 			"timeout",
@@ -625,6 +625,163 @@ func TestExec(t *testing.T) {
 
 			if failed {
 				t.Errorf("Exec() = `%s`, want `%s`", gotErr, tc.wantErr)
+			}
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("sqlmock unfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
+func TestBulk(t *testing.T) {
+	type args struct {
+		feeder  func(*sql.Stmt) error
+		schema  string
+		table   string
+		columns []string
+	}
+
+	var count uint
+
+	var cases = []struct {
+		intention string
+		args      args
+		wantErr   error
+	}{
+		{
+			"no tx",
+			args{},
+			ErrNoTransaction,
+		},
+		{
+			"prepare error",
+			args{
+				schema:  "business",
+				table:   "users",
+				columns: []string{"name", "email"},
+			},
+			errors.New("unable to prepare context: invalid statement"),
+		},
+		{
+			"feed error",
+			args{
+				feeder: func(*sql.Stmt) error {
+					return errors.New("unknown error")
+				},
+				schema:  "business",
+				table:   "users",
+				columns: []string{"name", "email"},
+			},
+			errors.New("unable to feed bulk creation: unknown error"),
+		},
+		{
+			"exec error",
+			args{
+				feeder: func(stmt *sql.Stmt) error {
+					if count == 0 {
+						_, err := stmt.Exec("vibioh", "nobody@localhost")
+						count++
+						return err
+					}
+					return ErrBulkEnded
+				},
+				schema:  "business",
+				table:   "users",
+				columns: []string{"name", "email"},
+			},
+			errors.New("unable to exec bulk creation: invalid values"),
+		},
+		{
+			"close error",
+			args{
+				feeder: func(stmt *sql.Stmt) error {
+					if count == 0 {
+						_, err := stmt.Exec("vibioh", "nobody@localhost")
+						count++
+						return err
+					}
+					return ErrBulkEnded
+				},
+				schema:  "business",
+				table:   "users",
+				columns: []string{"name", "email"},
+			},
+			errors.New("unable to close bulk creation: invalid"),
+		},
+		{
+			"success",
+			args{
+				feeder: func(stmt *sql.Stmt) error {
+					if count == 0 {
+						_, err := stmt.Exec("vibioh", "nobody@localhost")
+						count++
+						return err
+					}
+					return ErrBulkEnded
+				},
+				schema:  "business",
+				table:   "users",
+				columns: []string{"name", "email"},
+			},
+			nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			mockDb, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("unable to create mock database: %s", err)
+			}
+			defer mockDb.Close()
+
+			ctx := context.Background()
+
+			if tc.intention != "no tx" {
+				mock.ExpectBegin()
+				if tx, err := mockDb.Begin(); err != nil {
+					t.Errorf("unable to create tx: %v", err)
+				} else {
+					ctx = StoreTx(ctx, tx)
+				}
+
+				prepareStmt := mock.ExpectPrepare(`COPY "business"\."users" \("name", "email"\) FROM STDIN`)
+				if tc.intention == "prepare error" {
+					prepareStmt.WillReturnError(errors.New("invalid statement"))
+				}
+
+				if tc.intention == "exec error" || tc.intention == "close error" || tc.intention == "success" {
+					mock.ExpectExec(`COPY "business"\."users" \("name", "email"\) FROM STDIN`).WithArgs("vibioh", "nobody@localhost").WillReturnResult(sqlmock.NewResult(0, 0))
+
+					exec := mock.ExpectExec(`COPY "business"\."users" \("name", "email"\) FROM STDIN`)
+					if tc.intention == "exec error" {
+						exec.WillReturnError(errors.New("invalid values"))
+					} else {
+						exec.WillReturnResult(sqlmock.NewResult(0, 1))
+
+						if tc.intention == "close error" {
+							prepareStmt.WillReturnCloseError(errors.New("invalid"))
+						}
+					}
+				}
+			}
+
+			count = 0
+			gotErr := Bulk(ctx, tc.args.feeder, tc.args.schema, tc.args.table, tc.args.columns...)
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("Bulk() = `%s`, want `%s`", gotErr, tc.wantErr)
 			}
 
 			if err := mock.ExpectationsWereMet(); err != nil {
