@@ -93,6 +93,23 @@ func TestMiddleware(t *testing.T) {
 			},
 		},
 		{
+			"no value",
+			app{
+				csp:          "",
+				hsts:         false,
+				frameOptions: "",
+			},
+			nil,
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			http.StatusOK,
+			http.Header{
+				"Referrer-Policy":                   []string{"strict-origin-when-cross-origin"},
+				"X-Content-Type-Options":            []string{"nosniff"},
+				"X-Xss-Protection":                  []string{"1; mode=block"},
+				"X-Permitted-Cross-Domain-Policies": []string{"none"},
+			},
+		},
+		{
 			"hsts",
 			app{
 				csp:          "default-src 'self'; base-uri 'self'",
