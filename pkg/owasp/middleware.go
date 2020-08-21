@@ -19,7 +19,7 @@ func (m *middleware) setHeader() {
 		if m.index {
 			m.Header().Set(cacheControlHeader, "no-cache")
 		} else {
-			m.Header().Set(cacheControlHeader, "max-age=864000")
+			m.Header().Set(cacheControlHeader, "public, max-age=864000")
 		}
 	}
 }

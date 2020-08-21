@@ -170,7 +170,7 @@ func TestMiddleware(t *testing.T) {
 				"X-Content-Type-Options":            []string{"nosniff"},
 				"X-Xss-Protection":                  []string{"1; mode=block"},
 				"X-Permitted-Cross-Domain-Policies": []string{"none"},
-				"Cache-Control":                     []string{"max-age=864000"},
+				"Cache-Control":                     []string{"public, max-age=864000"},
 			},
 		},
 		{
