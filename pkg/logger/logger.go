@@ -48,7 +48,12 @@ func Fatal(err error) {
 }
 
 func output(l *log.Logger, format string, a ...interface{}) {
-	if err := l.Output(callDepth, fmt.Sprintf(format, a...)); err != nil {
+	msg := format
+	if len(a) > 0 {
+		msg = fmt.Sprintf(format, a...)
+	}
+
+	if err := l.Output(callDepth, msg); err != nil {
 		log.Printf("%s", err)
 	}
 }
