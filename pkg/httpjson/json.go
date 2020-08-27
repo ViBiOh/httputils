@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/ViBiOh/httputils/v3/pkg/httperror"
 	"github.com/ViBiOh/httputils/v3/pkg/query"
@@ -61,4 +62,39 @@ func ResponsePaginatedJSON(w http.ResponseWriter, status int, page uint, pageSiz
 	}
 
 	ResponseJSON(w, status, pagination{Results: array, Page: page, PageSize: pageSize, PageCount: pageCount, Total: total}, pretty)
+}
+
+// EscapeString escapes value from raw string to be JSON compatible
+func EscapeString(content string) string {
+	output := content
+
+	if strings.Contains(output, "\\") {
+		output = strings.ReplaceAll(output, "\\", "\\\\")
+	}
+
+	if strings.Contains(output, "\b") {
+		output = strings.ReplaceAll(output, "\b", "\\b")
+	}
+
+	if strings.Contains(output, "\f") {
+		output = strings.ReplaceAll(output, "\f", "\\f")
+	}
+
+	if strings.Contains(output, "\r") {
+		output = strings.ReplaceAll(output, "\r", "\\r")
+	}
+
+	if strings.Contains(output, "\n") {
+		output = strings.ReplaceAll(output, "\n", "\\n")
+	}
+
+	if strings.Contains(output, "\t") {
+		output = strings.ReplaceAll(output, "\t", "\\t")
+	}
+
+	if strings.Contains(output, "\"") {
+		output = strings.ReplaceAll(output, "\"", "\\\"")
+	}
+
+	return output
 }

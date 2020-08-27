@@ -2,9 +2,11 @@ package logger
 
 import (
 	"errors"
+	"io/ioutil"
 	"log"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestBasics(t *testing.T) {
@@ -122,5 +124,39 @@ func TestOutput(t *testing.T) {
 				t.Errorf("Info() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
+	}
+}
+
+func BenchmarkSimpleOutput(b *testing.B) {
+	logger := log.New(ioutil.Discard, "INFO  ", log.LstdFlags|log.Lshortfile|log.LUTC)
+
+	for i := 0; i < b.N; i++ {
+		output(logger, "Hello world")
+	}
+}
+
+func BenchmarkSimpleOutputWithoutFile(b *testing.B) {
+	logger := log.New(ioutil.Discard, "INFO  ", log.LstdFlags|log.LUTC)
+
+	for i := 0; i < b.N; i++ {
+		output(logger, "Hello world")
+	}
+}
+
+func BenchmarkFormattedOutput(b *testing.B) {
+	logger := log.New(ioutil.Discard, "INFO  ", log.LstdFlags|log.Lshortfile|log.LUTC)
+	time := time.Now().Unix()
+
+	for i := 0; i < b.N; i++ {
+		output(logger, "Hello %s, it's %d", "Bob", time)
+	}
+}
+
+func BenchmarkFormattedOutputWithoutFile(b *testing.B) {
+	logger := log.New(ioutil.Discard, "INFO  ", log.LstdFlags|log.LUTC)
+	time := time.Now().Unix()
+
+	for i := 0; i < b.N; i++ {
+		output(logger, "Hello %s, it's %d", "Bob", time)
 	}
 }
