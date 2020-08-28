@@ -69,6 +69,8 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 
 // New creates new App from Config
 func New(config Config) App {
+	logger.Global(logger.New(flags.LookupEnvBool("LOGGER_JSON", false)))
+
 	graceDurationValue := strings.TrimSpace(*config.graceDuration)
 	graceDuration, err := time.ParseDuration(graceDurationValue)
 	if err != nil {
@@ -255,5 +257,6 @@ func (a *app) WaitForTermination(err <-chan error) {
 			logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
 			time.Sleep(a.graceDuration)
 		}
+		logger.Close()
 	}
 }
