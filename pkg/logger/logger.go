@@ -135,10 +135,10 @@ func (l *Logger) Fatal(err error) {
 }
 
 func (l *Logger) output(lev level, format string, a ...interface{}) {
-	msg := format
+	message := format
 	if len(a) > 0 {
-		msg = fmt.Sprintf(format, a...)
+		message = fmt.Sprintf(format, a...)
 	}
 
-	l.buffer <- event{time.Now().Unix(), lev, msg}
+	l.buffer <- event{time.Now(), lev, message}
 }

@@ -9,15 +9,29 @@ import (
 
 func BenchmarkJson(b *testing.B) {
 	e := event{
-		ts:    time.Now().Unix(),
-		level: levelInfo,
-		msg:   "Hello world",
+		timestamp: time.Now(),
+		level:     levelInfo,
+		message:   "Hello world",
 	}
 
 	builder := bytes.Buffer{}
 
 	for i := 0; i < b.N; i++ {
 		e.json(&builder)
+	}
+}
+
+func BenchmarkText(b *testing.B) {
+	e := event{
+		timestamp: time.Now(),
+		level:     levelInfo,
+		message:   "Hello world",
+	}
+
+	builder := bytes.Buffer{}
+
+	for i := 0; i < b.N; i++ {
+		e.text(&builder)
 	}
 }
 
