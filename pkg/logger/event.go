@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"bytes"
 	"strings"
 	"time"
 )
@@ -12,32 +11,38 @@ type event struct {
 	message   string
 }
 
-func (e event) json(builder *bytes.Buffer) []byte {
-	builder.Reset()
+func (e event) json(logger *Logger) []byte {
+	logger.builder.Reset()
 
-	builder.WriteString(`{"timestamp":`)
-	builder.WriteString(e.timestamp.Format(time.RFC3339))
-	builder.WriteString(`,"level":"`)
-	builder.WriteString(levelValues[e.level])
-	builder.WriteString(`","message":"`)
-	builder.WriteString(EscapeString(e.message))
-	builder.WriteString(`"}`)
-	builder.WriteString("\n")
+	logger.builder.WriteString(`{"`)
+	logger.builder.WriteString(logger.timeKey)
+	logger.builder.WriteString(`":"`)
+	logger.builder.WriteString(e.timestamp.Format(time.RFC3339))
+	logger.builder.WriteString(`","`)
+	logger.builder.WriteString(logger.levelKey)
+	logger.builder.WriteString(`":"`)
+	logger.builder.WriteString(levelValues[e.level])
+	logger.builder.WriteString(`","`)
+	logger.builder.WriteString(logger.messageKey)
+	logger.builder.WriteString(`":"`)
+	logger.builder.WriteString(EscapeString(e.message))
+	logger.builder.WriteString(`"}`)
+	logger.builder.WriteString("\n")
 
-	return builder.Bytes()
+	return logger.builder.Bytes()
 }
 
-func (e event) text(builder *bytes.Buffer) []byte {
-	builder.Reset()
+func (e event) text(logger *Logger) []byte {
+	logger.builder.Reset()
 
-	builder.WriteString(e.timestamp.Format(time.RFC3339))
-	builder.WriteString(` `)
-	builder.WriteString(levelValues[e.level])
-	builder.WriteString(` `)
-	builder.WriteString(e.message)
-	builder.WriteString("\n")
+	logger.builder.WriteString(e.timestamp.Format(time.RFC3339))
+	logger.builder.WriteString(` `)
+	logger.builder.WriteString(levelValues[e.level])
+	logger.builder.WriteString(` `)
+	logger.builder.WriteString(e.message)
+	logger.builder.WriteString("\n")
 
-	return builder.Bytes()
+	return logger.builder.Bytes()
 }
 
 // EscapeString escapes value from raw string to be JSON compatible

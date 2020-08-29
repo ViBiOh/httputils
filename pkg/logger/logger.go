@@ -2,13 +2,16 @@ package logger
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/ViBiOh/httputils/v3/pkg/flags"
 )
 
 type level int
@@ -29,15 +32,23 @@ var (
 	exitFunc = os.Exit
 )
 
-func init() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile | log.LUTC)
-	logger = New(false)
+func parseLevel(line string) (level, error) {
+	for i, l := range levelValues {
+		if strings.EqualFold(l, line) {
+			return level(i), nil
+		}
+	}
+
+	return levelInfo, fmt.Errorf("invalid value `%s` for level", line)
 }
 
-// Global sets global logger
-func Global(l *Logger) {
-	logger.Close()
-	logger = l
+// Config of package
+type Config struct {
+	level      *string
+	json       *bool
+	timeKey    *string
+	levelKey   *string
+	messageKey *string
 }
 
 // Logger defines a logger instance
@@ -45,22 +56,62 @@ type Logger struct {
 	builder bytes.Buffer
 	buffer  chan event
 	wg      sync.WaitGroup
-	json    bool
 
+	json       bool
+	timeKey    string
+	levelKey   string
+	messageKey string
+
+	level     level
 	outWriter io.Writer
 	errWriter io.Writer
 }
 
-// New creates a Logger
-func New(json bool) *Logger {
-	logger := Logger{
-		buffer:    make(chan event, runtime.NumCPU()),
+// Flags adds flags for configuring package
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		level:      flags.New(prefix, "logger").Name("Level").Default("INFO").Label("Logger level").ToString(fs),
+		json:       flags.New(prefix, "logger").Name("Json").Default(false).Label("Log format as JSON").ToBool(fs),
+		timeKey:    flags.New(prefix, "logger").Name("TimeKey").Default("time").Label("Key for timestam in JSON").ToString(fs),
+		levelKey:   flags.New(prefix, "logger").Name("LevelKey").Default("level").Label("Key for level in JSON").ToString(fs),
+		messageKey: flags.New(prefix, "logger").Name("MessageKey").Default("message").Label("Key for message in JSON").ToString(fs),
+	}
+}
+
+func init() {
+	logger = &Logger{
+		buffer: make(chan event, runtime.NumCPU()),
+
+		level:     levelInfo,
 		outWriter: os.Stdout,
 		errWriter: os.Stderr,
-		json:      json,
 	}
 
 	go logger.Start()
+}
+
+// New creates a Logger
+func New(config Config) *Logger {
+	level, err := parseLevel(*config.level)
+
+	logger := Logger{
+		buffer: make(chan event, runtime.NumCPU()),
+
+		level:     level,
+		outWriter: os.Stdout,
+		errWriter: os.Stderr,
+
+		json:       *config.json,
+		timeKey:    EscapeString(*config.timeKey),
+		levelKey:   EscapeString(*config.levelKey),
+		messageKey: EscapeString(*config.messageKey),
+	}
+
+	go logger.Start()
+
+	if err != nil {
+		logger.Error(err.Error())
+	}
 
 	return &logger
 }
@@ -75,9 +126,9 @@ func (l *Logger) Start() {
 
 	for e := range l.buffer {
 		if l.json {
-			payload = e.json(&l.builder)
+			payload = e.json(l)
 		} else {
-			payload = e.text(&l.builder)
+			payload = e.text(l)
 		}
 
 		if e.level <= levelInfo {
@@ -87,7 +138,7 @@ func (l *Logger) Start() {
 		}
 
 		if err != nil {
-			log.Printf("unable to write log: %s", err)
+			writeError(fmt.Sprintf("unable to write log: %s\n", err))
 		}
 	}
 }
@@ -131,14 +182,37 @@ func (l *Logger) Fatal(err error) {
 
 	l.output(levelFatal, "%s", err)
 	l.Close()
+
+	if closer, ok := l.outWriter.(io.Closer); ok {
+		if err := closer.Close(); err != nil {
+			writeError(fmt.Sprintf("unable to close out writer: %s\n", err))
+		}
+	}
+
+	if closer, ok := l.errWriter.(io.Closer); ok {
+		if err := closer.Close(); err != nil {
+			writeError(fmt.Sprintf("unable to close err writer: %s\n", err))
+		}
+	}
+
 	exitFunc(1)
 }
 
 func (l *Logger) output(lev level, format string, a ...interface{}) {
+	if l.level < lev {
+		return
+	}
+
 	message := format
 	if len(a) > 0 {
 		message = fmt.Sprintf(format, a...)
 	}
 
 	l.buffer <- event{time.Now(), lev, message}
+}
+
+func writeError(message string) {
+	if _, err := os.Stderr.WriteString(message); err != nil {
+		// do nothing here
+	}
 }
