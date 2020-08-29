@@ -1,5 +1,14 @@
 package logger
 
+// Global sets global logger
+func Global(l *Logger) {
+	if logger != nil {
+		logger.Close()
+	}
+
+	logger = l
+}
+
 // Close ends logger gracefully
 func Close() {
 	logger.Close()

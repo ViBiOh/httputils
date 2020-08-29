@@ -6,8 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/ViBiOh/httputils/v3/pkg/logger"
 )
 
 // Flag describe a flag
@@ -125,8 +123,6 @@ func LookupEnvInt(key string, defaultValue int) int {
 		return intVal
 	}
 
-	logger.Warn("%s=%s, not a valid integer: %s", key, val, err)
-
 	return defaultValue
 }
 
@@ -142,8 +138,6 @@ func LookupEnvUint(key string, defaultValue uint) uint {
 	if err == nil {
 		return uint(intVal)
 	}
-
-	logger.Warn("%s=%s, not a valid unsigned integer: %s", key, val, err)
 
 	return defaultValue
 }
@@ -161,8 +155,6 @@ func LookupEnvFloat64(key string, defaultValue float64) float64 {
 		return intVal
 	}
 
-	logger.Warn("%s=%s, not a valid float: %s", key, val, err)
-
 	return defaultValue
 }
 
@@ -178,8 +170,6 @@ func LookupEnvBool(key string, defaultValue bool) bool {
 	if err == nil {
 		return boolBal
 	}
-
-	logger.Warn("%s=%s, not a valid boolean: %s", key, val, err)
 
 	return defaultValue
 }
