@@ -114,6 +114,7 @@ func BenchmarkSimpleOutput(b *testing.B) {
 		buffer:    make(chan event, runtime.NumCPU()),
 	}
 
+	logger.wg.Add(1)
 	go logger.Start()
 	defer logger.Close()
 
@@ -129,6 +130,7 @@ func BenchmarkFormattedOutput(b *testing.B) {
 		buffer:    make(chan event, runtime.NumCPU()),
 	}
 
+	logger.wg.Add(1)
 	go logger.Start()
 	defer logger.Close()
 

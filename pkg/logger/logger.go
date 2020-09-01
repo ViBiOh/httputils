@@ -63,6 +63,7 @@ func init() {
 		errWriter: os.Stderr,
 	}
 
+	logger.wg.Add(1)
 	go logger.Start()
 }
 
@@ -83,6 +84,7 @@ func New(config Config) *Logger {
 		messageKey: EscapeString(*config.messageKey),
 	}
 
+	logger.wg.Add(1)
 	go logger.Start()
 
 	if err != nil {
@@ -94,7 +96,6 @@ func New(config Config) *Logger {
 
 // Start starts logger's writer
 func (l *Logger) Start() {
-	l.wg.Add(1)
 	defer l.wg.Done()
 
 	var payload []byte
