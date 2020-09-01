@@ -1,48 +1,40 @@
 package logger
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
+
+type level int
+
+const (
+	levelFatal = iota
+	levelError
+	levelWarning
+	levelInfo
+	levelDebug
+	levelTrace
+)
+
+var (
+	levelValues = []string{"FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"}
+)
+
+func parseLevel(line string) (level, error) {
+	for i, l := range levelValues {
+		if strings.EqualFold(l, line) {
+			return level(i), nil
+		}
+	}
+
+	return levelInfo, fmt.Errorf("invalid value `%s` for level", line)
+}
 
 type event struct {
 	timestamp time.Time
 	level     level
 	message   string
-}
-
-func (e event) json(logger *Logger) []byte {
-	logger.builder.Reset()
-
-	logger.builder.WriteString(`{"`)
-	logger.builder.WriteString(logger.timeKey)
-	logger.builder.WriteString(`":"`)
-	logger.builder.WriteString(e.timestamp.Format(time.RFC3339))
-	logger.builder.WriteString(`","`)
-	logger.builder.WriteString(logger.levelKey)
-	logger.builder.WriteString(`":"`)
-	logger.builder.WriteString(levelValues[e.level])
-	logger.builder.WriteString(`","`)
-	logger.builder.WriteString(logger.messageKey)
-	logger.builder.WriteString(`":"`)
-	logger.builder.WriteString(EscapeString(e.message))
-	logger.builder.WriteString(`"}`)
-	logger.builder.WriteString("\n")
-
-	return logger.builder.Bytes()
-}
-
-func (e event) text(logger *Logger) []byte {
-	logger.builder.Reset()
-
-	logger.builder.WriteString(e.timestamp.Format(time.RFC3339))
-	logger.builder.WriteString(` `)
-	logger.builder.WriteString(levelValues[e.level])
-	logger.builder.WriteString(` `)
-	logger.builder.WriteString(e.message)
-	logger.builder.WriteString("\n")
-
-	return logger.builder.Bytes()
 }
 
 // EscapeString escapes value from raw string to be JSON compatible
