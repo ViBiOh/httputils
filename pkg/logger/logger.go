@@ -48,7 +48,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
 		level:      flags.New(prefix, "logger").Name("Level").Default("INFO").Label("Logger level").ToString(fs),
 		json:       flags.New(prefix, "logger").Name("Json").Default(false).Label("Log format as JSON").ToBool(fs),
-		timeKey:    flags.New(prefix, "logger").Name("TimeKey").Default("time").Label("Key for timestam in JSON").ToString(fs),
+		timeKey:    flags.New(prefix, "logger").Name("TimeKey").Default("time").Label("Key for timestamp in JSON").ToString(fs),
 		levelKey:   flags.New(prefix, "logger").Name("LevelKey").Default("level").Label("Key for level in JSON").ToString(fs),
 		messageKey: flags.New(prefix, "logger").Name("MessageKey").Default("message").Label("Key for message in JSON").ToString(fs),
 	}
