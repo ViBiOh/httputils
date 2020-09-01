@@ -7,11 +7,76 @@ import (
 	"time"
 )
 
+func TestText(t *testing.T) {
+	type args struct {
+		e event
+	}
+
+	var cases = []struct {
+		intention string
+		args      args
+		want      string
+	}{
+		{
+			"simple",
+			args{
+				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: levelInfo, message: "Hello world"},
+			},
+			"2020-09-30T14:59:38Z INFO Hello world\n",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			logger := Logger{}
+
+			if got := logger.text(tc.args.e); string(got) != tc.want {
+				t.Errorf("text() = `%s`, want `%s`", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestJson(t *testing.T) {
+	type args struct {
+		e event
+	}
+
+	var cases = []struct {
+		intention string
+		args      args
+		want      string
+	}{
+		{
+			"simple",
+			args{
+				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: levelInfo, message: "Hello world"},
+			},
+			`{"ts":"2020-09-30T14:59:38Z","level":"INFO","msg":"Hello world"}
+`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			logger := Logger{
+				timeKey:    "ts",
+				levelKey:   "level",
+				messageKey: "msg",
+			}
+
+			if got := logger.json(tc.args.e); string(got) != tc.want {
+				t.Errorf("json() = `%s`, want `%s`", got, tc.want)
+			}
+		})
+	}
+}
+
 func BenchmarkJson(b *testing.B) {
 	logger := Logger{
-		json:      true,
-		outWriter: ioutil.Discard,
-		level:     levelInfo,
+		jsonFormat: true,
+		outWriter:  ioutil.Discard,
+		level:      levelInfo,
 	}
 
 	e := event{
@@ -21,7 +86,7 @@ func BenchmarkJson(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		e.json(&logger)
+		logger.json(e)
 	}
 }
 
@@ -38,7 +103,7 @@ func BenchmarkText(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		e.text(&logger)
+		logger.text(e)
 	}
 }
 
