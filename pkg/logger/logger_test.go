@@ -1,11 +1,42 @@
 package logger
 
 import (
+	"flag"
 	"io/ioutil"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 )
+
+func TestFlags(t *testing.T) {
+	var cases = []struct {
+		intention string
+		want      string
+	}{
+		{
+			"simple",
+			"Usage of simple:\n  -json\n    \t[logger] Log format as JSON {SIMPLE_JSON}\n  -level string\n    \t[logger] Logger level {SIMPLE_LEVEL} (default \"INFO\")\n  -levelKey string\n    \t[logger] Key for level in JSON {SIMPLE_LEVEL_KEY} (default \"level\")\n  -messageKey string\n    \t[logger] Key for message in JSON {SIMPLE_MESSAGE_KEY} (default \"message\")\n  -timeKey string\n    \t[logger] Key for timestamp in JSON {SIMPLE_TIME_KEY} (default \"time\")\n",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
+			Flags(fs, "")
+
+			var writer strings.Builder
+			fs.SetOutput(&writer)
+			fs.Usage()
+
+			result := writer.String()
+
+			if result != testCase.want {
+				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
+			}
+		})
+	}
+}
 
 func TestText(t *testing.T) {
 	type args struct {
