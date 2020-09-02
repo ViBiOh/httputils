@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"bytes"
 	"flag"
 	"io/ioutil"
 	"runtime"
@@ -33,6 +34,75 @@ func TestFlags(t *testing.T) {
 
 			if result != testCase.want {
 				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
+			}
+		})
+	}
+}
+
+func TestStart(t *testing.T) {
+	type args struct {
+		e event
+	}
+
+	var cases = []struct {
+		intention string
+		instance  *Logger
+		args      args
+		want      string
+	}{
+		{
+			"json",
+			&Logger{
+				buffer:     make(chan event, runtime.NumCPU()),
+				jsonFormat: true,
+				timeKey:    "ts",
+				levelKey:   "level",
+				messageKey: "msg",
+				level:      levelInfo,
+			},
+			args{
+				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: levelInfo, message: "Hello world"},
+			},
+			`{"ts":"2020-09-30T14:59:38Z","level":"INFO","msg":"Hello world"}
+`,
+		},
+		{
+			"text",
+			&Logger{
+				buffer: make(chan event, runtime.NumCPU()),
+				level:  levelInfo,
+			},
+			args{
+				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: levelInfo, message: "Hello world"},
+			},
+			"2020-09-30T14:59:38Z INFO Hello world\n",
+		},
+		{
+			"error",
+			&Logger{
+				buffer: make(chan event, runtime.NumCPU()),
+				level:  levelInfo,
+			},
+			args{
+				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: levelWarning, message: "Hello world"},
+			},
+			"2020-09-30T14:59:38Z WARN Hello world\n",
+		},
+	}
+
+	for _, tc := range cases {
+		outputter := bytes.Buffer{}
+		tc.instance.outWriter = &outputter
+		tc.instance.errWriter = &outputter
+		tc.instance.wg.Add(1)
+		go tc.instance.Start()
+
+		t.Run(tc.intention, func(t *testing.T) {
+			tc.instance.buffer <- tc.args.e
+			tc.instance.Close()
+
+			if got := outputter.String(); got != tc.want {
+				t.Errorf("Start() = `%s`, want `%s`", got, tc.want)
 			}
 		})
 	}
