@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	levelValues = []string{"FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"}
+	levelValues = []string{"FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"}
 )
 
 func parseLevel(line string) (level, error) {
