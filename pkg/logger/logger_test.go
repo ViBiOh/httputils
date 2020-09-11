@@ -86,7 +86,7 @@ func TestStart(t *testing.T) {
 			args{
 				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: levelWarning, message: "Hello world"},
 			},
-			"2020-09-30T14:59:38Z WARN Hello world\n",
+			"2020-09-30T14:59:38Z WARNING Hello world\n",
 		},
 	}
 
