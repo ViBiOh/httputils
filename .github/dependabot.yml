@@ -6,7 +6,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: friday
+      day: thursday
     commit-message:
       prefix: chore
       include: scope
