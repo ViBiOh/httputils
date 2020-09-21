@@ -16,8 +16,7 @@ import (
 var (
 	logger   *Logger
 	exitFunc = os.Exit
-
-	now = time.Now
+	nowFunc  = time.Now
 )
 
 // Config of package
@@ -187,7 +186,7 @@ func (l *Logger) output(lev level, format string, a ...interface{}) {
 		message = fmt.Sprintf(format, a...)
 	}
 
-	l.buffer <- event{now(), lev, message}
+	l.buffer <- event{nowFunc(), lev, message}
 }
 
 func (l *Logger) json(e event) []byte {

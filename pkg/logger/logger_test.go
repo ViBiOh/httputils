@@ -2,13 +2,24 @@ package logger
 
 import (
 	"bytes"
+	"errors"
 	"flag"
+	"io"
 	"io/ioutil"
 	"runtime"
 	"strings"
 	"testing"
 	"time"
 )
+
+type writeCloser struct {
+	error
+	io.Writer
+}
+
+func (wc writeCloser) Close() error {
+	return wc.error
+}
 
 func TestFlags(t *testing.T) {
 	var cases = []struct {
@@ -108,6 +119,64 @@ func TestStart(t *testing.T) {
 	}
 }
 
+func TestClose(t *testing.T) {
+	type args struct {
+		out io.Writer
+		err io.Writer
+	}
+
+	var cases = []struct {
+		intention string
+		args      args
+		want      bool
+	}{
+		{
+			"simple",
+			args{
+				out: ioutil.Discard,
+			},
+			true,
+		},
+		{
+			"closer",
+			args{
+				out: writeCloser{nil, &bytes.Buffer{}},
+				err: writeCloser{nil, &bytes.Buffer{}},
+			},
+			true,
+		},
+		{
+			"closer error",
+			args{
+				out: writeCloser{errors.New("error"), &bytes.Buffer{}},
+				err: writeCloser{errors.New("error"), &bytes.Buffer{}},
+			},
+			true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			logger := Logger{
+				outWriter: tc.args.out,
+				errWriter: tc.args.err,
+				level:     levelInfo,
+				buffer:    make(chan event, runtime.NumCPU()),
+			}
+
+			logger.wg.Add(1)
+			go logger.Start()
+
+			logger.Debug("Hello World")
+			logger.Trace("Hello World")
+			logger.Info("Hello World")
+			logger.Warn("Hello World")
+			logger.Error("Hello World")
+			logger.Close()
+		})
+	}
+}
+
 func TestOutput(t *testing.T) {
 	type args struct {
 		lev    level
@@ -115,7 +184,7 @@ func TestOutput(t *testing.T) {
 		a      []interface{}
 	}
 
-	now = func() time.Time {
+	nowFunc = func() time.Time {
 		return time.Date(2020, 9, 21, 18, 34, 57, 0, time.UTC)
 	}
 
