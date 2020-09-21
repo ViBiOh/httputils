@@ -16,6 +16,8 @@ import (
 var (
 	logger   *Logger
 	exitFunc = os.Exit
+
+	now = time.Now
 )
 
 // Config of package
@@ -124,6 +126,18 @@ func (l *Logger) Start() {
 func (l *Logger) Close() {
 	close(l.buffer)
 	l.wg.Wait()
+
+	if closer, ok := l.outWriter.(io.Closer); ok {
+		if err := closer.Close(); err != nil {
+			safeErrorWrite(fmt.Sprintf("unable to close out writer: %s\n", err))
+		}
+	}
+
+	if closer, ok := l.errWriter.(io.Closer); ok {
+		if err := closer.Close(); err != nil {
+			safeErrorWrite(fmt.Sprintf("unable to close err writer: %s\n", err))
+		}
+	}
 }
 
 // Trace logs tracing message
@@ -160,18 +174,6 @@ func (l *Logger) Fatal(err error) {
 	l.output(levelFatal, "%s", err)
 	l.Close()
 
-	if closer, ok := l.outWriter.(io.Closer); ok {
-		if err := closer.Close(); err != nil {
-			safeErrorWrite(fmt.Sprintf("unable to close out writer: %s\n", err))
-		}
-	}
-
-	if closer, ok := l.errWriter.(io.Closer); ok {
-		if err := closer.Close(); err != nil {
-			safeErrorWrite(fmt.Sprintf("unable to close err writer: %s\n", err))
-		}
-	}
-
 	exitFunc(1)
 }
 
@@ -185,7 +187,7 @@ func (l *Logger) output(lev level, format string, a ...interface{}) {
 		message = fmt.Sprintf(format, a...)
 	}
 
-	l.buffer <- event{time.Now(), lev, message}
+	l.buffer <- event{now(), lev, message}
 }
 
 func (l *Logger) json(e event) []byte {
