@@ -62,7 +62,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 		port:          flags.New(prefix, "http").Name("Port").Default(1080).Label("Listen port").ToUint(fs),
 		cert:          flags.New(prefix, "http").Name("Cert").Default("").Label("Certificate file").ToString(fs),
 		key:           flags.New(prefix, "http").Name("Key").Default("").Label("Key file").ToString(fs),
-		graceDuration: flags.New(prefix, "http").Name("GraceDuration").Default("15s").Label("Grace duration when SIGTERM received").ToString(fs),
+		graceDuration: flags.New(prefix, "http").Name("GraceDuration").Default("30s").Label("Grace duration when SIGTERM received").ToString(fs),
 		okStatus:      flags.New(prefix, "http").Name("OkStatus").Default(http.StatusNoContent).Label("Healthy HTTP Status code").ToInt(fs),
 	}
 }
