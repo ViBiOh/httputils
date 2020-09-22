@@ -126,15 +126,19 @@ func (l *Logger) Close() {
 	close(l.buffer)
 	l.wg.Wait()
 
-	if closer, ok := l.outWriter.(io.Closer); ok {
-		if err := closer.Close(); err != nil {
-			safeErrorWrite(fmt.Sprintf("unable to close out writer: %s\n", err))
+	if l.outWriter != os.Stdout {
+		if closer, ok := l.outWriter.(io.Closer); ok {
+			if err := closer.Close(); err != nil {
+				safeErrorWrite(fmt.Sprintf("unable to close out writer: %s\n", err))
+			}
 		}
 	}
 
-	if closer, ok := l.errWriter.(io.Closer); ok {
-		if err := closer.Close(); err != nil {
-			safeErrorWrite(fmt.Sprintf("unable to close err writer: %s\n", err))
+	if l.outWriter != os.Stderr {
+		if closer, ok := l.errWriter.(io.Closer); ok {
+			if err := closer.Close(); err != nil {
+				safeErrorWrite(fmt.Sprintf("unable to close err writer: %s\n", err))
+			}
 		}
 	}
 }

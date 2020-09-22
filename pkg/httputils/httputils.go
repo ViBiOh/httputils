@@ -156,37 +156,6 @@ func (a *app) Health(pinger Pinger) App {
 	return a
 }
 
-func (a *app) Swagger() (swagger.Configuration, error) {
-	paths := fmt.Sprintf(`/health:
-  get:
-    description: Healthcheck of app
-    responses:
-      %d:
-        description: Everything is fine
-
-/version:
-  get:
-    description: Version of app
-
-    responses:
-      200:
-        description: Version of app
-        content:
-          text/plain:
-            schema:
-              type: string`, a.okStatus)
-
-	return swagger.Configuration{
-		Paths: paths,
-		Components: `Error:
-  description: Plain text Error
-  content:
-    text/plain:
-      schema:
-        type: string`,
-	}, nil
-}
-
 // ListenAndServe starts server
 func (a *app) ListenAndServe(handler http.Handler) (*http.Server, <-chan error) {
 	versionHandler := versionHandler()
@@ -239,7 +208,7 @@ func (a *app) ListenServeWait(handler http.Handler) {
 	}
 }
 
-// WaitForTermination wait for error or SIGTERM/SIGINT signal
+// WaitForTermination wait for error on SIGTERM signal
 func (a *app) WaitForTermination(err <-chan error) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM)
@@ -255,6 +224,36 @@ func (a *app) WaitForTermination(err <-chan error) {
 			logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
 			time.Sleep(a.graceDuration)
 		}
-		logger.Close()
 	}
+}
+
+func (a *app) Swagger() (swagger.Configuration, error) {
+	paths := fmt.Sprintf(`/health:
+  get:
+    description: Healthcheck of app
+    responses:
+      %d:
+        description: Everything is fine
+
+/version:
+  get:
+    description: Version of app
+
+    responses:
+      200:
+        description: Version of app
+        content:
+          text/plain:
+            schema:
+              type: string`, a.okStatus)
+
+	return swagger.Configuration{
+		Paths: paths,
+		Components: `Error:
+  description: Plain text Error
+  content:
+    text/plain:
+      schema:
+        type: string`,
+	}, nil
 }
