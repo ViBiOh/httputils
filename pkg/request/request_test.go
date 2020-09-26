@@ -18,6 +18,8 @@ type testStruct struct {
 }
 
 func TestSend(t *testing.T) {
+	var retryCount int
+
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/simple" {
 			w.WriteHeader(http.StatusOK)
@@ -63,6 +65,22 @@ func TestSend(t *testing.T) {
 			return
 		} else if r.URL.Path == "/client" {
 			w.WriteHeader(http.StatusNoContent)
+			return
+		} else if r.URL.Path == "/retry" {
+			if retryCount == 0 {
+				w.WriteHeader(http.StatusTooManyRequests)
+			} else if retryCount == 1 {
+				w.WriteHeader(http.StatusInternalServerError)
+			} else if retryCount == 2 {
+				w.WriteHeader(http.StatusBadGateway)
+			} else if retryCount == 3 {
+				w.WriteHeader(http.StatusServiceUnavailable)
+			} else {
+				w.WriteHeader(http.StatusNotImplemented)
+			}
+
+			retryCount++
+
 			return
 		}
 
@@ -174,10 +192,27 @@ func TestSend(t *testing.T) {
 			"",
 			nil,
 		},
+		{
+			"retry",
+			New().Get(testServer.URL + "/retry"),
+			context.Background(),
+			nil,
+			"",
+			errors.New("HTTP/503"),
+		},
+		{
+			"don't retry for post",
+			New().Post(testServer.URL + "/retry"),
+			context.Background(),
+			nil,
+			"",
+			errors.New("HTTP/429"),
+		},
 	}
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
+			retryCount = 0
 			resp, err := testCase.request.Send(testCase.ctx, testCase.payload)
 			result, _ := ReadBodyResponse(resp)
 
