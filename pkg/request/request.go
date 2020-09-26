@@ -26,6 +26,7 @@ var (
 
 // Request describe a complete request
 type Request struct {
+	retry  bool
 	method string
 	url    string
 	header http.Header
@@ -38,10 +39,18 @@ type Request struct {
 // New create a new Request
 func New() *Request {
 	return &Request{
+		retry:  true,
 		method: http.MethodGet,
 		header: http.Header{},
 		client: defaultHTTPClient,
 	}
+}
+
+// NoRetry deactivates retry on error
+func (r *Request) NoRetry() *Request {
+	r.retry = false
+
+	return r
 }
 
 // Method set method of Request
@@ -172,6 +181,7 @@ func DoWithClientAndRetry(client http.Client, req *http.Request, retry uint) (*h
 	resp, err := client.Do(req)
 	if err != nil || resp.StatusCode >= http.StatusBadRequest {
 		if resp != nil && retry > 0 && CanRetry(req, resp) {
+			time.Sleep(time.Second)
 			return DoWithClientAndRetry(client, req, retry-1)
 		}
 
