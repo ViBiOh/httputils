@@ -13,12 +13,16 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
 )
 
-var defaultHTTPClient = http.Client{
-	Timeout: 30 * time.Second,
-	CheckRedirect: func(*http.Request, []*http.Request) error {
-		return http.ErrUseLastResponse
-	},
-}
+var (
+	defaultHTTPClient = http.Client{
+		Timeout: 30 * time.Second,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	defaultRetryCount uint = 3
+)
 
 // Request describe a complete request
 type Request struct {
@@ -138,7 +142,7 @@ func (r *Request) Send(ctx context.Context, payload io.Reader) (*http.Response, 
 		return nil, err
 	}
 
-	return DoWithClient(r.client, req)
+	return DoWithClientAndRetry(r.client, req, defaultRetryCount)
 }
 
 // Form send request with given context and url.Values as payload
@@ -163,10 +167,14 @@ func (r *Request) JSON(ctx context.Context, body interface{}) (*http.Response, e
 	return r.ContentJSON().Send(ctx, reader)
 }
 
-// DoWithClient send request with given client
-func DoWithClient(client http.Client, req *http.Request) (*http.Response, error) {
+// DoWithClientAndRetry send request with given client and retry for specific HTTP status
+func DoWithClientAndRetry(client http.Client, req *http.Request, retry uint) (*http.Response, error) {
 	resp, err := client.Do(req)
 	if err != nil || resp.StatusCode >= http.StatusBadRequest {
+		if resp != nil && retry > 0 && CanRetry(req, resp) {
+			return DoWithClientAndRetry(client, req, retry-1)
+		}
+
 		if err == nil {
 			err = fmt.Errorf("HTTP/%d", resp.StatusCode)
 		}
@@ -181,5 +189,14 @@ func DoWithClient(client http.Client, req *http.Request) (*http.Response, error)
 
 // Do send request with default client
 func Do(req *http.Request) (*http.Response, error) {
-	return DoWithClient(defaultHTTPClient, req)
+	return DoWithClientAndRetry(defaultHTTPClient, req, defaultRetryCount)
+}
+
+// CanRetry evaluates request and
+func CanRetry(r *http.Request, resp *http.Response) bool {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Method != http.MethodOptions {
+		return false
+	}
+
+	return resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusBadGateway || resp.StatusCode == http.StatusServiceUnavailable
 }
