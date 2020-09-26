@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -70,7 +71,7 @@ func init() {
 
 // New creates a Logger
 func New(config Config) *Logger {
-	level, err := parseLevel(*config.level)
+	level, err := parseLevel(strings.TrimSpace(*config.level))
 
 	logger := Logger{
 		buffer: make(chan event, runtime.NumCPU()),
@@ -80,9 +81,9 @@ func New(config Config) *Logger {
 		errWriter: os.Stderr,
 
 		jsonFormat: *config.json,
-		timeKey:    EscapeString(*config.timeKey),
-		levelKey:   EscapeString(*config.levelKey),
-		messageKey: EscapeString(*config.messageKey),
+		timeKey:    EscapeString(strings.TrimSpace(*config.timeKey)),
+		levelKey:   EscapeString(strings.TrimSpace(*config.levelKey)),
+		messageKey: EscapeString(strings.TrimSpace(*config.messageKey)),
 	}
 
 	logger.wg.Add(1)

@@ -76,9 +76,9 @@ func New(config Config) App {
 	}
 
 	return &app{
-		listenAddress: fmt.Sprintf("%s:%d", *config.address, *config.port),
-		cert:          *config.cert,
-		key:           *config.key,
+		listenAddress: fmt.Sprintf("%s:%d", strings.TrimSpace(*config.address), *config.port),
+		cert:          strings.TrimSpace(*config.cert),
+		key:           strings.TrimSpace(*config.key),
 		okStatus:      *config.okStatus,
 		graceDuration: graceDuration,
 
