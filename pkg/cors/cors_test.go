@@ -134,3 +134,21 @@ func TestMiddleware(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkMiddleware(b *testing.B) {
+	app := app{
+		origin:      "*",
+		headers:     "Content-Type",
+		methods:     http.MethodGet,
+		exposes:     "",
+		credentials: "true",
+	}
+
+	middleware := app.Middleware(nil)
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	writer := httptest.NewRecorder()
+
+	for i := 0; i < b.N; i++ {
+		middleware.ServeHTTP(writer, request)
+	}
+}

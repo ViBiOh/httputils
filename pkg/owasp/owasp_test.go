@@ -237,3 +237,21 @@ func TestMiddleware(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkMiddleware(b *testing.B) {
+	app := app{
+		csp:          "default-src 'self'; base-uri 'self'",
+		hsts:         true,
+		frameOptions: "deny",
+	}
+
+	middleware := app.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	writer := httptest.NewRecorder()
+
+	for i := 0; i < b.N; i++ {
+		middleware.ServeHTTP(writer, request)
+	}
+}
