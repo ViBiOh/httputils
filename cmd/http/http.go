@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"net/http"
 	"os"
 
 	"github.com/ViBiOh/httputils/v3/pkg/alcotest"
@@ -10,7 +11,6 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
 	"github.com/ViBiOh/httputils/v3/pkg/owasp"
 	"github.com/ViBiOh/httputils/v3/pkg/prometheus"
-	"github.com/ViBiOh/httputils/v3/pkg/swagger"
 )
 
 func main() {
@@ -22,7 +22,6 @@ func main() {
 	prometheusConfig := prometheus.Flags(fs, "prometheus")
 	owaspConfig := owasp.Flags(fs, "")
 	corsConfig := cors.Flags(fs, "cors")
-	swaggerConfig := swagger.Flags(fs, "swagger")
 
 	logger.Fatal(fs.Parse(os.Args[1:]))
 
@@ -30,15 +29,14 @@ func main() {
 	logger.Global(logger.New(loggerConfig))
 	defer logger.Close()
 
-	prometheusApp := prometheus.New(prometheusConfig)
-
 	server := httputils.New(serverConfig)
-	server.Middleware(prometheusApp.Middleware)
+	server.Middleware(prometheus.New(prometheusConfig).Middleware)
 	server.Middleware(owasp.New(owaspConfig).Middleware)
 	server.Middleware(cors.New(corsConfig).Middleware)
 
-	swaggerApp, err := swagger.New(swaggerConfig, server.Swagger, prometheusApp.Swagger)
-	logger.Fatal(err)
-
-	server.ListenServeWait(swaggerApp.Handler())
+	server.ListenServeWait(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := w.Write([]byte("It works!")); err != nil {
+			logger.Warn("unable to write: %s", err)
+		}
+	}))
 }
