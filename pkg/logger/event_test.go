@@ -78,9 +78,9 @@ func TestEscapeString(t *testing.T) {
 		{
 			"complex",
 			args{
-				content: "Text with special character /\"'\b\f\t\r\n.",
+				content: "Text with special character \"'\b\f\t\r\n.",
 			},
-			`Text with special character /\"'\b\f\t\r\n.`,
+			`Text with special character \"'\b\f\t\r\n.`,
 		},
 	}
 

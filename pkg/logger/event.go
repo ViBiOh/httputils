@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"time"
@@ -15,6 +16,18 @@ const (
 	levelInfo
 	levelDebug
 	levelTrace
+)
+
+var (
+	specialChars = map[rune][]byte{
+		rune('\\'): []byte("\\\\"),
+		rune('\b'): []byte("\\b"),
+		rune('\f'): []byte("\\f"),
+		rune('\r'): []byte("\\r"),
+		rune('\n'): []byte("\\n"),
+		rune('\t'): []byte("\\t"),
+		rune('"'):  []byte("\\\""),
+	}
 )
 
 var (
@@ -39,35 +52,39 @@ type event struct {
 
 // EscapeString escapes value from raw string to be JSON compatible
 func EscapeString(content string) string {
-	output := content
-
-	if strings.Contains(output, "\\") {
-		output = strings.ReplaceAll(output, "\\", "\\\\")
+	if !strings.ContainsRune(content, '\\') && !strings.ContainsRune(content, '\b') && !strings.ContainsRune(content, '\f') && !strings.ContainsRune(content, '\r') && !strings.ContainsRune(content, '\n') && !strings.ContainsRune(content, '\t') && !strings.ContainsRune(content, '"') {
+		return content
 	}
 
-	if strings.Contains(output, "\b") {
-		output = strings.ReplaceAll(output, "\b", "\\b")
+	output := bytes.Buffer{}
+
+	for _, char := range content {
+		switch char {
+		case '\\':
+			output.WriteString("\\\\")
+			break
+		case '\b':
+			output.WriteString("\\b")
+			break
+		case '\f':
+			output.WriteString("\\f")
+			break
+		case '\r':
+			output.WriteString("\\r")
+			break
+		case '\n':
+			output.WriteString("\\n")
+			break
+		case '\t':
+			output.WriteString("\\t")
+			break
+		case '"':
+			output.WriteString("\\\"")
+			break
+		default:
+			output.WriteRune(char)
+		}
 	}
 
-	if strings.Contains(output, "\f") {
-		output = strings.ReplaceAll(output, "\f", "\\f")
-	}
-
-	if strings.Contains(output, "\r") {
-		output = strings.ReplaceAll(output, "\r", "\\r")
-	}
-
-	if strings.Contains(output, "\n") {
-		output = strings.ReplaceAll(output, "\n", "\\n")
-	}
-
-	if strings.Contains(output, "\t") {
-		output = strings.ReplaceAll(output, "\t", "\\t")
-	}
-
-	if strings.Contains(output, "\"") {
-		output = strings.ReplaceAll(output, "\"", "\\\"")
-	}
-
-	return output
+	return output.String()
 }

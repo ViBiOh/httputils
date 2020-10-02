@@ -198,12 +198,10 @@ func (l *Logger) output(lev level, format string, a ...interface{}) {
 func (l *Logger) json(e event) []byte {
 	l.logBuffer.Reset()
 
-	dateBuffer = e.timestamp.AppendFormat(dateBuffer[:0], time.RFC3339)
-
 	l.logBuffer.WriteString(`{"`)
 	l.logBuffer.WriteString(l.timeKey)
 	l.logBuffer.WriteString(`":"`)
-	l.logBuffer.Write(dateBuffer)
+	l.logBuffer.Write(e.timestamp.AppendFormat(dateBuffer[:0], time.RFC3339))
 	l.logBuffer.WriteString(`","`)
 	l.logBuffer.WriteString(l.levelKey)
 	l.logBuffer.WriteString(`":"`)
@@ -221,9 +219,7 @@ func (l *Logger) json(e event) []byte {
 func (l *Logger) text(e event) []byte {
 	l.logBuffer.Reset()
 
-	dateBuffer = e.timestamp.AppendFormat(dateBuffer[:0], time.RFC3339)
-
-	l.logBuffer.Write(dateBuffer)
+	l.logBuffer.Write(e.timestamp.AppendFormat(dateBuffer[:0], time.RFC3339))
 	l.logBuffer.WriteString(` `)
 	l.logBuffer.WriteString(levelValues[e.level])
 	l.logBuffer.WriteString(` `)
