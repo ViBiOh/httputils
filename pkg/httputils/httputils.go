@@ -14,11 +14,6 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
 	"github.com/ViBiOh/httputils/v3/pkg/model"
-	"github.com/ViBiOh/httputils/v3/pkg/swagger"
-)
-
-var (
-	_ swagger.Provider = (&app{}).Swagger
 )
 
 // Pinger describes a function to check liveness of app
@@ -30,7 +25,6 @@ type App interface {
 	Middleware(model.Middleware) App
 	ListenAndServe(http.Handler) (*http.Server, <-chan error)
 	ListenServeWait(http.Handler)
-	Swagger() (swagger.Configuration, error)
 }
 
 // Config of package
@@ -225,35 +219,4 @@ func (a *app) WaitForTermination(err <-chan error) {
 			time.Sleep(a.graceDuration)
 		}
 	}
-}
-
-func (a *app) Swagger() (swagger.Configuration, error) {
-	paths := fmt.Sprintf(`/health:
-  get:
-    description: Healthcheck of app
-    responses:
-      %d:
-        description: Everything is fine
-
-/version:
-  get:
-    description: Version of app
-
-    responses:
-      200:
-        description: Version of app
-        content:
-          text/plain:
-            schema:
-              type: string`, a.okStatus)
-
-	return swagger.Configuration{
-		Paths: paths,
-		Components: `Error:
-  description: Plain text Error
-  content:
-    text/plain:
-      schema:
-        type: string`,
-	}, nil
 }
