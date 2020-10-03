@@ -246,6 +246,7 @@ func TestOutput(t *testing.T) {
 
 func BenchmarkSimpleOutput(b *testing.B) {
 	logger := Logger{
+		dateBuffer: make([]byte, 25),
 		outWriter:  ioutil.Discard,
 		level:      levelInfo,
 		eventsChan: make(chan event, runtime.NumCPU()),
@@ -262,6 +263,7 @@ func BenchmarkSimpleOutput(b *testing.B) {
 
 func BenchmarkNoOutput(b *testing.B) {
 	logger := Logger{
+		dateBuffer: make([]byte, 25),
 		outWriter:  ioutil.Discard,
 		level:      levelWarning,
 		eventsChan: make(chan event, runtime.NumCPU()),
@@ -278,6 +280,7 @@ func BenchmarkNoOutput(b *testing.B) {
 
 func BenchmarkFormattedOutput(b *testing.B) {
 	logger := Logger{
+		dateBuffer: make([]byte, 25),
 		outWriter:  ioutil.Discard,
 		level:      levelInfo,
 		eventsChan: make(chan event, runtime.NumCPU()),
@@ -332,6 +335,7 @@ func TestJson(t *testing.T) {
 func BenchmarkJson(b *testing.B) {
 	logger := Logger{
 		jsonFormat: true,
+		dateBuffer: make([]byte, 25),
 		outWriter:  ioutil.Discard,
 		level:      levelInfo,
 	}
@@ -379,8 +383,9 @@ func TestText(t *testing.T) {
 
 func BenchmarkText(b *testing.B) {
 	logger := Logger{
-		outWriter: ioutil.Discard,
-		level:     levelInfo,
+		dateBuffer: make([]byte, 25),
+		outWriter:  ioutil.Discard,
+		level:      levelInfo,
 	}
 
 	e := event{

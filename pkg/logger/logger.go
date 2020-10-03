@@ -15,10 +15,9 @@ import (
 )
 
 var (
-	logger     *Logger
-	exitFunc   = os.Exit
-	nowFunc    = time.Now
-	dateBuffer = make([]byte, 25)
+	logger   *Logger
+	exitFunc = os.Exit
+	nowFunc  = time.Now
 )
 
 // Config of package
@@ -33,6 +32,8 @@ type Config struct {
 // Logger defines a logger instance
 type Logger struct {
 	logBuffer  bytes.Buffer
+	dateBuffer []byte
+
 	eventsChan chan event
 	wg         sync.WaitGroup
 
@@ -60,6 +61,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 func init() {
 	logger = &Logger{
 		eventsChan: make(chan event, runtime.NumCPU()),
+		dateBuffer: make([]byte, 25),
 
 		level:     levelInfo,
 		outWriter: os.Stdout,
@@ -76,6 +78,7 @@ func New(config Config) *Logger {
 
 	logger := Logger{
 		eventsChan: make(chan event, runtime.NumCPU()),
+		dateBuffer: make([]byte, 25),
 
 		level:     level,
 		outWriter: os.Stdout,
@@ -201,7 +204,7 @@ func (l *Logger) json(e event) []byte {
 	l.logBuffer.WriteString(`{"`)
 	l.logBuffer.WriteString(l.timeKey)
 	l.logBuffer.WriteString(`":"`)
-	l.logBuffer.Write(e.timestamp.AppendFormat(dateBuffer[:0], time.RFC3339))
+	l.logBuffer.Write(e.timestamp.AppendFormat(l.dateBuffer[:0], time.RFC3339))
 	l.logBuffer.WriteString(`","`)
 	l.logBuffer.WriteString(l.levelKey)
 	l.logBuffer.WriteString(`":"`)
@@ -219,7 +222,7 @@ func (l *Logger) json(e event) []byte {
 func (l *Logger) text(e event) []byte {
 	l.logBuffer.Reset()
 
-	l.logBuffer.Write(e.timestamp.AppendFormat(dateBuffer[:0], time.RFC3339))
+	l.logBuffer.Write(e.timestamp.AppendFormat(l.dateBuffer[:0], time.RFC3339))
 	l.logBuffer.WriteString(` `)
 	l.logBuffer.WriteString(levelValues[e.level])
 	l.logBuffer.WriteString(` `)
