@@ -19,18 +19,6 @@ const (
 )
 
 var (
-	specialChars = map[rune][]byte{
-		rune('\\'): []byte("\\\\"),
-		rune('\b'): []byte("\\b"),
-		rune('\f'): []byte("\\f"),
-		rune('\r'): []byte("\\r"),
-		rune('\n'): []byte("\\n"),
-		rune('\t'): []byte("\\t"),
-		rune('"'):  []byte("\\\""),
-	}
-)
-
-var (
 	levelValues = []string{"FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"}
 )
 
@@ -61,25 +49,25 @@ func EscapeString(content string) string {
 	for _, char := range content {
 		switch char {
 		case '\\':
-			output.WriteString("\\\\")
+			output.WriteString(`\\`)
 			break
 		case '\b':
-			output.WriteString("\\b")
+			output.WriteString(`\b`)
 			break
 		case '\f':
-			output.WriteString("\\f")
+			output.WriteString(`\f`)
 			break
 		case '\r':
-			output.WriteString("\\r")
+			output.WriteString(`\r`)
 			break
 		case '\n':
-			output.WriteString("\\n")
+			output.WriteString(`\n`)
 			break
 		case '\t':
-			output.WriteString("\\t")
+			output.WriteString(`\t`)
 			break
 		case '"':
-			output.WriteString("\\\"")
+			output.WriteString(`\"`)
 			break
 		default:
 			output.WriteRune(char)

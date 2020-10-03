@@ -45,7 +45,7 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			"simple",
-			&app{
+			app{
 				origin:      "*",
 				headers:     "Content-Type",
 				methods:     http.MethodGet,
@@ -90,7 +90,6 @@ func TestMiddleware(t *testing.T) {
 				"Access-Control-Allow-Origin":      []string{"*"},
 				"Access-Control-Allow-Headers":     []string{"Content-Type"},
 				"Access-Control-Allow-Methods":     []string{http.MethodGet},
-				"Access-Control-Expose-Headers":    []string{""},
 				"Access-Control-Allow-Credentials": []string{"true"},
 			},
 		},
@@ -100,7 +99,7 @@ func TestMiddleware(t *testing.T) {
 				origin:      "*",
 				headers:     "Content-Type,Authorization",
 				methods:     http.MethodPost,
-				exposes:     "",
+				exposes:     "X-Total-Count",
 				credentials: "false",
 			},
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +111,7 @@ func TestMiddleware(t *testing.T) {
 				"Access-Control-Allow-Origin":      []string{"*"},
 				"Access-Control-Allow-Headers":     []string{"Content-Type,Authorization"},
 				"Access-Control-Allow-Methods":     []string{http.MethodPost},
-				"Access-Control-Expose-Headers":    []string{""},
+				"Access-Control-Expose-Headers":    []string{"X-Total-Count"},
 				"Access-Control-Allow-Credentials": []string{"false"},
 			},
 		},

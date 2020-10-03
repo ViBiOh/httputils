@@ -49,7 +49,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 
 // New creates new App from Config
 func New(config Config) App {
-	return &app{
+	return app{
 		origin:      strings.TrimSpace(*config.origin),
 		headers:     strings.TrimSpace(*config.headers),
 		methods:     strings.TrimSpace(*config.methods),
@@ -61,11 +61,21 @@ func New(config Config) App {
 // Middleware for net/http package allowing cors header
 func (a app) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", a.origin)
-		w.Header().Set("Access-Control-Allow-Headers", a.headers)
-		w.Header().Set("Access-Control-Allow-Methods", a.methods)
-		w.Header().Set("Access-Control-Expose-Headers", a.exposes)
-		w.Header().Set("Access-Control-Allow-Credentials", a.credentials)
+		if len(a.origin) != 0 {
+			w.Header().Set("Access-Control-Allow-Origin", a.origin)
+		}
+		if len(a.headers) != 0 {
+			w.Header().Set("Access-Control-Allow-Headers", a.headers)
+		}
+		if len(a.methods) != 0 {
+			w.Header().Set("Access-Control-Allow-Methods", a.methods)
+		}
+		if len(a.exposes) != 0 {
+			w.Header().Set("Access-Control-Expose-Headers", a.exposes)
+		}
+		if len(a.credentials) != 0 {
+			w.Header().Set("Access-Control-Allow-Credentials", a.credentials)
+		}
 
 		if next != nil {
 			next.ServeHTTP(w, r)

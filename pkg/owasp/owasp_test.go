@@ -45,7 +45,7 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			"simple",
-			&app{
+			app{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         true,
 				frameOptions: "deny",

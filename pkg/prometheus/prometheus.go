@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	_ model.Middleware = (&app{}).Middleware
+	_ model.Middleware = (app{}).Middleware
 )
 
 // App of package
@@ -41,7 +41,7 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 
 // New creates new App from Config
 func New(config Config) App {
-	return &app{
+	return app{
 		path:     strings.TrimSpace(*config.path),
 		registry: prometheus.NewRegistry(),
 	}

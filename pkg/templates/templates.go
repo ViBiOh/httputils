@@ -75,7 +75,7 @@ func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content
 // ResponseXMLTemplate write template name from given template into writer for provided content with XML minification
 func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
 	var templateBuffer bytes.Buffer
-	templateBuffer.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+	templateBuffer.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
 	if err := tpl.Execute(&templateBuffer, content); err != nil {
 		return err
 	}
