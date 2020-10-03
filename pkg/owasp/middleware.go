@@ -10,12 +10,18 @@ const (
 
 type middleware struct {
 	http.ResponseWriter
-	index       bool
-	wroteHeader bool
+	index      bool
+	cacheAdded bool
 }
 
-func (m *middleware) setHeader() {
-	if m.Header().Get(cacheControlHeader) == "" {
+func (m *middleware) setCacheControl(status int) {
+	m.cacheAdded = true
+
+	if len(m.Header().Get(cacheControlHeader)) != 0 {
+		return
+	}
+
+	if status == http.StatusOK || status == http.StatusMovedPermanently || status == http.StatusSeeOther || status == http.StatusNotModified || status == http.StatusPermanentRedirect {
 		if m.index {
 			m.Header().Set(cacheControlHeader, "no-cache")
 		} else {
@@ -25,18 +31,13 @@ func (m *middleware) setHeader() {
 }
 
 func (m *middleware) WriteHeader(status int) {
-	m.wroteHeader = true
-
-	if status == http.StatusOK || status == http.StatusMovedPermanently {
-		m.setHeader()
-	}
-
+	m.setCacheControl(status)
 	m.ResponseWriter.WriteHeader(status)
 }
 
 func (m *middleware) Write(b []byte) (int, error) {
-	if !m.wroteHeader {
-		m.setHeader()
+	if !m.cacheAdded {
+		m.setCacheControl(http.StatusOK)
 	}
 
 	return m.ResponseWriter.Write(b)

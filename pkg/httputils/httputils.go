@@ -157,7 +157,10 @@ func (a *app) ListenAndServe(handler http.Handler) (*http.Server, <-chan error) 
 	defaultHandler := ChainMiddlewares(handler, a.middlewares...)
 
 	httpServer := &http.Server{
-		Addr: a.listenAddress,
+		Addr:         a.listenAddress,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/health":

@@ -70,7 +70,7 @@ func TestMiddleware(t *testing.T) {
 		app        App
 		next       http.Handler
 		request    *http.Request
-		want       int
+		wantStatus int
 		wantHeader http.Header
 	}{
 		{
@@ -137,10 +137,10 @@ func TestMiddleware(t *testing.T) {
 				frameOptions: "deny",
 			},
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
+				w.WriteHeader(http.StatusPermanentRedirect)
 			}),
 			httptest.NewRequest(http.MethodGet, "/", nil),
-			http.StatusOK,
+			http.StatusPermanentRedirect,
 			http.Header{
 				"Content-Security-Policy":           []string{"default-src 'self'; base-uri 'self'"},
 				"Referrer-Policy":                   []string{"strict-origin-when-cross-origin"},
@@ -159,10 +159,10 @@ func TestMiddleware(t *testing.T) {
 				frameOptions: "deny",
 			},
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
+				w.WriteHeader(http.StatusPermanentRedirect)
 			}),
 			httptest.NewRequest(http.MethodGet, "/404.html", nil),
-			http.StatusOK,
+			http.StatusPermanentRedirect,
 			http.Header{
 				"Content-Security-Policy":           []string{"default-src 'self'; base-uri 'self'"},
 				"Referrer-Policy":                   []string{"strict-origin-when-cross-origin"},
@@ -182,10 +182,10 @@ func TestMiddleware(t *testing.T) {
 			},
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set(cacheControlHeader, "max-age=3000")
-				w.WriteHeader(http.StatusOK)
+				w.WriteHeader(http.StatusNoContent)
 			}),
 			httptest.NewRequest(http.MethodGet, "/404.html", nil),
-			http.StatusOK,
+			http.StatusNoContent,
 			http.Header{
 				"Content-Security-Policy":           []string{"default-src 'self'; base-uri 'self'"},
 				"Referrer-Policy":                   []string{"strict-origin-when-cross-origin"},
@@ -219,20 +219,46 @@ func TestMiddleware(t *testing.T) {
 				"Content-Type":                      []string{"text/plain; charset=utf-8"},
 			},
 		},
+		{
+			"don't write header in error",
+			app{
+				csp:          "default-src 'self'; base-uri 'self'",
+				hsts:         false,
+				frameOptions: "deny",
+			},
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, "", http.StatusNotFound)
+			}),
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			http.StatusNotFound,
+			http.Header{
+				"Content-Security-Policy":           []string{"default-src 'self'; base-uri 'self'"},
+				"Referrer-Policy":                   []string{"strict-origin-when-cross-origin"},
+				"X-Frame-Options":                   []string{"deny"},
+				"X-Content-Type-Options":            []string{"nosniff"},
+				"X-Xss-Protection":                  []string{"1; mode=block"},
+				"X-Permitted-Cross-Domain-Policies": []string{"none"},
+				"Cache-Control":                     []string{""},
+				"Content-Type":                      []string{"text/plain; charset=utf-8"},
+			},
+		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
+			tc.app.Middleware(tc.next).ServeHTTP(writer, tc.request)
 
-			testCase.app.Middleware(testCase.next).ServeHTTP(writer, testCase.request)
-
-			if writer.Code != testCase.want {
-				t.Errorf("Middleware() = %d, want %d", writer.Code, testCase.want)
+			if got := writer.Code; got != tc.wantStatus {
+				t.Errorf("Middleware = %d, want %d", got, tc.wantStatus)
 			}
 
-			if !reflect.DeepEqual(writer.Header(), testCase.wantHeader) {
-				t.Errorf("Middleware() = %#v, want %#v", writer.Header(), testCase.wantHeader)
+			for key := range tc.wantHeader {
+				want := tc.wantHeader.Get(key)
+				if got := writer.Header().Get(key); got != want {
+
+					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
+				}
 			}
 		})
 	}
