@@ -7,7 +7,6 @@ import (
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/model"
-	"github.com/ViBiOh/httputils/v3/pkg/query"
 )
 
 var (
@@ -69,7 +68,7 @@ func (a app) Middleware(next http.Handler) http.Handler {
 		}
 
 		if next != nil {
-			next.ServeHTTP(&middleware{w, query.IsRoot(r), false}, r)
+			next.ServeHTTP(w, r)
 		}
 	})
 }
