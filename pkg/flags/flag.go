@@ -20,7 +20,7 @@ type Flag struct {
 // New creates new instance of Flag
 func New(prefix, docPrefix string) *Flag {
 	docPrefixValue := prefix
-	if prefix == "" {
+	if len(prefix) == 0 {
 		docPrefixValue = docPrefix
 	}
 

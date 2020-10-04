@@ -62,7 +62,7 @@ func Do(url, userAgent string) error {
 // DoAndExit test status code of given URL (if present) and exit program with correct status
 func DoAndExit(config Config) {
 	url := strings.TrimSpace(*config.url)
-	if url == "" {
+	if len(url) == 0 {
 		return
 	}
 

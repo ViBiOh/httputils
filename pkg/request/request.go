@@ -137,7 +137,7 @@ func (r *Request) Build(ctx context.Context, payload io.Reader) (*http.Request, 
 	}
 
 	req.Header = r.header
-	if r.username != "" || r.password != "" {
+	if len(r.username) != 0 || len(r.password) != 0 {
 		req.SetBasicAuth(r.username, r.password)
 	}
 

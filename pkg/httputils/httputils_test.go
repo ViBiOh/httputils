@@ -19,7 +19,7 @@ func TestFlags(t *testing.T) {
 	}{
 		{
 			"simple",
-			"Usage of simple:\n  -address string\n    \t[http] Listen address {SIMPLE_ADDRESS}\n  -cert string\n    \t[http] Certificate file {SIMPLE_CERT}\n  -graceDuration string\n    \t[http] Grace duration when SIGTERM received {SIMPLE_GRACE_DURATION} (default \"30s\")\n  -key string\n    \t[http] Key file {SIMPLE_KEY}\n  -okStatus int\n    \t[http] Healthy HTTP Status code {SIMPLE_OK_STATUS} (default 204)\n  -port uint\n    \t[http] Listen port {SIMPLE_PORT} (default 1080)\n",
+			"Usage of simple:\n  -address string\n    \t[http] Listen address {SIMPLE_ADDRESS}\n  -cert string\n    \t[http] Certificate file {SIMPLE_CERT}\n  -graceDuration string\n    \t[http] Grace duration when SIGTERM received {SIMPLE_GRACE_DURATION} (default \"30s\")\n  -idleTimeout string\n    \t[http] Idle Timeout {SIMPLE_IDLE_TIMEOUT} (default \"2m\")\n  -key string\n    \t[http] Key file {SIMPLE_KEY}\n  -okStatus int\n    \t[http] Healthy HTTP Status code {SIMPLE_OK_STATUS} (default 204)\n  -port uint\n    \t[http] Listen port {SIMPLE_PORT} (default 1080)\n  -readTimeout string\n    \t[http] Read Timeout {SIMPLE_READ_TIMEOUT} (default \"5s\")\n  -shutdownTimeout string\n    \t[http] Shutdown Timeout {SIMPLE_SHUTDOWN_TIMEOUT} (default \"10s\")\n  -writeTimeout string\n    \t[http] Write Timeout {SIMPLE_WRITE_TIMEOUT} (default \"10s\")\n",
 		},
 	}
 
@@ -115,7 +115,7 @@ func TestChainMiddlewares(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			ChainMiddlewares(handler, testCase.middlewares...).ServeHTTP(writer, testCase.request)
+			chainMiddlewares(handler, testCase.middlewares...).ServeHTTP(writer, testCase.request)
 
 			if result := writer.Code; result != testCase.wantStatus {
 				t.Errorf("ChainMiddlewares = %d, want %d", result, testCase.wantStatus)
