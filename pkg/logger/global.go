@@ -1,11 +1,8 @@
 package logger
 
 // Global sets global logger
-func Global(l *Logger) {
-	if logger != nil {
-		logger.Close()
-	}
-
+func Global(l Logger) {
+	logger.Close()
 	logger = l
 }
 

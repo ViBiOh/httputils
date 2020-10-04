@@ -57,13 +57,14 @@ func TestStart(t *testing.T) {
 
 	var cases = []struct {
 		intention string
-		instance  *Logger
+		instance  Logger
 		args      args
 		want      string
 	}{
 		{
 			"json",
-			&Logger{
+			Logger{
+				done:       make(chan struct{}),
 				eventsChan: make(chan event, runtime.NumCPU()),
 				jsonFormat: true,
 				timeKey:    "ts",
@@ -79,7 +80,8 @@ func TestStart(t *testing.T) {
 		},
 		{
 			"text",
-			&Logger{
+			Logger{
+				done:       make(chan struct{}),
 				eventsChan: make(chan event, runtime.NumCPU()),
 				level:      levelInfo,
 			},
@@ -90,7 +92,8 @@ func TestStart(t *testing.T) {
 		},
 		{
 			"error",
-			&Logger{
+			Logger{
+				done:       make(chan struct{}),
 				eventsChan: make(chan event, runtime.NumCPU()),
 				level:      levelInfo,
 			},
@@ -105,7 +108,6 @@ func TestStart(t *testing.T) {
 		outputter := bytes.Buffer{}
 		tc.instance.outWriter = &outputter
 		tc.instance.errWriter = &outputter
-		tc.instance.wg.Add(1)
 		go tc.instance.Start()
 
 		t.Run(tc.intention, func(t *testing.T) {
@@ -161,10 +163,10 @@ func TestClose(t *testing.T) {
 				outWriter:  tc.args.out,
 				errWriter:  tc.args.err,
 				level:      levelInfo,
+				done:       make(chan struct{}),
 				eventsChan: make(chan event, runtime.NumCPU()),
 			}
 
-			logger.wg.Add(1)
 			go logger.Start()
 
 			logger.Debug("Hello World")
@@ -226,10 +228,10 @@ func TestOutput(t *testing.T) {
 			logger := Logger{
 				outWriter:  &writer,
 				level:      levelInfo,
+				done:       make(chan struct{}),
 				eventsChan: make(chan event, runtime.NumCPU()),
 			}
 
-			logger.wg.Add(1)
 			go logger.Start()
 
 			logger.output(tc.args.lev, tc.args.format, tc.args.a...)
@@ -246,13 +248,13 @@ func TestOutput(t *testing.T) {
 
 func BenchmarkSimpleOutput(b *testing.B) {
 	logger := Logger{
+		done:       make(chan struct{}),
 		dateBuffer: make([]byte, 25),
 		outWriter:  ioutil.Discard,
 		level:      levelInfo,
 		eventsChan: make(chan event, runtime.NumCPU()),
 	}
 
-	logger.wg.Add(1)
 	go logger.Start()
 	defer logger.Close()
 
@@ -263,13 +265,13 @@ func BenchmarkSimpleOutput(b *testing.B) {
 
 func BenchmarkNoOutput(b *testing.B) {
 	logger := Logger{
+		done:       make(chan struct{}),
 		dateBuffer: make([]byte, 25),
 		outWriter:  ioutil.Discard,
 		level:      levelWarning,
 		eventsChan: make(chan event, runtime.NumCPU()),
 	}
 
-	logger.wg.Add(1)
 	go logger.Start()
 	defer logger.Close()
 
@@ -280,13 +282,13 @@ func BenchmarkNoOutput(b *testing.B) {
 
 func BenchmarkFormattedOutput(b *testing.B) {
 	logger := Logger{
+		done:       make(chan struct{}),
 		dateBuffer: make([]byte, 25),
 		outWriter:  ioutil.Discard,
 		level:      levelInfo,
 		eventsChan: make(chan event, runtime.NumCPU()),
 	}
 
-	logger.wg.Add(1)
 	go logger.Start()
 	defer logger.Close()
 

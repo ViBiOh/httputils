@@ -8,14 +8,13 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 )
 
 var (
-	logger   *Logger
+	logger   Logger
 	exitFunc = os.Exit
 	nowFunc  = time.Now
 )
@@ -35,7 +34,7 @@ type Logger struct {
 	dateBuffer []byte
 
 	eventsChan chan event
-	wg         sync.WaitGroup
+	done       chan struct{}
 
 	jsonFormat bool
 	timeKey    string
@@ -59,7 +58,8 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 }
 
 func init() {
-	logger = &Logger{
+	logger = Logger{
+		done:       make(chan struct{}),
 		eventsChan: make(chan event, runtime.NumCPU()),
 		dateBuffer: make([]byte, 25),
 
@@ -68,15 +68,15 @@ func init() {
 		errWriter: os.Stderr,
 	}
 
-	logger.wg.Add(1)
 	go logger.Start()
 }
 
 // New creates a Logger
-func New(config Config) *Logger {
+func New(config Config) Logger {
 	level, err := parseLevel(strings.TrimSpace(*config.level))
 
 	logger := Logger{
+		done:       make(chan struct{}),
 		eventsChan: make(chan event, runtime.NumCPU()),
 		dateBuffer: make([]byte, 25),
 
@@ -90,20 +90,17 @@ func New(config Config) *Logger {
 		messageKey: EscapeString(strings.TrimSpace(*config.messageKey)),
 	}
 
-	logger.wg.Add(1)
 	go logger.Start()
 
 	if err != nil {
 		logger.Error(err.Error())
 	}
 
-	return &logger
+	return logger
 }
 
 // Start starts logger's writer
-func (l *Logger) Start() {
-	defer l.wg.Done()
-
+func (l Logger) Start() {
 	var payload []byte
 	var err error
 
@@ -124,57 +121,43 @@ func (l *Logger) Start() {
 			safeErrorWrite(fmt.Sprintf("unable to write log: %s\n", err))
 		}
 	}
+
+	close(l.done)
 }
 
 // Close ends logger gracefully
-func (l *Logger) Close() {
+func (l Logger) Close() {
 	close(l.eventsChan)
-	l.wg.Wait()
-
-	if l.outWriter != os.Stdout {
-		if closer, ok := l.outWriter.(io.Closer); ok {
-			if err := closer.Close(); err != nil {
-				safeErrorWrite(fmt.Sprintf("unable to close out writer: %s\n", err))
-			}
-		}
-	}
-
-	if l.outWriter != os.Stderr {
-		if closer, ok := l.errWriter.(io.Closer); ok {
-			if err := closer.Close(); err != nil {
-				safeErrorWrite(fmt.Sprintf("unable to close err writer: %s\n", err))
-			}
-		}
-	}
+	<-l.done
 }
 
 // Trace logs tracing message
-func (l *Logger) Trace(format string, a ...interface{}) {
+func (l Logger) Trace(format string, a ...interface{}) {
 	l.output(levelDebug, format, a...)
 }
 
 // Debug logs debug message
-func (l *Logger) Debug(format string, a ...interface{}) {
+func (l Logger) Debug(format string, a ...interface{}) {
 	l.output(levelDebug, format, a...)
 }
 
 // Info logs info message
-func (l *Logger) Info(format string, a ...interface{}) {
+func (l Logger) Info(format string, a ...interface{}) {
 	l.output(levelInfo, format, a...)
 }
 
 // Warn logs warning message
-func (l *Logger) Warn(format string, a ...interface{}) {
+func (l Logger) Warn(format string, a ...interface{}) {
 	l.output(levelWarning, format, a...)
 }
 
 // Error logs error message
-func (l *Logger) Error(format string, a ...interface{}) {
+func (l Logger) Error(format string, a ...interface{}) {
 	l.output(levelError, format, a...)
 }
 
 // Fatal logs error message and exit with status code 1
-func (l *Logger) Fatal(err error) {
+func (l Logger) Fatal(err error) {
 	if err == nil {
 		return
 	}
@@ -185,7 +168,7 @@ func (l *Logger) Fatal(err error) {
 	exitFunc(1)
 }
 
-func (l *Logger) output(lev level, format string, a ...interface{}) {
+func (l Logger) output(lev level, format string, a ...interface{}) {
 	if l.level < lev {
 		return
 	}
@@ -198,7 +181,7 @@ func (l *Logger) output(lev level, format string, a ...interface{}) {
 	l.eventsChan <- event{nowFunc(), lev, message}
 }
 
-func (l *Logger) json(e event) []byte {
+func (l Logger) json(e event) []byte {
 	l.logBuffer.Reset()
 
 	l.logBuffer.WriteString(`{"`)
@@ -219,7 +202,7 @@ func (l *Logger) json(e event) []byte {
 	return l.logBuffer.Bytes()
 }
 
-func (l *Logger) text(e event) []byte {
+func (l Logger) text(e event) []byte {
 	l.logBuffer.Reset()
 
 	l.logBuffer.Write(e.timestamp.AppendFormat(l.dateBuffer[:0], time.RFC3339))
