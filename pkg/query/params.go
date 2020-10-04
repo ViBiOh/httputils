@@ -20,7 +20,7 @@ func GetBool(r *http.Request, name string) bool {
 	}
 
 	strValue := strings.Join(value, "")
-	if strValue == "" {
+	if len(strValue) == 0 {
 		return true
 	}
 

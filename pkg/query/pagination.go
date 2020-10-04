@@ -42,7 +42,7 @@ func ParsePagination(r *http.Request, defaultPage, defaultPageSize, maxPageSize 
 
 	pagination.Page = defaultPage
 	rawPage := strings.TrimSpace(params.Get("page"))
-	if rawPage != "" {
+	if len(rawPage) != 0 {
 		parsed, err = strconv.ParseUint(rawPage, 10, 32)
 		if err != nil {
 			err = fmt.Errorf("page is invalid %s: %w", err, ErrInvalidValue)
@@ -54,7 +54,7 @@ func ParsePagination(r *http.Request, defaultPage, defaultPageSize, maxPageSize 
 
 	pagination.PageSize = defaultPageSize
 	rawPageSize := strings.TrimSpace(params.Get("pageSize"))
-	if rawPageSize != "" {
+	if len(rawPageSize) != 0 {
 		parsed, err = strconv.ParseUint(rawPageSize, 10, 32)
 		parsedUint = uint(parsed)
 		if err != nil {
@@ -77,7 +77,7 @@ func ParsePagination(r *http.Request, defaultPage, defaultPageSize, maxPageSize 
 
 	pagination.Sort = ""
 	rawSortKey := strings.TrimSpace(params.Get("sort"))
-	if rawSortKey != "" {
+	if len(rawSortKey) != 0 {
 		pagination.Sort = rawSortKey
 	}
 

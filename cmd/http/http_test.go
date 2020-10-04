@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v3/pkg/cors"
-	"github.com/ViBiOh/httputils/v3/pkg/httputils"
 	"github.com/ViBiOh/httputils/v3/pkg/owasp"
 	"github.com/ViBiOh/httputils/v3/pkg/prometheus"
 )
@@ -40,9 +39,10 @@ func BenchmarkNoMiddleware(b *testing.B) {
 		b.Error(err)
 	}
 
-	benchmarkHandler(b, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-	}))
+	})
+	benchmarkHandler(b, handler)
 }
 
 func BenchmarkFullMiddlewares(b *testing.B) {
@@ -64,6 +64,6 @@ func BenchmarkFullMiddlewares(b *testing.B) {
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	handler = httputils.ChainMiddlewares(handler, prometheus.New(prometheusConfig).Middleware, owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware)
+	handler = prometheus.New(prometheusConfig).Middleware(owasp.New(owaspConfig).Middleware(cors.New(corsConfig).Middleware(handler)))
 	benchmarkHandler(b, handler)
 }

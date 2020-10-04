@@ -14,7 +14,7 @@ var (
 
 // IsRoot checks if current path is root (empty or only trailing slash)
 func IsRoot(r *http.Request) bool {
-	return r.URL.Path == "/" || r.URL.Path == ""
+	return len(r.URL.Path) == 0 || r.URL.Path == "/"
 }
 
 // GetID return ID of URL (first section between two slashes)
