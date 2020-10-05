@@ -30,11 +30,11 @@ type Config struct {
 
 // Logger defines a logger instance
 type Logger struct {
-	logBuffer  bytes.Buffer
-	dateBuffer []byte
+	outputBuffer *bytes.Buffer
+	dateBuffer   []byte
 
-	eventsChan chan event
-	done       chan struct{}
+	events chan event
+	done   chan struct{}
 
 	jsonFormat bool
 	timeKey    string
@@ -59,9 +59,11 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 
 func init() {
 	logger = Logger{
-		done:       make(chan struct{}),
-		eventsChan: make(chan event, runtime.NumCPU()),
-		dateBuffer: make([]byte, 25),
+		done:   make(chan struct{}),
+		events: make(chan event, runtime.NumCPU()),
+
+		outputBuffer: bytes.NewBuffer(nil),
+		dateBuffer:   make([]byte, 25),
 
 		level:     levelInfo,
 		outWriter: os.Stdout,
@@ -76,9 +78,11 @@ func New(config Config) Logger {
 	level, err := parseLevel(strings.TrimSpace(*config.level))
 
 	logger := Logger{
-		done:       make(chan struct{}),
-		eventsChan: make(chan event, runtime.NumCPU()),
-		dateBuffer: make([]byte, 25),
+		done:   make(chan struct{}),
+		events: make(chan event, runtime.NumCPU()),
+
+		outputBuffer: bytes.NewBuffer(nil),
+		dateBuffer:   make([]byte, 25),
 
 		level:     level,
 		outWriter: os.Stdout,
@@ -104,7 +108,7 @@ func (l Logger) Start() {
 	var payload []byte
 	var err error
 
-	for e := range l.eventsChan {
+	for e := range l.events {
 		if l.jsonFormat {
 			payload = l.json(e)
 		} else {
@@ -127,7 +131,7 @@ func (l Logger) Start() {
 
 // Close ends logger gracefully
 func (l Logger) Close() {
-	close(l.eventsChan)
+	close(l.events)
 	<-l.done
 }
 
@@ -178,41 +182,41 @@ func (l Logger) output(lev level, format string, a ...interface{}) {
 		message = fmt.Sprintf(format, a...)
 	}
 
-	l.eventsChan <- event{nowFunc(), lev, message}
+	l.events <- event{nowFunc(), lev, message}
 }
 
 func (l Logger) json(e event) []byte {
-	l.logBuffer.Reset()
+	l.outputBuffer.Reset()
 
-	l.logBuffer.WriteString(`{"`)
-	l.logBuffer.WriteString(l.timeKey)
-	l.logBuffer.WriteString(`":"`)
-	l.logBuffer.Write(e.timestamp.AppendFormat(l.dateBuffer[:0], time.RFC3339))
-	l.logBuffer.WriteString(`","`)
-	l.logBuffer.WriteString(l.levelKey)
-	l.logBuffer.WriteString(`":"`)
-	l.logBuffer.WriteString(levelValues[e.level])
-	l.logBuffer.WriteString(`","`)
-	l.logBuffer.WriteString(l.messageKey)
-	l.logBuffer.WriteString(`":"`)
-	l.logBuffer.WriteString(EscapeString(e.message))
-	l.logBuffer.WriteString(`"}`)
-	l.logBuffer.WriteString("\n")
+	l.outputBuffer.WriteString(`{"`)
+	l.outputBuffer.WriteString(l.timeKey)
+	l.outputBuffer.WriteString(`":"`)
+	l.outputBuffer.Write(e.timestamp.AppendFormat(l.dateBuffer[:0], time.RFC3339))
+	l.outputBuffer.WriteString(`","`)
+	l.outputBuffer.WriteString(l.levelKey)
+	l.outputBuffer.WriteString(`":"`)
+	l.outputBuffer.WriteString(levelValues[e.level])
+	l.outputBuffer.WriteString(`","`)
+	l.outputBuffer.WriteString(l.messageKey)
+	l.outputBuffer.WriteString(`":"`)
+	l.outputBuffer.WriteString(EscapeString(e.message))
+	l.outputBuffer.WriteString(`"}`)
+	l.outputBuffer.WriteString("\n")
 
-	return l.logBuffer.Bytes()
+	return l.outputBuffer.Bytes()
 }
 
 func (l Logger) text(e event) []byte {
-	l.logBuffer.Reset()
+	l.outputBuffer.Reset()
 
-	l.logBuffer.Write(e.timestamp.AppendFormat(l.dateBuffer[:0], time.RFC3339))
-	l.logBuffer.WriteString(` `)
-	l.logBuffer.WriteString(levelValues[e.level])
-	l.logBuffer.WriteString(` `)
-	l.logBuffer.WriteString(e.message)
-	l.logBuffer.WriteString("\n")
+	l.outputBuffer.Write(e.timestamp.AppendFormat(l.dateBuffer[:0], time.RFC3339))
+	l.outputBuffer.WriteString(` `)
+	l.outputBuffer.WriteString(levelValues[e.level])
+	l.outputBuffer.WriteString(` `)
+	l.outputBuffer.WriteString(e.message)
+	l.outputBuffer.WriteString("\n")
 
-	return l.logBuffer.Bytes()
+	return l.outputBuffer.Bytes()
 }
 
 func safeErrorWrite(message string) {
