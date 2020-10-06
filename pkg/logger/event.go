@@ -44,7 +44,7 @@ func EscapeString(content string) string {
 		return content
 	}
 
-	output := bytes.Buffer{}
+	output := bytes.NewBuffer(nil)
 
 	for _, char := range content {
 		switch char {

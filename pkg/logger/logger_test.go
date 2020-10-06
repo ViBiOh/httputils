@@ -145,16 +145,16 @@ func TestClose(t *testing.T) {
 		{
 			"closer",
 			args{
-				out: writeCloser{nil, &bytes.Buffer{}},
-				err: writeCloser{nil, &bytes.Buffer{}},
+				out: writeCloser{nil, bytes.NewBuffer(nil)},
+				err: writeCloser{nil, bytes.NewBuffer(nil)},
 			},
 			true,
 		},
 		{
 			"closer error",
 			args{
-				out: writeCloser{errors.New("error"), &bytes.Buffer{}},
-				err: writeCloser{errors.New("error"), &bytes.Buffer{}},
+				out: writeCloser{errors.New("error"), bytes.NewBuffer(nil)},
+				err: writeCloser{errors.New("error"), bytes.NewBuffer(nil)},
 			},
 			true,
 		},

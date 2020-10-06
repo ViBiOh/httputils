@@ -77,8 +77,8 @@ func TestWriteTemplate(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			writer := bytes.Buffer{}
-			err := WriteTemplate(testCase.tpl, &writer, nil, "text/css")
+			writer := bytes.NewBuffer(nil)
+			err := WriteTemplate(testCase.tpl, writer, nil, "text/css")
 
 			result := writer.String()
 

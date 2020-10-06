@@ -50,7 +50,7 @@ func GetTemplates(dir, ext string) ([]string, error) {
 
 // WriteTemplate write template name from given template into writer for provided content with given minification
 func WriteTemplate(tpl *template.Template, w io.Writer, content interface{}, mediatype string) error {
-	templateBuffer := &bytes.Buffer{}
+	templateBuffer := bytes.NewBuffer(nil)
 	if err := tpl.Execute(templateBuffer, content); err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func WriteTemplate(tpl *template.Template, w io.Writer, content interface{}, med
 
 // ResponseHTMLTemplate write template name from given template into writer for provided content with HTML minification
 func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
-	templateBuffer := &bytes.Buffer{}
+	templateBuffer := bytes.NewBuffer(nil)
 	if err := tpl.Execute(templateBuffer, content); err != nil {
 		return err
 	}
