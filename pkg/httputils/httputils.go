@@ -84,7 +84,7 @@ func New(config Config) App {
 // ListenAndServe starts server
 func (a app) ListenAndServe(handler http.Handler, middlewares []model.Middleware, pingers ...model.Pinger) {
 	versionHandler := versionHandler()
-	defaultHandler := chainMiddlewares(handler, middlewares...)
+	defaultHandler := ChainMiddlewares(handler, middlewares...)
 
 	done := make(chan struct{})
 	healthHandler := healthHandler(a.okStatus, done, pingers...)
@@ -203,7 +203,8 @@ func healthHandler(okStatus int, done <-chan struct{}, pingers ...model.Pinger) 
 	})
 }
 
-func chainMiddlewares(handler http.Handler, middlewares ...model.Middleware) http.Handler {
+// ChainMiddlewares chain middlewares call from last to first (so first item is the first called)
+func ChainMiddlewares(handler http.Handler, middlewares ...model.Middleware) http.Handler {
 	result := handler
 
 	for i := len(middlewares) - 1; i >= 0; i-- {

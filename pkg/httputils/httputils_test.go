@@ -115,7 +115,7 @@ func TestChainMiddlewares(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			chainMiddlewares(handler, testCase.middlewares...).ServeHTTP(writer, testCase.request)
+			ChainMiddlewares(handler, testCase.middlewares...).ServeHTTP(writer, testCase.request)
 
 			if result := writer.Code; result != testCase.wantStatus {
 				t.Errorf("ChainMiddlewares = %d, want %d", result, testCase.wantStatus)
