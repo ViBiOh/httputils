@@ -32,11 +32,11 @@ type app struct {
 }
 
 // Flags adds flags for configuring package
-func Flags(fs *flag.FlagSet, prefix string) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		csp:          flags.New(prefix, "owasp").Name("Csp").Default("default-src 'self'; base-uri 'self'").Label("Content-Security-Policy").ToString(fs),
-		hsts:         flags.New(prefix, "owasp").Name("Hsts").Default(true).Label("Indicate Strict Transport Security").ToBool(fs),
-		frameOptions: flags.New(prefix, "owasp").Name("FrameOptions").Default("deny").Label("X-Frame-Options").ToString(fs),
+		csp:          flags.New(prefix, "owasp").Name("Csp").Default(flags.Default("Csp", "default-src 'self'; base-uri 'self'", overrides)).Label("Content-Security-Policy").ToString(fs),
+		hsts:         flags.New(prefix, "owasp").Name("Hsts").Default(flags.Default("Hsts", true, overrides)).Label("Indicate Strict Transport Security").ToBool(fs),
+		frameOptions: flags.New(prefix, "owasp").Name("FrameOptions").Default(flags.Default("FrameOptions", "deny", overrides)).Label("X-Frame-Options").ToString(fs),
 	}
 }
 

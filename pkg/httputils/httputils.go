@@ -18,7 +18,7 @@ import (
 
 // App of package
 type App interface {
-	ListenAndServe(http.Handler, []model.Middleware, ...model.Pinger)
+	ListenAndServe(http.Handler, []model.Pinger, ...model.Middleware)
 }
 
 // Config of package
@@ -50,18 +50,18 @@ type app struct {
 }
 
 // Flags adds flags for configuring package
-func Flags(fs *flag.FlagSet, prefix string) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		address:         flags.New(prefix, "http").Name("Address").Default("").Label("Listen address").ToString(fs),
-		port:            flags.New(prefix, "http").Name("Port").Default(1080).Label("Listen port").ToUint(fs),
-		cert:            flags.New(prefix, "http").Name("Cert").Default("").Label("Certificate file").ToString(fs),
-		key:             flags.New(prefix, "http").Name("Key").Default("").Label("Key file").ToString(fs),
-		okStatus:        flags.New(prefix, "http").Name("OkStatus").Default(http.StatusNoContent).Label("Healthy HTTP Status code").ToInt(fs),
-		readTimeout:     flags.New(prefix, "http").Name("ReadTimeout").Default("5s").Label("Read Timeout").ToString(fs),
-		writeTimeout:    flags.New(prefix, "http").Name("WriteTimeout").Default("10s").Label("Write Timeout").ToString(fs),
-		idleTimeout:     flags.New(prefix, "http").Name("IdleTimeout").Default("2m").Label("Idle Timeout").ToString(fs),
-		graceDuration:   flags.New(prefix, "http").Name("GraceDuration").Default("30s").Label("Grace duration when SIGTERM received").ToString(fs),
-		shutdownTimeout: flags.New(prefix, "http").Name("ShutdownTimeout").Default("10s").Label("Shutdown Timeout").ToString(fs),
+		address:         flags.New(prefix, "http").Name("Address").Default(flags.Default("Address", "", overrides)).Label("Listen address").ToString(fs),
+		port:            flags.New(prefix, "http").Name("Port").Default(flags.Default("Port", 1080, overrides)).Label("Listen port").ToUint(fs),
+		cert:            flags.New(prefix, "http").Name("Cert").Default(flags.Default("Cert", "", overrides)).Label("Certificate file").ToString(fs),
+		key:             flags.New(prefix, "http").Name("Key").Default(flags.Default("Key", "", overrides)).Label("Key file").ToString(fs),
+		okStatus:        flags.New(prefix, "http").Name("OkStatus").Default(flags.Default("OkStatus", http.StatusNoContent, overrides)).Label("Healthy HTTP Status code").ToInt(fs),
+		readTimeout:     flags.New(prefix, "http").Name("ReadTimeout").Default(flags.Default("ReadTimeout", "5s", overrides)).Label("Read Timeout").ToString(fs),
+		writeTimeout:    flags.New(prefix, "http").Name("WriteTimeout").Default(flags.Default("WriteTimeout", "10s", overrides)).Label("Write Timeout").ToString(fs),
+		idleTimeout:     flags.New(prefix, "http").Name("IdleTimeout").Default(flags.Default("IdleTimeout", "2m", overrides)).Label("Idle Timeout").ToString(fs),
+		graceDuration:   flags.New(prefix, "http").Name("GraceDuration").Default(flags.Default("GraceDuration", "30s", overrides)).Label("Grace duration when SIGTERM received").ToString(fs),
+		shutdownTimeout: flags.New(prefix, "http").Name("ShutdownTimeout").Default(flags.Default("ShutdownTimeout", "10s", overrides)).Label("Shutdown Timeout").ToString(fs),
 	}
 }
 
@@ -82,7 +82,7 @@ func New(config Config) App {
 }
 
 // ListenAndServe starts server
-func (a app) ListenAndServe(handler http.Handler, middlewares []model.Middleware, pingers ...model.Pinger) {
+func (a app) ListenAndServe(handler http.Handler, pingers []model.Pinger, middlewares ...model.Middleware) {
 	versionHandler := versionHandler()
 	defaultHandler := ChainMiddlewares(handler, middlewares...)
 

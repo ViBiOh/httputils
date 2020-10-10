@@ -8,13 +8,38 @@ import (
 	"strings"
 )
 
+// Override is an override of default value
+type Override struct {
+	name  string
+	value interface{}
+}
+
+// NewOverride create a default override value
+func NewOverride(name string, value interface{}) Override {
+	return Override{
+		name:  name,
+		value: value,
+	}
+}
+
+// Default returns default value for param's name based on default value and overrides
+func Default(name string, value interface{}, overrides []Override) interface{} {
+	for _, override := range overrides {
+		if strings.EqualFold(name, override.name) {
+			return override.value
+		}
+	}
+
+	return value
+}
+
 // Flag describe a flag
 type Flag struct {
-	prefix       string
-	docPrefix    string
-	name         string
-	label        string
-	defaultValue interface{}
+	prefix    string
+	docPrefix string
+	name      string
+	label     string
+	value     interface{}
 }
 
 // New creates new instance of Flag
@@ -38,8 +63,8 @@ func (f *Flag) Name(name string) *Flag {
 }
 
 // Default defines default value of Flag
-func (f *Flag) Default(defaultValue interface{}) *Flag {
-	f.defaultValue = defaultValue
+func (f *Flag) Default(value interface{}) *Flag {
+	f.value = value
 
 	return f
 }
@@ -54,13 +79,13 @@ func (f *Flag) Label(format string, a ...interface{}) *Flag {
 // ToString build Flag Set for string
 func (f *Flag) ToString(fs *flag.FlagSet) *string {
 	name, envName := f.getNameAndEnv(fs)
-	return fs.String(FirstLowerCase(name), LookupEnvString(envName, f.defaultValue.(string)), f.formatLabel(envName))
+	return fs.String(FirstLowerCase(name), LookupEnvString(envName, f.value.(string)), f.formatLabel(envName))
 }
 
 // ToInt build Flag Set for int
 func (f *Flag) ToInt(fs *flag.FlagSet) *int {
 	name, envName := f.getNameAndEnv(fs)
-	return fs.Int(FirstLowerCase(name), LookupEnvInt(envName, f.defaultValue.(int)), f.formatLabel(envName))
+	return fs.Int(FirstLowerCase(name), LookupEnvInt(envName, f.value.(int)), f.formatLabel(envName))
 }
 
 // ToUint build Flag Set for uint
@@ -68,11 +93,11 @@ func (f *Flag) ToUint(fs *flag.FlagSet) *uint {
 	name, envName := f.getNameAndEnv(fs)
 
 	var value uint
-	switch f.defaultValue.(type) {
+	switch f.value.(type) {
 	case int:
-		value = uint(f.defaultValue.(int))
+		value = uint(f.value.(int))
 	case uint:
-		value = f.defaultValue.(uint)
+		value = f.value.(uint)
 	default:
 		value = 0
 	}
@@ -83,13 +108,13 @@ func (f *Flag) ToUint(fs *flag.FlagSet) *uint {
 // ToFloat64 build Flag Set for float64
 func (f *Flag) ToFloat64(fs *flag.FlagSet) *float64 {
 	name, envName := f.getNameAndEnv(fs)
-	return fs.Float64(FirstLowerCase(name), LookupEnvFloat64(envName, f.defaultValue.(float64)), f.formatLabel(envName))
+	return fs.Float64(FirstLowerCase(name), LookupEnvFloat64(envName, f.value.(float64)), f.formatLabel(envName))
 }
 
 // ToBool build Flag Set for bool
 func (f *Flag) ToBool(fs *flag.FlagSet) *bool {
 	name, envName := f.getNameAndEnv(fs)
-	return fs.Bool(FirstLowerCase(name), LookupEnvBool(envName, f.defaultValue.(bool)), f.formatLabel(envName))
+	return fs.Bool(FirstLowerCase(name), LookupEnvBool(envName, f.value.(bool)), f.formatLabel(envName))
 }
 
 func (f *Flag) getNameAndEnv(fs *flag.FlagSet) (string, string) {
@@ -102,20 +127,20 @@ func (f *Flag) formatLabel(envName string) string {
 }
 
 // LookupEnvString search for given key in environment
-func LookupEnvString(key, defaultValue string) string {
+func LookupEnvString(key, value string) string {
 	if val, ok := os.LookupEnv(key); ok {
 		return val
 	}
 
-	return defaultValue
+	return value
 }
 
 // LookupEnvInt search for given key in environment as int
-func LookupEnvInt(key string, defaultValue int) int {
+func LookupEnvInt(key string, value int) int {
 	val, ok := os.LookupEnv(key)
 
 	if !ok {
-		return defaultValue
+		return value
 	}
 
 	intVal, err := strconv.Atoi(val)
@@ -123,15 +148,15 @@ func LookupEnvInt(key string, defaultValue int) int {
 		return intVal
 	}
 
-	return defaultValue
+	return value
 }
 
 // LookupEnvUint search for given key in environment as uint
-func LookupEnvUint(key string, defaultValue uint) uint {
+func LookupEnvUint(key string, value uint) uint {
 	val, ok := os.LookupEnv(key)
 
 	if !ok {
-		return defaultValue
+		return value
 	}
 
 	intVal, err := strconv.ParseUint(val, 10, 32)
@@ -139,15 +164,15 @@ func LookupEnvUint(key string, defaultValue uint) uint {
 		return uint(intVal)
 	}
 
-	return defaultValue
+	return value
 }
 
 // LookupEnvFloat64 search for given key in environment as float64
-func LookupEnvFloat64(key string, defaultValue float64) float64 {
+func LookupEnvFloat64(key string, value float64) float64 {
 	val, ok := os.LookupEnv(key)
 
 	if !ok {
-		return defaultValue
+		return value
 	}
 
 	intVal, err := strconv.ParseFloat(val, 64)
@@ -155,15 +180,15 @@ func LookupEnvFloat64(key string, defaultValue float64) float64 {
 		return intVal
 	}
 
-	return defaultValue
+	return value
 }
 
 // LookupEnvBool search for given key in environment as bool
-func LookupEnvBool(key string, defaultValue bool) bool {
+func LookupEnvBool(key string, value bool) bool {
 	val, ok := os.LookupEnv(key)
 
 	if !ok {
-		return defaultValue
+		return value
 	}
 
 	boolBal, err := strconv.ParseBool(val)
@@ -171,5 +196,5 @@ func LookupEnvBool(key string, defaultValue bool) bool {
 		return boolBal
 	}
 
-	return defaultValue
+	return value
 }

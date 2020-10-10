@@ -45,14 +45,14 @@ type Config struct {
 }
 
 // Flags adds flags for configuring package
-func Flags(fs *flag.FlagSet, prefix string) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		host:    flags.New(prefix, "database").Name("Host").Default("").Label("Host").ToString(fs),
-		port:    flags.New(prefix, "database").Name("Port").Default(5432).Label("Port").ToUint(fs),
-		user:    flags.New(prefix, "database").Name("User").Default("").Label("User").ToString(fs),
-		pass:    flags.New(prefix, "database").Name("Pass").Default("").Label("Pass").ToString(fs),
-		name:    flags.New(prefix, "database").Name("Name").Default("").Label("Name").ToString(fs),
-		sslmode: flags.New(prefix, "database").Name("Sslmode").Default("disable").Label("SSL Mode").ToString(fs),
+		host:    flags.New(prefix, "database").Name("Host").Default(flags.Default("Host", "", overrides)).Label("Host").ToString(fs),
+		port:    flags.New(prefix, "database").Name("Port").Default(flags.Default("Port", 5432, overrides)).Label("Port").ToUint(fs),
+		user:    flags.New(prefix, "database").Name("User").Default(flags.Default("User", "", overrides)).Label("User").ToString(fs),
+		pass:    flags.New(prefix, "database").Name("Pass").Default(flags.Default("Pass", "", overrides)).Label("Pass").ToString(fs),
+		name:    flags.New(prefix, "database").Name("Name").Default(flags.Default("Name", "", overrides)).Label("Name").ToString(fs),
+		sslmode: flags.New(prefix, "database").Name("Sslmode").Default(flags.Default("Sslmode", "disable", overrides)).Label("SSL Mode").ToString(fs),
 	}
 }
 

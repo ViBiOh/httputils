@@ -33,9 +33,9 @@ type app struct {
 }
 
 // Flags adds flags for configuring package
-func Flags(fs *flag.FlagSet, prefix string) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		path: flags.New(prefix, "prometheus").Name("Path").Default("/metrics").Label("Path for exposing metrics").ToString(fs),
+		path: flags.New(prefix, "prometheus").Name("Path").Default(flags.Default("Path", "/metrics", overrides)).Label("Path for exposing metrics").ToString(fs),
 	}
 }
 
