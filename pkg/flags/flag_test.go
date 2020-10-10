@@ -8,6 +8,60 @@ import (
 	"testing"
 )
 
+func TestDefault(t *testing.T) {
+	type args struct {
+		name      string
+		value     interface{}
+		overrides []Override
+	}
+
+	var cases = []struct {
+		intention string
+		args      args
+		want      interface{}
+	}{
+		{
+			"empty",
+			args{
+				name:  "value",
+				value: "empty",
+			},
+			"empty",
+		},
+		{
+			"match",
+			args{
+				name:  "value",
+				value: "empty",
+				overrides: []Override{
+					NewOverride("VALUE", "found"),
+				},
+			},
+			"found",
+		},
+		{
+			"no match",
+			args{
+				name:  "value",
+				value: "empty",
+				overrides: []Override{
+					NewOverride("value1", "found"),
+					NewOverride("value2", "found"),
+				},
+			},
+			"empty",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if got := Default(tc.args.name, tc.args.value, tc.args.overrides); got != tc.want {
+				t.Errorf("Default() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestNew(t *testing.T) {
 	var cases = []struct {
 		intention string
