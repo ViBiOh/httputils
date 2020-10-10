@@ -37,13 +37,13 @@ type app struct {
 }
 
 // Flags adds flags for configuring package
-func Flags(fs *flag.FlagSet, prefix string) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		origin:      flags.New(prefix, "cors").Name("Origin").Default("*").Label("Access-Control-Allow-Origin").ToString(fs),
-		headers:     flags.New(prefix, "cors").Name("Headers").Default("Content-Type").Label("Access-Control-Allow-Headers").ToString(fs),
-		methods:     flags.New(prefix, "cors").Name("Methods").Default(http.MethodGet).Label("Access-Control-Allow-Methods").ToString(fs),
-		exposes:     flags.New(prefix, "cors").Name("Expose").Default("").Label("Access-Control-Expose-Headers").ToString(fs),
-		credentials: flags.New(prefix, "cors").Name("Credentials").Default(false).Label("Access-Control-Allow-Credentials").ToBool(fs),
+		origin:      flags.New(prefix, "cors").Name("Origin").Default(flags.Default("Origin", "*", overrides)).Label("Access-Control-Allow-Origin").ToString(fs),
+		headers:     flags.New(prefix, "cors").Name("Headers").Default(flags.Default("Headers", "Content-Type", overrides)).Label("Access-Control-Allow-Headers").ToString(fs),
+		methods:     flags.New(prefix, "cors").Name("Methods").Default(flags.Default("Methods", http.MethodGet, overrides)).Label("Access-Control-Allow-Methods").ToString(fs),
+		exposes:     flags.New(prefix, "cors").Name("Expose").Default(flags.Default("Expose", "", overrides)).Label("Access-Control-Expose-Headers").ToString(fs),
+		credentials: flags.New(prefix, "cors").Name("Credentials").Default(flags.Default("Credentials", false, overrides)).Label("Access-Control-Allow-Credentials").ToBool(fs),
 	}
 }
 

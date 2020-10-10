@@ -28,10 +28,10 @@ type Config struct {
 }
 
 // Flags adds flags for configuring package
-func Flags(fs *flag.FlagSet, prefix string) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		url:       flags.New(prefix, "alcotest").Name("Url").Default("").Label("URL to check").ToString(fs),
-		userAgent: flags.New(prefix, "alcotest").Name("UserAgent").Default("Alcotest").Label("User-Agent for check").ToString(fs),
+		url:       flags.New(prefix, "alcotest").Name("Url").Default(flags.Default("Url", "", overrides)).Label("URL to check").ToString(fs),
+		userAgent: flags.New(prefix, "alcotest").Name("UserAgent").Default(flags.Default("UserAgent", "Alcotest", overrides)).Label("User-Agent for check").ToString(fs),
 	}
 }
 

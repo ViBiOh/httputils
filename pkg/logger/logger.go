@@ -47,13 +47,13 @@ type Logger struct {
 }
 
 // Flags adds flags for configuring package
-func Flags(fs *flag.FlagSet, prefix string) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		level:      flags.New(prefix, "logger").Name("Level").Default("INFO").Label("Logger level").ToString(fs),
-		json:       flags.New(prefix, "logger").Name("Json").Default(false).Label("Log format as JSON").ToBool(fs),
-		timeKey:    flags.New(prefix, "logger").Name("TimeKey").Default("time").Label("Key for timestamp in JSON").ToString(fs),
-		levelKey:   flags.New(prefix, "logger").Name("LevelKey").Default("level").Label("Key for level in JSON").ToString(fs),
-		messageKey: flags.New(prefix, "logger").Name("MessageKey").Default("message").Label("Key for message in JSON").ToString(fs),
+		level:      flags.New(prefix, "logger").Name("Level").Default(flags.Default("Level", "INFO", overrides)).Label("Logger level").ToString(fs),
+		json:       flags.New(prefix, "logger").Name("Json").Default(flags.Default("Json", false, overrides)).Label("Log format as JSON").ToBool(fs),
+		timeKey:    flags.New(prefix, "logger").Name("TimeKey").Default(flags.Default("TimeKey", "time", overrides)).Label("Key for timestamp in JSON").ToString(fs),
+		levelKey:   flags.New(prefix, "logger").Name("LevelKey").Default(flags.Default("LevelKey", "level", overrides)).Label("Key for level in JSON").ToString(fs),
+		messageKey: flags.New(prefix, "logger").Name("MessageKey").Default(flags.Default("MessageKey", "message", overrides)).Label("Key for message in JSON").ToString(fs),
 	}
 }
 
