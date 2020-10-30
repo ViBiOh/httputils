@@ -143,20 +143,20 @@ func TestFindMatchingDay(t *testing.T) {
 		{
 			"already good",
 			New().Tuesday().At("12:00"),
-			time.Date(2019, 10, 22, 12, 0, 0, 0, time.Local),
-			time.Date(2019, 10, 22, 12, 0, 0, 0, time.Local),
+			time.Date(2019, 10, 22, 12, 0, 0, 0, time.UTC),
+			time.Date(2019, 10, 22, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			"shift a week",
 			New().Saturday().At("12:00"),
-			time.Date(2019, 10, 20, 12, 0, 0, 0, time.Local),
-			time.Date(2019, 10, 26, 12, 0, 0, 0, time.Local),
+			time.Date(2019, 10, 20, 12, 0, 0, 0, time.UTC),
+			time.Date(2019, 10, 26, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			"next week",
 			New().Weekdays().At("12:00"),
-			time.Date(2019, 10, 19, 12, 0, 0, 0, time.Local),
-			time.Date(2019, 10, 21, 12, 0, 0, 0, time.Local),
+			time.Date(2019, 10, 19, 12, 0, 0, 0, time.UTC),
+			time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC),
 		},
 	}
 
@@ -295,12 +295,12 @@ func TestStart(t *testing.T) {
 	}{
 		{
 			"run once",
-			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.Local)}),
+			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)}),
 			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
 				return func(_ time.Time) error {
 					wg.Done()
 
-					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.Local)})
+					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.UTC)})
 					return nil
 				}
 			},
@@ -312,7 +312,7 @@ func TestStart(t *testing.T) {
 		},
 		{
 			"retry",
-			New().Days().At("12:00").Retry(time.Millisecond).MaxRetry(5).Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.Local)}),
+			New().Days().At("12:00").Retry(time.Millisecond).MaxRetry(5).Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)}),
 			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
 				count := 0
 				return func(_ time.Time) error {
@@ -322,7 +322,7 @@ func TestStart(t *testing.T) {
 					}
 
 					wg.Done()
-					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.Local)})
+					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.UTC)})
 					return nil
 				}
 			},
@@ -332,13 +332,13 @@ func TestStart(t *testing.T) {
 		},
 		{
 			"run on demand",
-			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.Local)}),
+			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)}),
 			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
 				cron.Now()
 
 				return func(_ time.Time) error {
 					wg.Done()
-					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.Local)})
+					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.UTC)})
 					return nil
 				}
 			},
@@ -348,7 +348,7 @@ func TestStart(t *testing.T) {
 		},
 		{
 			"fail if misconfigured",
-			New().Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.Local)}),
+			New().Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)}),
 			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
 				cron.Now()
 
@@ -381,7 +381,7 @@ func TestStart(t *testing.T) {
 			select {
 			case <-time.After(time.Second * 5):
 				testCase.cron.Stop()
-				t.Errorf("Start() did not complete within a second")
+				t.Errorf("Start() did not complete within 5 seconds")
 			case <-done:
 				testCase.cron.Stop()
 			}

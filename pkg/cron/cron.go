@@ -32,7 +32,6 @@ func (c *Clock) Now() time.Time {
 type Cron struct {
 	day           byte
 	dayTime       time.Time
-	timezone      *time.Location
 	interval      time.Duration
 	maxRetry      uint
 	retryInterval time.Duration
@@ -47,10 +46,9 @@ type Cron struct {
 // New create new cron
 func New() *Cron {
 	return &Cron{
-		dayTime:  time.Date(0, 0, 0, 8, 0, 0, 0, time.UTC),
-		timezone: time.Local,
-		now:      make(chan time.Time, 1),
-		errors:   make([]error, 0),
+		dayTime: time.Date(0, 0, 0, 8, 0, 0, 0, time.UTC),
+		now:     make(chan time.Time, 1),
+		errors:  make([]error, 0),
 	}
 }
 
@@ -60,10 +58,14 @@ func (c *Cron) String() string {
 	if c.interval != 0 {
 		buffer.WriteString(fmt.Sprintf("each: %s", c.interval))
 	} else {
-		buffer.WriteString(fmt.Sprintf("day: %07b, at: %02d:%02d, in: %s", c.day, c.dayTime.Hour(), c.dayTime.Minute(), c.timezone))
+		buffer.WriteString(fmt.Sprintf("day: %07b, at: %02d:%02d, in: %s", c.day, c.dayTime.Hour(), c.dayTime.Minute(), c.dayTime.Location()))
 	}
 
 	buffer.WriteString(fmt.Sprintf(", retry: %d times every %s", c.maxRetry, c.retryInterval))
+
+	for _, err := range c.errors {
+		buffer.WriteString(fmt.Sprintf(", error=`%s`", err))
+	}
 
 	return buffer.String()
 }
@@ -145,9 +147,16 @@ func (c *Cron) In(tz string) *Cron {
 	timezone, err := time.LoadLocation(tz)
 	if err != nil {
 		c.errors = append(c.errors, err)
-	} else {
-		c.timezone = timezone
+		return c
 	}
+
+	hourTime, err := time.ParseInLocation(hourFormat, fmt.Sprintf("%02d:%02d", c.dayTime.Hour(), c.dayTime.Minute()), timezone)
+	if err != nil {
+		c.errors = append(c.errors, err)
+		return c
+	}
+
+	c.dayTime = hourTime
 
 	return c
 }
@@ -201,9 +210,10 @@ func (c *Cron) getTickerDuration(shouldRetry bool) time.Duration {
 		return c.interval
 	}
 
-	now := c.clock.Now()
+	tz := c.dayTime.Location()
+	now := c.clock.Now().In(tz)
 
-	nextTime := c.findMatchingDay(time.Date(now.Year(), now.Month(), now.Day(), c.dayTime.Hour(), c.dayTime.Minute(), 0, 0, c.timezone))
+	nextTime := c.findMatchingDay(time.Date(now.Year(), now.Month(), now.Day(), c.dayTime.Hour(), c.dayTime.Minute(), 0, 0, tz))
 	if nextTime.Before(now) {
 		nextTime = c.findMatchingDay(nextTime.AddDate(0, 0, 1))
 	}
