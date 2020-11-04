@@ -19,7 +19,7 @@ func TestFlags(t *testing.T) {
 	}{
 		{
 			"simple",
-			"Usage of simple:\n  -path string\n    \t[prometheus] Path for exposing metrics {SIMPLE_PATH} (default \"/metrics\")\n",
+			"Usage of simple:\n  -ignore string\n    \t[prometheus] Ignored path prefixes for metrics, comma separated {SIMPLE_IGNORE}\n  -path string\n    \t[prometheus] Path for exposing metrics {SIMPLE_PATH} (default \"/metrics\")\n",
 		},
 	}
 
@@ -43,6 +43,8 @@ func TestFlags(t *testing.T) {
 
 func TestMiddleware(t *testing.T) {
 	metricsPath := "/metrics"
+	metricsIgnore := ""
+	metricsIgnoreValue := "/api"
 
 	var cases = []struct {
 		intention string
@@ -53,7 +55,8 @@ func TestMiddleware(t *testing.T) {
 		{
 			"golang metrics",
 			New(Config{
-				path: &metricsPath,
+				ignore: &metricsIgnore,
+				path:   &metricsPath,
 			}),
 			[]*http.Request{
 				httptest.NewRequest(http.MethodGet, "/", nil),
@@ -63,7 +66,8 @@ func TestMiddleware(t *testing.T) {
 		{
 			"http metrics",
 			New(Config{
-				path: &metricsPath,
+				ignore: &metricsIgnore,
+				path:   &metricsPath,
 			}),
 			[]*http.Request{
 				httptest.NewRequest(http.MethodGet, "/", nil),
@@ -73,14 +77,15 @@ func TestMiddleware(t *testing.T) {
 		{
 			"http_requests_total",
 			New(Config{
-				path: &metricsPath,
+				ignore: &metricsIgnoreValue,
+				path:   &metricsPath,
 			}),
 			[]*http.Request{
 				httptest.NewRequest(http.MethodPost, "/", nil),
 				httptest.NewRequest(http.MethodPost, "/", nil),
-				httptest.NewRequest(http.MethodPost, "/", nil),
+				httptest.NewRequest(http.MethodPost, "/api", nil),
 			},
-			"http_requests_total{code=\"204\",method=\"post\"} 3",
+			"http_requests_total{code=\"204\",method=\"post\"} 2",
 		},
 	}
 
@@ -125,6 +130,49 @@ func TestRegisterer(t *testing.T) {
 		t.Run(testCase.intention, func(t *testing.T) {
 			if result := testCase.instance.Registerer(); !reflect.DeepEqual(result, testCase.want) {
 				t.Errorf("Registerer() = %#v, want %#v", result, testCase.want)
+			}
+		})
+	}
+}
+
+func TestIsIgnored(t *testing.T) {
+	type args struct {
+		path string
+	}
+
+	var cases = []struct {
+		intention string
+		instance  app
+		args      args
+		want      bool
+	}{
+		{
+			"empty",
+			app{},
+			args{
+				path: "/metrics",
+			},
+			false,
+		},
+		{
+			"multiple",
+			app{
+				ignore: []string{
+					"/metrics",
+					"/api",
+				},
+			},
+			args{
+				path: "/api/users/1",
+			},
+			true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if got := tc.instance.isIgnored(tc.args.path); got != tc.want {
+				t.Errorf("isIgnored() = %t, want %t", got, tc.want)
 			}
 		})
 	}

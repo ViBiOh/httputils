@@ -23,11 +23,13 @@ type App interface {
 
 // Config of package
 type Config struct {
-	path *string
+	path   *string
+	ignore *string
 }
 
 type app struct {
-	path string
+	path   string
+	ignore []string
 
 	registry *prometheus.Registry
 }
@@ -35,14 +37,22 @@ type app struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		path: flags.New(prefix, "prometheus").Name("Path").Default(flags.Default("Path", "/metrics", overrides)).Label("Path for exposing metrics").ToString(fs),
+		path:   flags.New(prefix, "prometheus").Name("Path").Default(flags.Default("Path", "/metrics", overrides)).Label("Path for exposing metrics").ToString(fs),
+		ignore: flags.New(prefix, "prometheus").Name("Ignore").Default(flags.Default("Ignore", "", overrides)).Label("Ignored path prefixes for metrics, comma separated").ToString(fs),
 	}
 }
 
 // New creates new App from Config
 func New(config Config) App {
+	var ignore []string
+	ignoredPaths := strings.TrimSpace(*config.ignore)
+	if len(ignoredPaths) != 0 {
+		ignore = strings.Split(ignoredPaths, ",")
+	}
+
 	return app{
 		path:     strings.TrimSpace(*config.path),
+		ignore:   ignore,
 		registry: prometheus.NewRegistry(),
 	}
 }
@@ -61,6 +71,8 @@ func (a app) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == a.path {
 			prometheusHandler.ServeHTTP(w, r)
+		} else if a.isIgnored(r.URL.Path) {
+			next.ServeHTTP(w, r)
 		} else {
 			instrumentedHandler.ServeHTTP(w, r)
 		}
@@ -101,4 +113,14 @@ func (a app) instrumentHandler(next http.Handler) http.Handler {
 	instrumentedHandler = promhttp.InstrumentHandlerCounter(counterVec, instrumentedHandler)
 
 	return instrumentedHandler
+}
+
+func (a app) isIgnored(path string) bool {
+	for _, prefix := range a.ignore {
+		if strings.HasPrefix(path, prefix) {
+			return true
+		}
+	}
+
+	return false
 }
