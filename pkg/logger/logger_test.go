@@ -6,6 +6,7 @@ import (
 	"flag"
 	"io"
 	"io/ioutil"
+	"log"
 	"runtime"
 	"strings"
 	"testing"
@@ -248,6 +249,14 @@ func TestOutput(t *testing.T) {
 				t.Errorf("output() = `%s`, want `%s`", got, tc.want)
 			}
 		})
+	}
+}
+
+func BenchmarkStandardSimpleOutput(b *testing.B) {
+	logger := log.New(ioutil.Discard, "", log.Ldate|log.Ltime)
+
+	for i := 0; i < b.N; i++ {
+		logger.Print("[INFO] Hello world")
 	}
 }
 
