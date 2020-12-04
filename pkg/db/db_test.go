@@ -141,7 +141,6 @@ func TestReadTx(t *testing.T) {
 func TestDoAtomic(t *testing.T) {
 	type args struct {
 		ctx    context.Context
-		db     *sql.DB
 		action func(context.Context) error
 	}
 

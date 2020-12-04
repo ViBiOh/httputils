@@ -30,16 +30,16 @@ func (c *Clock) Now() time.Time {
 
 // Cron definition
 type Cron struct {
-	errors []error
-	clock  *Clock
+	now chan time.Time
 
 	dayTime       time.Time
-	interval      time.Duration
 	retryInterval time.Duration
-	now           chan time.Time
+	interval      time.Duration
+
+	clock  *Clock
+	errors []error
 
 	day      byte
-	onStart  bool
 	maxRetry uint
 }
 

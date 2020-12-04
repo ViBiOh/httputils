@@ -11,7 +11,6 @@ import (
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/lib/pq"
-	_ "github.com/lib/pq" // Not referenced but needed for database/sql
 )
 
 type key int

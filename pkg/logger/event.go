@@ -50,25 +50,18 @@ func EscapeString(content string) string {
 		switch char {
 		case '\\':
 			output.WriteString(`\\`)
-			break
 		case '\b':
 			output.WriteString(`\b`)
-			break
 		case '\f':
 			output.WriteString(`\f`)
-			break
 		case '\r':
 			output.WriteString(`\r`)
-			break
 		case '\n':
 			output.WriteString(`\n`)
-			break
 		case '\t':
 			output.WriteString(`\t`)
-			break
 		case '"':
 			output.WriteString(`\"`)
-			break
 		default:
 			output.WriteRune(char)
 		}
