@@ -2,15 +2,18 @@ package breaksync
 
 // Source of data in a break/sync algorithm
 type Source struct {
-	synchronized bool
-	reader       func() (interface{}, error)
-	keyer        func(interface{}) string
-	readRupture  *Rupture
+	next    interface{}
+	Current interface{}
 
-	Current    interface{}
+	reader func() (interface{}, error)
+	keyer  func(interface{}) string
+
+	readRupture *Rupture
+
 	currentKey string
-	next       interface{}
 	nextKey    string
+
+	synchronized bool
 }
 
 // NewSource creates and initialize Source

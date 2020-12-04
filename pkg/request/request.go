@@ -26,14 +26,15 @@ var (
 
 // Request describe a complete request
 type Request struct {
-	retry  bool
-	method string
-	url    string
+	method   string
+	url      string
+	username string
+	password string
+
 	header http.Header
 	client http.Client
 
-	username string
-	password string
+	retry bool
 }
 
 // New create a new Request

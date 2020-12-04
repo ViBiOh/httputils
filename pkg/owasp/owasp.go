@@ -27,8 +27,8 @@ type Config struct {
 
 type app struct {
 	csp          string
-	hsts         bool
 	frameOptions string
+	hsts         bool
 }
 
 // Flags adds flags for configuring package

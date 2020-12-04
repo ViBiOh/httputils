@@ -6,10 +6,11 @@ const finalValue = "\uffff"
 type Synchronization struct {
 	currentKey string
 	nextKey    string
-	end        bool
 
 	Sources  []*Source
 	ruptures []*Rupture
+
+	end bool
 }
 
 // NewSynchronization creates and initializes Synchronization

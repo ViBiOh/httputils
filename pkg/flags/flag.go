@@ -10,8 +10,8 @@ import (
 
 // Override is an override of default value
 type Override struct {
-	name  string
 	value interface{}
+	name  string
 }
 
 // NewOverride create a default override value
@@ -35,11 +35,11 @@ func Default(name string, value interface{}, overrides []Override) interface{} {
 
 // Flag describe a flag
 type Flag struct {
+	value     interface{}
 	prefix    string
 	docPrefix string
 	name      string
 	label     string
-	value     interface{}
 }
 
 // New creates new instance of Flag

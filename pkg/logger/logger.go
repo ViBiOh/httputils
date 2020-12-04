@@ -30,20 +30,21 @@ type Config struct {
 
 // Logger defines a logger instance
 type Logger struct {
-	outputBuffer *bytes.Buffer
-	dateBuffer   []byte
-
-	events chan event
-	done   chan struct{}
-
-	jsonFormat bool
 	timeKey    string
 	levelKey   string
 	messageKey string
 
-	level     level
+	events chan event
+	done   chan struct{}
+
 	outWriter io.Writer
 	errWriter io.Writer
+
+	outputBuffer *bytes.Buffer
+	dateBuffer   []byte
+
+	level      level
+	jsonFormat bool
 }
 
 // Flags adds flags for configuring package
@@ -182,7 +183,7 @@ func (l Logger) output(lev level, format string, a ...interface{}) {
 		message = fmt.Sprintf(format, a...)
 	}
 
-	l.events <- event{nowFunc(), lev, message}
+	l.events <- event{timestamp: nowFunc(), level: lev, message: message}
 }
 
 func (l Logger) json(e event) []byte {

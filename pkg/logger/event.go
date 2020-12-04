@@ -34,8 +34,8 @@ func parseLevel(line string) (level, error) {
 
 type event struct {
 	timestamp time.Time
-	level     level
 	message   string
+	level     level
 }
 
 // EscapeString escapes value from raw string to be JSON compatible

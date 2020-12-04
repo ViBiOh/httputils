@@ -28,10 +28,9 @@ type Config struct {
 }
 
 type app struct {
-	path   string
-	ignore []string
-
+	path     string
 	registry *prometheus.Registry
+	ignore   []string
 }
 
 // Flags adds flags for configuring package

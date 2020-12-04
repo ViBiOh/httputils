@@ -2,10 +2,10 @@ package breaksync
 
 // Rupture in a break/sync algorithm
 type Rupture struct {
-	name    string
-	first   bool
-	last    bool
 	extract func(string) string
+	name    string
+	last    bool
+	first   bool
 }
 
 // NewRupture creates and initialize Rupture

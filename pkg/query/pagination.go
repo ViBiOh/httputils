@@ -22,9 +22,9 @@ var (
 
 // Pagination describes pagination params
 type Pagination struct {
+	Sort     string
 	Page     uint
 	PageSize uint
-	Sort     string
 	Desc     bool
 }
 
