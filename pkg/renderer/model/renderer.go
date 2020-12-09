@@ -67,17 +67,21 @@ func ConcatError(errs []error) error {
 	return errors.New(strings.Join(values, ", "))
 }
 
+func wrapError(err, wrapper error) error {
+	return fmt.Errorf("%s: %w", err, wrapper)
+}
+
 // WrapInvalid wraps given error with invalid err
 func WrapInvalid(err error) error {
-	return fmt.Errorf("%s: %w", err, ErrInvalid)
+	return wrapError(err, ErrInvalid)
 }
 
 // WrapInternal wraps given error with internal err
 func WrapInternal(err error) error {
-	return fmt.Errorf("%s: %w", err, ErrInternalError)
+	return wrapError(err, ErrInternalError)
 }
 
 // WrapNotFound wraps given error with not found err
 func WrapNotFound(err error) error {
-	return fmt.Errorf("%s: %w", err, ErrNotFound)
+	return wrapError(err, ErrNotFound)
 }
