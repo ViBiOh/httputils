@@ -98,6 +98,8 @@ func (a app) Handler(templateFunc model.TemplateFunc) http.Handler {
 			return
 		}
 
+		content["Version"] = a.version
+
 		message := model.ParseMessage(r)
 		if len(message.Content) > 0 {
 			content["Message"] = message
