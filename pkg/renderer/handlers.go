@@ -15,9 +15,8 @@ import (
 func (a app) error(w http.ResponseWriter, err error) {
 	logger.Error("%s", err)
 
-	content := map[string]interface{}{
-		"Version": a.version,
-	}
+	content := make(map[string]interface{})
+	a.feedContent(content)
 
 	var message string
 	status := http.StatusInternalServerError

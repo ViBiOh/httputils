@@ -34,19 +34,23 @@ type App interface {
 type Config struct {
 	templates *string
 	statics   *string
+	publicURL *string
+	title     *string
 }
 
 type app struct {
 	tpl        *template.Template
-	version    string
 	staticsDir string
+	content    map[string]interface{}
 }
 
 // Flags adds flags for configuring package
-func Flags(fs *flag.FlagSet, prefix string) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		templates: flags.New(prefix, "").Name("Templates").Default("./templates/").Label("HTML Templates folder").ToString(fs),
-		statics:   flags.New(prefix, "").Name("Static").Default("./static/").Label("Static folder, content served directly").ToString(fs),
+		templates: flags.New(prefix, "").Name("Templates").Default(flags.Default("Templates", "./templates/", overrides)).Label("HTML Templates folder").ToString(fs),
+		statics:   flags.New(prefix, "").Name("Static").Default(flags.Default("Static", "./static/", overrides)).Label("Static folder, content served directly").ToString(fs),
+		publicURL: flags.New(prefix, "").Name("PublicURL").Default(flags.Default("PublicURL", "http://localhost", overrides)).Label("Public URL").ToString(fs),
+		title:     flags.New(prefix, "").Name("Title").Default(flags.Default("Title", "App", overrides)).Label("Application title").ToString(fs),
 	}
 }
 
@@ -58,8 +62,12 @@ func New(config Config, funcMap template.FuncMap) (App, error) {
 	}
 
 	return app{
-		tpl:     template.Must(template.New("app").Funcs(funcMap).ParseFiles(filesTemplates...)),
-		version: os.Getenv("VERSION"),
+		tpl: template.Must(template.New("app").Funcs(funcMap).ParseFiles(filesTemplates...)),
+		content: map[string]interface{}{
+			"PublicURL": strings.TrimSpace(*config.publicURL),
+			"Title":     strings.TrimSpace(*config.title),
+			"Version":   os.Getenv("VERSION"),
+		},
 	}, nil
 }
 
@@ -71,6 +79,12 @@ func isRootPaths(requestPath string) bool {
 	}
 
 	return false
+}
+
+func (a app) feedContent(content map[string]interface{}) {
+	for key, value := range a.content {
+		content[key] = value
+	}
 }
 
 func (a app) Handler(templateFunc model.TemplateFunc) http.Handler {
@@ -98,7 +112,7 @@ func (a app) Handler(templateFunc model.TemplateFunc) http.Handler {
 			return
 		}
 
-		content["Version"] = a.version
+		a.feedContent(content)
 
 		message := model.ParseMessage(r)
 		if len(message.Content) > 0 {
