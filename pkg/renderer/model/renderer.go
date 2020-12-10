@@ -11,8 +11,11 @@ var (
 	// ErrInvalid occurs when checks fails
 	ErrInvalid = errors.New("invalid")
 
-	// ErrNotFound occurs when somehint is not found
+	// ErrNotFound occurs when something is not found
 	ErrNotFound = errors.New("not found")
+
+	// ErrMethodNotAllowed occurs when method is not allowed
+	ErrMethodNotAllowed = errors.New("method not allowed")
 
 	// ErrInternalError occurs when shit happens
 	ErrInternalError = errors.New("internal error")
@@ -76,12 +79,17 @@ func WrapInvalid(err error) error {
 	return wrapError(err, ErrInvalid)
 }
 
-// WrapInternal wraps given error with internal err
-func WrapInternal(err error) error {
-	return wrapError(err, ErrInternalError)
-}
-
 // WrapNotFound wraps given error with not found err
 func WrapNotFound(err error) error {
 	return wrapError(err, ErrNotFound)
+}
+
+// WrapMethodNotAllowed wraps given error with not method not allowed err
+func WrapMethodNotAllowed(err error) error {
+	return wrapError(err, ErrMethodNotAllowed)
+}
+
+// WrapInternal wraps given error with internal err
+func WrapInternal(err error) error {
+	return wrapError(err, ErrInternalError)
 }

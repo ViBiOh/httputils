@@ -28,6 +28,8 @@ var (
 // App of package
 type App interface {
 	Handler(model.TemplateFunc) http.Handler
+	Error(http.ResponseWriter, error)
+	Redirect(http.ResponseWriter, *http.Request, string, string)
 }
 
 // Config of package
@@ -108,7 +110,7 @@ func (a app) Handler(templateFunc model.TemplateFunc) http.Handler {
 
 		templateName, status, content, err := templateFunc(r)
 		if err != nil {
-			a.error(w, err)
+			a.Error(w, err)
 			return
 		}
 

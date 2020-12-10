@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/ViBiOh/httputils/v3/pkg/httperror"
@@ -12,7 +13,11 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/templates"
 )
 
-func (a app) error(w http.ResponseWriter, err error) {
+func (a app) Redirect(w http.ResponseWriter, r *http.Request, path, message string) {
+	http.Redirect(w, r, fmt.Sprintf("%s?messageContent=%s", path, url.QueryEscape(message)), http.StatusFound)
+}
+
+func (a app) Error(w http.ResponseWriter, err error) {
 	logger.Error("%s", err)
 
 	content := make(map[string]interface{})
@@ -29,6 +34,8 @@ func (a app) error(w http.ResponseWriter, err error) {
 			status = http.StatusBadRequest
 		} else if errors.Is(err, model.ErrNotFound) {
 			status = http.StatusNotFound
+		} else if errors.Is(err, model.ErrMethodNotAllowed) {
+			status = http.StatusMethodNotAllowed
 		} else if errors.Is(err, model.ErrInternalError) {
 			status = http.StatusInternalServerError
 			message = "Oops! Something went wrong."
