@@ -123,7 +123,14 @@ func (f *Flag) getNameAndEnv(fs *flag.FlagSet) (string, string) {
 }
 
 func (f *Flag) formatLabel(envName string) string {
-	return fmt.Sprintf("[%s] %s {%s}", f.docPrefix, f.label, envName)
+	builder := strings.Builder{}
+
+	if len(f.docPrefix) != 0 {
+		builder.WriteString(fmt.Sprintf("[%s] ", f.docPrefix))
+	}
+
+	builder.WriteString(fmt.Sprintf("%s {%s}", f.label, envName))
+	return builder.String()
 }
 
 // LookupEnvString search for given key in environment

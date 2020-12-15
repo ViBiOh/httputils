@@ -64,7 +64,8 @@ func New(config Config, funcMap template.FuncMap) (App, error) {
 	}
 
 	return app{
-		tpl: template.Must(template.New("app").Funcs(funcMap).ParseFiles(filesTemplates...)),
+		tpl:        template.Must(template.New("app").Funcs(funcMap).ParseFiles(filesTemplates...)),
+		staticsDir: strings.TrimSpace(*config.statics),
 		content: map[string]interface{}{
 			"PublicURL": strings.TrimSpace(*config.publicURL),
 			"Title":     strings.TrimSpace(*config.title),
@@ -114,21 +115,6 @@ func (a app) Handler(templateFunc model.TemplateFunc) http.Handler {
 			return
 		}
 
-		templateName, status, content, err := templateFunc(r)
-		if err != nil {
-			a.Error(w, err)
-			return
-		}
-
-		a.feedContent(content)
-
-		message := model.ParseMessage(r)
-		if len(message.Content) > 0 {
-			content["Message"] = message
-		}
-
-		if err := templates.ResponseHTMLTemplate(a.tpl.Lookup(templateName), w, content, status); err != nil {
-			httperror.InternalServerError(w, err)
-		}
+		a.html(w, r, templateFunc)
 	})
 }

@@ -29,13 +29,27 @@ func (a app) Error(w http.ResponseWriter, err error) {
 	}
 }
 
+func (a app) html(w http.ResponseWriter, r *http.Request, templateFunc model.TemplateFunc) {
+	templateName, status, content, err := templateFunc(r)
+	if err != nil {
+		a.Error(w, err)
+		return
+	}
+
+	a.feedContent(content)
+
+	message := model.ParseMessage(r)
+	if len(message.Content) > 0 {
+		content["Message"] = message
+	}
+
+	if err := templates.ResponseHTMLTemplate(a.tpl.Lookup(templateName), w, content, status); err != nil {
+		httperror.InternalServerError(w, err)
+	}
+}
+
 func (a app) svg() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if a.tpl == nil {
-			httperror.NotFound(w)
-			return
-		}
-
 		tpl := a.tpl.Lookup(fmt.Sprintf("svg-%s", strings.Trim(r.URL.Path, "/")))
 		if tpl == nil {
 			httperror.NotFound(w)

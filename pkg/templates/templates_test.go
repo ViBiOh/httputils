@@ -21,9 +21,9 @@ func TestGetTemplates(t *testing.T) {
 	}{
 		{
 			"simple",
-			"./",
+			"../../templates/",
 			".xml",
-			[]string{"sitemap.xml"},
+			[]string{"../../templates/sitemap.xml"},
 			nil,
 		},
 		{
@@ -63,13 +63,13 @@ func TestWriteTemplate(t *testing.T) {
 	}{
 		{
 			"simple",
-			template.Must(template.New("css_template.html").ParseFiles("css_template.html")),
+			template.Must(template.New("css_template.html").ParseFiles("../../templates/css_template.html")),
 			"html{height:100vh;width:100vw}",
 			nil,
 		},
 		{
 			"error",
-			template.Must(template.New("invalidName").ParseFiles("html5_template.html")),
+			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.html")),
 			"",
 			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
 		},
@@ -106,13 +106,13 @@ func TestResponseHTMLTemplate(t *testing.T) {
 	}{
 		{
 			"simple",
-			template.Must(template.New("html5_template.html").ParseFiles("html5_template.html")),
+			template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html")),
 			`<!doctype html><html lang=fr><meta charset=utf-8><title>Golang Testing</title><meta name=description content="Golang Testing"><meta name=author content="ViBiOh"><script>function helloWorld(){console.info('Hello world!')}</script><style>html{height:100vh;width:100vw}</style><body onload=helloWorld()><h1>It works!</h1>`,
 			nil,
 		},
 		{
 			"error",
-			template.Must(template.New("invalidName").ParseFiles("html5_template.html")),
+			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.html")),
 			"",
 			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
 		},
@@ -149,13 +149,13 @@ func TestResponseXMLTemplate(t *testing.T) {
 	}{
 		{
 			"simple",
-			template.Must(template.New("sitemap.xml").ParseFiles("sitemap.xml")),
+			template.Must(template.New("sitemap.xml").ParseFiles("../../templates/sitemap.xml")),
 			`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"><url><loc>https://vibioh.fr</loc><changefreq>weekly</changefreq><priority>1.00</priority></url></urlset>`,
 			nil,
 		},
 		{
 			"error",
-			template.Must(template.New("invalidName").ParseFiles("sitemap.xml")),
+			template.Must(template.New("invalidName").ParseFiles("../../templates/sitemap.xml")),
 			"",
 			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
 		},
