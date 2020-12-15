@@ -1,10 +1,8 @@
 package renderer
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/ViBiOh/httputils/v3/pkg/httperror"
@@ -13,38 +11,17 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/templates"
 )
 
-func (a app) Redirect(w http.ResponseWriter, r *http.Request, path, message string) {
-	http.Redirect(w, r, fmt.Sprintf("%s?messageContent=%s", path, url.QueryEscape(message)), http.StatusFound)
+func (a app) Redirect(w http.ResponseWriter, r *http.Request, path string, message model.Message) {
+	http.Redirect(w, r, fmt.Sprintf("%s?%s", path, message), http.StatusFound)
 }
 
 func (a app) Error(w http.ResponseWriter, err error) {
-	logger.Error("%s", err)
+	content := a.feedContent(nil)
 
-	content := make(map[string]interface{})
-	a.feedContent(content)
-
-	var message string
-	status := http.StatusInternalServerError
-
-	if err != nil {
-		message = err.Error()
-		subMessages := ""
-
-		if errors.Is(err, model.ErrInvalid) {
-			status = http.StatusBadRequest
-		} else if errors.Is(err, model.ErrNotFound) {
-			status = http.StatusNotFound
-		} else if errors.Is(err, model.ErrMethodNotAllowed) {
-			status = http.StatusMethodNotAllowed
-		} else if errors.Is(err, model.ErrInternalError) {
-			status = http.StatusInternalServerError
-			message = "Oops! Something went wrong."
-		}
-
+	status, message := model.ErrorStatus(err)
+	if len(message) > 0 {
+		logger.Error("%s", message)
 		content["Message"] = model.NewErrorMessage(message)
-		if len(subMessages) > 0 {
-			content["Errors"] = strings.Split(subMessages, ", ")
-		}
 	}
 
 	if err := templates.ResponseHTMLTemplate(a.tpl.Lookup("error"), w, content, status); err != nil {
