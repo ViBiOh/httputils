@@ -4,7 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
+)
+
+const (
+	internalError = "Oops! Something went wrong."
 )
 
 var (
@@ -30,6 +35,14 @@ type Message struct {
 	Content string
 }
 
+func (m Message) String() string {
+	if len(m.Content) == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf("messageContent=%s&messageLevel=%s", url.QueryEscape(m.Content), url.QueryEscape(m.Level))
+}
+
 // ParseMessage parses messages from request
 func ParseMessage(r *http.Request) Message {
 	values := r.URL.Query()
@@ -44,7 +57,7 @@ func ParseMessage(r *http.Request) Message {
 func NewSuccessMessage(content string) Message {
 	return Message{
 		Level:   "success",
-		Content: content,
+		Content: strings.TrimSpace(content),
 	}
 }
 
@@ -52,22 +65,31 @@ func NewSuccessMessage(content string) Message {
 func NewErrorMessage(content string) Message {
 	return Message{
 		Level:   "error",
-		Content: content,
+		Content: strings.TrimSpace(content),
 	}
 }
 
-// ConcatError concat errors to a single string
-func ConcatError(errs []error) error {
-	if len(errs) == 0 {
-		return nil
+// ErrorStatus guess HTTP status and message from given error
+func ErrorStatus(err error) (status int, message string) {
+	status = http.StatusInternalServerError
+	if err == nil {
+		return
 	}
 
-	values := make([]string, len(errs))
-	for index, err := range errs {
-		values[index] = err.Error()
+	message = err.Error()
+
+	switch {
+	case errors.Is(err, ErrInvalid):
+		status = http.StatusBadRequest
+	case errors.Is(err, ErrNotFound):
+		status = http.StatusNotFound
+	case errors.Is(err, ErrMethodNotAllowed):
+		status = http.StatusMethodNotAllowed
+	default:
+		message = internalError
 	}
 
-	return errors.New(strings.Join(values, ", "))
+	return
 }
 
 func wrapError(err, wrapper error) error {

@@ -21,15 +21,15 @@ const (
 )
 
 var (
-	rootPaths = []string{"/robots.txt", "/sitemap.xml"}
-	staticDir = "static"
+	staticRootPaths = []string{"/robots.txt", "/sitemap.xml"}
+	staticDir       = "static"
 )
 
 // App of package
 type App interface {
 	Handler(model.TemplateFunc) http.Handler
 	Error(http.ResponseWriter, error)
-	Redirect(http.ResponseWriter, *http.Request, string, string)
+	Redirect(http.ResponseWriter, *http.Request, string, model.Message)
 }
 
 // Config of package
@@ -73,8 +73,8 @@ func New(config Config, funcMap template.FuncMap) (App, error) {
 	}, nil
 }
 
-func isRootPaths(requestPath string) bool {
-	for _, rootPath := range rootPaths {
+func isStaticRootPaths(requestPath string) bool {
+	for _, rootPath := range staticRootPaths {
 		if strings.EqualFold(rootPath, requestPath) {
 			return true
 		}
@@ -83,17 +83,23 @@ func isRootPaths(requestPath string) bool {
 	return false
 }
 
-func (a app) feedContent(content map[string]interface{}) {
+func (a app) feedContent(content map[string]interface{}) map[string]interface{} {
+	if content == nil {
+		content = make(map[string]interface{})
+	}
+
 	for key, value := range a.content {
 		content[key] = value
 	}
+
+	return content
 }
 
 func (a app) Handler(templateFunc model.TemplateFunc) http.Handler {
 	svgHandler := http.StripPrefix(svgPath, a.svg())
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, faviconPath) || isRootPaths(r.URL.Path) {
+		if strings.HasPrefix(r.URL.Path, faviconPath) || isStaticRootPaths(r.URL.Path) {
 			http.ServeFile(w, r, path.Join(a.staticsDir, r.URL.Path))
 			return
 		}
