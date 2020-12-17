@@ -11,7 +11,8 @@ import (
 	"github.com/ViBiOh/httputils/v3/pkg/templates"
 )
 
-func (a app) Redirect(w http.ResponseWriter, r *http.Request, path string, message model.Message) {
+// Redirect redirect user to a defined path with a message
+func Redirect(w http.ResponseWriter, r *http.Request, path string, message model.Message) {
 	http.Redirect(w, r, fmt.Sprintf("%s?%s", path, message), http.StatusFound)
 }
 
@@ -36,7 +37,7 @@ func (a app) html(w http.ResponseWriter, r *http.Request, templateFunc model.Tem
 		return
 	}
 
-	a.feedContent(content)
+	content = a.feedContent(content)
 
 	message := model.ParseMessage(r)
 	if len(message.Content) > 0 {

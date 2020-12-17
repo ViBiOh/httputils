@@ -3,6 +3,7 @@ package renderer
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -192,14 +193,34 @@ func TestHandler(t *testing.T) {
 			http.Header{},
 		},
 		{
+			"svg not found",
+			configuredApp,
+			httptest.NewRequest(http.MethodGet, "/svg/unknown?fill=black", nil),
+			nil,
+			"¯\\_(ツ)_/¯\n",
+			http.StatusNotFound,
+			http.Header{},
+		},
+		{
 			"html",
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			func(_ *http.Request) (string, int, map[string]interface{}, error) {
 				return "public", http.StatusCreated, nil, nil
 			},
-			`<!doctype html><meta charset=utf-8><title></title><h1>Hello !</h1>`,
+			`<!doctype html><meta charset=utf-8><title>Golang Test</title><h1>Hello !</h1>`,
 			http.StatusCreated,
+			http.Header{},
+		},
+		{
+			"message",
+			configuredApp,
+			httptest.NewRequest(http.MethodGet, fmt.Sprintf("/?%s", model.NewSuccessMessage("Hello world")), nil),
+			func(_ *http.Request) (string, int, map[string]interface{}, error) {
+				return "error", http.StatusUnauthorized, nil, nil
+			},
+			`messageContent=Hello+world&messageLevel=success`,
+			http.StatusUnauthorized,
 			http.Header{},
 		},
 		{
@@ -226,6 +247,52 @@ func TestHandler(t *testing.T) {
 
 			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.want {
 				t.Errorf("Handler = `%s`, want `%s`", string(got), tc.want)
+			}
+
+			for key := range tc.wantHeader {
+				want := tc.wantHeader.Get(key)
+				if got := writer.Header().Get(key); got != want {
+					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
+				}
+			}
+		})
+	}
+}
+
+func TestRedirect(t *testing.T) {
+	var cases = []struct {
+		intention  string
+		request    *http.Request
+		path       string
+		message    model.Message
+		want       string
+		wantStatus int
+		wantHeader http.Header
+	}{
+		{
+			"simple",
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			"/success",
+			model.NewSuccessMessage("Created with success"),
+			"<a href=\"/success?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
+			http.StatusFound,
+			http.Header{
+				"Location": []string{fmt.Sprintf("/success?%s", model.NewSuccessMessage("Created with success"))},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
+			Redirect(writer, tc.request, tc.path, tc.message)
+
+			if got := writer.Code; got != tc.wantStatus {
+				t.Errorf("Redirect = %d, want %d", got, tc.wantStatus)
+			}
+
+			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.want {
+				t.Errorf("Redirect = `%s`, want `%s`", string(got), tc.want)
 			}
 
 			for key := range tc.wantHeader {
