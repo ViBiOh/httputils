@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 const (
@@ -35,6 +34,13 @@ type Message struct {
 	Content string
 }
 
+func newMessage(level, format string, a ...interface{}) Message {
+	return Message{
+		Level:   level,
+		Content: fmt.Sprintf(format, a...),
+	}
+}
+
 func (m Message) String() string {
 	if len(m.Content) == 0 {
 		return ""
@@ -54,19 +60,13 @@ func ParseMessage(r *http.Request) Message {
 }
 
 // NewSuccessMessage create a success message
-func NewSuccessMessage(content string) Message {
-	return Message{
-		Level:   "success",
-		Content: strings.TrimSpace(content),
-	}
+func NewSuccessMessage(format string, a ...interface{}) Message {
+	return newMessage("success", format, a...)
 }
 
 // NewErrorMessage create a error message
-func NewErrorMessage(content string) Message {
-	return Message{
-		Level:   "error",
-		Content: strings.TrimSpace(content),
-	}
+func NewErrorMessage(format string, a ...interface{}) Message {
+	return newMessage("error", format, a...)
 }
 
 // ErrorStatus guess HTTP status and message from given error
