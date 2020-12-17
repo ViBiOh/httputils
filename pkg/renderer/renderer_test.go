@@ -208,7 +208,7 @@ func TestHandler(t *testing.T) {
 			func(_ *http.Request) (string, int, map[string]interface{}, error) {
 				return "public", http.StatusCreated, nil, nil
 			},
-			`<!doctype html><meta charset=utf-8><title>Golang Test</title><h1>Hello !</h1>`,
+			`<!doctype html><html lang=en><meta charset=utf-8><title>Golang Test</title><h1>Hello !</h1>`,
 			http.StatusCreated,
 			http.Header{},
 		},
