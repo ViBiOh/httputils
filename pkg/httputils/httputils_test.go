@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ViBiOh/httputils/v3/pkg/model"
 	"github.com/ViBiOh/httputils/v3/pkg/request"
@@ -94,6 +95,13 @@ func TestChainMiddlewares(t *testing.T) {
 		w.Write([]byte("handler"))
 	})
 
+	middlewareNotFound := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+			next.ServeHTTP(w, r)
+		})
+	}
+
 	var cases = []struct {
 		intention   string
 		request     *http.Request
@@ -108,6 +116,14 @@ func TestChainMiddlewares(t *testing.T) {
 			nil,
 			"handler",
 			http.StatusOK,
+			http.Header{},
+		},
+		{
+			"values",
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			[]model.Middleware{middlewareNotFound},
+			"handler",
+			http.StatusNotFound,
 			http.Header{},
 		},
 	}
@@ -130,6 +146,47 @@ func TestChainMiddlewares(t *testing.T) {
 				if result := writer.Header().Get(key); result != want {
 					t.Errorf("`%s` Header = `%s`, want `%s`", key, result, want)
 				}
+			}
+		})
+	}
+}
+
+func TestSafeParseDuration(t *testing.T) {
+	type args struct {
+		name            string
+		value           string
+		defaultDuration time.Duration
+	}
+
+	var cases = []struct {
+		intention string
+		args      args
+		want      time.Duration
+	}{
+		{
+			"default",
+			args{
+				name:            "test",
+				value:           "abcd",
+				defaultDuration: time.Minute,
+			},
+			time.Minute,
+		},
+		{
+			"parsed",
+			args{
+				name:            "test",
+				value:           "5m",
+				defaultDuration: time.Minute,
+			},
+			time.Minute * 5,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if got := safeParseDuration(tc.args.name, tc.args.value, tc.args.defaultDuration); got != tc.want {
+				t.Errorf("safeParseDuration() = %s, want %s", got, tc.want)
 			}
 		})
 	}

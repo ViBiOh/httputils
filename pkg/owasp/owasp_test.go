@@ -129,6 +129,27 @@ func TestMiddleware(t *testing.T) {
 				"Strict-Transport-Security":         []string{"max-age=10886400"},
 			},
 		},
+		{
+			"next",
+			app{
+				csp:          "default-src 'self'; base-uri 'self'",
+				hsts:         false,
+				frameOptions: "deny",
+			},
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			}),
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			http.StatusNotFound,
+			http.Header{
+				"Content-Security-Policy":           []string{"default-src 'self'; base-uri 'self'"},
+				"Referrer-Policy":                   []string{"strict-origin-when-cross-origin"},
+				"X-Frame-Options":                   []string{"deny"},
+				"X-Content-Type-Options":            []string{"nosniff"},
+				"X-Xss-Protection":                  []string{"1; mode=block"},
+				"X-Permitted-Cross-Domain-Policies": []string{"none"},
+			},
+		},
 	}
 
 	for _, tc := range cases {
