@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 const (
@@ -114,4 +115,18 @@ func WrapMethodNotAllowed(err error) error {
 // WrapInternal wraps given error with internal err
 func WrapInternal(err error) error {
 	return wrapError(err, ErrInternalError)
+}
+
+// ConcatError concat errors to a single string
+func ConcatError(errs []error) error {
+	if len(errs) == 0 {
+		return nil
+	}
+
+	values := make([]string, len(errs))
+	for index, err := range errs {
+		values[index] = err.Error()
+	}
+
+	return errors.New(strings.Join(values, ", "))
 }
