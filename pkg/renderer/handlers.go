@@ -17,11 +17,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, path string, message model
 }
 
 func (a app) Error(w http.ResponseWriter, err error) {
+	logger.Error("%s", err)
 	content := a.feedContent(nil)
 
 	status, message := model.ErrorStatus(err)
 	if len(message) > 0 {
-		logger.Error("%s", message)
 		content["Message"] = model.NewErrorMessage(message)
 	}
 
