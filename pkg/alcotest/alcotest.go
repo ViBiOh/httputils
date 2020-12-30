@@ -37,7 +37,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 
 // GetStatusCode return status code of a GET on given url
 func GetStatusCode(url, userAgent string) (int, error) {
-	resp, err := request.New().NoRetry().Get(url).Header("User-Agent", userAgent).WithClient(httpClient).Send(context.Background(), nil)
+	resp, err := request.New().Get(url).Header("User-Agent", userAgent).WithClient(httpClient).Send(context.Background(), nil)
 	if resp == nil {
 		return 0, err
 	}

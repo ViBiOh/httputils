@@ -3,6 +3,7 @@ package request
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,8 +21,6 @@ var (
 			return http.ErrUseLastResponse
 		},
 	}
-
-	defaultRetryCount uint = 3
 )
 
 // Request describe a complete request
@@ -33,25 +32,15 @@ type Request struct {
 
 	header http.Header
 	client http.Client
-
-	retry bool
 }
 
 // New create a new Request
 func New() *Request {
 	return &Request{
-		retry:  true,
 		method: http.MethodGet,
 		header: http.Header{},
 		client: defaultHTTPClient,
 	}
-}
-
-// NoRetry deactivates retry on error
-func (r *Request) NoRetry() *Request {
-	r.retry = false
-
-	return r
 }
 
 // Method set method of Request
@@ -152,7 +141,7 @@ func (r *Request) Send(ctx context.Context, payload io.Reader) (*http.Response, 
 		return nil, err
 	}
 
-	return DoWithClientAndRetry(r.client, req, defaultRetryCount)
+	return DoWithClient(r.client, req)
 }
 
 // Form send request with given context and url.Values as payload
@@ -177,22 +166,28 @@ func (r *Request) JSON(ctx context.Context, body interface{}) (*http.Response, e
 	return r.ContentJSON().Send(ctx, reader)
 }
 
-// DoWithClientAndRetry send request with given client and retry for specific HTTP status
-func DoWithClientAndRetry(client http.Client, req *http.Request, retry uint) (*http.Response, error) {
+// DoWithClient send request with given client
+func DoWithClient(client http.Client, req *http.Request) (*http.Response, error) {
 	resp, err := client.Do(req)
 	if err != nil || resp.StatusCode >= http.StatusBadRequest {
-		if resp != nil && retry > 0 && CanRetry(req, resp) {
-			time.Sleep(time.Second)
-			return DoWithClientAndRetry(client, req, retry-1)
+		errMessage := strings.Builder{}
+
+		if resp != nil {
+			errMessage.WriteString(fmt.Sprintf("HTTP/%d", resp.StatusCode))
 		}
 
-		if err == nil {
-			err = fmt.Errorf("HTTP/%d", resp.StatusCode)
+		if err != nil {
+			if errMessage.Len() > 0 {
+				errMessage.WriteString(": ")
+			}
+			errMessage.WriteString(err.Error())
 		}
 
 		if errBody, bodyErr := ReadBodyResponse(resp); bodyErr == nil && len(errBody) > 0 {
-			err = fmt.Errorf("%s\n%s", err, errBody)
+			errMessage.WriteString(fmt.Sprintf("\n%s", errBody))
 		}
+
+		err = errors.New(errMessage.String())
 	}
 
 	return resp, err
@@ -200,14 +195,5 @@ func DoWithClientAndRetry(client http.Client, req *http.Request, retry uint) (*h
 
 // Do send request with default client
 func Do(req *http.Request) (*http.Response, error) {
-	return DoWithClientAndRetry(defaultHTTPClient, req, defaultRetryCount)
-}
-
-// CanRetry evaluates request and
-func CanRetry(r *http.Request, resp *http.Response) bool {
-	if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Method != http.MethodOptions {
-		return false
-	}
-
-	return resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusBadGateway || resp.StatusCode == http.StatusServiceUnavailable
+	return DoWithClient(defaultHTTPClient, req)
 }

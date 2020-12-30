@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 type testStruct struct {
@@ -18,8 +19,6 @@ type testStruct struct {
 }
 
 func TestSend(t *testing.T) {
-	var retryCount int
-
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/simple" {
 			w.WriteHeader(http.StatusOK)
@@ -66,27 +65,22 @@ func TestSend(t *testing.T) {
 		} else if r.URL.Path == "/client" {
 			w.WriteHeader(http.StatusNoContent)
 			return
-		} else if r.URL.Path == "/retry" {
-			if retryCount == 0 {
-				w.WriteHeader(http.StatusTooManyRequests)
-			} else if retryCount == 1 {
-				w.WriteHeader(http.StatusInternalServerError)
-			} else if retryCount == 2 {
-				w.WriteHeader(http.StatusBadGateway)
-			} else if retryCount == 3 {
-				w.WriteHeader(http.StatusServiceUnavailable)
-			} else {
-				w.WriteHeader(http.StatusNotImplemented)
-			}
-
-			retryCount++
-
+		} else if r.URL.Path == "/timeout" {
+			time.Sleep(time.Second * 2)
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer testServer.Close()
+
+	defaultHTTPClient = http.Client{
+		Timeout: time.Second,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
 
 	var cases = []struct {
 		intention string
@@ -193,26 +187,17 @@ func TestSend(t *testing.T) {
 			nil,
 		},
 		{
-			"retry",
-			New().Get(testServer.URL + "/retry"),
+			"timeout",
+			New().Get(testServer.URL + "/timeout"),
 			context.Background(),
 			nil,
 			"",
-			errors.New("HTTP/503"),
-		},
-		{
-			"don't retry for post",
-			New().Post(testServer.URL + "/retry"),
-			context.Background(),
-			nil,
-			"",
-			errors.New("HTTP/429"),
+			errors.New("context deadline exceeded (Client.Timeout exceeded while awaiting headers)"),
 		},
 	}
 
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			retryCount = 0
 			resp, err := testCase.request.Send(testCase.ctx, testCase.payload)
 			result, _ := ReadBodyResponse(resp)
 
@@ -222,7 +207,7 @@ func TestSend(t *testing.T) {
 				failed = true
 			} else if err != nil && testCase.wantErr == nil {
 				failed = true
-			} else if err != nil && err.Error() != testCase.wantErr.Error() {
+			} else if err != nil && !strings.Contains(err.Error(), testCase.wantErr.Error()) {
 				failed = true
 			} else if string(result) != testCase.want {
 				failed = true
