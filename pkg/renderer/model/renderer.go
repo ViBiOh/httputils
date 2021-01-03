@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/ViBiOh/httputils/v3/pkg/httperror"
 )
 
 const (
@@ -91,6 +93,26 @@ func ErrorStatus(err error) (status int, message string) {
 	}
 
 	return
+}
+
+// HandleError return a status code according to given error
+func HandleError(w http.ResponseWriter, err error) bool {
+	if err == nil {
+		return false
+	}
+
+	switch {
+	case errors.Is(err, ErrInvalid):
+		httperror.BadRequest(w, err)
+	case errors.Is(err, ErrNotFound):
+		httperror.NotFound(w)
+	case errors.Is(err, ErrMethodNotAllowed):
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	default:
+		httperror.InternalServerError(w, err)
+	}
+
+	return true
 }
 
 func wrapError(err, wrapper error) error {

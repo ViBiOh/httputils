@@ -29,7 +29,6 @@ var (
 type App interface {
 	Handler(model.TemplateFunc) http.Handler
 	Error(http.ResponseWriter, error)
-	Redirect(http.ResponseWriter, *http.Request, string, model.Message)
 }
 
 // Config of package

@@ -77,7 +77,7 @@ func TestResponseJSON(t *testing.T) {
 				return "test"
 			},
 			false,
-			"json: unsupported type: func() string: cannot marshall json\n",
+			"Oops! Something went wrong. Server's logs contain more details.\n",
 			http.StatusOK, // might not occur in real life
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},

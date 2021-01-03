@@ -139,7 +139,7 @@ func TestInternalServerError(t *testing.T) {
 		{
 			"should set body and status",
 			errors.New("failed to do something"),
-			"failed to do something\n",
+			"Oops! Something went wrong. Server's logs contain more details.\n",
 			http.StatusInternalServerError,
 		},
 	}

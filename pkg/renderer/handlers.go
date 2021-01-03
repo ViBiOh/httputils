@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/ViBiOh/httputils/v3/pkg/httperror"
@@ -13,21 +14,17 @@ import (
 )
 
 // Redirect redirect user to a defined path with a message
-func (a app) Redirect(w http.ResponseWriter, r *http.Request, path string, message model.Message) {
-	redirect := strings.Builder{}
+func Redirect(w http.ResponseWriter, r *http.Request, pathname string, message model.Message) {
+	var redirect string
 
-	value, err := url.Parse(path)
+	value, err := url.Parse(pathname)
 	if err == nil && value.Host != "" {
-		redirect.WriteString(path)
+		redirect = pathname
 	} else {
-		redirect.WriteString(a.content["PublicURL"].(string))
-		if !strings.HasPrefix(path, "/") {
-			redirect.WriteString("/")
-		}
-		redirect.WriteString(path)
+		redirect = fmt.Sprintf("%s://%s", r.URL.Scheme, path.Join(r.URL.Host, pathname))
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("%s?%s", redirect.String(), message), http.StatusFound)
+	http.Redirect(w, r, fmt.Sprintf("%s?%s", redirect, message), http.StatusFound)
 }
 
 func (a app) Error(w http.ResponseWriter, err error) {
