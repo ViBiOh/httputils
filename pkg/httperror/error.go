@@ -1,9 +1,11 @@
 package httperror
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
+	"github.com/ViBiOh/httputils/v3/pkg/model"
 )
 
 const (
@@ -48,4 +50,47 @@ func NotFound(w http.ResponseWriter) {
 // InternalServerError logs error and sets InternalServerError status
 func InternalServerError(w http.ResponseWriter, err error) {
 	httpError(w, http.StatusInternalServerError, internalError, err)
+}
+
+// HandleError return a status code according to given error
+func HandleError(w http.ResponseWriter, err error) bool {
+	if err == nil {
+		return false
+	}
+
+	switch {
+	case errors.Is(err, model.ErrInvalid):
+		BadRequest(w, err)
+	case errors.Is(err, model.ErrNotFound):
+		NotFound(w)
+	case errors.Is(err, model.ErrMethodNotAllowed):
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	default:
+		InternalServerError(w, err)
+	}
+
+	return true
+}
+
+// ErrorStatus guess HTTP status and message from given error
+func ErrorStatus(err error) (status int, message string) {
+	status = http.StatusInternalServerError
+	if err == nil {
+		return
+	}
+
+	message = err.Error()
+
+	switch {
+	case errors.Is(err, model.ErrInvalid):
+		status = http.StatusBadRequest
+	case errors.Is(err, model.ErrNotFound):
+		status = http.StatusNotFound
+	case errors.Is(err, model.ErrMethodNotAllowed):
+		status = http.StatusMethodNotAllowed
+	default:
+		message = internalError
+	}
+
+	return
 }

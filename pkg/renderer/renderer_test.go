@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ViBiOh/httputils/v3/pkg/renderer/model"
+	"github.com/ViBiOh/httputils/v3/pkg/model"
 	"github.com/ViBiOh/httputils/v3/pkg/request"
 )
 
@@ -160,7 +160,7 @@ func TestHandler(t *testing.T) {
 		intention    string
 		instance     App
 		request      *http.Request
-		templateFunc model.TemplateFunc
+		templateFunc TemplateFunc
 		want         string
 		wantStatus   int
 		wantHeader   http.Header
@@ -215,7 +215,7 @@ func TestHandler(t *testing.T) {
 		{
 			"message",
 			configuredApp,
-			httptest.NewRequest(http.MethodGet, fmt.Sprintf("/?%s", model.NewSuccessMessage("Hello world")), nil),
+			httptest.NewRequest(http.MethodGet, fmt.Sprintf("/?%s", NewSuccessMessage("Hello world")), nil),
 			func(_ *http.Request) (string, int, map[string]interface{}, error) {
 				return "error", http.StatusUnauthorized, nil, nil
 			},
@@ -264,7 +264,7 @@ func TestRedirect(t *testing.T) {
 		intention  string
 		request    *http.Request
 		path       string
-		message    model.Message
+		message    Message
 		want       string
 		wantStatus int
 		wantHeader http.Header
@@ -273,33 +273,33 @@ func TestRedirect(t *testing.T) {
 			"simple",
 			httptest.NewRequest(http.MethodGet, "http://vibioh.fr/", nil),
 			"/",
-			model.NewSuccessMessage("Created with success"),
+			NewSuccessMessage("Created with success"),
 			"<a href=\"http://vibioh.fr?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
 			http.StatusFound,
 			http.Header{
-				"Location": []string{fmt.Sprintf("http://vibioh.fr?%s", model.NewSuccessMessage("Created with success"))},
+				"Location": []string{fmt.Sprintf("http://vibioh.fr?%s", NewSuccessMessage("Created with success"))},
 			},
 		},
 		{
 			"relative URL",
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success",
-			model.NewSuccessMessage("Created with success"),
+			NewSuccessMessage("Created with success"),
 			"<a href=\"http://localhost:1080/success?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
 			http.StatusFound,
 			http.Header{
-				"Location": []string{fmt.Sprintf("http://localhost:1080/success?%s", model.NewSuccessMessage("Created with success"))},
+				"Location": []string{fmt.Sprintf("http://localhost:1080/success?%s", NewSuccessMessage("Created with success"))},
 			},
 		},
 		{
 			"exact URL",
 			httptest.NewRequest(http.MethodGet, "http://vibioh.fr", nil),
 			"https://app.local/success",
-			model.NewSuccessMessage("Created with success"),
+			NewSuccessMessage("Created with success"),
 			"<a href=\"https://app.local/success?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
 			http.StatusFound,
 			http.Header{
-				"Location": []string{fmt.Sprintf("https://app.local/success?%s", model.NewSuccessMessage("Created with success"))},
+				"Location": []string{fmt.Sprintf("https://app.local/success?%s", NewSuccessMessage("Created with success"))},
 			},
 		},
 	}

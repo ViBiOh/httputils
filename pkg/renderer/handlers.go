@@ -9,12 +9,11 @@ import (
 
 	"github.com/ViBiOh/httputils/v3/pkg/httperror"
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
-	"github.com/ViBiOh/httputils/v3/pkg/renderer/model"
 	"github.com/ViBiOh/httputils/v3/pkg/templates"
 )
 
 // Redirect redirect user to a defined path with a message
-func Redirect(w http.ResponseWriter, r *http.Request, pathname string, message model.Message) {
+func Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
 	var redirect string
 
 	value, err := url.Parse(pathname)
@@ -31,9 +30,9 @@ func (a app) Error(w http.ResponseWriter, err error) {
 	logger.Error("%s", err)
 	content := a.feedContent(nil)
 
-	status, message := model.ErrorStatus(err)
+	status, message := httperror.ErrorStatus(err)
 	if len(message) > 0 {
-		content["Message"] = model.NewErrorMessage(message)
+		content["Message"] = NewErrorMessage(message)
 	}
 
 	if err := templates.ResponseHTMLTemplate(a.tpl.Lookup("error"), w, content, status); err != nil {
@@ -41,7 +40,7 @@ func (a app) Error(w http.ResponseWriter, err error) {
 	}
 }
 
-func (a app) html(w http.ResponseWriter, r *http.Request, templateFunc model.TemplateFunc) {
+func (a app) html(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
 	templateName, status, content, err := templateFunc(r)
 	if err != nil {
 		a.Error(w, err)
@@ -50,7 +49,7 @@ func (a app) html(w http.ResponseWriter, r *http.Request, templateFunc model.Tem
 
 	content = a.feedContent(content)
 
-	message := model.ParseMessage(r)
+	message := ParseMessage(r)
 	if len(message.Content) > 0 {
 		content["Message"] = message
 	}

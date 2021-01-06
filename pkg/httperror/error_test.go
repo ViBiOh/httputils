@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ViBiOh/httputils/v3/pkg/model"
 	"github.com/ViBiOh/httputils/v3/pkg/request"
 )
 
@@ -155,6 +156,76 @@ func TestInternalServerError(t *testing.T) {
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
 				t.Errorf("InternalServerError() = `%s`, want `%s`", string(result), testCase.want)
+			}
+		})
+	}
+}
+
+func TestErrorStatus(t *testing.T) {
+	type args struct {
+		err error
+	}
+
+	var cases = []struct {
+		intention   string
+		args        args
+		want        int
+		wantMessage string
+	}{
+		{
+			"nil",
+			args{
+				err: nil,
+			},
+			http.StatusInternalServerError,
+			"",
+		},
+		{
+			"simple",
+			args{
+				err: errors.New("boom"),
+			},
+			http.StatusInternalServerError,
+			internalError,
+		},
+		{
+			"invalid",
+			args{
+				err: model.WrapInvalid(errors.New("bad request")),
+			},
+			http.StatusBadRequest,
+			"bad request",
+		},
+		{
+			"not found",
+			args{
+				err: model.WrapNotFound(errors.New("unknown")),
+			},
+			http.StatusNotFound,
+			"unknown",
+		},
+		{
+			"method",
+			args{
+				err: model.WrapMethodNotAllowed(errors.New("not allowed")),
+			},
+			http.StatusMethodNotAllowed,
+			"not allowed",
+		},
+		{
+			"internal",
+			args{
+				err: model.WrapInternal(errors.New("boom")),
+			},
+			http.StatusMethodNotAllowed,
+			internalError,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if got, gotMessage := ErrorStatus(tc.args.err); got != tc.want && gotMessage != tc.wantMessage {
+				t.Errorf("ErrorStatus() = (%d, `%s`), want (%d, `%s`)", got, gotMessage, tc.want, tc.wantMessage)
 			}
 		})
 	}

@@ -11,7 +11,6 @@ import (
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/httperror"
-	"github.com/ViBiOh/httputils/v3/pkg/renderer/model"
 	"github.com/ViBiOh/httputils/v3/pkg/templates"
 )
 
@@ -27,7 +26,7 @@ var (
 
 // App of package
 type App interface {
-	Handler(model.TemplateFunc) http.Handler
+	Handler(TemplateFunc) http.Handler
 	Error(http.ResponseWriter, error)
 }
 
@@ -95,7 +94,7 @@ func (a app) feedContent(content map[string]interface{}) map[string]interface{} 
 	return content
 }
 
-func (a app) Handler(templateFunc model.TemplateFunc) http.Handler {
+func (a app) Handler(templateFunc TemplateFunc) http.Handler {
 	svgHandler := http.StripPrefix(svgPath, a.svg())
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
