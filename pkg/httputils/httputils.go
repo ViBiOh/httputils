@@ -132,21 +132,16 @@ func (a app) ListenAndServe(handler http.Handler, pingers []model.Pinger, middle
 	}
 }
 
-func (a app) waitForGracefulShutdown(err <-chan error, done chan<- struct{}) {
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGTERM)
-
-	select {
-	case err := <-err:
+func (a app) waitForGracefulShutdown(errors <-chan error, done chan<- struct{}) {
+	defer close(done)
+	if err := WaitForTermination(errors); err != nil {
 		logger.Error("%s", err)
-	case sig := <-signals:
-		logger.Info("%s received", sig)
-		close(done)
+		return
+	}
 
-		if a.graceDuration != 0 {
-			logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
-			time.Sleep(a.graceDuration)
-		}
+	if a.graceDuration != 0 {
+		logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
+		time.Sleep(a.graceDuration)
 	}
 }
 
@@ -201,6 +196,23 @@ func healthHandler(okStatus int, done <-chan struct{}, pingers ...model.Pinger) 
 
 		w.WriteHeader(okStatus)
 	})
+}
+
+// WaitForTermination waits for an error or a n end signal
+func WaitForTermination(errors <-chan error) error {
+	signals := make(chan os.Signal, 1)
+	defer close(signals)
+
+	signal.Notify(signals, syscall.SIGTERM)
+	defer signal.Stop(signals)
+
+	select {
+	case err := <-errors:
+		return err
+	case sig := <-signals:
+		logger.Info("%s received", sig)
+		return nil
+	}
 }
 
 // ChainMiddlewares chain middlewares call from last to first (so first item is the first called)
