@@ -19,6 +19,7 @@ import (
 // App of package
 type App interface {
 	ListenAndServe(http.Handler, []model.Pinger, ...model.Middleware)
+	GetDone() chan<- struct{}
 }
 
 // Config of package
@@ -37,7 +38,7 @@ type Config struct {
 }
 
 type app struct {
-	Done chan struct{}
+	done chan struct{}
 
 	listenAddress string
 	cert          string
@@ -82,8 +83,13 @@ func New(config Config) App {
 		graceDuration:   safeParseDuration("GraceDuration", *config.graceDuration, 30*time.Second),
 		shutdownTimeout: safeParseDuration("ShutdownTimeout", *config.shutdownTimeout, 10*time.Second),
 
-		Done: make(chan struct{}),
+		done: make(chan struct{}),
 	}
+}
+
+// ListenAndServe starts server
+func (a app) GetDone() chan<- struct{} {
+	return a.done
 }
 
 // ListenAndServe starts server
@@ -91,7 +97,7 @@ func (a app) ListenAndServe(handler http.Handler, pingers []model.Pinger, middle
 	versionHandler := versionHandler()
 	defaultHandler := ChainMiddlewares(handler, middlewares...)
 
-	healthHandler := healthHandler(a.okStatus, a.Done, pingers...)
+	healthHandler := healthHandler(a.okStatus, a.done, pingers...)
 
 	httpServer := http.Server{
 		Addr:         a.listenAddress,
@@ -142,7 +148,7 @@ func (a app) ListenAndServe(handler http.Handler, pingers []model.Pinger, middle
 }
 
 func (a app) waitForTermination(errors <-chan error) {
-	defer close(a.Done)
+	defer close(a.done)
 
 	if err := WaitForTermination(errors); err != nil {
 		logger.Error("%s", err)
