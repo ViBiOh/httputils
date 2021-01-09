@@ -37,16 +37,19 @@ type Config struct {
 }
 
 type app struct {
+	Done chan struct{}
+
 	listenAddress string
 	cert          string
 	key           string
-	okStatus      int
 
 	readTimeout     time.Duration
 	writeTimeout    time.Duration
 	idleTimeout     time.Duration
 	graceDuration   time.Duration
 	shutdownTimeout time.Duration
+
+	okStatus int
 }
 
 // Flags adds flags for configuring package
@@ -78,6 +81,8 @@ func New(config Config) App {
 		idleTimeout:     safeParseDuration("IdleTimeout", *config.idleTimeout, 2*time.Minute),
 		graceDuration:   safeParseDuration("GraceDuration", *config.graceDuration, 30*time.Second),
 		shutdownTimeout: safeParseDuration("ShutdownTimeout", *config.shutdownTimeout, 10*time.Second),
+
+		Done: make(chan struct{}),
 	}
 }
 
@@ -86,8 +91,7 @@ func (a app) ListenAndServe(handler http.Handler, pingers []model.Pinger, middle
 	versionHandler := versionHandler()
 	defaultHandler := ChainMiddlewares(handler, middlewares...)
 
-	done := make(chan struct{})
-	healthHandler := healthHandler(a.okStatus, done, pingers...)
+	healthHandler := healthHandler(a.okStatus, a.Done, pingers...)
 
 	httpServer := http.Server{
 		Addr:         a.listenAddress,
@@ -110,19 +114,24 @@ func (a app) ListenAndServe(handler http.Handler, pingers []model.Pinger, middle
 
 	logger.Info("Starting HTTP server on %s", httpServer.Addr)
 
-	err := make(chan error, 1)
+	errors := make(chan error, 1)
+	defer close(errors)
 
 	go func() {
 		if len(a.cert) != 0 && len(a.key) != 0 {
 			logger.Info("Listening with TLS")
-			err <- httpServer.ListenAndServeTLS(a.cert, a.key)
+			errors <- httpServer.ListenAndServeTLS(a.cert, a.key)
 		} else {
 			logger.Warn("Listening without TLS")
-			err <- httpServer.ListenAndServe()
+			errors <- httpServer.ListenAndServe()
 		}
 	}()
 
-	a.waitForGracefulShutdown(err, done)
+	a.waitForTermination(errors)
+	if a.graceDuration != 0 {
+		logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
+		time.Sleep(a.graceDuration)
+	}
 
 	ctx, cancelFn := context.WithTimeout(context.Background(), a.shutdownTimeout)
 	defer cancelFn()
@@ -132,16 +141,12 @@ func (a app) ListenAndServe(handler http.Handler, pingers []model.Pinger, middle
 	}
 }
 
-func (a app) waitForGracefulShutdown(errors <-chan error, done chan<- struct{}) {
-	defer close(done)
+func (a app) waitForTermination(errors <-chan error) {
+	defer close(a.Done)
+
 	if err := WaitForTermination(errors); err != nil {
 		logger.Error("%s", err)
 		return
-	}
-
-	if a.graceDuration != 0 {
-		logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
-		time.Sleep(a.graceDuration)
 	}
 }
 

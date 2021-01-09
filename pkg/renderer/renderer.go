@@ -40,8 +40,8 @@ type Config struct {
 
 type app struct {
 	tpl        *template.Template
-	staticsDir string
 	content    map[string]interface{}
+	staticsDir string
 }
 
 // Flags adds flags for configuring package

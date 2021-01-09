@@ -30,17 +30,16 @@ func (c *Clock) Now() time.Time {
 
 // Cron definition
 type Cron struct {
-	now chan time.Time
-
 	dayTime       time.Time
 	retryInterval time.Duration
 	interval      time.Duration
 
+	now    chan time.Time
 	clock  *Clock
 	errors []error
 
-	day      byte
 	maxRetry uint
+	day      byte
 }
 
 // New create new cron
