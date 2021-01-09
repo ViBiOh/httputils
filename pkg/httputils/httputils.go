@@ -19,7 +19,7 @@ import (
 // App of package
 type App interface {
 	ListenAndServe(http.Handler, []model.Pinger, ...model.Middleware)
-	GetDone() chan<- struct{}
+	GetDone() <-chan struct{}
 }
 
 // Config of package
@@ -88,7 +88,7 @@ func New(config Config) App {
 }
 
 // ListenAndServe starts server
-func (a app) GetDone() chan<- struct{} {
+func (a app) GetDone() <-chan struct{} {
 	return a.done
 }
 
