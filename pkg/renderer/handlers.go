@@ -20,7 +20,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, pathname string, message M
 	if err == nil && value.Host != "" {
 		redirect = pathname
 	} else {
-		redirect = fmt.Sprintf("%s://%s", r.URL.Scheme, path.Join(r.URL.Host, pathname))
+		if r.URL.Scheme != "" {
+			redirect = fmt.Sprintf("%s://", r.URL.Scheme)
+		}
+
+		redirect += path.Join(r.URL.Host, pathname)
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("%s?%s", redirect, message), http.StatusFound)
