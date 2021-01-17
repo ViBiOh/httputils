@@ -273,13 +273,9 @@ func TestHasError(t *testing.T) {
 		},
 	}
 
-	onError := func(err error) {
-		fmt.Println(err)
-	}
-
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
-			if result := testCase.cron.hasError(onError); result != testCase.want {
+			if result := testCase.cron.hasError(); result != testCase.want {
 				t.Errorf("hasError() = %t, want %t", result, testCase.want)
 			}
 		})
@@ -370,7 +366,7 @@ func TestStart(t *testing.T) {
 			var wg sync.WaitGroup
 			wg.Add(1)
 
-			go testCase.cron.Start(testCase.action(&wg, testCase.cron), testCase.onError(&wg, testCase.cron))
+			go testCase.cron.OnError(testCase.onError(&wg, testCase.cron)).Start(testCase.action(&wg, testCase.cron), nil)
 
 			done := make(chan struct{})
 			go func() {
@@ -380,10 +376,10 @@ func TestStart(t *testing.T) {
 
 			select {
 			case <-time.After(time.Second * 5):
-				testCase.cron.Stop()
+				testCase.cron.Shutdown()
 				t.Errorf("Start() did not complete within 5 seconds")
 			case <-done:
-				testCase.cron.Stop()
+				testCase.cron.Shutdown()
 			}
 		})
 	}

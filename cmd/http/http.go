@@ -4,9 +4,12 @@ import (
 	"flag"
 	"net/http"
 	"os"
+	"syscall"
+	"time"
 
 	"github.com/ViBiOh/httputils/v3/pkg/alcotest"
 	"github.com/ViBiOh/httputils/v3/pkg/cors"
+	"github.com/ViBiOh/httputils/v3/pkg/cron"
 	"github.com/ViBiOh/httputils/v3/pkg/httputils"
 	"github.com/ViBiOh/httputils/v3/pkg/logger"
 	"github.com/ViBiOh/httputils/v3/pkg/owasp"
@@ -29,7 +32,18 @@ func main() {
 	logger.Global(logger.New(loggerConfig))
 	defer logger.Close()
 
-	httputils.New(serverConfig).ListenAndServe(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httputils.New(serverConfig)
+
+	speakingClock := cron.New().Each(5 * time.Minute).OnSignal(syscall.SIGUSR1).OnError(func(err error) {
+		logger.Error("error while running cron: %s", err)
+	}).Now()
+	go speakingClock.Start(func(moment time.Time) error {
+		logger.Info("Clock is ticking %s", moment)
+		return nil
+	}, server.GetDone())
+	defer speakingClock.Shutdown()
+
+	server.ListenAndServe(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := w.Write([]byte("It works!")); err != nil {
 			logger.Warn("unable to write: %s", err)
 		}

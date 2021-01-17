@@ -3,6 +3,8 @@ package cron
 import (
 	"errors"
 	"fmt"
+	"os"
+	"os/signal"
 	"strings"
 	"time"
 )
@@ -30,24 +32,30 @@ func (c *Clock) Now() time.Time {
 
 // Cron definition
 type Cron struct {
-	dayTime       time.Time
 	retryInterval time.Duration
 	interval      time.Duration
+	dayTime       time.Time
 
-	now    chan time.Time
 	clock  *Clock
-	errors []error
+	now    chan time.Time
+	signal os.Signal
 
-	maxRetry uint
+	onError func(error)
+	errors  []error
+
 	day      byte
+	maxRetry uint
 }
 
-// New create new cron
+// New creates new cron
 func New() *Cron {
 	return &Cron{
 		dayTime: time.Date(0, 0, 0, 8, 0, 0, 0, time.UTC),
 		now:     make(chan time.Time, 1),
 		errors:  make([]error, 0),
+		onError: func(err error) {
+			fmt.Println(err)
+		},
 	}
 }
 
@@ -69,66 +77,66 @@ func (c *Cron) String() string {
 	return buffer.String()
 }
 
-// Days set recurence to every day
+// Days sets recurence to every day
 func (c *Cron) Days() *Cron {
 	return c.Monday().Tuesday().Wednesday().Thursday().Friday().Saturday().Sunday()
 }
 
-// Weekdays set recurence to every day except sunday and saturday
+// Weekdays sets recurence to every day except sunday and saturday
 func (c *Cron) Weekdays() *Cron {
 	return c.Monday().Tuesday().Wednesday().Thursday().Friday()
 }
 
-// Sunday set recurence to every Sunday
+// Sunday sets recurence to every Sunday
 func (c *Cron) Sunday() *Cron {
 	c.day = c.day | 1<<time.Sunday
 
 	return c
 }
 
-// Monday set recurence to every Monday
+// Monday sets recurence to every Monday
 func (c *Cron) Monday() *Cron {
 	c.day = c.day | 1<<time.Monday
 
 	return c
 }
 
-// Tuesday set recurence to every Tuesday
+// Tuesday sets recurence to every Tuesday
 func (c *Cron) Tuesday() *Cron {
 	c.day = c.day | 1<<time.Tuesday
 
 	return c
 }
 
-// Wednesday set recurence to every Wednesday
+// Wednesday sets recurence to every Wednesday
 func (c *Cron) Wednesday() *Cron {
 	c.day = c.day | 1<<time.Wednesday
 
 	return c
 }
 
-// Thursday set recurence to every Thursday
+// Thursday sets recurence to every Thursday
 func (c *Cron) Thursday() *Cron {
 	c.day = c.day | 1<<time.Thursday
 
 	return c
 }
 
-// Friday set recurence to every Friday
+// Friday sets recurence to every Friday
 func (c *Cron) Friday() *Cron {
 	c.day = c.day | 1<<time.Friday
 
 	return c
 }
 
-// Saturday set recurence to every Saturday
+// Saturday sets recurence to every Saturday
 func (c *Cron) Saturday() *Cron {
 	c.day = c.day | 1<<time.Saturday
 
 	return c
 }
 
-// At set hour of run in format HH:MM
+// At sets hour of run in format HH:MM
 func (c *Cron) At(hour string) *Cron {
 	hourTime, err := time.Parse(hourFormat, hour)
 
@@ -141,7 +149,7 @@ func (c *Cron) At(hour string) *Cron {
 	return c
 }
 
-// In set timezone
+// In sets timezone
 func (c *Cron) In(tz string) *Cron {
 	timezone, err := time.LoadLocation(tz)
 	if err != nil {
@@ -160,7 +168,7 @@ func (c *Cron) In(tz string) *Cron {
 	return c
 }
 
-// Each set interval of each run
+// Each sets interval of each run
 func (c *Cron) Each(interval time.Duration) *Cron {
 	if c.day != 0 {
 		c.errors = append(c.errors, errors.New("cannot set interval and days on the same cron"))
@@ -171,21 +179,35 @@ func (c *Cron) Each(interval time.Duration) *Cron {
 	return c
 }
 
-// Retry set interval retry if action failed
+// Retry sets interval retry if action failed
 func (c *Cron) Retry(retryInterval time.Duration) *Cron {
 	c.retryInterval = retryInterval
 
 	return c
 }
 
-// MaxRetry set maximum retry count
+// MaxRetry sets maximum retry count
 func (c *Cron) MaxRetry(maxRetry uint) *Cron {
 	c.maxRetry = maxRetry
 
 	return c
 }
 
-// Clock set clock that give current time, mostly for testing purpose
+// OnSignal sets signal listened for trigerring cron
+func (c *Cron) OnSignal(signal os.Signal) *Cron {
+	c.signal = signal
+
+	return c
+}
+
+// OnError defines error handling function
+func (c *Cron) OnError(onError func(error)) *Cron {
+	c.onError = onError
+
+	return c
+}
+
+// Clock sets clock that give current time, mostly for testing purpose
 func (c *Cron) Clock(clock *Clock) *Cron {
 	c.clock = clock
 
@@ -220,21 +242,21 @@ func (c *Cron) getTickerDuration(shouldRetry bool) time.Duration {
 	return nextTime.Sub(now)
 }
 
-func (c *Cron) hasError(onError func(error)) bool {
+func (c *Cron) hasError() bool {
 	if len(c.errors) > 0 {
 		for _, err := range c.errors {
-			onError(err)
+			c.onError(err)
 		}
 		return true
 	}
 
 	if c.day == 0 && c.interval == 0 {
-		onError(errors.New("no schedule configuration"))
+		c.onError(errors.New("no schedule configuration"))
 		return true
 	}
 
 	if c.maxRetry != 0 && c.retryInterval == 0 {
-		onError(errors.New("no retry interval for max retry"))
+		c.onError(errors.New("no retry interval for max retry"))
 		return true
 	}
 
@@ -249,8 +271,8 @@ func (c *Cron) Now() *Cron {
 }
 
 // Start cron
-func (c *Cron) Start(action func(time.Time) error, onError func(error)) {
-	if c.hasError(onError) {
+func (c *Cron) Start(action func(time.Time) error, done <-chan struct{}) {
+	if c.hasError() {
 		return
 	}
 
@@ -259,7 +281,7 @@ func (c *Cron) Start(action func(time.Time) error, onError func(error)) {
 
 	do := func(now time.Time) {
 		if err := action(now); err != nil {
-			onError(err)
+			c.onError(err)
 
 			retryCount++
 			shouldRetry = retryCount <= c.maxRetry
@@ -270,24 +292,33 @@ func (c *Cron) Start(action func(time.Time) error, onError func(error)) {
 	}
 
 	for {
-		duration := c.getTickerDuration(shouldRetry)
-		ticker := time.NewTicker(duration)
+		ticker := time.NewTicker(c.getTickerDuration(shouldRetry))
+		defer ticker.Stop()
+
+		signals := make(chan os.Signal, 1)
+		defer close(signals)
+
+		if c.signal != nil {
+			signal.Notify(signals, c.signal)
+			defer signal.Stop(signals)
+		}
 
 		select {
-		case now, ok := <-c.now:
-			ticker.Stop()
-			if ok {
-				do(now)
-			} else {
-				return
-			}
+		case <-done:
+			return
+		case <-signals:
+			do(c.clock.Now())
 		case now := <-ticker.C:
 			do(now)
+		case now, ok := <-c.now:
+			if ok {
+				do(now)
+			}
 		}
 	}
 }
 
-// Stop cron
-func (c *Cron) Stop() {
+// Shutdown cron, do not attempt Start() after
+func (c *Cron) Shutdown() {
 	close(c.now)
 }
