@@ -50,7 +50,7 @@ type Cron struct {
 // New creates new cron
 func New() *Cron {
 	return &Cron{
-		dayTime: time.Date(0, 0, 0, 8, 0, 0, 0, time.UTC),
+		dayTime: time.Date(0, 1, 1, 8, 0, 0, 0, time.UTC),
 		now:     make(chan time.Time, 1),
 		errors:  make([]error, 0),
 		onError: func(err error) {
@@ -138,7 +138,7 @@ func (c *Cron) Saturday() *Cron {
 
 // At sets hour of run in format HH:MM
 func (c *Cron) At(hour string) *Cron {
-	hourTime, err := time.Parse(hourFormat, hour)
+	hourTime, err := time.ParseInLocation(hourFormat, hour, c.dayTime.Location())
 
 	if err != nil {
 		c.errors = append(c.errors, err)

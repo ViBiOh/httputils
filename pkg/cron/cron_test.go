@@ -3,8 +3,10 @@ package cron
 import (
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -77,10 +79,10 @@ func TestString(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := testCase.cron.String(); result != testCase.want {
-				t.Errorf("String() = `%s`, want `%s`", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := tc.cron.String(); result != tc.want {
+				t.Errorf("String() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -110,25 +112,87 @@ func TestAt(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			testCase.cron.At(testCase.input)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			tc.cron.At(tc.input)
 
 			failed := false
 
-			if len(testCase.cron.errors) == 0 && testCase.wantErr != nil {
+			if len(tc.cron.errors) == 0 && tc.wantErr != nil {
 				failed = true
-			} else if len(testCase.cron.errors) != 0 && testCase.wantErr == nil {
+			} else if len(tc.cron.errors) != 0 && tc.wantErr == nil {
 				failed = true
-			} else if len(testCase.cron.errors) > 0 && testCase.cron.errors[0].Error() != testCase.wantErr.Error() {
+			} else if len(tc.cron.errors) > 0 && tc.cron.errors[0].Error() != tc.wantErr.Error() {
 				failed = true
-			} else if testCase.cron.dayTime.String() != testCase.want.String() {
+			} else if tc.cron.dayTime.String() != tc.want.String() {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("At() = (`%s`, `%s`), want (`%s`, `%s`)", testCase.cron.dayTime, testCase.cron.errors, testCase.want, testCase.wantErr)
+				t.Errorf("At() = (`%s`, `%s`), want (`%s`, `%s`)", tc.cron.dayTime, tc.cron.errors, tc.want, tc.wantErr)
 			}
+		})
+	}
+}
+
+func TestIn(t *testing.T) {
+	timezone, err := time.LoadLocation("Europe/Paris")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	type args struct {
+		tz string
+	}
+
+	var cases = []struct {
+		intention string
+		instance  *Cron
+		args      args
+		want      time.Time
+		wantErr   error
+	}{
+		{
+			"invalid location",
+			New().At("08:00"),
+			args{
+				tz: "test",
+			},
+			time.Date(0, 1, 1, 8, 0, 0, 0, time.UTC),
+			errors.New("unknown time zone test"),
+		},
+		{
+			"converted time",
+			New().At("08:00"),
+			args{
+				tz: "Europe/Paris",
+			},
+			time.Date(0, 1, 1, 8, 0, 0, 0, timezone),
+			nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			tc.instance.In(tc.args.tz)
+
+			failed := false
+
+			if len(tc.instance.errors) == 0 && tc.wantErr != nil {
+				failed = true
+			} else if len(tc.instance.errors) != 0 && tc.wantErr == nil {
+				failed = true
+			} else if len(tc.instance.errors) > 0 && tc.instance.errors[0].Error() != tc.wantErr.Error() {
+				failed = true
+			} else if tc.instance.dayTime.String() != tc.want.String() {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("In() = (`%s`, `%s`), want (`%s`, `%s`)", tc.instance.dayTime, tc.instance.errors, tc.want, tc.wantErr)
+			}
+
 		})
 	}
 }
@@ -160,10 +224,10 @@ func TestFindMatchingDay(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := testCase.cron.findMatchingDay(testCase.input); result.String() != testCase.want.String() {
-				t.Errorf("findMatchingDay() = `%s`, want `%s`", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := tc.cron.findMatchingDay(tc.input); result.String() != tc.want.String() {
+				t.Errorf("findMatchingDay() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -220,11 +284,11 @@ func TestGetTickerDuration(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			result := testCase.cron.getTickerDuration(testCase.input)
-			if !reflect.DeepEqual(result, testCase.want) {
-				t.Errorf("getTickerDuration() = `%s`, want `%s`", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			result := tc.cron.getTickerDuration(tc.input)
+			if !reflect.DeepEqual(result, tc.want) {
+				t.Errorf("getTickerDuration() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -273,10 +337,10 @@ func TestHasError(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := testCase.cron.hasError(); result != testCase.want {
-				t.Errorf("hasError() = %t, want %t", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := tc.cron.hasError(); result != tc.want {
+				t.Errorf("hasError() = %t, want %t", result, tc.want)
 			}
 		})
 	}
@@ -343,6 +407,30 @@ func TestStart(t *testing.T) {
 			},
 		},
 		{
+			"run on signal",
+			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)}).OnSignal(syscall.SIGUSR1),
+			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
+				p, err := os.FindProcess(os.Getpid())
+				if err != nil {
+					t.Error(err)
+				}
+
+				go func() {
+					time.Sleep(time.Second)
+					p.Signal(syscall.SIGUSR1)
+				}()
+
+				return func(_ time.Time) error {
+					wg.Done()
+					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.UTC)})
+					return nil
+				}
+			},
+			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
+				return func(err error) {}
+			},
+		},
+		{
 			"fail if misconfigured",
 			New().Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)}),
 			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
@@ -361,12 +449,12 @@ func TestStart(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			var wg sync.WaitGroup
 			wg.Add(1)
 
-			go testCase.cron.OnError(testCase.onError(&wg, testCase.cron)).Start(testCase.action(&wg, testCase.cron), nil)
+			go tc.cron.OnError(tc.onError(&wg, tc.cron)).Start(tc.action(&wg, tc.cron), nil)
 
 			done := make(chan struct{})
 			go func() {
@@ -376,10 +464,10 @@ func TestStart(t *testing.T) {
 
 			select {
 			case <-time.After(time.Second * 5):
-				testCase.cron.Shutdown()
+				tc.cron.Shutdown()
 				t.Errorf("Start() did not complete within 5 seconds")
 			case <-done:
-				testCase.cron.Shutdown()
+				tc.cron.Shutdown()
 			}
 		})
 	}
