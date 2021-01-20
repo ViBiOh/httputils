@@ -291,18 +291,18 @@ func (c *Cron) Start(action func(time.Time) error, done <-chan struct{}) {
 		}
 	}
 
+	signals := make(chan os.Signal, 1)
+	defer close(signals)
+
+	if c.signal != nil {
+		signal.Notify(signals, c.signal)
+		defer signal.Stop(signals)
+	}
+
+	ticker := time.NewTicker(c.getTickerDuration(shouldRetry))
+	defer ticker.Stop()
+
 	for {
-		ticker := time.NewTicker(c.getTickerDuration(shouldRetry))
-		defer ticker.Stop()
-
-		signals := make(chan os.Signal, 1)
-		defer close(signals)
-
-		if c.signal != nil {
-			signal.Notify(signals, c.signal)
-			defer signal.Stop(signals)
-		}
-
 		select {
 		case <-done:
 			return
@@ -315,6 +315,8 @@ func (c *Cron) Start(action func(time.Time) error, done <-chan struct{}) {
 				do(now)
 			}
 		}
+
+		ticker.Reset(c.getTickerDuration(shouldRetry))
 	}
 }
 
