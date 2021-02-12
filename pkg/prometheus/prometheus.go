@@ -98,8 +98,7 @@ func (a app) instrumentHandler(next http.Handler) http.Handler {
 		Name:    "http_response_size_bytes",
 		Help:    "A histogram of response sizes for requests.",
 		Buckets: []float64{200, 500, 900, 1500},
-	},
-		[]string{})
+	}, nil)
 	a.registry.MustRegister(sizeVec)
 	instrumentedHandler = promhttp.InstrumentHandlerResponseSize(sizeVec, instrumentedHandler)
 
