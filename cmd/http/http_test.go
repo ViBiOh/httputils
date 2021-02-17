@@ -34,6 +34,7 @@ func BenchmarkNoMiddleware(b *testing.B) {
 	fs.String("test.bench", "", "")
 	fs.String("test.benchmem", "", "")
 	fs.String("test.run", "", "")
+	fs.String("test.paniconexit0", "", "")
 
 	if err := fs.Parse(os.Args[1:]); err != nil {
 		b.Error(err)
@@ -52,6 +53,7 @@ func BenchmarkFullMiddlewares(b *testing.B) {
 	fs.String("test.bench", "", "")
 	fs.String("test.benchmem", "", "")
 	fs.String("test.run", "", "")
+	fs.String("test.paniconexit0", "", "")
 
 	prometheusConfig := prometheus.Flags(fs, "prometheus")
 	owaspConfig := owasp.Flags(fs, "")
