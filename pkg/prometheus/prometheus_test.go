@@ -19,13 +19,13 @@ func TestFlags(t *testing.T) {
 	}{
 		{
 			"simple",
-			"Usage of simple:\n  -ignore string\n    \t[prometheus] Ignored path prefixes for metrics, comma separated {SIMPLE_IGNORE}\n  -path string\n    \t[prometheus] Path for exposing metrics {SIMPLE_PATH} (default \"/metrics\")\n",
+			"Usage of simple:\n  -ignore string\n    \t[prometheus] Ignored path prefixes for metrics, comma separated {SIMPLE_IGNORE}\n",
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder
@@ -34,15 +34,14 @@ func TestFlags(t *testing.T) {
 
 			result := writer.String()
 
-			if result != testCase.want {
-				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
+			if result != tc.want {
+				t.Errorf("Flags() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
 }
 
 func TestMiddleware(t *testing.T) {
-	metricsPath := "/metrics"
 	metricsIgnore := ""
 	metricsIgnoreValue := "/api"
 
@@ -56,7 +55,6 @@ func TestMiddleware(t *testing.T) {
 			"golang metrics",
 			New(Config{
 				ignore: &metricsIgnore,
-				path:   &metricsPath,
 			}),
 			[]*http.Request{
 				httptest.NewRequest(http.MethodGet, "/", nil),
@@ -67,7 +65,6 @@ func TestMiddleware(t *testing.T) {
 			"http metrics",
 			New(Config{
 				ignore: &metricsIgnore,
-				path:   &metricsPath,
 			}),
 			[]*http.Request{
 				httptest.NewRequest(http.MethodGet, "/", nil),
@@ -78,7 +75,6 @@ func TestMiddleware(t *testing.T) {
 			"http_requests_total",
 			New(Config{
 				ignore: &metricsIgnoreValue,
-				path:   &metricsPath,
 			}),
 			[]*http.Request{
 				httptest.NewRequest(http.MethodPost, "/", nil),
@@ -89,21 +85,21 @@ func TestMiddleware(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			handler := testCase.instance.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			handler := tc.instance.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 			}))
 
-			for _, req := range testCase.requests {
+			for _, req := range tc.requests {
 				handler.ServeHTTP(httptest.NewRecorder(), req)
 			}
 
 			writer := httptest.NewRecorder()
-			handler.ServeHTTP(writer, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+			tc.instance.Handler().ServeHTTP(writer, httptest.NewRequest(http.MethodGet, metricsEndpoint, nil))
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); !strings.Contains(string(result), testCase.want) {
-				t.Errorf("Middleware() = `%s`, want `%s`", string(result), testCase.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); !strings.Contains(string(result), tc.want) {
+				t.Errorf("Middleware() = `%s`, want `%s`", string(result), tc.want)
 			}
 		})
 	}
@@ -126,10 +122,10 @@ func TestRegisterer(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := testCase.instance.Registerer(); !reflect.DeepEqual(result, testCase.want) {
-				t.Errorf("Registerer() = %#v, want %#v", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := tc.instance.Registerer(); !reflect.DeepEqual(result, tc.want) {
+				t.Errorf("Registerer() = %#v, want %#v", result, tc.want)
 			}
 		})
 	}
@@ -150,7 +146,7 @@ func TestIsIgnored(t *testing.T) {
 			"empty",
 			app{},
 			args{
-				path: "/metrics",
+				path: metricsEndpoint,
 			},
 			false,
 		},
@@ -158,7 +154,7 @@ func TestIsIgnored(t *testing.T) {
 			"multiple",
 			app{
 				ignore: []string{
-					"/metrics",
+					metricsEndpoint,
 					"/api",
 				},
 			},
