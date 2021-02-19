@@ -7,8 +7,13 @@ import (
 
 	"github.com/ViBiOh/httputils/v3/pkg/flags"
 	"github.com/ViBiOh/httputils/v3/pkg/model"
+	"github.com/ViBiOh/httputils/v3/pkg/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+const (
+	metricsEndpoint = "/metrics"
 )
 
 var (
@@ -19,24 +24,25 @@ var (
 type App interface {
 	Middleware(http.Handler) http.Handler
 	Registerer() prometheus.Registerer
+	Handler() http.Handler
 }
 
 // Config of package
 type Config struct {
-	path   *string
-	ignore *string
+	serverConfig server.Config
+	ignore       *string
+	port         *uint
 }
 
 type app struct {
-	path     string
-	registry *prometheus.Registry
-	ignore   []string
+	serverApp server.App
+	registry  *prometheus.Registry
+	ignore    []string
 }
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		path:   flags.New(prefix, "prometheus").Name("Path").Default(flags.Default("Path", "/metrics", overrides)).Label("Path for exposing metrics").ToString(fs),
 		ignore: flags.New(prefix, "prometheus").Name("Ignore").Default(flags.Default("Ignore", "", overrides)).Label("Ignored path prefixes for metrics, comma separated").ToString(fs),
 	}
 }
@@ -50,10 +56,26 @@ func New(config Config) App {
 	}
 
 	return app{
-		path:     strings.TrimSpace(*config.path),
 		ignore:   ignore,
 		registry: prometheus.NewRegistry(),
 	}
+}
+
+// Handler for request. Should be use with net/http
+func (a app) Handler() http.Handler {
+	instrumentHandler := promhttp.InstrumentMetricHandler(
+		a.registry, promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{}),
+	)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case metricsEndpoint:
+			instrumentHandler.ServeHTTP(w, r)
+
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
 }
 
 // Middleware for net/http
@@ -62,15 +84,10 @@ func (a app) Middleware(next http.Handler) http.Handler {
 	a.registry.MustRegister(prometheus.NewGoCollector())
 	a.registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
 
-	prometheusHandler := promhttp.InstrumentMetricHandler(
-		a.registry, promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{}),
-	)
 	instrumentedHandler := a.instrumentHandler(next)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == a.path {
-			prometheusHandler.ServeHTTP(w, r)
-		} else if a.isIgnored(r.URL.Path) {
+		if a.isIgnored(r.URL.Path) {
 			next.ServeHTTP(w, r)
 		} else {
 			instrumentedHandler.ServeHTTP(w, r)
