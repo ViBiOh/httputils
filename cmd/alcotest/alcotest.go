@@ -4,8 +4,8 @@ import (
 	"flag"
 	"os"
 
-	"github.com/ViBiOh/httputils/v3/pkg/alcotest"
-	"github.com/ViBiOh/httputils/v3/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
+	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
 func main() {

@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ViBiOh/httputils/v3/pkg/cors"
-	"github.com/ViBiOh/httputils/v3/pkg/owasp"
-	"github.com/ViBiOh/httputils/v3/pkg/prometheus"
+	"github.com/ViBiOh/httputils/v4/pkg/cors"
+	"github.com/ViBiOh/httputils/v4/pkg/owasp"
+	"github.com/ViBiOh/httputils/v4/pkg/prometheus"
 )
 
 func benchmarkHandler(b *testing.B, handler http.Handler) {

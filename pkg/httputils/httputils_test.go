@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ViBiOh/httputils/v3/pkg/health"
-	"github.com/ViBiOh/httputils/v3/pkg/request"
+	"github.com/ViBiOh/httputils/v4/pkg/health"
+	"github.com/ViBiOh/httputils/v4/pkg/request"
 )
 
 func TestHandler(t *testing.T) {
