@@ -151,7 +151,7 @@ func TestHandler(t *testing.T) {
 		statics:   &statics,
 		publicURL: &publicURL,
 		title:     &title,
-	}, template.FuncMap{})
+	}, template.FuncMap{}, nil)
 	if err != nil {
 		t.Error(err)
 	}
