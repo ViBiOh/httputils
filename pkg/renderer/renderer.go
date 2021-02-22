@@ -60,7 +60,7 @@ func New(config Config, funcMap template.FuncMap, filesystem fs.FS) (App, error)
 	tpl := template.New("app").Funcs(funcMap)
 
 	if filesystem != nil {
-		tpl = template.Must(tpl.ParseFS(filesystem, "*.html"))
+		tpl = template.Must(tpl.ParseFS(filesystem, "templates/*.html"))
 	} else {
 		filesTemplates, err := templates.GetTemplates(strings.TrimSpace(*config.templates), ".html")
 		if err != nil {
