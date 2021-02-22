@@ -78,18 +78,30 @@ func (f *Flag) Label(format string, a ...interface{}) *Flag {
 
 // ToString build Flag Set for string
 func (f *Flag) ToString(fs *flag.FlagSet) *string {
+	if f.value == nil {
+		return nil
+	}
+
 	name, envName := f.getNameAndEnv(fs)
 	return fs.String(FirstLowerCase(name), LookupEnvString(envName, f.value.(string)), f.formatLabel(envName))
 }
 
 // ToInt build Flag Set for int
 func (f *Flag) ToInt(fs *flag.FlagSet) *int {
+	if f.value == nil {
+		return nil
+	}
+
 	name, envName := f.getNameAndEnv(fs)
 	return fs.Int(FirstLowerCase(name), LookupEnvInt(envName, f.value.(int)), f.formatLabel(envName))
 }
 
 // ToUint build Flag Set for uint
 func (f *Flag) ToUint(fs *flag.FlagSet) *uint {
+	if f.value == nil {
+		return nil
+	}
+
 	name, envName := f.getNameAndEnv(fs)
 
 	var value uint
@@ -107,12 +119,20 @@ func (f *Flag) ToUint(fs *flag.FlagSet) *uint {
 
 // ToFloat64 build Flag Set for float64
 func (f *Flag) ToFloat64(fs *flag.FlagSet) *float64 {
+	if f.value == nil {
+		return nil
+	}
+
 	name, envName := f.getNameAndEnv(fs)
 	return fs.Float64(FirstLowerCase(name), LookupEnvFloat64(envName, f.value.(float64)), f.formatLabel(envName))
 }
 
 // ToBool build Flag Set for bool
 func (f *Flag) ToBool(fs *flag.FlagSet) *bool {
+	if f.value == nil {
+		return nil
+	}
+
 	name, envName := f.getNameAndEnv(fs)
 	return fs.Bool(FirstLowerCase(name), LookupEnvBool(envName, f.value.(bool)), f.formatLabel(envName))
 }

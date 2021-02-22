@@ -104,7 +104,7 @@ func TestToString(t *testing.T) {
 		prefix       string
 		docPrefix    string
 		name         string
-		defaultValue string
+		defaultValue interface{}
 		label        string
 		want         string
 	}{
@@ -135,6 +135,15 @@ func TestToString(t *testing.T) {
 			"Test flag",
 			"Usage of ToString:\n  -value string\n    \t[cli] Test flag {TO_STRING_VALUE} (default \"test\")\n",
 		},
+		{
+			"nil",
+			"",
+			"cli",
+			"empty",
+			nil,
+			"Test flag",
+			"Usage of ToString:\n",
+		},
 	}
 
 	os.Setenv("TO_STRING_VALUE", "test")
@@ -162,7 +171,7 @@ func TestToInt(t *testing.T) {
 		prefix       string
 		docPrefix    string
 		name         string
-		defaultValue int
+		defaultValue interface{}
 		label        string
 		want         string
 	}{
@@ -201,6 +210,15 @@ func TestToInt(t *testing.T) {
 			8000,
 			"Test flag",
 			"Usage of ToInt:\n  -invalidValue int\n    \t[cli] Test flag {TO_INT_INVALID_VALUE} (default 8000)\n",
+		},
+		{
+			"nil",
+			"",
+			"cli",
+			"empty",
+			nil,
+			"Test flag",
+			"Usage of ToInt:\n",
 		},
 	}
 
@@ -288,6 +306,15 @@ func TestToUint(t *testing.T) {
 			"Test flag",
 			"Usage of ToUint:\n  -invalidValue uint\n    \t[cli] Test flag {TO_UINT_INVALID_VALUE} (default 8000)\n",
 		},
+		{
+			"nil",
+			"",
+			"cli",
+			"empty",
+			nil,
+			"Test flag",
+			"Usage of ToUint:\n",
+		},
 	}
 
 	os.Setenv("TO_UINT_VALUE", "6000")
@@ -316,7 +343,7 @@ func TestToFloat64(t *testing.T) {
 		prefix       string
 		docPrefix    string
 		name         string
-		defaultValue float64
+		defaultValue interface{}
 		label        string
 		want         string
 	}{
@@ -325,7 +352,7 @@ func TestToFloat64(t *testing.T) {
 			"",
 			"cli",
 			"test",
-			0,
+			float64(0),
 			"Test flag",
 			"Usage of ToFloat64:\n  -test float\n    \t[cli] Test flag {TO_FLOAT64_TEST}\n",
 		},
@@ -334,7 +361,7 @@ func TestToFloat64(t *testing.T) {
 			"context",
 			"cli",
 			"test",
-			12.34,
+			float64(12.34),
 			"Test flag",
 			"Usage of ToFloat64:\n  -contextTest float\n    \t[context] Test flag {TO_FLOAT64_CONTEXT_TEST} (default 12.34)\n",
 		},
@@ -343,7 +370,7 @@ func TestToFloat64(t *testing.T) {
 			"",
 			"cli",
 			"value",
-			12.34,
+			float64(12.34),
 			"Test flag",
 			"Usage of ToFloat64:\n  -value float\n    \t[cli] Test flag {TO_FLOAT64_VALUE} (default 34.56)\n",
 		},
@@ -352,9 +379,18 @@ func TestToFloat64(t *testing.T) {
 			"",
 			"cli",
 			"invalidValue",
-			12.34,
+			float64(12.34),
 			"Test flag",
 			"Usage of ToFloat64:\n  -invalidValue float\n    \t[cli] Test flag {TO_FLOAT64_INVALID_VALUE} (default 12.34)\n",
+		},
+		{
+			"nil",
+			"",
+			"cli",
+			"empty",
+			nil,
+			"Test flag",
+			"Usage of ToFloat64:\n",
 		},
 	}
 
@@ -384,7 +420,7 @@ func TestToBool(t *testing.T) {
 		prefix       string
 		docPrefix    string
 		name         string
-		defaultValue bool
+		defaultValue interface{}
 		label        string
 		want         string
 	}{
@@ -423,6 +459,15 @@ func TestToBool(t *testing.T) {
 			true,
 			"Test flag",
 			"Usage of ToBool:\n  -invalidValue\n    \t[cli] Test flag {TO_BOOL_INVALID_VALUE} (default true)\n",
+		},
+		{
+			"nil",
+			"",
+			"cli",
+			"invalidValue",
+			nil,
+			"Test flag",
+			"Usage of ToBool:\n",
 		},
 	}
 

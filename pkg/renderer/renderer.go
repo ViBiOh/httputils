@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -55,14 +56,22 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 // New creates new App from Config
-func New(config Config, funcMap template.FuncMap) (App, error) {
-	filesTemplates, err := templates.GetTemplates(strings.TrimSpace(*config.templates), ".html")
-	if err != nil {
-		return nil, fmt.Errorf("unable to get templates: %s", err)
+func New(config Config, funcMap template.FuncMap, filesystem fs.FS) (App, error) {
+	tpl := template.New("app").Funcs(funcMap)
+
+	if filesystem != nil {
+		tpl = template.Must(tpl.ParseFS(filesystem, "*.html"))
+	} else {
+		filesTemplates, err := templates.GetTemplates(strings.TrimSpace(*config.templates), ".html")
+		if err != nil {
+			return nil, fmt.Errorf("unable to get templates: %s", err)
+		}
+
+		tpl = template.Must(tpl.ParseFiles(filesTemplates...))
 	}
 
 	return app{
-		tpl:        template.Must(template.New("app").Funcs(funcMap).ParseFiles(filesTemplates...)),
+		tpl:        tpl,
 		staticsDir: strings.TrimSpace(*config.statics),
 		content: map[string]interface{}{
 			"PublicURL": strings.TrimSpace(*config.publicURL),
