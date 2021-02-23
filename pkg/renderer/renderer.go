@@ -7,12 +7,10 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
-	"github.com/ViBiOh/httputils/v4/pkg/templates"
 )
 
 const (
@@ -40,39 +38,34 @@ type Config struct {
 }
 
 type app struct {
-	tpl        *template.Template
-	content    map[string]interface{}
-	staticsDir string
+	tpl      *template.Template
+	content  map[string]interface{}
+	staticFS fs.FS
 }
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		templates: flags.New(prefix, "").Name("Templates").Default(flags.Default("Templates", "./templates/", overrides)).Label("HTML Templates folder").ToString(fs),
-		statics:   flags.New(prefix, "").Name("Static").Default(flags.Default("Static", "./static/", overrides)).Label("Static folder, content served directly").ToString(fs),
 		publicURL: flags.New(prefix, "").Name("PublicURL").Default(flags.Default("PublicURL", "http://localhost", overrides)).Label("Public URL").ToString(fs),
 		title:     flags.New(prefix, "").Name("Title").Default(flags.Default("Title", "App", overrides)).Label("Application title").ToString(fs),
 	}
 }
 
 // New creates new App from Config
-func New(config Config, funcMap template.FuncMap, filesystem fs.FS) (App, error) {
-	tpl := template.New("app").Funcs(funcMap)
+func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error) {
+	staticFS, err := fs.Sub(filesystem, "static")
+	if err != nil {
+		return nil, fmt.Errorf("unable to get static/ filesystem: %s", err)
+	}
 
-	if filesystem != nil {
-		tpl = template.Must(tpl.ParseFS(filesystem, "templates/*.html"))
-	} else {
-		filesTemplates, err := templates.GetTemplates(strings.TrimSpace(*config.templates), ".html")
-		if err != nil {
-			return nil, fmt.Errorf("unable to get templates: %s", err)
-		}
-
-		tpl = template.Must(tpl.ParseFiles(filesTemplates...))
+	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse templates/*.html templates: %s", err)
 	}
 
 	return app{
-		tpl:        tpl,
-		staticsDir: strings.TrimSpace(*config.statics),
+		tpl:      tpl,
+		staticFS: staticFS,
 		content: map[string]interface{}{
 			"PublicURL": strings.TrimSpace(*config.publicURL),
 			"Title":     strings.TrimSpace(*config.title),
@@ -105,10 +98,11 @@ func (a app) feedContent(content map[string]interface{}) map[string]interface{} 
 
 func (a app) Handler(templateFunc TemplateFunc) http.Handler {
 	svgHandler := http.StripPrefix(svgPath, a.svg())
+	fileHandler := http.FileServer(http.FS(a.staticFS))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, faviconPath) || isStaticRootPaths(r.URL.Path) {
-			http.ServeFile(w, r, path.Join(a.staticsDir, r.URL.Path))
+			fileHandler.ServeHTTP(w, r)
 			return
 		}
 
