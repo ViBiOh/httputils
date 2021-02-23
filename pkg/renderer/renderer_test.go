@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"embed"
 	"errors"
 	"flag"
 	"fmt"
@@ -22,7 +23,7 @@ func TestFlags(t *testing.T) {
 	}{
 		{
 			"simple",
-			"Usage of simple:\n  -publicURL string\n    \tPublic URL {SIMPLE_PUBLIC_URL} (default \"http://localhost\")\n  -static string\n    \tStatic folder, content served directly {SIMPLE_STATIC} (default \"./static/\")\n  -templates string\n    \tHTML Templates folder {SIMPLE_TEMPLATES} (default \"./templates/\")\n  -title string\n    \tApplication title {SIMPLE_TITLE} (default \"App\")\n",
+			"Usage of simple:\n  -publicURL string\n    \tPublic URL {SIMPLE_PUBLIC_URL} (default \"http://localhost\")\n  -title string\n    \tApplication title {SIMPLE_TITLE} (default \"App\")\n",
 		},
 	}
 
@@ -140,18 +141,17 @@ func TestFeedContent(t *testing.T) {
 	}
 }
 
+//go:embed templates static
+var content embed.FS
+
 func TestHandler(t *testing.T) {
-	templates := "../../templates/"
-	statics := "../../templates/static/"
 	publicURL := "http://localhost"
 	title := "Golang Test"
 
 	configuredApp, err := New(Config{
-		templates: &templates,
-		statics:   &statics,
 		publicURL: &publicURL,
 		title:     &title,
-	}, template.FuncMap{}, nil)
+	}, content, template.FuncMap{})
 	if err != nil {
 		t.Error(err)
 	}
