@@ -14,6 +14,12 @@ var (
 	// ErrInvalid occurs when checks fails
 	ErrInvalid = errors.New("invalid")
 
+	// ErrUnauthorized occurs when authorization header is missing
+	ErrUnauthorized = errors.New("unauthorized")
+
+	// ErrForbidden occurs when authorization header is missing
+	ErrForbidden = errors.New("forbidden")
+
 	// ErrNotFound occurs when something is not found
 	ErrNotFound = errors.New("not found")
 
@@ -31,6 +37,16 @@ func wrapError(err, wrapper error) error {
 // WrapInvalid wraps given error with invalid err
 func WrapInvalid(err error) error {
 	return wrapError(err, ErrInvalid)
+}
+
+// WrapUnauthorized wraps given error with unauthorized err
+func WrapUnauthorized(err error) error {
+	return wrapError(err, ErrUnauthorized)
+}
+
+// WrapForbidden wraps given error with forbidden err
+func WrapForbidden(err error) error {
+	return wrapError(err, ErrForbidden)
 }
 
 // WrapNotFound wraps given error with not found err

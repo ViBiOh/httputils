@@ -61,6 +61,10 @@ func HandleError(w http.ResponseWriter, err error) bool {
 	switch {
 	case errors.Is(err, model.ErrInvalid):
 		BadRequest(w, err)
+	case errors.Is(err, model.ErrUnauthorized):
+		Unauthorized(w, err)
+	case errors.Is(err, model.ErrForbidden):
+		httpError(w, http.StatusForbidden, err.Error(), err)
 	case errors.Is(err, model.ErrNotFound):
 		NotFound(w)
 	case errors.Is(err, model.ErrMethodNotAllowed):
@@ -84,6 +88,10 @@ func ErrorStatus(err error) (status int, message string) {
 	switch {
 	case errors.Is(err, model.ErrInvalid):
 		status = http.StatusBadRequest
+	case errors.Is(err, model.ErrUnauthorized):
+		status = http.StatusUnauthorized
+	case errors.Is(err, model.ErrForbidden):
+		status = http.StatusForbidden
 	case errors.Is(err, model.ErrNotFound):
 		status = http.StatusNotFound
 	case errors.Is(err, model.ErrMethodNotAllowed):

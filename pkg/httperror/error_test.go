@@ -197,6 +197,22 @@ func TestErrorStatus(t *testing.T) {
 			"bad request",
 		},
 		{
+			"unauthorized",
+			args{
+				err: model.WrapUnauthorized(errors.New("jwt missing")),
+			},
+			http.StatusUnauthorized,
+			"unauthorized",
+		},
+		{
+			"forbidden",
+			args{
+				err: model.WrapForbidden(errors.New("jwt invalid")),
+			},
+			http.StatusForbidden,
+			"forbidden",
+		},
+		{
 			"not found",
 			args{
 				err: model.WrapNotFound(errors.New("unknown")),
