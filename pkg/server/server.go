@@ -96,15 +96,6 @@ func (a app) Start(name string, done <-chan struct{}, handler http.Handler) {
 	go func() {
 		defer close(serverDone)
 
-		isShutdown := func() bool {
-			select {
-			case <-serverDone:
-				return false
-			default:
-				return true
-			}
-		}
-
 		var err error
 		if len(a.cert) != 0 && len(a.key) != 0 {
 			logger.Info("[%s] Listening on %s with TLS", name, a.listenAddress)
@@ -114,7 +105,7 @@ func (a app) Start(name string, done <-chan struct{}, handler http.Handler) {
 			err = httpServer.ListenAndServe()
 		}
 
-		if !isShutdown() && err != nil {
+		if err != http.ErrServerClosed {
 			logger.Error("[%s] Server error: %s", name, err)
 		}
 	}()
