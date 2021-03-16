@@ -41,6 +41,7 @@ type Config struct {
 	pass    *string
 	name    *string
 	sslmode *string
+	maxConn *uint
 }
 
 // Flags adds flags for configuring package
@@ -51,6 +52,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 		user:    flags.New(prefix, "database").Name("User").Default(flags.Default("User", "", overrides)).Label("User").ToString(fs),
 		pass:    flags.New(prefix, "database").Name("Pass").Default(flags.Default("Pass", "", overrides)).Label("Pass").ToString(fs),
 		name:    flags.New(prefix, "database").Name("Name").Default(flags.Default("Name", "", overrides)).Label("Name").ToString(fs),
+		maxConn: flags.New(prefix, "database").Name("MaxConn").Default(flags.Default("MaxConn", 5, overrides)).Label("Max Open Connections").ToUint(fs),
 		sslmode: flags.New(prefix, "database").Name("Sslmode").Default(flags.Default("Sslmode", "disable", overrides)).Label("SSL Mode").ToString(fs),
 	}
 }
@@ -75,6 +77,8 @@ func New(config Config) (*sql.DB, error) {
 	if err = db.Ping(); err != nil {
 		return db, err
 	}
+
+	db.SetMaxOpenConns(int(*config.maxConn))
 
 	return db, nil
 }
