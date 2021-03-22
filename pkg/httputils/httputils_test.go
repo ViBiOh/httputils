@@ -46,6 +46,12 @@ func TestHandler(t *testing.T) {
 			"",
 			http.StatusNoContent,
 		},
+		{
+			"ready",
+			httptest.NewRequest(http.MethodGet, "/ready", nil),
+			"",
+			http.StatusNoContent,
+		},
 	}
 
 	for _, tc := range cases {

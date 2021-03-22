@@ -22,7 +22,9 @@ func Handler(handler http.Handler, healthApp health.App, middlewares ...model.Mi
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/health":
+		case health.HealthPath:
+			fallthrough
+		case health.ReadyPath:
 			healthHandler.ServeHTTP(w, r)
 
 		case "/version":

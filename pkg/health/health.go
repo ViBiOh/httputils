@@ -13,6 +13,14 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
+const (
+	// HealthPath is the path for checking that HTTP service is live
+	HealthPath = "/health"
+
+	// ReadyPath is the path for checking that HTTP service is ready (checking dependencies)
+	ReadyPath = "/ready"
+)
+
 // App of package
 type App interface {
 	Handler() http.Handler
@@ -76,6 +84,11 @@ func (a app) Handler() http.Handler {
 
 		if a.isShutdown() {
 			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+
+		if r.URL.Path == HealthPath {
+			w.WriteHeader(a.okStatus)
 			return
 		}
 

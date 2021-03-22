@@ -93,9 +93,21 @@ func TestHandler(t *testing.T) {
 			}, func() error {
 				return errors.New("boom")
 			}),
-			httptest.NewRequest(http.MethodGet, "/", nil),
+			httptest.NewRequest(http.MethodGet, "/ready", nil),
 			"",
 			http.StatusServiceUnavailable,
+		},
+		{
+			"failing pinger on health",
+			New(Config{
+				okStatus:      &okStatus,
+				graceDuration: &graceDuration,
+			}, func() error {
+				return errors.New("boom")
+			}),
+			httptest.NewRequest(http.MethodGet, "/health", nil),
+			"",
+			http.StatusNoContent,
 		},
 	}
 
