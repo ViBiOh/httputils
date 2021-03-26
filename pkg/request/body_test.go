@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -58,13 +57,13 @@ func TestReadContent(t *testing.T) {
 		},
 		{
 			"basic read",
-			ioutil.NopCloser(bytes.NewReader([]byte("Content"))),
+			io.NopCloser(bytes.NewReader([]byte("Content"))),
 			[]byte("Content"),
 			nil,
 		},
 		{
 			"read with error",
-			ioutil.NopCloser(errReader(0)),
+			io.NopCloser(errReader(0)),
 			[]byte{},
 			errors.New("read error"),
 		},

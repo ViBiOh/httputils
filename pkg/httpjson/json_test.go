@@ -1,8 +1,12 @@
 package httpjson
 
 import (
+	"bytes"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -37,7 +41,7 @@ func TestIsPretty(t *testing.T) {
 	}
 }
 
-func TestResponseJSON(t *testing.T) {
+func TestWrite(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		obj        interface{}
@@ -86,26 +90,26 @@ func TestResponseJSON(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			ResponseJSON(writer, http.StatusOK, testCase.obj, testCase.pretty)
+			Write(writer, http.StatusOK, testCase.obj, testCase.pretty)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("ResponseJSON() = `%s`, want `%s`", string(result), testCase.want)
+				t.Errorf("Write() = `%s`, want `%s`", string(result), testCase.want)
 			}
 
 			if result := writer.Result().StatusCode; result != testCase.wantStatus {
-				t.Errorf("ResponseJSON() = %d, want %d", result, testCase.wantStatus)
+				t.Errorf("Write() = %d, want %d", result, testCase.wantStatus)
 			}
 
 			for key, value := range testCase.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
-					t.Errorf("ResponseJSON().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
+					t.Errorf("Write().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
 				}
 			}
 		})
 	}
 }
 
-func BenchmarkResponseJSON(b *testing.B) {
+func BenchmarkWrite(b *testing.B) {
 	var testCase = struct {
 		obj interface{}
 	}{
@@ -115,11 +119,11 @@ func BenchmarkResponseJSON(b *testing.B) {
 	writer := httptest.NewRecorder()
 
 	for i := 0; i < b.N; i++ {
-		ResponseJSON(writer, http.StatusOK, testCase.obj, false)
+		Write(writer, http.StatusOK, testCase.obj, false)
 	}
 }
 
-func TestResponseArrayJSON(t *testing.T) {
+func TestWriteArray(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		obj        interface{}
@@ -143,22 +147,22 @@ func TestResponseArrayJSON(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			ResponseArrayJSON(writer, http.StatusOK, testCase.obj, false)
+			WriteArray(writer, http.StatusOK, testCase.obj, false)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("TestResponseArrayJSON() = `%s`, want `%s`", string(result), testCase.want)
+				t.Errorf("TestWriteArray() = `%s`, want `%s`", string(result), testCase.want)
 			}
 
 			for key, value := range testCase.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
-					t.Errorf("TestResponseArrayJSON().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
+					t.Errorf("TestWriteArray().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
 				}
 			}
 		})
 	}
 }
 
-func TestResponsePaginatedJSON(t *testing.T) {
+func TestWritePagination(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		page       uint
@@ -200,16 +204,97 @@ func TestResponsePaginatedJSON(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			ResponsePaginatedJSON(writer, http.StatusOK, testCase.page, testCase.pageSize, testCase.total, testCase.obj, false)
+			WritePagination(writer, http.StatusOK, testCase.page, testCase.pageSize, testCase.total, testCase.obj, false)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("ResponsePaginatedJSON() = `%s`, want `%s`", string(result), testCase.want)
+				t.Errorf("WritePagination() = `%s`, want `%s`", string(result), testCase.want)
 			}
 
 			for key, value := range testCase.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
-					t.Errorf("ResponsePaginatedJSON().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
+					t.Errorf("WritePagination().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
 				}
+			}
+		})
+	}
+}
+
+type errReader int
+
+func (errReader) Read(_ []byte) (int, error) {
+	return 0, errors.New("read error")
+}
+
+func TestRead(t *testing.T) {
+	type args struct {
+		resp   *http.Response
+		obj    interface{}
+		action string
+	}
+
+	var cases = []struct {
+		intention string
+		args      args
+		want      interface{}
+		wantErr   error
+	}{
+		{
+			"read error",
+			args{
+				resp: &http.Response{
+					Body: io.NopCloser(errReader(0)),
+				},
+				action: "read error",
+			},
+			nil,
+			errors.New("unable to read body response of read error"),
+		},
+		{
+			"parse error",
+			args{
+				resp: &http.Response{
+					Body: io.NopCloser(bytes.NewReader([]byte("invalid json"))),
+				},
+				action: "read error",
+			},
+			nil,
+			errors.New("unable to parse body of read error"),
+		},
+		{
+			"valid",
+			args{
+				resp: &http.Response{
+					Body: io.NopCloser(bytes.NewReader([]byte(`{"key": "value","valid":true}`))),
+				},
+				obj:    make(map[string]interface{}, 0),
+				action: "valid",
+			},
+			map[string]interface{}{
+				"key":   "value",
+				"valid": true,
+			},
+			nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			gotErr := Read(tc.args.resp, &tc.args.obj, tc.args.action)
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			} else if !reflect.DeepEqual(tc.args.obj, tc.want) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("Read() = (%+v, `%s`), want (%+v, `%s`)", tc.args.obj, gotErr, tc.want, tc.wantErr)
 			}
 		})
 	}

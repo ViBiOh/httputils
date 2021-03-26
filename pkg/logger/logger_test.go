@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"io"
-	"io/ioutil"
 	"log"
 	"runtime"
 	"strings"
@@ -139,7 +138,7 @@ func TestClose(t *testing.T) {
 		{
 			"simple",
 			args{
-				out: ioutil.Discard,
+				out: io.Discard,
 			},
 			true,
 		},
@@ -253,7 +252,7 @@ func TestOutput(t *testing.T) {
 }
 
 func BenchmarkStandardSimpleOutput(b *testing.B) {
-	logger := log.New(ioutil.Discard, "", log.Ldate|log.Ltime)
+	logger := log.New(io.Discard, "", log.Ldate|log.Ltime)
 
 	for i := 0; i < b.N; i++ {
 		logger.Print("[INFO] Hello world")
@@ -266,7 +265,7 @@ func BenchmarkSimpleOutput(b *testing.B) {
 		dateBuffer:   make([]byte, 25),
 		done:         make(chan struct{}),
 		events:       make(chan event, runtime.NumCPU()),
-		outWriter:    ioutil.Discard,
+		outWriter:    io.Discard,
 		level:        levelInfo,
 	}
 
@@ -284,7 +283,7 @@ func BenchmarkNoOutput(b *testing.B) {
 		dateBuffer:   make([]byte, 25),
 		done:         make(chan struct{}),
 		events:       make(chan event, runtime.NumCPU()),
-		outWriter:    ioutil.Discard,
+		outWriter:    io.Discard,
 		level:        levelWarning,
 	}
 
@@ -302,7 +301,7 @@ func BenchmarkFormattedOutput(b *testing.B) {
 		dateBuffer:   make([]byte, 25),
 		done:         make(chan struct{}),
 		events:       make(chan event, runtime.NumCPU()),
-		outWriter:    ioutil.Discard,
+		outWriter:    io.Discard,
 		level:        levelInfo,
 	}
 
@@ -358,7 +357,7 @@ func BenchmarkJson(b *testing.B) {
 		dateBuffer:   make([]byte, 25),
 		jsonFormat:   true,
 		level:        levelInfo,
-		outWriter:    ioutil.Discard,
+		outWriter:    io.Discard,
 	}
 
 	e := event{
@@ -409,7 +408,7 @@ func BenchmarkText(b *testing.B) {
 		outputBuffer: bytes.NewBuffer(nil),
 		dateBuffer:   make([]byte, 25),
 		level:        levelInfo,
-		outWriter:    ioutil.Discard,
+		outWriter:    io.Discard,
 	}
 
 	e := event{

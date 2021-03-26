@@ -3,7 +3,6 @@ package request
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -22,7 +21,7 @@ func readContent(body io.ReadCloser) (content []byte, err error) {
 		}
 	}()
 
-	content, err = ioutil.ReadAll(body)
+	content, err = io.ReadAll(body)
 	return
 }
 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/query"
+	"github.com/ViBiOh/httputils/v4/pkg/request"
 )
 
 var (
@@ -32,8 +33,8 @@ func IsPretty(r *http.Request) bool {
 	return query.GetBool(r, "pretty")
 }
 
-// ResponseJSON write marshalled obj to http.ResponseWriter with correct header
-func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty bool) {
+// Write writes marshalled obj to http.ResponseWriter with correct header
+func Write(w http.ResponseWriter, status int, obj interface{}, pretty bool) {
 	encoder := json.NewEncoder(w)
 	if pretty {
 		encoder.SetIndent("", "  ")
@@ -48,17 +49,31 @@ func ResponseJSON(w http.ResponseWriter, status int, obj interface{}, pretty boo
 	}
 }
 
-// ResponseArrayJSON write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func ResponseArrayJSON(w http.ResponseWriter, status int, array interface{}, pretty bool) {
-	ResponseJSON(w, status, results{array}, pretty)
+// WriteArray write marshalled obj wrapped into an object to http.ResponseWriter with correct header
+func WriteArray(w http.ResponseWriter, status int, array interface{}, pretty bool) {
+	Write(w, status, results{array}, pretty)
 }
 
-// ResponsePaginatedJSON write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func ResponsePaginatedJSON(w http.ResponseWriter, status int, page uint, pageSize uint, total uint, array interface{}, pretty bool) {
+// WritePagination write marshalled obj wrapped into an object to http.ResponseWriter with correct header
+func WritePagination(w http.ResponseWriter, status int, page uint, pageSize uint, total uint, array interface{}, pretty bool) {
 	pageCount := total / pageSize
 	if total%pageSize != 0 {
 		pageCount++
 	}
 
-	ResponseJSON(w, status, pagination{Results: array, Page: page, PageSize: pageSize, PageCount: pageCount, Total: total}, pretty)
+	Write(w, status, pagination{Results: array, Page: page, PageSize: pageSize, PageCount: pageCount, Total: total}, pretty)
+}
+
+// Read read body response and unmarshall it into given interface
+func Read(resp *http.Response, obj interface{}, action string) error {
+	payload, err := request.ReadBodyResponse(resp)
+	if err != nil {
+		return fmt.Errorf("unable to read body response of %s: %s", action, err)
+	}
+
+	if err := json.Unmarshal(payload, obj); err != nil {
+		return fmt.Errorf("unable to parse body of %s: %s", action, err)
+	}
+
+	return nil
 }
