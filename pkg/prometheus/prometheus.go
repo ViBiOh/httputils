@@ -7,7 +7,6 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
-	"github.com/ViBiOh/httputils/v4/pkg/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -29,15 +28,12 @@ type App interface {
 
 // Config of package
 type Config struct {
-	serverConfig server.Config
-	ignore       *string
-	port         *uint
+	ignore *string
 }
 
 type app struct {
-	serverApp server.App
-	registry  *prometheus.Registry
-	ignore    []string
+	registry *prometheus.Registry
+	ignore   []string
 }
 
 // Flags adds flags for configuring package

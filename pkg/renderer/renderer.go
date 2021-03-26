@@ -20,7 +20,6 @@ const (
 
 var (
 	staticRootPaths = []string{"/robots.txt", "/sitemap.xml"}
-	staticDir       = "static"
 )
 
 // App of package
@@ -31,8 +30,6 @@ type App interface {
 
 // Config of package
 type Config struct {
-	templates *string
-	statics   *string
 	publicURL *string
 	title     *string
 }

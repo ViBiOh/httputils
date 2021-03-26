@@ -266,7 +266,7 @@ func TestRead(t *testing.T) {
 				resp: &http.Response{
 					Body: io.NopCloser(bytes.NewReader([]byte(`{"key": "value","valid":true}`))),
 				},
-				obj:    make(map[string]interface{}, 0),
+				obj:    make(map[string]interface{}),
 				action: "valid",
 			},
 			map[string]interface{}{

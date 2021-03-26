@@ -6,10 +6,6 @@ import (
 	"strings"
 )
 
-const (
-	internalError = "Oops! Something went wrong."
-)
-
 var (
 	// ErrInvalid occurs when checks fails
 	ErrInvalid = errors.New("invalid")
