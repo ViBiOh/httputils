@@ -1,12 +1,15 @@
 package cron
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
+
+	"github.com/ViBiOh/httputils/v4/pkg/redis"
 )
 
 const (
@@ -32,6 +35,10 @@ func (c *Clock) Now() time.Time {
 
 // Cron definition
 type Cron struct {
+	timeout  time.Duration
+	name     string
+	redisApp redis.App
+
 	retryInterval time.Duration
 	interval      time.Duration
 	dayTime       time.Time
@@ -145,6 +152,15 @@ func (c *Cron) At(hour string) *Cron {
 	} else {
 		c.dayTime = hourTime
 	}
+
+	return c
+}
+
+// Exclusive run cron in an exclusive manner
+func (c *Cron) Exclusive(redisApp redis.App, name string, timeout time.Duration) *Cron {
+	c.redisApp = redisApp
+	c.name = name
+	c.timeout = timeout
 
 	return c
 }
@@ -291,6 +307,20 @@ func (c *Cron) Start(action func(time.Time) error, done <-chan struct{}) {
 		}
 	}
 
+	run := func(now time.Time) {
+		if c.redisApp == nil {
+			do(now)
+			return
+		}
+
+		if _, err := c.redisApp.DoExclusive(context.Background(), c.name, c.timeout, func(_ context.Context) error {
+			do(now)
+			return nil
+		}); err != nil {
+			fmt.Println(err)
+		}
+	}
+
 	signals := make(chan os.Signal, 1)
 	defer close(signals)
 
@@ -307,12 +337,12 @@ func (c *Cron) Start(action func(time.Time) error, done <-chan struct{}) {
 		case <-done:
 			return
 		case <-signals:
-			do(c.clock.Now())
+			run(c.clock.Now())
 		case now := <-ticker.C:
-			do(now)
+			run(now)
 		case now, ok := <-c.now:
 			if ok {
-				do(now)
+				run(now)
 			}
 		}
 
