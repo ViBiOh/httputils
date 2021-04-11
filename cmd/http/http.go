@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"net/http"
 	"os"
@@ -46,8 +47,8 @@ func main() {
 	speakingClock := cron.New().Each(5 * time.Minute).OnSignal(syscall.SIGUSR1).OnError(func(err error) {
 		logger.Error("error while running cron: %s", err)
 	}).Now()
-	go speakingClock.Start(func(moment time.Time) error {
-		logger.Info("Clock is ticking %s", moment)
+	go speakingClock.Start(func(_ context.Context) error {
+		logger.Info("Clock is ticking")
 		return nil
 	}, healthApp.Done())
 	defer speakingClock.Shutdown()

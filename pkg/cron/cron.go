@@ -77,6 +77,10 @@ func (c *Cron) String() string {
 
 	buffer.WriteString(fmt.Sprintf(", retry: %d times every %s", c.maxRetry, c.retryInterval))
 
+	if c.redisApp != nil {
+		buffer.WriteString(fmt.Sprintf(", in exclusive mode as `%s` with %s timeout", c.name, c.timeout))
+	}
+
 	for _, err := range c.errors {
 		buffer.WriteString(fmt.Sprintf(", error=`%s`", err))
 	}
@@ -156,7 +160,7 @@ func (c *Cron) At(hour string) *Cron {
 	return c
 }
 
-// Exclusive run cron in an exclusive manner
+// Exclusive runs cron in an exclusive manner with a distributed lock on Redis
 func (c *Cron) Exclusive(redisApp redis.App, name string, timeout time.Duration) *Cron {
 	c.redisApp = redisApp
 	c.name = name
@@ -287,7 +291,7 @@ func (c *Cron) Now() *Cron {
 }
 
 // Start cron
-func (c *Cron) Start(action func(time.Time) error, done <-chan struct{}) {
+func (c *Cron) Start(action func(context.Context) error, done <-chan struct{}) {
 	if c.hasError() {
 		return
 	}
@@ -295,8 +299,8 @@ func (c *Cron) Start(action func(time.Time) error, done <-chan struct{}) {
 	retryCount := uint(0)
 	shouldRetry := false
 
-	do := func(now time.Time) {
-		if err := action(now); err != nil {
+	do := func(ctx context.Context) {
+		if err := action(ctx); err != nil {
 			c.onError(err)
 
 			retryCount++
@@ -307,17 +311,17 @@ func (c *Cron) Start(action func(time.Time) error, done <-chan struct{}) {
 		}
 	}
 
-	run := func(now time.Time) {
+	run := func() {
 		if c.redisApp == nil {
-			do(now)
+			do(context.Background())
 			return
 		}
 
-		if _, err := c.redisApp.DoExclusive(context.Background(), c.name, c.timeout, func(_ context.Context) error {
-			do(now)
+		if err := c.redisApp.Exclusive(context.Background(), c.name, c.timeout, func(ctx context.Context) error {
+			do(ctx)
 			return nil
 		}); err != nil {
-			fmt.Println(err)
+			c.onError(err)
 		}
 	}
 
@@ -337,12 +341,12 @@ func (c *Cron) Start(action func(time.Time) error, done <-chan struct{}) {
 		case <-done:
 			return
 		case <-signals:
-			run(c.clock.Now())
-		case now := <-ticker.C:
-			run(now)
-		case now, ok := <-c.now:
+			run()
+		case <-ticker.C:
+			run()
+		case _, ok := <-c.now:
 			if ok {
-				run(now)
+				run()
 			}
 		}
 

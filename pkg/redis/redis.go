@@ -13,11 +13,11 @@ import (
 
 // App of package
 type App interface {
+	Ping() error
 	Store(context.Context, string, string, time.Duration) error
 	Load(context.Context, string) (string, error)
 	Delete(context.Context, string) error
-	DoExclusive(context.Context, string, time.Duration, func(context.Context) error) (bool, error)
-	Ping() error
+	Exclusive(context.Context, string, time.Duration, func(context.Context) error) error
 }
 
 // Config of package
@@ -67,19 +67,19 @@ func (a app) Delete(ctx context.Context, key string) error {
 	return a.redisClient.Del(ctx, key).Err()
 }
 
-func (a app) DoExclusive(ctx context.Context, lockName string, timeout time.Duration, action func(context.Context) error) (bool, error) {
-	if !a.redisClient.SetNX(ctx, lockName, "acquired", timeout).Val() {
-		return false, nil
+func (a app) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) error {
+	if !a.redisClient.SetNX(ctx, name, "acquired", timeout).Val() {
+		return nil
 	}
 
 	defer func() {
-		if err := a.redisClient.Del(ctx, lockName).Err(); err != nil {
-			logger.Warn("unable to release lock for `%s`: %s", lockName, err)
+		if err := a.redisClient.Del(ctx, name).Err(); err != nil {
+			logger.Warn("unable to release exclusive lock for `%s`: %s", name, err)
 		}
 	}()
 
 	actionCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	return true, action(actionCtx)
+	return action(actionCtx)
 }

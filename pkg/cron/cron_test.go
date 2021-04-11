@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -350,14 +351,14 @@ func TestStart(t *testing.T) {
 	var cases = []struct {
 		intention string
 		cron      *Cron
-		action    func(*sync.WaitGroup, *Cron) func(time.Time) error
+		action    func(*sync.WaitGroup, *Cron) func(context.Context) error
 		onError   func(*sync.WaitGroup, *Cron) func(error)
 	}{
 		{
 			"run once",
 			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)}),
-			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
-				return func(_ time.Time) error {
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
+				return func(_ context.Context) error {
 					wg.Done()
 
 					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.UTC)})
@@ -373,9 +374,9 @@ func TestStart(t *testing.T) {
 		{
 			"retry",
 			New().Days().At("12:00").Retry(time.Millisecond).MaxRetry(5).Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)}),
-			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				count := 0
-				return func(_ time.Time) error {
+				return func(_ context.Context) error {
 					count++
 					if count < 4 {
 						return errors.New("call me again")
@@ -393,10 +394,10 @@ func TestStart(t *testing.T) {
 		{
 			"run on demand",
 			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)}),
-			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				cron.Now()
 
-				return func(_ time.Time) error {
+				return func(_ context.Context) error {
 					wg.Done()
 					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.UTC)})
 					return nil
@@ -409,7 +410,7 @@ func TestStart(t *testing.T) {
 		{
 			"run on signal",
 			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)}).OnSignal(syscall.SIGUSR1),
-			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				p, err := os.FindProcess(os.Getpid())
 				if err != nil {
 					t.Error(err)
@@ -420,7 +421,7 @@ func TestStart(t *testing.T) {
 					p.Signal(syscall.SIGUSR1)
 				}()
 
-				return func(_ time.Time) error {
+				return func(_ context.Context) error {
 					wg.Done()
 					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.UTC)})
 					return nil
@@ -433,10 +434,10 @@ func TestStart(t *testing.T) {
 		{
 			"fail if misconfigured",
 			New().Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)}),
-			func(wg *sync.WaitGroup, cron *Cron) func(time.Time) error {
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				cron.Now()
 
-				return func(_ time.Time) error {
+				return func(_ context.Context) error {
 					wg.Done()
 					return nil
 				}
