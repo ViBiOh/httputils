@@ -42,11 +42,11 @@ func TestComputeSynchro(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			testCase.instance.computeSynchro(testCase.input)
-			if testCase.instance.synchronized != testCase.want {
-				t.Errorf("computeSynchro() = %t, want %t", testCase.instance.synchronized, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			tc.instance.computeSynchro(tc.input)
+			if tc.instance.synchronized != tc.want {
+				t.Errorf("computeSynchro() = %t, want %t", tc.instance.synchronized, tc.want)
 			}
 		})
 	}
@@ -118,20 +118,20 @@ func TestSourceRead(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			err := testCase.instance.read()
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			err := tc.instance.read()
 
-			if testCase.want != nil && !errors.Is(err, testCase.want) {
-				t.Errorf("Read() = %v, want %v", err, testCase.want)
-			} else if !reflect.DeepEqual(testCase.wantCurrent, testCase.instance.Current) {
-				t.Errorf("Read().Current = `%s`, want `%s`", testCase.wantCurrent, testCase.instance.Current)
-			} else if testCase.wantCurrentKey != testCase.instance.currentKey {
-				t.Errorf("Read().currentKey = `%s`, want `%s`", testCase.wantCurrentKey, testCase.instance.currentKey)
-			} else if !reflect.DeepEqual(testCase.wantNext, testCase.instance.next) {
-				t.Errorf("Read().next = `%s`, want `%s`", testCase.wantNext, testCase.instance.next)
-			} else if testCase.wantNextKey != testCase.instance.nextKey {
-				t.Errorf("Read().nextKey = `%s`, want `%s`", testCase.wantNextKey, testCase.instance.nextKey)
+			if tc.want != nil && !errors.Is(err, tc.want) {
+				t.Errorf("Read() = %v, want %v", err, tc.want)
+			} else if !reflect.DeepEqual(tc.wantCurrent, tc.instance.Current) {
+				t.Errorf("Read().Current = `%s`, want `%s`", tc.wantCurrent, tc.instance.Current)
+			} else if tc.wantCurrentKey != tc.instance.currentKey {
+				t.Errorf("Read().currentKey = `%s`, want `%s`", tc.wantCurrentKey, tc.instance.currentKey)
+			} else if !reflect.DeepEqual(tc.wantNext, tc.instance.next) {
+				t.Errorf("Read().next = `%s`, want `%s`", tc.wantNext, tc.instance.next)
+			} else if tc.wantNextKey != tc.instance.nextKey {
+				t.Errorf("Read().nextKey = `%s`, want `%s`", tc.wantNextKey, tc.instance.nextKey)
 			}
 		})
 	}

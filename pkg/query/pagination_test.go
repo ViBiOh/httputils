@@ -145,20 +145,20 @@ func TestParsePagination(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			result, err := ParsePagination(testCase.request, testCase.defaultPage, testCase.defaultPageSize, testCase.maxPageSize)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			result, err := ParsePagination(tc.request, tc.defaultPage, tc.defaultPageSize, tc.maxPageSize)
 
 			failed := false
 
-			if testCase.wantErr != nil && !errors.Is(err, testCase.wantErr) {
+			if tc.wantErr != nil && !errors.Is(err, tc.wantErr) {
 				failed = true
-			} else if !reflect.DeepEqual(result, testCase.want) {
+			} else if !reflect.DeepEqual(result, tc.want) {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("ParsePagination() = (%#v, `%s`), want (%#v, `%s`)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("ParsePagination() = (%#v, `%s`), want (%#v, `%s`)", result, err, tc.want, tc.wantErr)
 			}
 		})
 	}

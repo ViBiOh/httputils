@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/ViBiOh/httputils/v4/pkg/redis/redistest"
 )
 
 func TestString(t *testing.T) {
@@ -361,7 +363,6 @@ func TestStart(t *testing.T) {
 				return func(_ context.Context) error {
 					wg.Done()
 
-					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.UTC)})
 					return nil
 				}
 			},
@@ -383,7 +384,6 @@ func TestStart(t *testing.T) {
 					}
 
 					wg.Done()
-					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.UTC)})
 					return nil
 				}
 			},
@@ -399,7 +399,6 @@ func TestStart(t *testing.T) {
 
 				return func(_ context.Context) error {
 					wg.Done()
-					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.UTC)})
 					return nil
 				}
 			},
@@ -423,12 +422,26 @@ func TestStart(t *testing.T) {
 
 				return func(_ context.Context) error {
 					wg.Done()
-					cron.Clock(&Clock{time.Date(2019, 10, 21, 13, 0, 0, 0, time.UTC)})
 					return nil
 				}
 			},
 			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
 				return func(err error) {}
+			},
+		},
+		{
+			"run in exclusive",
+			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)}).Exclusive(redistest.New().SetExclusive(nil), "test", time.Minute),
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
+				return func(_ context.Context) error {
+					wg.Done()
+					return nil
+				}
+			},
+			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
+				return func(err error) {
+					t.Error(err)
+				}
 			},
 		},
 		{
