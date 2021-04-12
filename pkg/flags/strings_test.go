@@ -25,10 +25,10 @@ func TestFirstLowerCase(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := FirstLowerCase(testCase.input); result != testCase.want {
-				t.Errorf("FirstUpperCase() = `%s`, want `%s`", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := FirstLowerCase(tc.input); result != tc.want {
+				t.Errorf("FirstUpperCase() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -57,10 +57,10 @@ func TestFirstUpperCase(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := FirstUpperCase(testCase.input); result != testCase.want {
-				t.Errorf("FirstUpperCase() = `%s`, want `%s`", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := FirstUpperCase(tc.input); result != tc.want {
+				t.Errorf("FirstUpperCase() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -99,10 +99,10 @@ func TestSnakeCase(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := SnakeCase(testCase.input); result != testCase.want {
-				t.Errorf("SnakeCase() = `%s`, want `%s`", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := SnakeCase(tc.input); result != tc.want {
+				t.Errorf("SnakeCase() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}

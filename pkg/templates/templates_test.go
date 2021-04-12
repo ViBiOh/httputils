@@ -35,20 +35,20 @@ func TestGetTemplates(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			result, err := GetTemplates(testCase.dir, testCase.ext)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			result, err := GetTemplates(tc.dir, tc.ext)
 
 			failed := false
 
-			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
+			if tc.wantErr != nil && (err == nil || err.Error() != tc.wantErr.Error()) {
 				failed = true
-			} else if !reflect.DeepEqual(result, testCase.want) {
+			} else if !reflect.DeepEqual(result, tc.want) {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("GetTemplates() = (%#v, `%s`), want (%#v, `%s`)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("GetTemplates() = (%#v, `%s`), want (%#v, `%s`)", result, err, tc.want, tc.wantErr)
 			}
 		})
 	}
@@ -75,23 +75,23 @@ func TestWriteTemplate(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			writer := bytes.NewBuffer(nil)
-			err := WriteTemplate(testCase.tpl, writer, nil, "text/css")
+			err := WriteTemplate(tc.tpl, writer, nil, "text/css")
 
 			result := writer.String()
 
 			failed := false
 
-			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
+			if tc.wantErr != nil && (err == nil || err.Error() != tc.wantErr.Error()) {
 				failed = true
-			} else if result != testCase.want {
+			} else if result != tc.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("WriteTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("WriteTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", result, err, tc.want, tc.wantErr)
 			}
 		})
 	}
@@ -118,23 +118,23 @@ func TestResponseHTMLTemplate(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			err := ResponseHTMLTemplate(testCase.tpl, writer, nil, 200)
+			err := ResponseHTMLTemplate(tc.tpl, writer, nil, 200)
 
 			result, _ := request.ReadBodyResponse(writer.Result())
 
 			failed := false
 
-			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
+			if tc.wantErr != nil && (err == nil || err.Error() != tc.wantErr.Error()) {
 				failed = true
-			} else if string(result) != testCase.want {
+			} else if string(result) != tc.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("ResponseHTMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
+				t.Errorf("ResponseHTMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, tc.want, tc.wantErr)
 			}
 		})
 	}
@@ -161,23 +161,23 @@ func TestResponseXMLTemplate(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			err := ResponseXMLTemplate(testCase.tpl, writer, nil, 200)
+			err := ResponseXMLTemplate(tc.tpl, writer, nil, 200)
 
 			result, _ := request.ReadBodyResponse(writer.Result())
 
 			failed := false
 
-			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
+			if tc.wantErr != nil && (err == nil || err.Error() != tc.wantErr.Error()) {
 				failed = true
-			} else if string(result) != testCase.want {
+			} else if string(result) != tc.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("ResponseXMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
+				t.Errorf("ResponseXMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, tc.want, tc.wantErr)
 			}
 		})
 	}

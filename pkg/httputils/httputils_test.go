@@ -101,18 +101,18 @@ func TestVersionHandler(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			os.Setenv("VERSION", testCase.environment)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			os.Setenv("VERSION", tc.environment)
 			writer := httptest.NewRecorder()
-			versionHandler().ServeHTTP(writer, testCase.request)
+			versionHandler().ServeHTTP(writer, tc.request)
 
-			if result := writer.Code; result != testCase.wantStatus {
-				t.Errorf("VersionHandler = %d, want %d", result, testCase.wantStatus)
+			if result := writer.Code; result != tc.wantStatus {
+				t.Errorf("VersionHandler = %d, want %d", result, tc.wantStatus)
 			}
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("VersionHandler = `%s`, want `%s`", string(result), testCase.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
+				t.Errorf("VersionHandler = `%s`, want `%s`", string(result), tc.want)
 			}
 		})
 	}

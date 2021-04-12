@@ -30,10 +30,10 @@ func TestIsRoot(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := IsRoot(testCase.input); result != testCase.want {
-				t.Errorf("IsRoot() = %t, want %t", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := IsRoot(tc.input); result != tc.want {
+				t.Errorf("IsRoot() = %t, want %t", result, tc.want)
 			}
 		})
 	}
@@ -62,10 +62,10 @@ func TestGetID(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := GetID(testCase.input); result != testCase.want {
-				t.Errorf("getID() = `%s`, want `%s`", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := GetID(tc.input); result != tc.want {
+				t.Errorf("getID() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -104,20 +104,20 @@ func TestGetUintID(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			result, err := GetUintID(httptest.NewRequest(http.MethodGet, testCase.input, nil))
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			result, err := GetUintID(httptest.NewRequest(http.MethodGet, tc.input, nil))
 
 			failed := false
 
-			if testCase.wantErr != nil && !errors.Is(err, testCase.wantErr) {
+			if tc.wantErr != nil && !errors.Is(err, tc.wantErr) {
 				failed = true
-			} else if result != testCase.want {
+			} else if result != tc.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("GetUintID() = (%d, %v), want (%d, %v)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("GetUintID() = (%d, %v), want (%d, %v)", result, err, tc.want, tc.wantErr)
 			}
 		})
 	}

@@ -37,10 +37,10 @@ func TestCompute(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := testCase.instance.compute(testCase.current, testCase.next, testCase.force); result != testCase.want {
-				t.Errorf("Compute() = %t, want %t", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := tc.instance.compute(tc.current, tc.next, tc.force); result != tc.want {
+				t.Errorf("Compute() = %t, want %t", result, tc.want)
 			}
 		})
 	}

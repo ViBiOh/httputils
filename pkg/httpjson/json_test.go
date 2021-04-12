@@ -32,10 +32,10 @@ func TestIsPretty(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := IsPretty(testCase.input); result != testCase.want {
-				t.Errorf("IsPretty() = %t, want %t", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := IsPretty(tc.input); result != tc.want {
+				t.Errorf("IsPretty() = %t, want %t", result, tc.want)
 			}
 		})
 	}
@@ -87,20 +87,20 @@ func TestWrite(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			Write(writer, http.StatusOK, testCase.obj, testCase.pretty)
+			Write(writer, http.StatusOK, tc.obj, tc.pretty)
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("Write() = `%s`, want `%s`", string(result), testCase.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
+				t.Errorf("Write() = `%s`, want `%s`", string(result), tc.want)
 			}
 
-			if result := writer.Result().StatusCode; result != testCase.wantStatus {
-				t.Errorf("Write() = %d, want %d", result, testCase.wantStatus)
+			if result := writer.Result().StatusCode; result != tc.wantStatus {
+				t.Errorf("Write() = %d, want %d", result, tc.wantStatus)
 			}
 
-			for key, value := range testCase.wantHeader {
+			for key, value := range tc.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
 					t.Errorf("Write().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
 				}
@@ -110,7 +110,7 @@ func TestWrite(t *testing.T) {
 }
 
 func BenchmarkWrite(b *testing.B) {
-	var testCase = struct {
+	var tc = struct {
 		obj interface{}
 	}{
 		testStruct{id: "Test", Active: true, Amount: 12.34},
@@ -119,7 +119,7 @@ func BenchmarkWrite(b *testing.B) {
 	writer := httptest.NewRecorder()
 
 	for i := 0; i < b.N; i++ {
-		Write(writer, http.StatusOK, testCase.obj, false)
+		Write(writer, http.StatusOK, tc.obj, false)
 	}
 }
 
@@ -144,16 +144,16 @@ func TestWriteArray(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			WriteArray(writer, http.StatusOK, testCase.obj, false)
+			WriteArray(writer, http.StatusOK, tc.obj, false)
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("TestWriteArray() = `%s`, want `%s`", string(result), testCase.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
+				t.Errorf("TestWriteArray() = `%s`, want `%s`", string(result), tc.want)
 			}
 
-			for key, value := range testCase.wantHeader {
+			for key, value := range tc.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
 					t.Errorf("TestWriteArray().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
 				}
@@ -201,16 +201,16 @@ func TestWritePagination(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			WritePagination(writer, http.StatusOK, testCase.page, testCase.pageSize, testCase.total, testCase.obj, false)
+			WritePagination(writer, http.StatusOK, tc.page, tc.pageSize, tc.total, tc.obj, false)
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("WritePagination() = `%s`, want `%s`", string(result), testCase.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
+				t.Errorf("WritePagination() = `%s`, want `%s`", string(result), tc.want)
 			}
 
-			for key, value := range testCase.wantHeader {
+			for key, value := range tc.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
 					t.Errorf("WritePagination().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
 				}

@@ -45,9 +45,9 @@ func TestFlags(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder
@@ -56,8 +56,8 @@ func TestFlags(t *testing.T) {
 
 			result := writer.String()
 
-			if result != testCase.want {
-				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
+			if result != tc.want {
+				t.Errorf("Flags() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -111,24 +111,24 @@ func TestGetStatusCode(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			result, err := GetStatusCode(testCase.url, testCase.userAgent)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			result, err := GetStatusCode(tc.url, tc.userAgent)
 
 			failed := false
 
-			if err == nil && testCase.wantErr != nil {
+			if err == nil && tc.wantErr != nil {
 				failed = true
-			} else if err != nil && testCase.wantErr == nil {
+			} else if err != nil && tc.wantErr == nil {
 				failed = true
-			} else if err != nil && err.Error() != testCase.wantErr.Error() {
+			} else if err != nil && err.Error() != tc.wantErr.Error() {
 				failed = true
-			} else if result != testCase.want {
+			} else if result != tc.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("GetStatusCode() = (%d, `%s`), want (%d, `%s`)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("GetStatusCode() = (%d, `%s`), want (%d, `%s`)", result, err, tc.want, tc.wantErr)
 			}
 		})
 	}
@@ -170,22 +170,22 @@ func TestDo(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			failed := false
 
-			result := Do(testCase.url, testCase.userAgent)
+			result := Do(tc.url, tc.userAgent)
 
-			if result == nil && testCase.want != nil {
+			if result == nil && tc.want != nil {
 				failed = true
-			} else if result != nil && testCase.want == nil {
+			} else if result != nil && tc.want == nil {
 				failed = true
-			} else if result != nil && !strings.Contains(result.Error(), testCase.want.Error()) {
+			} else if result != nil && !strings.Contains(result.Error(), tc.want.Error()) {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Do() = `%s`, want `%s`", result, testCase.want)
+				t.Errorf("Do() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -231,17 +231,17 @@ func TestDoAndExit(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			result := -1
 			exitFunc = func(code int) {
 				result = code
 			}
 
-			DoAndExit(testCase.input)
+			DoAndExit(tc.input)
 
-			if result != testCase.want {
-				t.Errorf("DoAndExit() = %d, want %d", result, testCase.want)
+			if result != tc.want {
+				t.Errorf("DoAndExit() = %d, want %d", result, tc.want)
 			}
 		})
 	}

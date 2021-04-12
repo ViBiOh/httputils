@@ -196,25 +196,25 @@ func TestSend(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			resp, err := testCase.request.Send(testCase.ctx, testCase.payload)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			resp, err := tc.request.Send(tc.ctx, tc.payload)
 			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 
-			if err == nil && testCase.wantErr != nil {
+			if err == nil && tc.wantErr != nil {
 				failed = true
-			} else if err != nil && testCase.wantErr == nil {
+			} else if err != nil && tc.wantErr == nil {
 				failed = true
-			} else if err != nil && !strings.Contains(err.Error(), testCase.wantErr.Error()) {
+			} else if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
 				failed = true
-			} else if string(result) != testCase.want {
+			} else if string(result) != tc.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
 			}
 		})
 	}
@@ -253,25 +253,25 @@ func TestForm(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			resp, err := testCase.request.Form(testCase.ctx, testCase.payload)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			resp, err := tc.request.Form(tc.ctx, tc.payload)
 			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 
-			if err == nil && testCase.wantErr != nil {
+			if err == nil && tc.wantErr != nil {
 				failed = true
-			} else if err != nil && testCase.wantErr == nil {
+			} else if err != nil && tc.wantErr == nil {
 				failed = true
-			} else if err != nil && err.Error() != testCase.wantErr.Error() {
+			} else if err != nil && err.Error() != tc.wantErr.Error() {
 				failed = true
-			} else if string(result) != testCase.want {
+			} else if string(result) != tc.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
 			}
 		})
 	}
@@ -317,25 +317,25 @@ func TestJSON(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			resp, err := testCase.request.JSON(testCase.ctx, testCase.payload)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			resp, err := tc.request.JSON(tc.ctx, tc.payload)
 			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 
-			if err == nil && testCase.wantErr != nil {
+			if err == nil && tc.wantErr != nil {
 				failed = true
-			} else if err != nil && testCase.wantErr == nil {
+			} else if err != nil && tc.wantErr == nil {
 				failed = true
-			} else if err != nil && err.Error() != testCase.wantErr.Error() {
+			} else if err != nil && err.Error() != tc.wantErr.Error() {
 				failed = true
-			} else if string(result) != testCase.want {
+			} else if string(result) != tc.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
+				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
 			}
 		})
 	}

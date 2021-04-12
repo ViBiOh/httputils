@@ -89,10 +89,10 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			if result := New(testCase.prefix, testCase.docPrefix); !reflect.DeepEqual(result, testCase.want) {
-				t.Errorf("New() = %#v, want %#v", result, testCase.want)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if result := New(tc.prefix, tc.docPrefix); !reflect.DeepEqual(result, tc.want) {
+				t.Errorf("New() = %#v, want %#v", result, tc.want)
 			}
 		})
 	}
@@ -148,18 +148,18 @@ func TestToString(t *testing.T) {
 
 	os.Setenv("TO_STRING_VALUE", "test")
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			fs := flag.NewFlagSet("ToString", flag.ContinueOnError)
-			fg := New(testCase.prefix, testCase.docPrefix).Name(testCase.name).Default(testCase.defaultValue).Label(testCase.label)
+			fg := New(tc.prefix, tc.docPrefix).Name(tc.name).Default(tc.defaultValue).Label(tc.label)
 			fg.ToString(fs)
 
 			var writer strings.Builder
 			fs.SetOutput(&writer)
 			fs.Usage()
 
-			if result := writer.String(); result != testCase.want {
-				t.Errorf("ToString() = `%s`, want `%s`", result, testCase.want)
+			if result := writer.String(); result != tc.want {
+				t.Errorf("ToString() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -225,18 +225,18 @@ func TestToInt(t *testing.T) {
 	os.Setenv("TO_INT_VALUE", "6000")
 	os.Setenv("TO_INT_INVALID_VALUE", "test")
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			fs := flag.NewFlagSet("ToInt", flag.ContinueOnError)
-			fg := New(testCase.prefix, testCase.docPrefix).Name(testCase.name).Default(testCase.defaultValue).Label(testCase.label)
+			fg := New(tc.prefix, tc.docPrefix).Name(tc.name).Default(tc.defaultValue).Label(tc.label)
 			fg.ToInt(fs)
 
 			var writer strings.Builder
 			fs.SetOutput(&writer)
 			fs.Usage()
 
-			if result := writer.String(); result != testCase.want {
-				t.Errorf("ToInt() = `%s`, want `%s`", result, testCase.want)
+			if result := writer.String(); result != tc.want {
+				t.Errorf("ToInt() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -320,18 +320,18 @@ func TestToUint(t *testing.T) {
 	os.Setenv("TO_UINT_VALUE", "6000")
 	os.Setenv("TO_UINT_INVALID_VALUE", "-6000")
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			fs := flag.NewFlagSet("ToUint", flag.ContinueOnError)
-			fg := New(testCase.prefix, testCase.docPrefix).Name(testCase.name).Default(testCase.defaultValue).Label(testCase.label)
+			fg := New(tc.prefix, tc.docPrefix).Name(tc.name).Default(tc.defaultValue).Label(tc.label)
 			fg.ToUint(fs)
 
 			var writer strings.Builder
 			fs.SetOutput(&writer)
 			fs.Usage()
 
-			if result := writer.String(); result != testCase.want {
-				t.Errorf("ToUint() = `%s`, want `%s`", result, testCase.want)
+			if result := writer.String(); result != tc.want {
+				t.Errorf("ToUint() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -397,18 +397,18 @@ func TestToFloat64(t *testing.T) {
 	os.Setenv("TO_FLOAT64_VALUE", "34.56")
 	os.Setenv("TO_FLOAT64_INVALID_VALUE", "12.34.56")
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			fs := flag.NewFlagSet("ToFloat64", flag.ContinueOnError)
-			fg := New(testCase.prefix, testCase.docPrefix).Name(testCase.name).Default(testCase.defaultValue).Label(testCase.label)
+			fg := New(tc.prefix, tc.docPrefix).Name(tc.name).Default(tc.defaultValue).Label(tc.label)
 			fg.ToFloat64(fs)
 
 			var writer strings.Builder
 			fs.SetOutput(&writer)
 			fs.Usage()
 
-			if result := writer.String(); result != testCase.want {
-				t.Errorf("ToFloat64() = `%s`, want `%s`", result, testCase.want)
+			if result := writer.String(); result != tc.want {
+				t.Errorf("ToFloat64() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -474,18 +474,18 @@ func TestToBool(t *testing.T) {
 	os.Setenv("TO_BOOL_VALUE", "false")
 	os.Setenv("TO_BOOL_INVALID_VALUE", "test")
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
 			fs := flag.NewFlagSet("ToBool", flag.ContinueOnError)
-			fg := New(testCase.prefix, testCase.docPrefix).Name(testCase.name).Default(testCase.defaultValue).Label(testCase.label)
+			fg := New(tc.prefix, tc.docPrefix).Name(tc.name).Default(tc.defaultValue).Label(tc.label)
 			fg.ToBool(fs)
 
 			var writer strings.Builder
 			fs.SetOutput(&writer)
 			fs.Usage()
 
-			if result := writer.String(); result != testCase.want {
-				t.Errorf("ToBool() = `%s`, want `%s`", result, testCase.want)
+			if result := writer.String(); result != tc.want {
+				t.Errorf("ToBool() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}

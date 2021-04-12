@@ -20,9 +20,9 @@ func TestFlags(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder
@@ -31,8 +31,8 @@ func TestFlags(t *testing.T) {
 
 			result := writer.String()
 
-			if result != testCase.want {
-				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
+			if result != tc.want {
+				t.Errorf("Flags() = `%s`, want `%s`", result, tc.want)
 			}
 		})
 	}
@@ -53,12 +53,12 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range cases {
-		t.Run(testCase.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(testCase.intention, flag.ContinueOnError)
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
 
-			if result := New(Flags(fs, "")); !reflect.DeepEqual(result, testCase.want) {
-				t.Errorf("New() = %#v, want %#v", result, testCase.want)
+			if result := New(Flags(fs, "")); !reflect.DeepEqual(result, tc.want) {
+				t.Errorf("New() = %#v, want %#v", result, tc.want)
 			}
 		})
 	}
