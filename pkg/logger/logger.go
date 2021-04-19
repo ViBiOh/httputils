@@ -59,18 +59,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 func init() {
-	logger = Logger{
-		done:   make(chan struct{}),
-		events: make(chan event, runtime.NumCPU()),
-
-		outputBuffer: bytes.NewBuffer(nil),
-		dateBuffer:   make([]byte, 25),
-
-		level:     levelInfo,
-		outWriter: os.Stdout,
-		errWriter: os.Stderr,
-	}
-
+	logger = newLogger(os.Stdout, os.Stderr, levelInfo, false, "time", "level", "message")
 	go logger.Start()
 }
 
@@ -78,22 +67,7 @@ func init() {
 func New(config Config) Logger {
 	level, err := parseLevel(strings.TrimSpace(*config.level))
 
-	logger := Logger{
-		done:   make(chan struct{}),
-		events: make(chan event, runtime.NumCPU()),
-
-		outputBuffer: bytes.NewBuffer(nil),
-		dateBuffer:   make([]byte, 25),
-
-		level:     level,
-		outWriter: os.Stdout,
-		errWriter: os.Stderr,
-
-		jsonFormat: *config.json,
-		timeKey:    EscapeString(strings.TrimSpace(*config.timeKey)),
-		levelKey:   EscapeString(strings.TrimSpace(*config.levelKey)),
-		messageKey: EscapeString(strings.TrimSpace(*config.messageKey)),
-	}
+	logger := newLogger(os.Stdout, os.Stderr, level, *config.json, strings.TrimSpace(*config.timeKey), strings.TrimSpace(*config.levelKey), strings.TrimSpace(*config.messageKey))
 
 	go logger.Start()
 
@@ -102,6 +76,25 @@ func New(config Config) Logger {
 	}
 
 	return logger
+}
+
+func newLogger(outWriter, errWriter io.Writer, lev level, json bool, timeKey, levelKey, messageKey string) Logger {
+	return Logger{
+		done:   make(chan struct{}),
+		events: make(chan event, runtime.NumCPU()),
+
+		outputBuffer: bytes.NewBuffer(nil),
+		dateBuffer:   make([]byte, 25),
+
+		level:     lev,
+		outWriter: outWriter,
+		errWriter: errWriter,
+
+		jsonFormat: json,
+		timeKey:    EscapeString(timeKey),
+		levelKey:   EscapeString(levelKey),
+		messageKey: EscapeString(messageKey),
+	}
 }
 
 // Start starts logger's writer
@@ -138,27 +131,27 @@ func (l Logger) Close() {
 
 // Trace logs tracing message
 func (l Logger) Trace(format string, a ...interface{}) {
-	l.output(levelDebug, format, a...)
+	l.output(levelTrace, nil, format, a...)
 }
 
 // Debug logs debug message
 func (l Logger) Debug(format string, a ...interface{}) {
-	l.output(levelDebug, format, a...)
+	l.output(levelDebug, nil, format, a...)
 }
 
 // Info logs info message
 func (l Logger) Info(format string, a ...interface{}) {
-	l.output(levelInfo, format, a...)
+	l.output(levelInfo, nil, format, a...)
 }
 
 // Warn logs warning message
 func (l Logger) Warn(format string, a ...interface{}) {
-	l.output(levelWarning, format, a...)
+	l.output(levelWarning, nil, format, a...)
 }
 
 // Error logs error message
 func (l Logger) Error(format string, a ...interface{}) {
-	l.output(levelError, format, a...)
+	l.output(levelError, nil, format, a...)
 }
 
 // Fatal logs error message and exit with status code 1
@@ -167,13 +160,24 @@ func (l Logger) Fatal(err error) {
 		return
 	}
 
-	l.output(levelFatal, "%s", err)
+	l.output(levelFatal, nil, "%s", err)
 	l.Close()
 
 	exitFunc(1)
 }
 
-func (l Logger) output(lev level, format string, a ...interface{}) {
+// WithField add given name and value to a context
+func (l Logger) WithField(name string, value interface{}) FieldsContext {
+	return FieldsContext{
+		outputFn: l.output,
+		closeFn:  l.Close,
+		fields: map[string]interface{}{
+			name: value,
+		},
+	}
+}
+
+func (l Logger) output(lev level, fields map[string]interface{}, format string, a ...interface{}) {
 	if l.level < lev {
 		return
 	}
@@ -183,7 +187,7 @@ func (l Logger) output(lev level, format string, a ...interface{}) {
 		message = fmt.Sprintf(format, a...)
 	}
 
-	l.events <- event{timestamp: nowFunc(), level: lev, message: message}
+	l.events <- event{timestamp: nowFunc(), level: lev, message: message, fields: fields}
 }
 
 func (l Logger) json(e event) []byte {
@@ -201,7 +205,24 @@ func (l Logger) json(e event) []byte {
 	l.outputBuffer.WriteString(l.messageKey)
 	l.outputBuffer.WriteString(`":"`)
 	l.outputBuffer.WriteString(EscapeString(e.message))
-	l.outputBuffer.WriteString(`"}`)
+	l.outputBuffer.WriteString(`"`)
+
+	for key, value := range e.fields {
+		l.outputBuffer.WriteString(`,"`)
+		l.outputBuffer.WriteString(EscapeString(key))
+		l.outputBuffer.WriteString(`":`)
+
+		switch value.(type) {
+		case string:
+			l.outputBuffer.WriteString(`"`)
+			l.outputBuffer.WriteString(EscapeString(value.(string)))
+			l.outputBuffer.WriteString(`"`)
+		default:
+			l.outputBuffer.WriteString(fmt.Sprintf("%v", value))
+		}
+	}
+
+	l.outputBuffer.WriteString(`}`)
 	l.outputBuffer.WriteString("\n")
 
 	return l.outputBuffer.Bytes()
@@ -215,6 +236,13 @@ func (l Logger) text(e event) []byte {
 	l.outputBuffer.WriteString(levelValues[e.level])
 	l.outputBuffer.WriteString(` `)
 	l.outputBuffer.WriteString(e.message)
+
+	for key, value := range e.fields {
+		l.outputBuffer.WriteString(" ")
+		l.outputBuffer.WriteString(key)
+		l.outputBuffer.WriteString("=")
+		l.outputBuffer.WriteString(fmt.Sprintf("%v", value))
+	}
 	l.outputBuffer.WriteString("\n")
 
 	return l.outputBuffer.Bytes()

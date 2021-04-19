@@ -2,7 +2,7 @@ package logger
 
 // Global sets global logger
 func Global(l Logger) {
-	logger.Close()
+	defer logger.Close()
 	logger = l
 }
 

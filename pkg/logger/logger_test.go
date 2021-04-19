@@ -2,8 +2,10 @@ package logger
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"runtime"
@@ -162,14 +164,7 @@ func TestClose(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			logger := Logger{
-				outWriter:    tc.args.out,
-				errWriter:    tc.args.err,
-				level:        levelInfo,
-				done:         make(chan struct{}),
-				events:       make(chan event, runtime.NumCPU()),
-				outputBuffer: bytes.NewBuffer(nil),
-			}
+			logger := newLogger(tc.args.out, tc.args.err, levelInfo, false, "time", "level", "msg")
 
 			go logger.Start()
 
@@ -229,17 +224,11 @@ func TestOutput(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			writer := bytes.NewBuffer(nil)
-			logger := Logger{
-				outWriter:    writer,
-				level:        levelInfo,
-				done:         make(chan struct{}),
-				events:       make(chan event, runtime.NumCPU()),
-				outputBuffer: bytes.NewBuffer(nil),
-			}
+			logger := newLogger(writer, writer, levelInfo, false, "time", "level", "msg")
 
 			go logger.Start()
 
-			logger.output(tc.args.lev, tc.args.format, tc.args.a...)
+			logger.output(tc.args.lev, nil, tc.args.format, tc.args.a...)
 			logger.Close()
 
 			got := writer.String()
@@ -260,50 +249,29 @@ func BenchmarkStandardSimpleOutput(b *testing.B) {
 }
 
 func BenchmarkSimpleOutput(b *testing.B) {
-	logger := Logger{
-		outputBuffer: bytes.NewBuffer(nil),
-		dateBuffer:   make([]byte, 25),
-		done:         make(chan struct{}),
-		events:       make(chan event, runtime.NumCPU()),
-		outWriter:    io.Discard,
-		level:        levelInfo,
-	}
+	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
 
 	go logger.Start()
 	defer logger.Close()
 
 	for i := 0; i < b.N; i++ {
-		logger.output(levelInfo, "Hello world")
+		logger.Info("Hello world")
 	}
 }
 
 func BenchmarkNoOutput(b *testing.B) {
-	logger := Logger{
-		outputBuffer: bytes.NewBuffer(nil),
-		dateBuffer:   make([]byte, 25),
-		done:         make(chan struct{}),
-		events:       make(chan event, runtime.NumCPU()),
-		outWriter:    io.Discard,
-		level:        levelWarning,
-	}
+	logger := newLogger(io.Discard, io.Discard, levelWarning, false, "time", "level", "msg")
 
 	go logger.Start()
 	defer logger.Close()
 
 	for i := 0; i < b.N; i++ {
-		logger.output(levelInfo, "Hello world")
+		logger.Info("Hello world")
 	}
 }
 
 func BenchmarkFormattedOutput(b *testing.B) {
-	logger := Logger{
-		outputBuffer: bytes.NewBuffer(nil),
-		dateBuffer:   make([]byte, 25),
-		done:         make(chan struct{}),
-		events:       make(chan event, runtime.NumCPU()),
-		outWriter:    io.Discard,
-		level:        levelInfo,
-	}
+	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
 
 	go logger.Start()
 	defer logger.Close()
@@ -311,11 +279,24 @@ func BenchmarkFormattedOutput(b *testing.B) {
 	time := time.Now().Unix()
 
 	for i := 0; i < b.N; i++ {
-		logger.output(levelInfo, "Hello %s, it's %d", "Bob", time)
+		logger.Info("Hello %s, it's %d", "Bob", time)
 	}
 }
 
-func TestJson(t *testing.T) {
+func BenchmarkFormattedOutputFields(b *testing.B) {
+	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
+
+	go logger.Start()
+	defer logger.Close()
+
+	time := time.Now().Unix()
+
+	for i := 0; i < b.N; i++ {
+		logger.WithField("success", true).WithField("count", 7).Info("Hello %s, it's %d", "Bob", time)
+	}
+}
+
+func TestJSON(t *testing.T) {
 	type args struct {
 		e event
 	}
@@ -323,15 +304,45 @@ func TestJson(t *testing.T) {
 	var cases = []struct {
 		intention string
 		args      args
-		want      string
+		want      map[string]interface{}
 	}{
 		{
 			"simple",
 			args{
-				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: levelInfo, message: "Hello world"},
+				e: event{
+					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
+					level:     levelInfo,
+					message:   "Hello world",
+				},
 			},
-			`{"ts":"2020-09-30T14:59:38Z","level":"INFO","msg":"Hello world"}
-`,
+			map[string]interface{}{
+				"ts":    "2020-09-30T14:59:38Z",
+				"level": "INFO",
+				"msg":   "Hello world",
+			},
+		},
+		{
+			"with fields",
+			args{
+				e: event{
+					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
+					level:     levelInfo,
+					message:   "Hello world",
+					fields: map[string]interface{}{
+						"count":   7,
+						"name":    "test",
+						"success": true,
+					},
+				},
+			},
+			map[string]interface{}{
+				"count":   7,
+				"level":   "INFO",
+				"msg":     "Hello world",
+				"name":    "test",
+				"success": true,
+				"ts":      "2020-09-30T14:59:38Z",
+			},
 		},
 	}
 
@@ -344,26 +355,44 @@ func TestJson(t *testing.T) {
 				messageKey:   "msg",
 			}
 
-			if got := logger.json(tc.args.e); string(got) != tc.want {
-				t.Errorf("json() = `%s`, want `%s`", got, tc.want)
+			var values map[string]interface{}
+			if err := json.Unmarshal([]byte(logger.json(tc.args.e)), &values); err != nil {
+				t.Errorf("unable to unmarshal json payload: %s", err)
+			}
+
+			if fmt.Sprintf("%+v", values) != fmt.Sprintf("%+v", tc.want) {
+				t.Errorf("json() = %+v, want %+v", values, tc.want)
 			}
 		})
 	}
 }
 
-func BenchmarkJson(b *testing.B) {
-	logger := Logger{
-		outputBuffer: bytes.NewBuffer(nil),
-		dateBuffer:   make([]byte, 25),
-		jsonFormat:   true,
-		level:        levelInfo,
-		outWriter:    io.Discard,
-	}
+func BenchmarkJSON(b *testing.B) {
+	logger := newLogger(io.Discard, io.Discard, levelInfo, true, "time", "level", "msg")
 
 	e := event{
 		timestamp: time.Now(),
 		level:     levelInfo,
 		message:   "Hello world",
+	}
+
+	for i := 0; i < b.N; i++ {
+		logger.json(e)
+	}
+}
+
+func BenchmarkJSONWithFields(b *testing.B) {
+	logger := newLogger(io.Discard, io.Discard, levelInfo, true, "time", "level", "msg")
+
+	e := event{
+		timestamp: time.Now(),
+		level:     levelInfo,
+		message:   "Hello world",
+		fields: map[string]interface{}{
+			"count":   7,
+			"name":    "test",
+			"success": true,
+		},
 	}
 
 	for i := 0; i < b.N; i++ {
@@ -384,9 +413,27 @@ func TestText(t *testing.T) {
 		{
 			"simple",
 			args{
-				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: levelInfo, message: "Hello world"},
+				e: event{
+					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
+					level:     levelInfo,
+					message:   "Hello world",
+				},
 			},
 			"2020-09-30T14:59:38Z INFO Hello world\n",
+		},
+		{
+			"fields",
+			args{
+				e: event{
+					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
+					level:     levelInfo,
+					message:   "Hello world",
+					fields: map[string]interface{}{
+						"count": 7,
+					},
+				},
+			},
+			"2020-09-30T14:59:38Z INFO Hello world count=7\n",
 		},
 	}
 
@@ -396,7 +443,7 @@ func TestText(t *testing.T) {
 				outputBuffer: bytes.NewBuffer(nil),
 			}
 
-			if got := logger.text(tc.args.e); string(got) != tc.want {
+			if got := logger.text(tc.args.e); !strings.Contains(string(got), tc.want) {
 				t.Errorf("text() = `%s`, want `%s`", got, tc.want)
 			}
 		})
@@ -404,17 +451,31 @@ func TestText(t *testing.T) {
 }
 
 func BenchmarkText(b *testing.B) {
-	logger := Logger{
-		outputBuffer: bytes.NewBuffer(nil),
-		dateBuffer:   make([]byte, 25),
-		level:        levelInfo,
-		outWriter:    io.Discard,
-	}
+	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
 
 	e := event{
 		timestamp: time.Now(),
 		level:     levelInfo,
 		message:   "Hello world",
+	}
+
+	for i := 0; i < b.N; i++ {
+		logger.text(e)
+	}
+}
+
+func BenchmarkTextWithFields(b *testing.B) {
+	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
+
+	e := event{
+		timestamp: time.Now(),
+		level:     levelInfo,
+		message:   "Hello world",
+		fields: map[string]interface{}{
+			"count":   7,
+			"name":    "test",
+			"success": true,
+		},
 	}
 
 	for i := 0; i < b.N; i++ {

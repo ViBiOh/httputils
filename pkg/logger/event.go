@@ -1,71 +1,63 @@
 package logger
 
 import (
-	"bytes"
-	"fmt"
-	"strings"
 	"time"
 )
 
-type level int
-
-const (
-	levelFatal = iota
-	levelError
-	levelWarning
-	levelInfo
-	levelDebug
-	levelTrace
-)
-
-var (
-	levelValues = []string{"FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"}
-)
-
-func parseLevel(line string) (level, error) {
-	for i, l := range levelValues {
-		if strings.EqualFold(l, line) {
-			return level(i), nil
-		}
-	}
-
-	return levelInfo, fmt.Errorf("invalid value `%s` for level", line)
-}
-
 type event struct {
+	fields    map[string]interface{}
 	timestamp time.Time
 	message   string
 	level     level
 }
 
-// EscapeString escapes value from raw string to be JSON compatible
-func EscapeString(content string) string {
-	if !strings.ContainsRune(content, '\\') && !strings.ContainsRune(content, '\b') && !strings.ContainsRune(content, '\f') && !strings.ContainsRune(content, '\r') && !strings.ContainsRune(content, '\n') && !strings.ContainsRune(content, '\t') && !strings.ContainsRune(content, '"') {
-		return content
+// FieldsContext contains field context
+type FieldsContext struct {
+	fields   map[string]interface{}
+	outputFn func(level, map[string]interface{}, string, ...interface{})
+	closeFn  func()
+}
+
+// WithField add a field to current context
+func (f FieldsContext) WithField(name string, value interface{}) FieldsContext {
+	f.fields[name] = value
+
+	return f
+}
+
+// Trace logs tracing message
+func (f FieldsContext) Trace(format string, a ...interface{}) {
+	f.outputFn(levelTrace, f.fields, format, a...)
+}
+
+// Debug logs debug message
+func (f FieldsContext) Debug(format string, a ...interface{}) {
+	f.outputFn(levelDebug, f.fields, format, a...)
+}
+
+// Info logs info message
+func (f FieldsContext) Info(format string, a ...interface{}) {
+	f.outputFn(levelInfo, f.fields, format, a...)
+}
+
+// Warn logs warning message
+func (f FieldsContext) Warn(format string, a ...interface{}) {
+	f.outputFn(levelWarning, f.fields, format, a...)
+}
+
+// Error logs error message
+func (f FieldsContext) Error(format string, a ...interface{}) {
+	f.outputFn(levelError, f.fields, format, a...)
+}
+
+// Fatal logs error message and exit with status code 1
+func (f FieldsContext) Fatal(err error) {
+	if err == nil {
+		return
 	}
 
-	output := bytes.NewBuffer(nil)
+	f.outputFn(levelFatal, f.fields, "%s", err)
+	f.closeFn()
 
-	for _, char := range content {
-		switch char {
-		case '\\':
-			output.WriteString(`\\`)
-		case '\b':
-			output.WriteString(`\b`)
-		case '\f':
-			output.WriteString(`\f`)
-		case '\r':
-			output.WriteString(`\r`)
-		case '\n':
-			output.WriteString(`\n`)
-		case '\t':
-			output.WriteString(`\t`)
-		case '"':
-			output.WriteString(`\"`)
-		default:
-			output.WriteRune(char)
-		}
-	}
-
-	return output.String()
+	exitFunc(1)
 }
