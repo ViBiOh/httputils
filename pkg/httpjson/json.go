@@ -63,13 +63,42 @@ func WritePagination(w http.ResponseWriter, status int, page uint, pageSize uint
 	Write(w, status, pagination{Results: array, Page: page, PageSize: pageSize, PageCount: pageCount, Total: total}, pretty)
 }
 
-// Read read body response and unmarshall it into given interface
-func Read(resp *http.Response, obj interface{}, action string) error {
-	decoder := json.NewDecoder(resp.Body)
+// Parse read body resquest and unmarshall it into given interface
+func Parse(req *http.Request, obj interface{}, action string) (err error) {
+	decoder := json.NewDecoder(req.Body)
+	defer func() {
+		if closeErr := req.Body.Close(); closeErr != nil {
+			if err == nil {
+				err = closeErr
+			} else {
+				err = fmt.Errorf("%s: %w", err, closeErr)
+			}
+		}
+	}()
 
-	if err := decoder.Decode(obj); err != nil {
-		return fmt.Errorf("unable to parse body of %s: %s", action, err)
+	if err = decoder.Decode(obj); err != nil {
+		err = fmt.Errorf("unable to parse body of %s: %s", action, err)
 	}
 
-	return nil
+	return
+}
+
+// Read read body response and unmarshall it into given interface
+func Read(resp *http.Response, obj interface{}, action string) (err error) {
+	decoder := json.NewDecoder(resp.Body)
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			if err == nil {
+				err = closeErr
+			} else {
+				err = fmt.Errorf("%s: %w", err, closeErr)
+			}
+		}
+	}()
+
+	if err = decoder.Decode(obj); err != nil {
+		err = fmt.Errorf("unable to parse body of %s: %s", action, err)
+	}
+
+	return
 }

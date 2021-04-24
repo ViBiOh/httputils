@@ -219,10 +219,64 @@ func TestWritePagination(t *testing.T) {
 	}
 }
 
-type errReader int
+func TestParse(t *testing.T) {
+	type args struct {
+		req    *http.Request
+		obj    interface{}
+		action string
+	}
 
-func (errReader) Read(_ []byte) (int, error) {
-	return 0, errors.New("read error")
+	var cases = []struct {
+		intention string
+		args      args
+		want      interface{}
+		wantErr   error
+	}{
+		{
+			"prase error",
+			args{
+				req:    httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(""))),
+				action: "empty",
+			},
+			nil,
+			errors.New("unable to parse body of empty"),
+		},
+		{
+			"valid",
+			args{
+				req:    httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(`{"key": "value","valid":true}`))),
+				obj:    make(map[string]interface{}, 0),
+				action: "empty",
+			},
+			map[string]interface{}{
+				"key":   "value",
+				"valid": true,
+			},
+			nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			gotErr := Parse(tc.args.req, &tc.args.obj, tc.args.action)
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			} else if !reflect.DeepEqual(tc.args.obj, tc.want) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("Parse() = (%+v, `%s`), want (%+v, `%s`)", tc.args.obj, gotErr, tc.want, tc.wantErr)
+			}
+		})
+	}
 }
 
 func TestRead(t *testing.T) {
