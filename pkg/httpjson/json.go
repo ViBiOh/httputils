@@ -8,7 +8,6 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/query"
-	"github.com/ViBiOh/httputils/v4/pkg/request"
 )
 
 var (
@@ -66,12 +65,9 @@ func WritePagination(w http.ResponseWriter, status int, page uint, pageSize uint
 
 // Read read body response and unmarshall it into given interface
 func Read(resp *http.Response, obj interface{}, action string) error {
-	payload, err := request.ReadBodyResponse(resp)
-	if err != nil {
-		return fmt.Errorf("unable to read body response of %s: %s", action, err)
-	}
+	decoder := json.NewDecoder(resp.Body)
 
-	if err := json.Unmarshal(payload, obj); err != nil {
+	if err := decoder.Decode(obj); err != nil {
 		return fmt.Errorf("unable to parse body of %s: %s", action, err)
 	}
 

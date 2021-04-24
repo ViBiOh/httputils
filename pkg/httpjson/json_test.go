@@ -239,17 +239,6 @@ func TestRead(t *testing.T) {
 		wantErr   error
 	}{
 		{
-			"read error",
-			args{
-				resp: &http.Response{
-					Body: io.NopCloser(errReader(0)),
-				},
-				action: "read error",
-			},
-			nil,
-			errors.New("unable to read body response of read error"),
-		},
-		{
 			"parse error",
 			args{
 				resp: &http.Response{
