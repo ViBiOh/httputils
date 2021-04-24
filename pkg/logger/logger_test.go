@@ -248,8 +248,17 @@ func BenchmarkStandardSimpleOutput(b *testing.B) {
 	}
 }
 
-func BenchmarkSimpleOutput(b *testing.B) {
-	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
+func BenchmarkStandardSimpleFormattedOutput(b *testing.B) {
+	logger := log.New(io.Discard, "", log.Ldate|log.Ltime)
+	time := time.Now().Unix()
+
+	for i := 0; i < b.N; i++ {
+		logger.Printf("Hello %s, it's %d", "Bob", time)
+	}
+}
+
+func BenchmarkNoOutput(b *testing.B) {
+	logger := newLogger(io.Discard, io.Discard, levelWarning, false, "time", "level", "msg")
 
 	go logger.Start()
 	defer logger.Close()
@@ -259,8 +268,8 @@ func BenchmarkSimpleOutput(b *testing.B) {
 	}
 }
 
-func BenchmarkNoOutput(b *testing.B) {
-	logger := newLogger(io.Discard, io.Discard, levelWarning, false, "time", "level", "msg")
+func BenchmarkSimpleOutput(b *testing.B) {
+	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
 
 	go logger.Start()
 	defer logger.Close()
