@@ -11,6 +11,11 @@ func Close() {
 	logger.Close()
 }
 
+// WithField create context for logging
+func WithField(name string, value interface{}) FieldsContext {
+	return logger.WithField(name, value)
+}
+
 // Trace logs tracing message
 func Trace(format string, a ...interface{}) {
 	logger.Trace(format, a...)

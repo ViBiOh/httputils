@@ -11,7 +11,7 @@ import (
 func SafeParseDuration(name string, value string, defaultDuration time.Duration) time.Duration {
 	duration, err := time.ParseDuration(strings.TrimSpace(value))
 	if err != nil {
-		logger.Warn("invalid %s value `%s`: %s", name, value, err)
+		logger.WithField("name", name).Warn("invalid value `%s`: %s", value, err)
 		return defaultDuration
 	}
 

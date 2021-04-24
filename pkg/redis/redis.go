@@ -74,7 +74,7 @@ func (a app) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 
 	defer func() {
 		if err := a.redisClient.Del(ctx, name).Err(); err != nil {
-			logger.Warn("unable to release exclusive lock for `%s`: %s", name, err)
+			logger.WithField("name", name).Warn("unable to release exclusive lock: %s", err)
 		}
 	}()
 
