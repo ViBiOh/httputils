@@ -431,7 +431,21 @@ func TestText(t *testing.T) {
 			"2020-09-30T14:59:38Z INFO Hello world\n",
 		},
 		{
-			"fields",
+			"string field",
+			args{
+				e: event{
+					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
+					level:     levelInfo,
+					message:   "Hello world",
+					fields: map[string]interface{}{
+						"name": "test",
+					},
+				},
+			},
+			"2020-09-30T14:59:38Z INFO Hello world name=\"test\"\n",
+		},
+		{
+			"numeric field",
 			args{
 				e: event{
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),

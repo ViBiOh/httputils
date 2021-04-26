@@ -241,7 +241,7 @@ func (l Logger) text(e event) []byte {
 		l.outputBuffer.WriteString(" ")
 		l.outputBuffer.WriteString(key)
 		l.outputBuffer.WriteString("=")
-		l.outputBuffer.WriteString(fmt.Sprintf("%v", value))
+		l.outputBuffer.WriteString(fmt.Sprintf("%#v", value))
 	}
 	l.outputBuffer.WriteString("\n")
 
