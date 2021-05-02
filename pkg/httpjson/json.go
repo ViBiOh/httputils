@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
@@ -101,4 +102,28 @@ func Read(resp *http.Response, obj interface{}, action string) (err error) {
 	}
 
 	return
+}
+
+// Stream reads io.Reader and stream array or map content to given chan
+func Stream(stream io.Reader, newObj func() interface{}, output chan<- interface{}) error {
+	defer close(output)
+	decoder := json.NewDecoder(stream)
+
+	if _, err := decoder.Token(); err != nil {
+		return fmt.Errorf("unable to read opening token: %s", err)
+	}
+
+	for decoder.More() {
+		obj := newObj()
+		if err := decoder.Decode(obj); err != nil {
+			return fmt.Errorf("unable to parse JSON: %s", err)
+		}
+		output <- obj
+	}
+
+	if _, err := decoder.Token(); err != nil {
+		return fmt.Errorf("unable to read closing token: %s", err)
+	}
+
+	return nil
 }
