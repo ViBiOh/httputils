@@ -245,7 +245,7 @@ func TestParse(t *testing.T) {
 			"valid",
 			args{
 				req:    httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(`{"key": "value","valid":true}`))),
-				obj:    make(map[string]interface{}, 0),
+				obj:    make(map[string]interface{}),
 				action: "empty",
 			},
 			map[string]interface{}{

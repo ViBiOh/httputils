@@ -212,10 +212,10 @@ func (l Logger) json(e event) []byte {
 		l.outputBuffer.WriteString(EscapeString(key))
 		l.outputBuffer.WriteString(`":`)
 
-		switch value.(type) {
+		switch content := value.(type) {
 		case string:
 			l.outputBuffer.WriteString(`"`)
-			l.outputBuffer.WriteString(EscapeString(value.(string)))
+			l.outputBuffer.WriteString(EscapeString(content))
 			l.outputBuffer.WriteString(`"`)
 		default:
 			l.outputBuffer.WriteString(fmt.Sprintf("%v", value))
