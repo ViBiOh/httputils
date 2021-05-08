@@ -20,10 +20,15 @@ func benchmarkHandler(b *testing.B, handler http.Handler) {
 	defaultHTTPClient := http.Client{
 		Timeout: 30 * time.Second,
 	}
-	request := httptest.NewRequest(http.MethodGet, testServer.URL+"/", nil)
+	request, err := http.NewRequest(http.MethodGet, testServer.URL+"/", nil)
+	if err != nil {
+		b.Errorf("unable to create request: %s", err)
+	}
 
 	for i := 0; i < b.N; i++ {
-		defaultHTTPClient.Do(request)
+		if _, err := defaultHTTPClient.Do(request); err != nil {
+			b.Errorf("unable to execute request: %s", err)
+		}
 	}
 }
 

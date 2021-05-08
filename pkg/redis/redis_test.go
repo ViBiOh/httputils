@@ -7,10 +7,6 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	type args struct {
-		content string
-	}
-
 	var cases = []struct {
 		intention string
 		want      string

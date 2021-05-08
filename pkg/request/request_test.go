@@ -3,6 +3,7 @@ package request
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +19,12 @@ type testStruct struct {
 	Amount float64
 }
 
+func safeWrite(writer io.Writer, content []byte) {
+	if _, err := writer.Write(content); err != nil {
+		fmt.Println(err)
+	}
+}
+
 func TestSend(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/simple" {
@@ -26,15 +33,15 @@ func TestSend(t *testing.T) {
 			payload, _ := ReadBodyRequest(r)
 
 			if r.Method == http.MethodGet {
-				w.Write([]byte("it works!"))
+				safeWrite(w, []byte("it works!"))
 			} else if r.Method == http.MethodPost && string(payload) == "posted" {
-				w.Write([]byte("it posts!"))
+				safeWrite(w, []byte("it posts!"))
 			} else if r.Method == http.MethodPut && string(payload) == "puted" {
-				w.Write([]byte("it puts!"))
+				safeWrite(w, []byte("it puts!"))
 			} else if r.Method == http.MethodPatch && string(payload) == "patched" {
-				w.Write([]byte("it patches!"))
+				safeWrite(w, []byte("it patches!"))
 			} else if r.Method == http.MethodDelete {
-				w.Write([]byte("it deletes!"))
+				safeWrite(w, []byte("it deletes!"))
 			}
 
 			return
@@ -42,20 +49,20 @@ func TestSend(t *testing.T) {
 			username, password, ok := r.BasicAuth()
 			if ok && username == "admin" && password == "secret" {
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("connected!"))
+				safeWrite(w, []byte("connected!"))
 
 				return
 			}
 		} else if r.URL.Path == "/accept" {
 			if r.Header.Get("Accept") == "text/plain" {
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("text me!"))
+				safeWrite(w, []byte("text me!"))
 
 				return
 			}
 		} else if r.URL.Path == "/explain" {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("missing id"))
+			safeWrite(w, []byte("missing id"))
 
 			return
 		} else if r.URL.Path == "/redirect" {
@@ -224,7 +231,7 @@ func TestForm(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/simple" && r.Method == http.MethodPost && r.FormValue("first") == "test" && r.FormValue("second") == "param" && r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("valid"))
+			safeWrite(w, []byte("valid"))
 			return
 		}
 
@@ -283,7 +290,7 @@ func TestJSON(t *testing.T) {
 
 		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == "{\"Active\":true,\"Amount\":12.34}\n" && r.Header.Get("Content-Type") == "application/json" {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("valid"))
+			safeWrite(w, []byte("valid"))
 			return
 		}
 

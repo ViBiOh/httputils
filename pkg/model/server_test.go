@@ -10,7 +10,9 @@ import (
 
 func TestChainMiddlewares(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("handler"))
+		if _, err := w.Write([]byte("handler")); err != nil {
+			t.Errorf("unable to write: %s", err)
+		}
 	})
 
 	middlewareNotFound := func(next http.Handler) http.Handler {

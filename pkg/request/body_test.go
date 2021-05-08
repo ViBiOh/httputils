@@ -170,7 +170,9 @@ func TestReadBodyResponse(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			writer.Write(tc.input)
+			if _, err := writer.Write(tc.input); err != nil {
+				t.Errorf("unable to write: %s", err)
+			}
 			result, err := ReadBodyResponse(writer.Result())
 
 			failed := false
