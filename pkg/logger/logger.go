@@ -250,6 +250,6 @@ func (l Logger) text(e event) []byte {
 
 func safeErrorWrite(message string) {
 	if _, err := os.Stderr.WriteString(message); err != nil {
-		// do nothing here
+		fmt.Println(err)
 	}
 }

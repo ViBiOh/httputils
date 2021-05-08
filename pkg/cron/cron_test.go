@@ -417,7 +417,9 @@ func TestStart(t *testing.T) {
 
 				go func() {
 					time.Sleep(time.Second)
-					p.Signal(syscall.SIGUSR1)
+					if err := p.Signal(syscall.SIGUSR1); err != nil {
+						fmt.Println(err)
+					}
 				}()
 
 				return func(_ context.Context) error {
