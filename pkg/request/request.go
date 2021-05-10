@@ -14,6 +14,10 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
+const (
+	maxErrorBody = 500
+)
+
 var (
 	defaultHTTPClient = http.Client{
 		Timeout: 15 * time.Second,
@@ -184,6 +188,10 @@ func DoWithClient(client http.Client, req *http.Request) (*http.Response, error)
 		}
 
 		if errBody, bodyErr := ReadBodyResponse(resp); bodyErr == nil && len(errBody) > 0 {
+			if len(errBody) > maxErrorBody {
+				errBody = errBody[:maxErrorBody]
+			}
+
 			errMessage.WriteString(fmt.Sprintf("\n%s", errBody))
 		}
 

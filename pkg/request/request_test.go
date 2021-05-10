@@ -65,6 +65,10 @@ func TestSend(t *testing.T) {
 			safeWrite(w, []byte("missing id"))
 
 			return
+		} else if r.URL.Path == "/long_explain" {
+			w.WriteHeader(http.StatusBadRequest)
+			safeWrite(w, []byte(`Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`))
+			return
 		} else if r.URL.Path == "/redirect" {
 			w.Header().Set("Location", "/simple")
 			w.WriteHeader(http.StatusPermanentRedirect)
@@ -184,6 +188,14 @@ func TestSend(t *testing.T) {
 			nil,
 			"",
 			errors.New("HTTP/400\nmissing id"),
+		},
+		{
+			"invalid status code with long payload",
+			New().Get(testServer.URL + "/long_explain"),
+			context.Background(),
+			nil,
+			"",
+			errors.New("HTTP/400\nLorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipisicing e"),
 		},
 		{
 			"don't redirect",
