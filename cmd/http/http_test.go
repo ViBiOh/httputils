@@ -11,6 +11,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/prometheus"
+	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 )
 
 var (
@@ -61,6 +62,6 @@ func BenchmarkFullMiddlewares(b *testing.B) {
 		b.Error(err)
 	}
 
-	middlewares := model.ChainMiddlewares(handler, prometheus.New(prometheusConfig).Middleware, owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware)
+	middlewares := model.ChainMiddlewares(handler, recoverer.Middleware, prometheus.New(prometheusConfig).Middleware, owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware)
 	benchmarkHandler(b, middlewares)
 }
