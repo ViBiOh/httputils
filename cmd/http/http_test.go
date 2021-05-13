@@ -6,29 +6,25 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/cors"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/prometheus"
 )
 
-func benchmarkHandler(b *testing.B, handler http.Handler) {
-	testServer := httptest.NewServer(handler)
-	defer testServer.Close()
+var (
+	handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+)
 
-	defaultHTTPClient := http.Client{
-		Timeout: 30 * time.Second,
-	}
-	request, err := http.NewRequest(http.MethodGet, testServer.URL+"/", nil)
-	if err != nil {
-		b.Errorf("unable to create request: %s", err)
-	}
+func benchmarkHandler(b *testing.B, handler http.Handler) {
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	writer := httptest.NewRecorder()
 
 	for i := 0; i < b.N; i++ {
-		if _, err := defaultHTTPClient.Do(request); err != nil {
-			b.Errorf("unable to execute request: %s", err)
-		}
+		handler.ServeHTTP(writer, request)
 	}
 }
 
@@ -45,9 +41,6 @@ func BenchmarkNoMiddleware(b *testing.B) {
 		b.Error(err)
 	}
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
 	benchmarkHandler(b, handler)
 }
 
@@ -68,9 +61,6 @@ func BenchmarkFullMiddlewares(b *testing.B) {
 		b.Error(err)
 	}
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-	handler = prometheus.New(prometheusConfig).Middleware(owasp.New(owaspConfig).Middleware(cors.New(corsConfig).Middleware(handler)))
-	benchmarkHandler(b, handler)
+	middlewares := model.ChainMiddlewares(handler, prometheus.New(prometheusConfig).Middleware, owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware)
+	benchmarkHandler(b, middlewares)
 }

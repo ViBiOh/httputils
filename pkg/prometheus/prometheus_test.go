@@ -173,3 +173,21 @@ func TestIsIgnored(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkMiddleware(b *testing.B) {
+	app := app{
+		registry: prometheus.NewRegistry(),
+	}
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	middleware := app.Middleware(handler)
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	writer := httptest.NewRecorder()
+
+	for i := 0; i < b.N; i++ {
+		middleware.ServeHTTP(writer, request)
+	}
+}

@@ -51,9 +51,14 @@ func New(config Config) App {
 		ignore = strings.Split(ignoredPaths, ",")
 	}
 
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(prometheus.NewBuildInfoCollector())
+	registry.MustRegister(prometheus.NewGoCollector())
+	registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
+
 	return app{
 		ignore:   ignore,
-		registry: prometheus.NewRegistry(),
+		registry: registry,
 	}
 }
 
@@ -76,9 +81,9 @@ func (a app) Handler() http.Handler {
 
 // Middleware for net/http
 func (a app) Middleware(next http.Handler) http.Handler {
-	a.registry.MustRegister(prometheus.NewBuildInfoCollector())
-	a.registry.MustRegister(prometheus.NewGoCollector())
-	a.registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
+	if next == nil {
+		return next
+	}
 
 	instrumentedHandler := a.instrumentHandler(next)
 
