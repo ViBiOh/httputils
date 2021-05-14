@@ -14,7 +14,7 @@ var (
 	failingHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var nilMap map[string]string
 
-		nilMap["fail"] = "yes"
+		nilMap["fail"] = "yes" //nolint:staticcheck
 
 		w.WriteHeader(http.StatusOK)
 	})
