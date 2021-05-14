@@ -35,9 +35,10 @@ type Config struct {
 }
 
 type app struct {
-	tpl      *template.Template
-	content  map[string]interface{}
-	staticFS fs.FS
+	tpl       *template.Template
+	content   map[string]interface{}
+	staticFS  fs.FS
+	publicURL string
 }
 
 // Flags adds flags for configuring package
@@ -60,11 +61,14 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 		return nil, fmt.Errorf("unable to parse templates/*.html templates: %s", err)
 	}
 
+	publicURL := strings.TrimSuffix(strings.TrimSpace(*config.publicURL), "/")
+
 	return app{
-		tpl:      tpl,
-		staticFS: staticFS,
+		tpl:       tpl,
+		staticFS:  staticFS,
+		publicURL: publicURL,
 		content: map[string]interface{}{
-			"PublicURL": strings.TrimSpace(*config.publicURL),
+			"PublicURL": publicURL,
 			"Title":     strings.TrimSpace(*config.title),
 			"Version":   os.Getenv("VERSION"),
 		},

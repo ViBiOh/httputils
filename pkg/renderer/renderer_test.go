@@ -262,6 +262,7 @@ func TestHandler(t *testing.T) {
 func TestRedirect(t *testing.T) {
 	var cases = []struct {
 		intention  string
+		instance   app
 		request    *http.Request
 		path       string
 		message    Message
@@ -271,17 +272,23 @@ func TestRedirect(t *testing.T) {
 	}{
 		{
 			"simple",
+			app{
+				publicURL: "http://vibioh.fr",
+			},
 			httptest.NewRequest(http.MethodGet, "http://vibioh.fr/", nil),
 			"/",
 			NewSuccessMessage("Created with success"),
-			"<a href=\"http://vibioh.fr?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
+			"<a href=\"http://vibioh.fr/?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
 			http.StatusFound,
 			http.Header{
-				"Location": []string{fmt.Sprintf("http://vibioh.fr?%s", NewSuccessMessage("Created with success"))},
+				"Location": []string{fmt.Sprintf("http://vibioh.fr/?%s", NewSuccessMessage("Created with success"))},
 			},
 		},
 		{
 			"relative URL",
+			app{
+				publicURL: "http://localhost:1080",
+			},
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success",
 			NewSuccessMessage("Created with success"),
@@ -293,13 +300,16 @@ func TestRedirect(t *testing.T) {
 		},
 		{
 			"exact URL",
-			httptest.NewRequest(http.MethodGet, "http://vibioh.fr", nil),
+			app{
+				publicURL: "https://vibioh.fr",
+			},
+			httptest.NewRequest(http.MethodGet, "https://vibioh.fr", nil),
 			"https://app.local/success",
 			NewSuccessMessage("Created with success"),
-			"<a href=\"https://app.local/success?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
+			"<a href=\"https://app.local/success\">Found</a>.\n\n",
 			http.StatusFound,
 			http.Header{
-				"Location": []string{fmt.Sprintf("https://app.local/success?%s", NewSuccessMessage("Created with success"))},
+				"Location": []string{"https://app.local/success"},
 			},
 		},
 	}
@@ -307,7 +317,7 @@ func TestRedirect(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			Redirect(writer, tc.request, tc.path, tc.message)
+			tc.instance.Redirect(writer, tc.request, tc.path, tc.message)
 
 			if got := writer.Code; got != tc.wantStatus {
 				t.Errorf("Redirect = %d, want %d", got, tc.wantStatus)
