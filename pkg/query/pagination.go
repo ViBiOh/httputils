@@ -22,14 +22,14 @@ var (
 
 // Pagination describes pagination params
 type Pagination struct {
+	LastKey  string
 	Sort     string
-	Page     uint
 	PageSize uint
 	Desc     bool
 }
 
 // ParsePagination parse common pagination param from request
-func ParsePagination(r *http.Request, defaultPage, defaultPageSize, maxPageSize uint) (pagination Pagination, err error) {
+func ParsePagination(r *http.Request, defaultPageSize, maxPageSize uint) (pagination Pagination, err error) {
 	var parsed uint64
 	var parsedUint uint
 	var params url.Values
@@ -38,18 +38,6 @@ func ParsePagination(r *http.Request, defaultPage, defaultPageSize, maxPageSize 
 	if err != nil {
 		err = fmt.Errorf("%s: %w", err, ErrInvalidValue)
 		return
-	}
-
-	pagination.Page = defaultPage
-	rawPage := strings.TrimSpace(params.Get("page"))
-	if len(rawPage) != 0 {
-		parsed, err = strconv.ParseUint(rawPage, 10, 32)
-		if err != nil {
-			err = fmt.Errorf("page is invalid %s: %w", err, ErrInvalidValue)
-			return
-		}
-
-		pagination.Page = uint(parsed)
 	}
 
 	pagination.PageSize = defaultPageSize
@@ -82,6 +70,7 @@ func ParsePagination(r *http.Request, defaultPage, defaultPageSize, maxPageSize 
 	}
 
 	pagination.Desc = GetBool(r, "desc")
+	pagination.LastKey = strings.TrimSpace(params.Get("lastKey"))
 
 	return
 }

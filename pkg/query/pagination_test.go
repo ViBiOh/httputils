@@ -13,7 +13,6 @@ func TestParsePagination(t *testing.T) {
 	var cases = []struct {
 		intention       string
 		request         *http.Request
-		defaultPage     uint
 		defaultPageSize uint
 		maxPageSize     uint
 		want            Pagination
@@ -22,23 +21,19 @@ func TestParsePagination(t *testing.T) {
 		{
 			"simple",
 			httptest.NewRequest(http.MethodGet, "/", nil),
-			1,
 			20,
 			100,
 			Pagination{
-				Page:     1,
 				PageSize: 20,
 			},
 			nil,
 		},
 		{
 			"simple value",
-			httptest.NewRequest(http.MethodGet, "/?page=2&pageSize=50&sort=name&desc", nil),
-			1,
+			httptest.NewRequest(http.MethodGet, "/?pageSize=50&sort=name&desc", nil),
 			20,
 			100,
 			Pagination{
-				Page:     2,
 				PageSize: 50,
 				Sort:     "name",
 				Desc:     true,
@@ -46,24 +41,11 @@ func TestParsePagination(t *testing.T) {
 			nil,
 		},
 		{
-			"invalid page",
-			httptest.NewRequest(http.MethodGet, "/?page=invalid", nil),
-			1,
-			20,
-			100,
-			Pagination{
-				Page: 1,
-			},
-			ErrInvalidValue,
-		},
-		{
 			"invalid pageSize",
 			httptest.NewRequest(http.MethodGet, "/?pageSize=invalid", nil),
-			1,
 			20,
 			100,
 			Pagination{
-				Page:     1,
 				PageSize: 20,
 			},
 			ErrInvalidValue,
@@ -71,11 +53,9 @@ func TestParsePagination(t *testing.T) {
 		{
 			"too high pageSize",
 			httptest.NewRequest(http.MethodGet, "/?pageSize=150", nil),
-			1,
 			20,
 			100,
 			Pagination{
-				Page:     1,
 				PageSize: 20,
 			},
 			ErrMaxPageSizeExceeded,
@@ -83,11 +63,9 @@ func TestParsePagination(t *testing.T) {
 		{
 			"invalid pageSize number",
 			httptest.NewRequest(http.MethodGet, "/?pageSize=0", nil),
-			1,
 			20,
 			100,
 			Pagination{
-				Page:     1,
 				PageSize: 20,
 			},
 			ErrPageSizeInvalid,
@@ -95,11 +73,9 @@ func TestParsePagination(t *testing.T) {
 		{
 			"sort",
 			httptest.NewRequest(http.MethodGet, "/?sort=name", nil),
-			1,
 			20,
 			100,
 			Pagination{
-				Page:     1,
 				PageSize: 20,
 				Sort:     "name",
 			},
@@ -108,11 +84,9 @@ func TestParsePagination(t *testing.T) {
 		{
 			"order",
 			httptest.NewRequest(http.MethodGet, "/?desc", nil),
-			1,
 			20,
 			100,
 			Pagination{
-				Page:     1,
 				PageSize: 20,
 				Desc:     true,
 			},
@@ -121,12 +95,21 @@ func TestParsePagination(t *testing.T) {
 		{
 			"order with value",
 			httptest.NewRequest(http.MethodGet, "/?desc=false", nil),
-			1,
 			20,
 			100,
 			Pagination{
-				Page:     1,
 				PageSize: 20,
+			},
+			nil,
+		},
+		{
+			"last key",
+			httptest.NewRequest(http.MethodGet, "/?lastKey=8000", nil),
+			20,
+			100,
+			Pagination{
+				PageSize: 20,
+				LastKey:  "8000",
 			},
 			nil,
 		},
@@ -139,7 +122,6 @@ func TestParsePagination(t *testing.T) {
 			},
 			0,
 			0,
-			0,
 			Pagination{},
 			ErrInvalidValue,
 		},
@@ -147,7 +129,7 @@ func TestParsePagination(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			result, err := ParsePagination(tc.request, tc.defaultPage, tc.defaultPageSize, tc.maxPageSize)
+			result, err := ParsePagination(tc.request, tc.defaultPageSize, tc.maxPageSize)
 
 			failed := false
 

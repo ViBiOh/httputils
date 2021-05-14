@@ -22,10 +22,10 @@ type results struct {
 
 type pagination struct {
 	Results   interface{} `json:"results"`
-	Page      uint        `json:"page"`
 	PageSize  uint        `json:"pageSize"`
 	PageCount uint        `json:"pageCount"`
 	Total     uint        `json:"total"`
+	LastKey   string      `json:"lastKey"`
 }
 
 // IsPretty determine if pretty is defined in query params
@@ -55,13 +55,13 @@ func WriteArray(w http.ResponseWriter, status int, array interface{}, pretty boo
 }
 
 // WritePagination write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func WritePagination(w http.ResponseWriter, status int, page uint, pageSize uint, total uint, array interface{}, pretty bool) {
+func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, lastKey string, array interface{}, pretty bool) {
 	pageCount := total / pageSize
 	if total%pageSize != 0 {
 		pageCount++
 	}
 
-	Write(w, status, pagination{Results: array, Page: page, PageSize: pageSize, PageCount: pageCount, Total: total}, pretty)
+	Write(w, status, pagination{Results: array, PageSize: pageSize, PageCount: pageCount, Total: total, LastKey: lastKey}, pretty)
 }
 
 // Parse read body resquest and unmarshall it into given interface
