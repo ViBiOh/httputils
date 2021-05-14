@@ -22,10 +22,10 @@ type results struct {
 
 type pagination struct {
 	Results   interface{} `json:"results"`
+	LastKey   string      `json:"lastKey"`
 	PageSize  uint        `json:"pageSize"`
 	PageCount uint        `json:"pageCount"`
 	Total     uint        `json:"total"`
-	LastKey   string      `json:"lastKey"`
 }
 
 // IsPretty determine if pretty is defined in query params

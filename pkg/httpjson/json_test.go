@@ -178,7 +178,7 @@ func TestWritePagination(t *testing.T) {
 			2,
 			"8000",
 			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"pageSize\":2,\"pageCount\":1,\"total\":2,\"lastKey\":\"8000\"}\n",
+			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"lastKey\":\"8000\",\"pageSize\":2,\"pageCount\":1,\"total\":2}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		{
@@ -187,7 +187,7 @@ func TestWritePagination(t *testing.T) {
 			40,
 			"8000",
 			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"pageSize\":10,\"pageCount\":4,\"total\":40,\"lastKey\":\"8000\"}\n",
+			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"lastKey\":\"8000\",\"pageSize\":10,\"pageCount\":4,\"total\":40}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		{
@@ -196,7 +196,7 @@ func TestWritePagination(t *testing.T) {
 			45,
 			"8000",
 			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"pageSize\":10,\"pageCount\":5,\"total\":45,\"lastKey\":\"8000\"}\n",
+			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"lastKey\":\"8000\",\"pageSize\":10,\"pageCount\":5,\"total\":45}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 	}

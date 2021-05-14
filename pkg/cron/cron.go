@@ -35,23 +35,23 @@ func (c *Clock) Now() time.Time {
 
 // Cron definition
 type Cron struct {
-	timeout  time.Duration
-	name     string
+	clock    *Clock
 	redisApp redis.App
 
-	retryInterval time.Duration
-	interval      time.Duration
-	dayTime       time.Time
-
-	clock  *Clock
-	now    chan time.Time
-	signal os.Signal
+	signal  os.Signal
+	dayTime time.Time
+	now     chan time.Time
+	name    string
 
 	onError func(error)
 	errors  []error
 
-	day      byte
+	retryInterval time.Duration
+	timeout       time.Duration
+	interval      time.Duration
+
 	maxRetry uint
+	day      byte
 }
 
 // New creates new cron
