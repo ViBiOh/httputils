@@ -25,6 +25,7 @@ var (
 // App of package
 type App interface {
 	Handler(TemplateFunc) http.Handler
+	Redirect(http.ResponseWriter, *http.Request, string, Message)
 	Error(http.ResponseWriter, error)
 }
 
