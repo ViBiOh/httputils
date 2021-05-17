@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ViBiOh/httputils/v4/pkg/clock"
 	"github.com/ViBiOh/httputils/v4/pkg/redis"
 )
 
@@ -20,22 +21,9 @@ var (
 	_ fmt.Stringer = New()
 )
 
-// Clock give time
-type Clock struct {
-	now time.Time
-}
-
-// Now return current time
-func (c *Clock) Now() time.Time {
-	if c == nil {
-		return time.Now()
-	}
-	return c.now
-}
-
 // Cron definition
 type Cron struct {
-	clock    *Clock
+	clock    *clock.Clock
 	redisApp redis.App
 
 	signal  os.Signal
@@ -223,13 +211,6 @@ func (c *Cron) OnSignal(signal os.Signal) *Cron {
 // OnError defines error handling function
 func (c *Cron) OnError(onError func(error)) *Cron {
 	c.onError = onError
-
-	return c
-}
-
-// Clock sets clock that give current time, mostly for testing purpose
-func (c *Cron) Clock(clock *Clock) *Cron {
-	c.clock = clock
 
 	return c
 }

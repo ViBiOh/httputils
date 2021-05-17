@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ViBiOh/httputils/v4/pkg/clock"
 	"github.com/ViBiOh/httputils/v4/pkg/redis/redistest"
 )
 
@@ -240,48 +241,56 @@ func TestGetTickerDuration(t *testing.T) {
 	var cases = []struct {
 		intention string
 		cron      *Cron
+		clock     *clock.Clock
 		input     bool
 		want      time.Duration
 	}{
 		{
 			"retry",
 			New().Retry(time.Minute),
+			nil,
 			true,
 			time.Minute,
 		},
 		{
 			"no retry",
 			New().Each(time.Hour).Retry(time.Minute),
+			nil,
 			false,
 			time.Hour,
 		},
 		{
 			"each",
 			New().Each(time.Hour),
+			nil,
 			false,
 			time.Hour,
 		},
 		{
 			"same day",
-			New().Days().At("13:00").In("UTC").Clock(&Clock{time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC)}),
+			New().Days().At("13:00").In("UTC"),
+			clock.New(time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC)),
 			false,
 			time.Hour,
 		},
 		{
 			"one week",
-			New().Monday().At("11:00").In("UTC").Clock(&Clock{time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC)}),
+			New().Monday().At("11:00").In("UTC"),
+			clock.New(time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC)),
 			false,
 			time.Hour * 167,
 		},
 		{
 			"another timezone",
-			New().Wednesday().At("12:00").In("EST").Clock(&Clock{time.Date(2019, 10, 23, 12, 0, 0, 0, time.UTC)}),
+			New().Wednesday().At("12:00").In("EST"),
+			clock.New(time.Date(2019, 10, 23, 12, 0, 0, 0, time.UTC)),
 			false,
 			time.Hour * 5,
 		},
 		{
 			"hour shift",
-			New().Sunday().At("12:00").In("Europe/Paris").Clock(&Clock{time.Date(2019, 10, 26, 22, 0, 0, 0, time.UTC)}),
+			New().Sunday().At("12:00").In("Europe/Paris"),
+			clock.New(time.Date(2019, 10, 26, 22, 0, 0, 0, time.UTC)),
 			false,
 			time.Hour * 13,
 		},
@@ -289,6 +298,7 @@ func TestGetTickerDuration(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
+			tc.cron.clock = tc.clock
 			result := tc.cron.getTickerDuration(tc.input)
 			if !reflect.DeepEqual(result, tc.want) {
 				t.Errorf("getTickerDuration() = `%s`, want `%s`", result, tc.want)
@@ -353,12 +363,14 @@ func TestStart(t *testing.T) {
 	var cases = []struct {
 		intention string
 		cron      *Cron
+		clock     *clock.Clock
 		action    func(*sync.WaitGroup, *Cron) func(context.Context) error
 		onError   func(*sync.WaitGroup, *Cron) func(error)
 	}{
 		{
 			"run once",
-			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)}),
+			New().Days().At("12:00"),
+			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				return func(_ context.Context) error {
 					wg.Done()
@@ -374,7 +386,8 @@ func TestStart(t *testing.T) {
 		},
 		{
 			"retry",
-			New().Days().At("12:00").Retry(time.Millisecond).MaxRetry(5).Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)}),
+			New().Days().At("12:00").Retry(time.Millisecond).MaxRetry(5),
+			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				count := 0
 				return func(_ context.Context) error {
@@ -393,7 +406,8 @@ func TestStart(t *testing.T) {
 		},
 		{
 			"run on demand",
-			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)}),
+			New().Days().At("12:00"),
+			clock.New(time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				cron.Now()
 
@@ -408,7 +422,8 @@ func TestStart(t *testing.T) {
 		},
 		{
 			"run on signal",
-			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)}).OnSignal(syscall.SIGUSR1),
+			New().Days().At("12:00").OnSignal(syscall.SIGUSR1),
+			clock.New(time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				p, err := os.FindProcess(os.Getpid())
 				if err != nil {
@@ -433,7 +448,8 @@ func TestStart(t *testing.T) {
 		},
 		{
 			"run in exclusive",
-			New().Days().At("12:00").Clock(&Clock{time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)}).Exclusive(redistest.New().SetExclusive(nil), "test", time.Minute),
+			New().Days().At("12:00").Exclusive(redistest.New().SetExclusive(nil), "test", time.Minute),
+			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				return func(_ context.Context) error {
 					wg.Done()
@@ -448,7 +464,8 @@ func TestStart(t *testing.T) {
 		},
 		{
 			"fail if misconfigured",
-			New().Clock(&Clock{time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)}),
+			New(),
+			clock.New(time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				cron.Now()
 
@@ -469,6 +486,7 @@ func TestStart(t *testing.T) {
 		t.Run(tc.intention, func(t *testing.T) {
 			var wg sync.WaitGroup
 			wg.Add(1)
+			tc.cron.clock = tc.clock
 
 			go tc.cron.OnError(tc.onError(&wg, tc.cron)).Start(tc.action(&wg, tc.cron), nil)
 

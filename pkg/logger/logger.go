@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ViBiOh/httputils/v4/pkg/clock"
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
 )
 
 var (
 	logger   Logger
 	exitFunc = os.Exit
-	nowFunc  = time.Now
 )
 
 // Config of package
@@ -30,6 +30,8 @@ type Config struct {
 
 // Logger defines a logger instance
 type Logger struct {
+	clock *clock.Clock
+
 	timeKey    string
 	levelKey   string
 	messageKey string
@@ -187,7 +189,7 @@ func (l Logger) output(lev level, fields map[string]interface{}, format string, 
 		message = fmt.Sprintf(format, a...)
 	}
 
-	l.events <- event{timestamp: nowFunc(), level: lev, message: message, fields: fields}
+	l.events <- event{timestamp: l.clock.Now(), level: lev, message: message, fields: fields}
 }
 
 func (l Logger) json(e event) []byte {

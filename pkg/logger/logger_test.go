@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ViBiOh/httputils/v4/pkg/clock"
 )
 
 type writeCloser struct {
@@ -185,10 +187,6 @@ func TestOutput(t *testing.T) {
 		a      []interface{}
 	}
 
-	nowFunc = func() time.Time {
-		return time.Date(2020, 9, 21, 18, 34, 57, 0, time.UTC)
-	}
-
 	var cases = []struct {
 		intention string
 		args      args
@@ -225,6 +223,7 @@ func TestOutput(t *testing.T) {
 		t.Run(tc.intention, func(t *testing.T) {
 			writer := bytes.NewBuffer(nil)
 			logger := newLogger(writer, writer, levelInfo, false, "time", "level", "msg")
+			logger.clock = clock.New(time.Date(2020, 9, 21, 18, 34, 57, 0, time.UTC))
 
 			go logger.Start()
 
@@ -250,15 +249,16 @@ func BenchmarkStandardSimpleOutput(b *testing.B) {
 
 func BenchmarkStandardSimpleFormattedOutput(b *testing.B) {
 	logger := log.New(io.Discard, "", log.Ldate|log.Ltime)
-	time := time.Now().Unix()
+	now := time.Now().Unix()
 
 	for i := 0; i < b.N; i++ {
-		logger.Printf("Hello %s, it's %d", "Bob", time)
+		logger.Printf("Hello %s, it's %d", "Bob", now)
 	}
 }
 
 func BenchmarkNoOutput(b *testing.B) {
 	logger := newLogger(io.Discard, io.Discard, levelWarning, false, "time", "level", "msg")
+	logger.clock = clock.New(time.Now())
 
 	go logger.Start()
 	defer logger.Close()
@@ -270,6 +270,7 @@ func BenchmarkNoOutput(b *testing.B) {
 
 func BenchmarkSimpleOutput(b *testing.B) {
 	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
+	logger.clock = clock.New(time.Now())
 
 	go logger.Start()
 	defer logger.Close()
@@ -281,27 +282,25 @@ func BenchmarkSimpleOutput(b *testing.B) {
 
 func BenchmarkFormattedOutput(b *testing.B) {
 	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
+	logger.clock = clock.New(time.Now())
 
 	go logger.Start()
 	defer logger.Close()
 
-	time := time.Now().Unix()
-
 	for i := 0; i < b.N; i++ {
-		logger.Info("Hello %s, it's %d", "Bob", time)
+		logger.Info("Hello %s", "Bob")
 	}
 }
 
 func BenchmarkFormattedOutputFields(b *testing.B) {
 	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
+	logger.clock = clock.New(time.Now())
 
 	go logger.Start()
 	defer logger.Close()
 
-	time := time.Now().Unix()
-
 	for i := 0; i < b.N; i++ {
-		logger.WithField("success", true).WithField("count", 7).Info("Hello %s, it's %d", "Bob", time)
+		logger.WithField("success", true).WithField("count", 7).Info("Hello %s", "Bob")
 	}
 }
 
