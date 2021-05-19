@@ -65,7 +65,9 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 	}
 
 	pathPrefix := strings.TrimSuffix(strings.TrimSpace(*config.pathPrefix), "/")
-	funcMap["buildURL"] = func(url string) string {
+	publicURL := strings.TrimSuffix(strings.TrimSpace(*config.publicURL), "/")
+
+	urlFn := func(url string) string {
 		prefixedURL := path.Join(pathPrefix, url)
 		if strings.HasSuffix(url, "/") {
 			return fmt.Sprintf("%s/", prefixedURL)
@@ -74,21 +76,23 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 		return prefixedURL
 	}
 
+	funcMap["url"] = urlFn
+	funcMap["publicURL"] = func(url string) string {
+		return fmt.Sprintf("%s%s", publicURL, urlFn(url))
+	}
+
 	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse templates/*.html templates: %s", err)
 	}
-
-	publicURL := strings.TrimSuffix(strings.TrimSpace(*config.publicURL), "/")
 
 	return app{
 		tpl:        tpl,
 		staticFS:   staticFS,
 		pathPrefix: pathPrefix,
 		content: map[string]interface{}{
-			"PublicURL": publicURL,
-			"Title":     strings.TrimSpace(*config.title),
-			"Version":   os.Getenv("VERSION"),
+			"Title":   strings.TrimSpace(*config.title),
+			"Version": os.Getenv("VERSION"),
 		},
 	}, nil
 }
