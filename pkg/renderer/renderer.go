@@ -66,7 +66,12 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 
 	pathPrefix := strings.TrimSuffix(strings.TrimSpace(*config.pathPrefix), "/")
 	funcMap["buildURL"] = func(url string) string {
-		return path.Join(pathPrefix, url)
+		prefixedURL := path.Join(pathPrefix, url)
+		if strings.HasSuffix(url, "/") {
+			return fmt.Sprintf("%s/", prefixedURL)
+		}
+
+		return prefixedURL
 	}
 
 	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
