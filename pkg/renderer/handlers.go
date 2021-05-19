@@ -18,7 +18,7 @@ func (a app) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 		joinChar = "&"
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("%s%s%s", path.Join(a.pathPrefix, pathname), joinChar, fmt.Sprintf("%s", message)), http.StatusFound)
+	http.Redirect(w, r, fmt.Sprintf("%s%s%s", path.Join(a.pathPrefix, pathname), joinChar, message), http.StatusFound)
 }
 
 func (a app) Error(w http.ResponseWriter, err error) {

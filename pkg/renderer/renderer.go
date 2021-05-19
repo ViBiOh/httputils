@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
@@ -40,7 +41,6 @@ type app struct {
 	tpl        *template.Template
 	content    map[string]interface{}
 	staticFS   fs.FS
-	publicURL  string
 	pathPrefix string
 }
 
@@ -60,23 +60,30 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 		return nil, fmt.Errorf("unable to get static/ filesystem: %s", err)
 	}
 
+	if funcMap == nil {
+		funcMap = template.FuncMap{}
+	}
+
+	pathPrefix := strings.TrimSuffix(strings.TrimSpace(*config.pathPrefix), "/")
+	funcMap["buildURL"] = func(url string) string {
+		return path.Join(pathPrefix, url)
+	}
+
 	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse templates/*.html templates: %s", err)
 	}
 
 	publicURL := strings.TrimSuffix(strings.TrimSpace(*config.publicURL), "/")
-	pathPrefix := strings.TrimSuffix(strings.TrimSpace(*config.pathPrefix), "/")
 
 	return app{
 		tpl:        tpl,
 		staticFS:   staticFS,
 		pathPrefix: pathPrefix,
 		content: map[string]interface{}{
-			"PublicURL":  publicURL,
-			"PathPrefix": pathPrefix,
-			"Title":      strings.TrimSpace(*config.title),
-			"Version":    os.Getenv("VERSION"),
+			"PublicURL": publicURL,
+			"Title":     strings.TrimSpace(*config.title),
+			"Version":   os.Getenv("VERSION"),
 		},
 	}, nil
 }
