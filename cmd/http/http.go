@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"flag"
 	"net/http"
 	"os"
@@ -18,8 +19,12 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
+	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
 )
+
+//go:embed templates static
+var content embed.FS
 
 func main() {
 	fs := flag.NewFlagSet("http", flag.ExitOnError)
@@ -34,6 +39,8 @@ func main() {
 	owaspConfig := owasp.Flags(fs, "")
 	corsConfig := cors.Flags(fs, "cors")
 
+	rendererConfig := renderer.Flags(fs, "renderer")
+
 	logger.Fatal(fs.Parse(os.Args[1:]))
 
 	alcotest.DoAndExit(alcotestConfig)
@@ -45,6 +52,9 @@ func main() {
 	prometheusApp := prometheus.New(prometheusConfig)
 	healthApp := health.New(healthConfig)
 
+	rendererApp, err := renderer.New(rendererConfig, content, nil)
+	logger.Fatal(err)
+
 	speakingClock := cron.New().Each(5 * time.Minute).OnSignal(syscall.SIGUSR1).OnError(func(err error) {
 		logger.Error("error while running cron: %s", err)
 	}).Now()
@@ -54,14 +64,12 @@ func main() {
 	}, healthApp.Done())
 	defer speakingClock.Shutdown()
 
-	appHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := w.Write([]byte("It works!")); err != nil {
-			logger.Warn("unable to write: %s", err)
-		}
-	})
+	templateFunc := func(r *http.Request) (string, int, map[string]interface{}, error) {
+		return "public", http.StatusOK, nil, nil
+	}
 
 	go promServer.Start("prometheus", healthApp.End(), prometheusApp.Handler())
-	go appServer.Start("http", healthApp.End(), httputils.Handler(appHandler, healthApp, recoverer.Middleware, prometheusApp.Middleware, owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware))
+	go appServer.Start("http", healthApp.End(), httputils.Handler(rendererApp.Handler(templateFunc), healthApp, recoverer.Middleware, prometheusApp.Middleware, owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware))
 
 	healthApp.WaitForTermination(appServer.Done())
 	server.GracefulWait(appServer.Done(), promServer.Done())

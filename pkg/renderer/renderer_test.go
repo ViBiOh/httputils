@@ -23,7 +23,7 @@ func TestFlags(t *testing.T) {
 	}{
 		{
 			"simple",
-			"Usage of simple:\n  -publicURL string\n    \tPublic URL {SIMPLE_PUBLIC_URL} (default \"http://localhost\")\n  -title string\n    \tApplication title {SIMPLE_TITLE} (default \"App\")\n",
+			"Usage of simple:\n  -pathPrefix string\n    \tRoot Path Prefix {SIMPLE_PATH_PREFIX}\n  -publicURL string\n    \tPublic URL {SIMPLE_PUBLIC_URL} (default \"http://localhost\")\n  -title string\n    \tApplication title {SIMPLE_TITLE} (default \"App\")\n",
 		},
 	}
 
@@ -145,12 +145,24 @@ func TestFeedContent(t *testing.T) {
 var content embed.FS
 
 func TestHandler(t *testing.T) {
+	emptyString := ""
 	publicURL := "http://localhost"
+	pathPrefix := "/app"
 	title := "Golang Test"
 
 	configuredApp, err := New(Config{
-		publicURL: &publicURL,
-		title:     &title,
+		publicURL:  &publicURL,
+		pathPrefix: &emptyString,
+		title:      &title,
+	}, content, template.FuncMap{})
+	if err != nil {
+		t.Error(err)
+	}
+
+	configuredPrefixApp, err := New(Config{
+		publicURL:  &publicURL,
+		pathPrefix: &pathPrefix,
+		title:      &title,
 	}, content, template.FuncMap{})
 	if err != nil {
 		t.Error(err)
@@ -187,6 +199,15 @@ func TestHandler(t *testing.T) {
 			"svg",
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, "/svg/test?fill=black", nil),
+			nil,
+			"color=black",
+			http.StatusOK,
+			http.Header{},
+		},
+		{
+			"svg with prefix",
+			configuredPrefixApp,
+			httptest.NewRequest(http.MethodGet, "/app/svg/test?fill=black", nil),
 			nil,
 			"color=black",
 			http.StatusOK,
@@ -247,84 +268,6 @@ func TestHandler(t *testing.T) {
 
 			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.want {
 				t.Errorf("Handler = `%s`, want `%s`", string(got), tc.want)
-			}
-
-			for key := range tc.wantHeader {
-				want := tc.wantHeader.Get(key)
-				if got := writer.Header().Get(key); got != want {
-					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
-				}
-			}
-		})
-	}
-}
-
-func TestRedirect(t *testing.T) {
-	var cases = []struct {
-		intention  string
-		instance   app
-		request    *http.Request
-		path       string
-		message    Message
-		want       string
-		wantStatus int
-		wantHeader http.Header
-	}{
-		{
-			"simple",
-			app{
-				publicURL: "http://vibioh.fr",
-			},
-			httptest.NewRequest(http.MethodGet, "http://vibioh.fr/", nil),
-			"/",
-			NewSuccessMessage("Created with success"),
-			"<a href=\"http://vibioh.fr/?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
-			http.StatusFound,
-			http.Header{
-				"Location": []string{fmt.Sprintf("http://vibioh.fr/?%s", NewSuccessMessage("Created with success"))},
-			},
-		},
-		{
-			"relative URL",
-			app{
-				publicURL: "http://localhost:1080",
-			},
-			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
-			"/success",
-			NewSuccessMessage("Created with success"),
-			"<a href=\"http://localhost:1080/success?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
-			http.StatusFound,
-			http.Header{
-				"Location": []string{fmt.Sprintf("http://localhost:1080/success?%s", NewSuccessMessage("Created with success"))},
-			},
-		},
-		{
-			"exact URL",
-			app{
-				publicURL: "https://vibioh.fr",
-			},
-			httptest.NewRequest(http.MethodGet, "https://vibioh.fr", nil),
-			"https://app.local/success",
-			NewSuccessMessage("Created with success"),
-			"<a href=\"https://app.local/success\">Found</a>.\n\n",
-			http.StatusFound,
-			http.Header{
-				"Location": []string{"https://app.local/success"},
-			},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			tc.instance.Redirect(writer, tc.request, tc.path, tc.message)
-
-			if got := writer.Code; got != tc.wantStatus {
-				t.Errorf("Redirect = %d, want %d", got, tc.wantStatus)
-			}
-
-			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.want {
-				t.Errorf("Redirect = `%s`, want `%s`", string(got), tc.want)
 			}
 
 			for key := range tc.wantHeader {
