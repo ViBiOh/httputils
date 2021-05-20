@@ -121,7 +121,7 @@ func TestGetStatusCode(t *testing.T) {
 				failed = true
 			} else if err != nil && tc.wantErr == nil {
 				failed = true
-			} else if err != nil && err.Error() != tc.wantErr.Error() {
+			} else if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
 				failed = true
 			} else if result != tc.want {
 				failed = true

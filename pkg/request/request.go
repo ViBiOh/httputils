@@ -178,13 +178,21 @@ func DoWithClient(client http.Client, req *http.Request) (*http.Response, error)
 
 		if resp != nil {
 			errMessage.WriteString(fmt.Sprintf("HTTP/%d", resp.StatusCode))
+
+			for key, value := range resp.Header {
+				errMessage.WriteString(fmt.Sprintf("\n%s: %s", key, strings.Join(value, ",")))
+			}
 		}
 
 		if err != nil {
 			if errMessage.Len() > 0 {
-				errMessage.WriteString(": ")
+				errMessage.WriteString("\n")
 			}
 			errMessage.WriteString(err.Error())
+		}
+
+		if errMessage.Len() > 0 {
+			errMessage.WriteString("\n")
 		}
 
 		if errBody, bodyErr := ReadBodyResponse(resp); bodyErr == nil && len(errBody) > 0 {
