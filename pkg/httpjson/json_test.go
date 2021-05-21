@@ -221,9 +221,8 @@ func TestWritePagination(t *testing.T) {
 
 func TestParse(t *testing.T) {
 	type args struct {
-		req    *http.Request
-		obj    interface{}
-		action string
+		req *http.Request
+		obj interface{}
 	}
 
 	var cases = []struct {
@@ -235,18 +234,16 @@ func TestParse(t *testing.T) {
 		{
 			"prase error",
 			args{
-				req:    httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(""))),
-				action: "empty",
+				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(""))),
 			},
 			nil,
-			errors.New("unable to parse body of empty"),
+			errors.New("unable to parse JSON body"),
 		},
 		{
 			"valid",
 			args{
-				req:    httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(`{"key": "value","valid":true}`))),
-				obj:    make(map[string]interface{}),
-				action: "empty",
+				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(`{"key": "value","valid":true}`))),
+				obj: make(map[string]interface{}),
 			},
 			map[string]interface{}{
 				"key":   "value",
@@ -258,7 +255,7 @@ func TestParse(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			gotErr := Parse(tc.args.req, &tc.args.obj, tc.args.action)
+			gotErr := Parse(tc.args.req, &tc.args.obj)
 
 			failed := false
 
@@ -281,9 +278,8 @@ func TestParse(t *testing.T) {
 
 func TestRead(t *testing.T) {
 	type args struct {
-		resp   *http.Response
-		obj    interface{}
-		action string
+		resp *http.Response
+		obj  interface{}
 	}
 
 	var cases = []struct {
@@ -298,10 +294,9 @@ func TestRead(t *testing.T) {
 				resp: &http.Response{
 					Body: io.NopCloser(bytes.NewReader([]byte("invalid json"))),
 				},
-				action: "read error",
 			},
 			nil,
-			errors.New("unable to parse body of read error"),
+			errors.New("unable to parse JSON body"),
 		},
 		{
 			"valid",
@@ -309,8 +304,7 @@ func TestRead(t *testing.T) {
 				resp: &http.Response{
 					Body: io.NopCloser(bytes.NewReader([]byte(`{"key": "value","valid":true}`))),
 				},
-				obj:    make(map[string]interface{}),
-				action: "valid",
+				obj: make(map[string]interface{}),
 			},
 			map[string]interface{}{
 				"key":   "value",
@@ -322,7 +316,7 @@ func TestRead(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			gotErr := Read(tc.args.resp, &tc.args.obj, tc.args.action)
+			gotErr := Read(tc.args.resp, &tc.args.obj)
 
 			failed := false
 
