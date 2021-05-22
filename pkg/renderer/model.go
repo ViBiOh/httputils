@@ -7,7 +7,7 @@ import (
 )
 
 // TemplateFunc handle a request and returns which template to render with which status and datas
-type TemplateFunc = func(*http.Request) (string, int, map[string]interface{}, error)
+type TemplateFunc = func(http.ResponseWriter, *http.Request) (string, int, map[string]interface{}, error)
 
 // Message for render
 type Message struct {

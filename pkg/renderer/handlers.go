@@ -42,7 +42,7 @@ func (a app) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 		}
 	}()
 
-	templateName, status, content, err := templateFunc(r)
+	templateName, status, content, err := templateFunc(w, r)
 	if err != nil {
 		a.Error(w, err)
 		return

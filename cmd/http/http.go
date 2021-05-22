@@ -64,7 +64,7 @@ func main() {
 	}, healthApp.Done())
 	defer speakingClock.Shutdown()
 
-	templateFunc := func(r *http.Request) (string, int, map[string]interface{}, error) {
+	templateFunc := func(w http.ResponseWriter, r *http.Request) (string, int, map[string]interface{}, error) {
 		return "public", http.StatusOK, nil, nil
 	}
 
