@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/query"
@@ -105,12 +106,21 @@ func Read(resp *http.Response, obj interface{}) (err error) {
 }
 
 // Stream reads io.Reader and stream array or map content to given chan
-func Stream(stream io.Reader, newObj func() interface{}, output chan<- interface{}) error {
+func Stream(stream io.Reader, newObj func() interface{}, output chan<- interface{}, key string) error {
 	defer close(output)
 	decoder := json.NewDecoder(stream)
 
+	var token json.Token
+	var err error
+	for !strings.EqualFold(fmt.Sprintf("%s", token), key) {
+		token, err = decoder.Token()
+		if err != nil {
+			return fmt.Errorf("unable to read token: %s", err)
+		}
+	}
+
 	if _, err := decoder.Token(); err != nil {
-		return fmt.Errorf("unable to read opening token: %s", err)
+		return fmt.Errorf("unable to read key opening token: %s", err)
 	}
 
 	for decoder.More() {
