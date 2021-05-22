@@ -139,7 +139,7 @@ func (a app) Handler(templateFunc TemplateFunc) http.Handler {
 			return
 		}
 
-		a.html(w, r, templateFunc)
+		a.render(w, r, templateFunc)
 	})
 
 	if len(a.pathPrefix) == 0 {

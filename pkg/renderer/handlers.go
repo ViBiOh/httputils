@@ -35,7 +35,7 @@ func (a app) Error(w http.ResponseWriter, err error) {
 	}
 }
 
-func (a app) html(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
+func (a app) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
 	defer func() {
 		if r := recover(); r != nil {
 			a.Error(w, fmt.Errorf("recovered from panic: %s", r))
@@ -45,6 +45,10 @@ func (a app) html(w http.ResponseWriter, r *http.Request, templateFunc TemplateF
 	templateName, status, content, err := templateFunc(r)
 	if err != nil {
 		a.Error(w, err)
+		return
+	}
+
+	if len(templateName) == 0 {
 		return
 	}
 
