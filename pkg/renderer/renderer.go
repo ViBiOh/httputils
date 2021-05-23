@@ -69,7 +69,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 
 	urlFn := func(url string) string {
 		prefixedURL := path.Join(pathPrefix, url)
-		if strings.HasSuffix(url, "/") {
+		if len(prefixedURL) > 1 && strings.HasSuffix(url, "/") {
 			return fmt.Sprintf("%s/", prefixedURL)
 		}
 
