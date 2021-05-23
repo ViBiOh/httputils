@@ -3,7 +3,6 @@ package renderer
 import (
 	"fmt"
 	"net/http"
-	"path"
 	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
@@ -18,7 +17,7 @@ func (a app) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 		joinChar = "&"
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("%s%s%s", path.Join(a.pathPrefix, pathname), joinChar, message), http.StatusFound)
+	http.Redirect(w, r, fmt.Sprintf("%s%s%s", a.url(pathname), joinChar, message), http.StatusFound)
 }
 
 func (a app) Error(w http.ResponseWriter, err error) {

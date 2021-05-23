@@ -67,18 +67,18 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 	pathPrefix := strings.TrimSuffix(strings.TrimSpace(*config.pathPrefix), "/")
 	publicURL := strings.TrimSuffix(strings.TrimSpace(*config.publicURL), "/")
 
-	urlFn := func(url string) string {
-		prefixedURL := path.Join(pathPrefix, url)
-		if len(prefixedURL) > 1 && strings.HasSuffix(url, "/") {
-			return fmt.Sprintf("%s/", prefixedURL)
-		}
-
-		return prefixedURL
+	instance := app{
+		staticFS:   staticFS,
+		pathPrefix: pathPrefix,
+		content: map[string]interface{}{
+			"Title":   strings.TrimSpace(*config.title),
+			"Version": os.Getenv("VERSION"),
+		},
 	}
 
-	funcMap["url"] = urlFn
+	funcMap["url"] = instance.url
 	funcMap["publicURL"] = func(url string) string {
-		return fmt.Sprintf("%s%s", publicURL, urlFn(url))
+		return fmt.Sprintf("%s%s", publicURL, instance.url(url))
 	}
 
 	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
@@ -86,15 +86,18 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 		return nil, fmt.Errorf("unable to parse templates/*.html templates: %s", err)
 	}
 
-	return app{
-		tpl:        tpl,
-		staticFS:   staticFS,
-		pathPrefix: pathPrefix,
-		content: map[string]interface{}{
-			"Title":   strings.TrimSpace(*config.title),
-			"Version": os.Getenv("VERSION"),
-		},
-	}, nil
+	instance.tpl = tpl
+
+	return instance, nil
+}
+
+func (a app) url(url string) string {
+	prefixedURL := path.Join(a.pathPrefix, url)
+	if len(prefixedURL) > 1 && strings.HasSuffix(url, "/") {
+		return fmt.Sprintf("%s/", prefixedURL)
+	}
+
+	return prefixedURL
 }
 
 func isStaticRootPaths(requestPath string) bool {
