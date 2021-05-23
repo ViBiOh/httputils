@@ -130,6 +130,22 @@ func TestFeedContent(t *testing.T) {
 				"Name":    "Hello World",
 			},
 		},
+		{
+			"no overwrite",
+			app{
+				content: map[string]interface{}{
+					"Title": "test",
+				},
+			},
+			args{
+				content: map[string]interface{}{
+					"Title": "Hello World",
+				},
+			},
+			map[string]interface{}{
+				"Title": "Hello World",
+			},
+		},
 	}
 
 	for _, tc := range cases {

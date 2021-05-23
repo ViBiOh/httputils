@@ -113,7 +113,9 @@ func (a app) feedContent(content map[string]interface{}) map[string]interface{} 
 	}
 
 	for key, value := range a.content {
-		content[key] = value
+		if _, ok := content[key]; !ok {
+			content[key] = value
+		}
 	}
 
 	return content
