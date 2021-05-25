@@ -176,18 +176,7 @@ func DoWithClient(client http.Client, req *http.Request) (*http.Response, error)
 	if err != nil || resp.StatusCode >= http.StatusBadRequest {
 		errMessage := strings.Builder{}
 
-		if resp != nil {
-			errMessage.WriteString(fmt.Sprintf("HTTP/%d", resp.StatusCode))
-
-			for key, value := range resp.Header {
-				errMessage.WriteString(fmt.Sprintf("\n%s: %s", key, strings.Join(value, ",")))
-			}
-		}
-
 		if err != nil {
-			if errMessage.Len() > 0 {
-				errMessage.WriteString("\n")
-			}
 			errMessage.WriteString(err.Error())
 		}
 
@@ -195,12 +184,20 @@ func DoWithClient(client http.Client, req *http.Request) (*http.Response, error)
 			errMessage.WriteString("\n")
 		}
 
-		if errBody, bodyErr := ReadBodyResponse(resp); bodyErr == nil && len(errBody) > 0 {
-			if len(errBody) > maxErrorBody {
-				errBody = errBody[:maxErrorBody]
+		if resp != nil {
+			errMessage.WriteString(fmt.Sprintf("HTTP/%d", resp.StatusCode))
+
+			for key, value := range resp.Header {
+				errMessage.WriteString(fmt.Sprintf("\n%s: %s", key, strings.Join(value, ",")))
 			}
 
-			errMessage.WriteString(fmt.Sprintf("\n%s", errBody))
+			if errBody, bodyErr := ReadBodyResponse(resp); bodyErr == nil && len(errBody) > 0 {
+				if len(errBody) > maxErrorBody {
+					errBody = errBody[:maxErrorBody]
+				}
+
+				errMessage.WriteString(fmt.Sprintf("\n\n%s", errBody))
+			}
 		}
 
 		err = errors.New(errMessage.String())
