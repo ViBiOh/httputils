@@ -9,6 +9,66 @@ import (
 	"testing"
 )
 
+func TestLinkNextHeader(t *testing.T) {
+	type args struct {
+		urlPath   string
+		extraArgs url.Values
+	}
+
+	var cases = []struct {
+		intention string
+		instance  Pagination
+		args      args
+		want      string
+	}{
+		{
+			"empty",
+			Pagination{
+				Last:     "8000",
+				PageSize: 20,
+			},
+			args{
+				urlPath: "/list",
+			},
+			`</list?last=8000&page=20>; rel="next"`,
+		},
+		{
+			"extra empty args",
+			Pagination{
+				Last:     "8000",
+				PageSize: 20,
+			},
+			args{
+				urlPath:   "/list",
+				extraArgs: url.Values{},
+			},
+			`</list?last=8000&page=20>; rel="next"`,
+		},
+		{
+			"extra args",
+			Pagination{
+				Last:     "8000",
+				PageSize: 20,
+			},
+			args{
+				urlPath: "/list",
+				extraArgs: url.Values{
+					"query": []string{"search"},
+				},
+			},
+			`</list?last=8000&page=20&query=search>; rel="next"`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if got := tc.instance.LinkNextHeader(tc.args.urlPath, tc.args.extraArgs); got != tc.want {
+				t.Errorf("LinkNextHeader() = `%s`, want `%s`", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestParsePagination(t *testing.T) {
 	var cases = []struct {
 		intention       string

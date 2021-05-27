@@ -28,6 +28,16 @@ type Pagination struct {
 	Desc     bool
 }
 
+// LinkNextHeader returns next header for pagination
+func (p Pagination) LinkNextHeader(urlPath string, extraArgs url.Values) string {
+	extraQuery := ""
+	if extraArgs != nil && len(extraArgs) != 0 {
+		extraQuery = fmt.Sprintf("&%s", extraArgs.Encode())
+	}
+
+	return fmt.Sprintf(`<%s?last=%s&page=%d%s>; rel="next"`, urlPath, url.QueryEscape(p.Last), p.PageSize, extraQuery)
+}
+
 // ParsePagination parse common pagination param from request
 func ParsePagination(r *http.Request, defaultPageSize, maxPageSize uint) (pagination Pagination, err error) {
 	var parsed uint64
