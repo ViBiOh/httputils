@@ -22,7 +22,7 @@ var (
 
 // Pagination describes pagination params
 type Pagination struct {
-	LastKey  string
+	Last     string
 	Sort     string
 	PageSize uint
 	Desc     bool
@@ -70,7 +70,7 @@ func ParsePagination(r *http.Request, defaultPageSize, maxPageSize uint) (pagina
 	}
 
 	pagination.Desc = GetBool(r, "desc")
-	pagination.LastKey = strings.TrimSpace(params.Get("lastKey"))
+	pagination.Last = strings.TrimSpace(params.Get("last"))
 
 	return
 }

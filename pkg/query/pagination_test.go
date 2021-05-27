@@ -104,12 +104,12 @@ func TestParsePagination(t *testing.T) {
 		},
 		{
 			"last key",
-			httptest.NewRequest(http.MethodGet, "/?lastKey=8000", nil),
+			httptest.NewRequest(http.MethodGet, "/?last=8000", nil),
 			20,
 			100,
 			Pagination{
 				PageSize: 20,
-				LastKey:  "8000",
+				Last:     "8000",
 			},
 			nil,
 		},
