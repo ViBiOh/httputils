@@ -30,12 +30,25 @@ type Pagination struct {
 
 // LinkNextHeader returns next header for pagination
 func (p Pagination) LinkNextHeader(urlPath string, extraArgs url.Values) string {
-	extraQuery := ""
-	if extraArgs != nil && len(extraArgs) != 0 {
-		extraQuery = fmt.Sprintf("&%s", extraArgs.Encode())
+	data := url.Values{}
+	for key, values := range extraArgs {
+		for _, value := range values {
+			data.Add(key, value)
+		}
 	}
 
-	return fmt.Sprintf(`<%s?last=%s&page=%d%s>; rel="next"`, urlPath, url.QueryEscape(p.Last), p.PageSize, extraQuery)
+	data.Set("pageSize", fmt.Sprintf("%d", p.PageSize))
+	data.Set("last", p.Last)
+
+	if len(p.Sort) != 0 {
+		data.Set("sort", p.Sort)
+	}
+
+	if p.Desc {
+		data.Set("desc", strconv.FormatBool(p.Desc))
+	}
+
+	return fmt.Sprintf(`<%s?%s>; rel="next"`, urlPath, data.Encode())
 }
 
 // ParsePagination parse common pagination param from request

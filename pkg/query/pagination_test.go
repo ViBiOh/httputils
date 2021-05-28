@@ -30,19 +30,21 @@ func TestLinkNextHeader(t *testing.T) {
 			args{
 				urlPath: "/list",
 			},
-			`</list?last=8000&page=20>; rel="next"`,
+			`</list?last=8000&pageSize=20>; rel="next"`,
 		},
 		{
-			"extra empty args",
+			"extra empty",
 			Pagination{
 				Last:     "8000",
 				PageSize: 20,
+				Sort:     "id",
+				Desc:     true,
 			},
 			args{
 				urlPath:   "/list",
 				extraArgs: url.Values{},
 			},
-			`</list?last=8000&page=20>; rel="next"`,
+			`</list?desc=true&last=8000&pageSize=20&sort=id>; rel="next"`,
 		},
 		{
 			"extra args",
@@ -56,7 +58,7 @@ func TestLinkNextHeader(t *testing.T) {
 					"query": []string{"search"},
 				},
 			},
-			`</list?last=8000&page=20&query=search>; rel="next"`,
+			`</list?last=8000&pageSize=20&query=search>; rel="next"`,
 		},
 	}
 
