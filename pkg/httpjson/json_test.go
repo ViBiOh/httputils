@@ -133,13 +133,13 @@ func TestWriteArray(t *testing.T) {
 		{
 			"nil",
 			nil,
-			"{\"results\":null}\n",
+			"{\"items\":null}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		{
 			"simple",
 			[]testStruct{{id: "First", Active: true, Amount: 12.34}, {id: "Second", Active: true, Amount: 12.34}},
-			"{\"results\":[{\"Active\":true,\"Amount\":12.34},{\"Active\":true,\"Amount\":12.34}]}\n",
+			"{\"items\":[{\"Active\":true,\"Amount\":12.34},{\"Active\":true,\"Amount\":12.34}]}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 	}
@@ -178,7 +178,7 @@ func TestWritePagination(t *testing.T) {
 			2,
 			"8000",
 			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"last\":\"8000\",\"pageSize\":2,\"pageCount\":1,\"total\":2}\n",
+			"{\"items\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"last\":\"8000\",\"pageSize\":2,\"pageCount\":1,\"total\":2}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		{
@@ -187,7 +187,7 @@ func TestWritePagination(t *testing.T) {
 			40,
 			"8000",
 			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"last\":\"8000\",\"pageSize\":10,\"pageCount\":4,\"total\":40}\n",
+			"{\"items\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"last\":\"8000\",\"pageSize\":10,\"pageCount\":4,\"total\":40}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		{
@@ -196,7 +196,7 @@ func TestWritePagination(t *testing.T) {
 			45,
 			"8000",
 			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			"{\"results\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"last\":\"8000\",\"pageSize\":10,\"pageCount\":5,\"total\":45}\n",
+			"{\"items\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"last\":\"8000\",\"pageSize\":10,\"pageCount\":5,\"total\":45}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 	}
@@ -231,14 +231,6 @@ func TestParse(t *testing.T) {
 		want      interface{}
 		wantErr   error
 	}{
-		{
-			"prase error",
-			args{
-				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(""))),
-			},
-			nil,
-			errors.New("unable to parse JSON body"),
-		},
 		{
 			"valid",
 			args{
@@ -276,6 +268,14 @@ func TestParse(t *testing.T) {
 	}
 }
 
+type errCloser struct {
+	io.Reader
+}
+
+func (errCloser) Close() error {
+	return errors.New("close error")
+}
+
 func TestRead(t *testing.T) {
 	type args struct {
 		resp *http.Response
@@ -297,6 +297,30 @@ func TestRead(t *testing.T) {
 			},
 			nil,
 			errors.New("unable to parse JSON body"),
+		},
+		{
+			"close error",
+			args{
+				resp: &http.Response{
+					Body: errCloser{bytes.NewReader([]byte(`{"key": "value","valid":true}`))},
+				},
+				obj: make(map[string]interface{}),
+			},
+			map[string]interface{}{
+				"key":   "value",
+				"valid": true,
+			},
+			errors.New("close error"),
+		},
+		{
+			"both error",
+			args{
+				resp: &http.Response{
+					Body: errCloser{bytes.NewReader([]byte(`invalid json`))},
+				},
+			},
+			nil,
+			errors.New("unable to parse JSON body: invalid character 'i' looking for beginning of value: close error"),
 		},
 		{
 			"valid",

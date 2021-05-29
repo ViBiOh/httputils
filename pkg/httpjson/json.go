@@ -17,12 +17,12 @@ var (
 	ErrCannotMarshall = errors.New("cannot marshall json")
 )
 
-type results struct {
-	Results interface{} `json:"results"`
+type items struct {
+	Items interface{} `json:"items"`
 }
 
 type pagination struct {
-	Results   interface{} `json:"results"`
+	Items     interface{} `json:"items"`
 	Last      string      `json:"last"`
 	PageSize  uint        `json:"pageSize"`
 	PageCount uint        `json:"pageCount"`
@@ -52,7 +52,7 @@ func Write(w http.ResponseWriter, status int, obj interface{}, pretty bool) {
 
 // WriteArray write marshalled obj wrapped into an object to http.ResponseWriter with correct header
 func WriteArray(w http.ResponseWriter, status int, array interface{}, pretty bool) {
-	Write(w, status, results{array}, pretty)
+	Write(w, status, items{array}, pretty)
 }
 
 // WritePagination write marshalled obj wrapped into an object to http.ResponseWriter with correct header
@@ -62,39 +62,28 @@ func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, la
 		pageCount++
 	}
 
-	Write(w, status, pagination{Results: array, PageSize: pageSize, PageCount: pageCount, Total: total, Last: last}, pretty)
+	Write(w, status, pagination{Items: array, PageSize: pageSize, PageCount: pageCount, Total: total, Last: last}, pretty)
 }
 
 // Parse read body resquest and unmarshall it into given interface
 func Parse(req *http.Request, obj interface{}) (err error) {
-	decoder := json.NewDecoder(req.Body)
-	defer func() {
-		if closeErr := req.Body.Close(); closeErr != nil {
-			if err == nil {
-				err = closeErr
-			} else {
-				err = fmt.Errorf("%s: %w", err, closeErr)
-			}
-		}
-	}()
-
-	if err = decoder.Decode(obj); err != nil {
-		err = fmt.Errorf("unable to parse JSON body: %s", err)
-	}
-
-	return
+	return decode(req.Body, obj)
 }
 
 // Read read body response and unmarshall it into given interface
 func Read(resp *http.Response, obj interface{}) (err error) {
-	decoder := json.NewDecoder(resp.Body)
+	return decode(resp.Body, obj)
+}
+
+func decode(input io.ReadCloser, obj interface{}) (err error) {
+	decoder := json.NewDecoder(input)
 	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
+		if closeErr := input.Close(); closeErr != nil {
 			if err == nil {
 				err = closeErr
-			} else {
-				err = fmt.Errorf("%s: %w", err, closeErr)
 			}
+
+			err = fmt.Errorf("%s: %w", err, closeErr)
 		}
 	}()
 
