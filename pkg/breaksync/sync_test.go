@@ -13,8 +13,10 @@ type client struct {
 
 func TestRun(t *testing.T) {
 	cards := []interface{}{
+		"AMEX",
 		"MASTERCARD",
 		"VISA",
+		"WESTERN",
 	}
 	cardKeyer := func(o interface{}) string {
 		return fmt.Sprintf("%-10s", o)
@@ -67,74 +69,49 @@ func TestRun(t *testing.T) {
 
 	var cases = []struct {
 		intention    string
-		sources      []*Source
-		ruptures     []*Rupture
+		instance     *Synchronization
 		businessFail bool
 		want         int
 		wantErr      error
 	}{
 		{
 			"fully synchronized",
-			[]*Source{
-				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
-				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
-			},
-			nil,
+			NewSynchronization().AddSources(NewSource(numberReader(0, false), sourceBasicKeyer, nil), NewSource(numberReader(0, false), sourceBasicKeyer, nil)),
 			false,
 			5,
 			nil,
 		},
 		{
 			"desynchronized once",
-			[]*Source{
-				NewSource(numberReader(1, false), sourceBasicKeyer, nil),
-				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
-			},
-			nil,
+			NewSynchronization().AddSources(NewSource(numberReader(0, false), sourceBasicKeyer, nil), NewSource(numberReader(1, false), sourceBasicKeyer, nil)),
 			false,
 			4,
 			nil,
 		},
 		{
 			"read first error",
-			[]*Source{
-				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
-				NewSource(numberReader(-2, false), sourceBasicKeyer, nil),
-			},
-			nil,
+			NewSynchronization().AddSources(NewSource(numberReader(0, false), sourceBasicKeyer, nil), NewSource(numberReader(-2, false), sourceBasicKeyer, nil)),
 			false,
 			0,
 			errRead,
 		},
 		{
 			"read later error",
-			[]*Source{
-				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
-				NewSource(numberReader(0, true), sourceBasicKeyer, nil),
-			},
-			nil,
+			NewSynchronization().AddSources(NewSource(numberReader(0, false), sourceBasicKeyer, nil), NewSource(numberReader(0, true), sourceBasicKeyer, nil)),
 			false,
 			4,
 			errRead,
 		},
 		{
 			"business error",
-			[]*Source{
-				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
-				NewSource(numberReader(0, false), sourceBasicKeyer, nil),
-			},
-			nil,
+			NewSynchronization().AddSources(NewSource(numberReader(0, false), sourceBasicKeyer, nil), NewSource(numberReader(0, false), sourceBasicKeyer, nil)),
 			true,
 			4,
 			errRead,
 		},
 		{
 			"should work with basic rupture on read",
-			[]*Source{
-				newSliceSource(clients, clientKeyer, nil),
-				newSliceSource(cards, cardKeyer, cardRupture),
-			},
-			[]*Rupture{cardRupture},
+			NewSynchronization().AddSources(NewSliceSource(clients, clientKeyer, nil), NewSliceSource(cards, cardKeyer, cardRupture)).AddRuptures(cardRupture),
 			false,
 			11,
 			nil,
@@ -143,14 +120,10 @@ func TestRun(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			synchronization := NewSynchronization(tc.sources, tc.ruptures)
-
 			var result int
-			err := synchronization.Run(func(s *Synchronization) error {
-				for _, source := range s.Sources {
-					if !source.synchronized {
-						return nil
-					}
+			err := tc.instance.Run(func(synchronization uint64, items []interface{}) error {
+				if synchronization != 0 {
+					return nil
 				}
 
 				if result > 3 && tc.businessFail {

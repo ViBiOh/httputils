@@ -3,7 +3,7 @@ package breaksync
 // Source of data in a break/sync algorithm
 type Source struct {
 	next    interface{}
-	Current interface{}
+	current interface{}
 
 	reader func() (interface{}, error)
 	keyer  func(interface{}) string
@@ -32,7 +32,7 @@ func (s *Source) computeSynchro(key string) {
 }
 
 func (s *Source) read() error {
-	s.Current = s.next
+	s.current = s.next
 	s.currentKey = s.nextKey
 
 	next, err := s.reader()
@@ -48,4 +48,17 @@ func (s *Source) read() error {
 	}
 
 	return nil
+}
+
+// NewSliceSource is a source from a slice, read sequentially
+func NewSliceSource(arr []interface{}, keyer func(interface{}) string, readRupture *Rupture) *Source {
+	index := -1
+
+	return NewSource(func() (interface{}, error) {
+		index++
+		if index < len(arr) {
+			return arr[index], nil
+		}
+		return nil, nil
+	}, keyer, readRupture)
 }

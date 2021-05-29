@@ -124,8 +124,8 @@ func TestSourceRead(t *testing.T) {
 
 			if tc.want != nil && !errors.Is(err, tc.want) {
 				t.Errorf("Read() = %v, want %v", err, tc.want)
-			} else if !reflect.DeepEqual(tc.wantCurrent, tc.instance.Current) {
-				t.Errorf("Read().Current = `%s`, want `%s`", tc.wantCurrent, tc.instance.Current)
+			} else if !reflect.DeepEqual(tc.wantCurrent, tc.instance.current) {
+				t.Errorf("Read().Current = `%s`, want `%s`", tc.wantCurrent, tc.instance.current)
 			} else if tc.wantCurrentKey != tc.instance.currentKey {
 				t.Errorf("Read().currentKey = `%s`, want `%s`", tc.wantCurrentKey, tc.instance.currentKey)
 			} else if !reflect.DeepEqual(tc.wantNext, tc.instance.next) {
