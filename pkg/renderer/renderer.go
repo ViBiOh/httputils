@@ -125,13 +125,16 @@ func (a app) feedContent(content map[string]interface{}) map[string]interface{} 
 }
 
 func (a app) Handler(templateFunc TemplateFunc) http.Handler {
+	filesystem := http.FS(a.staticFS)
+	fileHandler := http.FileServer(filesystem)
 	svgHandler := http.StripPrefix(svgPath, a.svg())
-	fileHandler := http.FileServer(http.FS(a.staticFS))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, faviconPath) || isStaticRootPaths(r.URL.Path) {
-			fileHandler.ServeHTTP(w, r)
-			return
+			if _, err := filesystem.Open(r.URL.Path); err == nil {
+				fileHandler.ServeHTTP(w, r)
+				return
+			}
 		}
 
 		if a.tpl == nil {
