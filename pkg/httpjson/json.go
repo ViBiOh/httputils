@@ -109,7 +109,7 @@ func Stream(stream io.Reader, newObj func() interface{}, output chan<- interface
 	}
 
 	if _, err := decoder.Token(); err != nil {
-		return fmt.Errorf("unable to read key opening token: %s", err)
+		return fmt.Errorf("unable to read opening token: %s", err)
 	}
 
 	for decoder.More() {

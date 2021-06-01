@@ -360,3 +360,84 @@ func TestRead(t *testing.T) {
 		})
 	}
 }
+
+func TestStream(t *testing.T) {
+	newObj := func() interface{} {
+		return new(string)
+	}
+
+	type args struct {
+		stream io.Reader
+		key    string
+	}
+
+	var cases = []struct {
+		intention string
+		args      args
+		want      []string
+		wantErr   error
+	}{
+		{
+			"invalid json",
+			args{
+				stream: strings.NewReader("invalid json"),
+				key:    "items",
+			},
+			nil,
+			errors.New("unable to read token"),
+		},
+		{
+			"no opening token",
+			args{
+				stream: strings.NewReader(`{"count": 10, "items"}`),
+				key:    "items",
+			},
+			nil,
+			errors.New("unable to read opening token"),
+		},
+		{
+			"no closing token",
+			args{
+				stream: strings.NewReader(`{"count": 10, "items": ["test", "next", "final"}`),
+				key:    "items",
+			},
+			[]string{"test", "next", "final"},
+			errors.New("unable to read closing token"),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			output := make(chan interface{}, 4)
+			done := make(chan struct{})
+			var got []string
+
+			go func() {
+				defer close(done)
+				for item := range output {
+					got = append(got, *(item.(*string)))
+				}
+			}()
+
+			gotErr := Stream(tc.args.stream, newObj, output, tc.args.key)
+
+			<-done
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			} else if !reflect.DeepEqual(got, tc.want) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("Stream() = (%+v, `%s`), want (%+v, `%s`)", got, gotErr, tc.want, tc.wantErr)
+			}
+		})
+	}
+}
