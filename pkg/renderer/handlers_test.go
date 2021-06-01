@@ -58,6 +58,30 @@ func TestRedirect(t *testing.T) {
 				"Location": []string{fmt.Sprintf("/app/success?%s", NewSuccessMessage("Created with success"))},
 			},
 		},
+		{
+			"anchor",
+			app{},
+			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
+			"/success#id",
+			NewSuccessMessage("Created with success"),
+			"<a href=\"/success?messageContent=Created+with+success&amp;messageLevel=success#id\">Found</a>.\n\n",
+			http.StatusFound,
+			http.Header{
+				"Location": []string{fmt.Sprintf("/success?%s#id", NewSuccessMessage("Created with success"))},
+			},
+		},
+		{
+			"anchor and query",
+			app{},
+			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
+			"/success?refresh=true#id",
+			NewSuccessMessage("Created with success"),
+			"<a href=\"/success?refresh=true&amp;messageContent=Created+with+success&amp;messageLevel=success#id\">Found</a>.\n\n",
+			http.StatusFound,
+			http.Header{
+				"Location": []string{fmt.Sprintf("/success?refresh=true&%s#id", NewSuccessMessage("Created with success"))},
+			},
+		},
 	}
 
 	for _, tc := range cases {

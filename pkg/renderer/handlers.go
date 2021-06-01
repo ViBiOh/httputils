@@ -17,7 +17,13 @@ func (a app) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 		joinChar = "&"
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("%s%s%s", a.url(pathname), joinChar, message), http.StatusFound)
+	var anchor string
+	parts := strings.SplitN(pathname, "#", 2)
+	if len(parts) == 2 {
+		anchor = fmt.Sprintf("#%s", parts[1])
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", a.url(parts[0]), joinChar, message, anchor), http.StatusFound)
 }
 
 func (a app) Error(w http.ResponseWriter, err error) {
