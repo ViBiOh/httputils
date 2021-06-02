@@ -29,17 +29,20 @@ type App interface {
 // Config of package
 type Config struct {
 	ignore *string
+	gzip   *bool
 }
 
 type app struct {
 	registry *prometheus.Registry
 	ignore   []string
+	gzip     bool
 }
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		ignore: flags.New(prefix, "prometheus").Name("Ignore").Default(flags.Default("Ignore", "", overrides)).Label("Ignored path prefixes for metrics, comma separated").ToString(fs),
+		gzip:   flags.New(prefix, "prometheus").Name("Gzip").Default(flags.Default("Gzip", true, overrides)).Label("Enable gzip compression of metrics output").ToBool(fs),
 	}
 }
 
@@ -58,6 +61,7 @@ func New(config Config) App {
 
 	return app{
 		ignore:   ignore,
+		gzip:     *config.gzip,
 		registry: registry,
 	}
 }
@@ -65,7 +69,9 @@ func New(config Config) App {
 // Handler for request. Should be use with net/http
 func (a app) Handler() http.Handler {
 	instrumentHandler := promhttp.InstrumentMetricHandler(
-		a.registry, promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{}),
+		a.registry, promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{
+			DisableCompression: !a.gzip,
+		}),
 	)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

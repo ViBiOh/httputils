@@ -19,7 +19,7 @@ func TestFlags(t *testing.T) {
 	}{
 		{
 			"simple",
-			"Usage of simple:\n  -ignore string\n    \t[prometheus] Ignored path prefixes for metrics, comma separated {SIMPLE_IGNORE}\n",
+			"Usage of simple:\n  -gzip\n    \t[prometheus] Enable gzip compression of metrics output {SIMPLE_GZIP} (default true)\n  -ignore string\n    \t[prometheus] Ignored path prefixes for metrics, comma separated {SIMPLE_IGNORE}\n",
 		},
 	}
 
@@ -44,6 +44,7 @@ func TestFlags(t *testing.T) {
 func TestMiddleware(t *testing.T) {
 	metricsIgnore := ""
 	metricsIgnoreValue := "/api"
+	gzip := true
 
 	var cases = []struct {
 		intention string
@@ -55,6 +56,7 @@ func TestMiddleware(t *testing.T) {
 			"golang metrics",
 			New(Config{
 				ignore: &metricsIgnore,
+				gzip:   &gzip,
 			}),
 			[]*http.Request{
 				httptest.NewRequest(http.MethodGet, "/", nil),
@@ -65,6 +67,7 @@ func TestMiddleware(t *testing.T) {
 			"http metrics",
 			New(Config{
 				ignore: &metricsIgnore,
+				gzip:   &gzip,
 			}),
 			[]*http.Request{
 				httptest.NewRequest(http.MethodGet, "/", nil),
@@ -75,6 +78,7 @@ func TestMiddleware(t *testing.T) {
 			"http_requests_total",
 			New(Config{
 				ignore: &metricsIgnoreValue,
+				gzip:   &gzip,
 			}),
 			[]*http.Request{
 				httptest.NewRequest(http.MethodPost, "/", nil),
