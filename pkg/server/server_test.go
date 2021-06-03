@@ -13,7 +13,7 @@ func TestFlags(t *testing.T) {
 	}{
 		{
 			"simple",
-			"Usage of simple:\n  -address string\n    \t[server] Listen address {SIMPLE_ADDRESS}\n  -cert string\n    \t[server] Certificate file {SIMPLE_CERT}\n  -idleTimeout string\n    \t[server] Idle Timeout {SIMPLE_IDLE_TIMEOUT} (default \"2m\")\n  -key string\n    \t[server] Key file {SIMPLE_KEY}\n  -port uint\n    \t[server] Listen port {SIMPLE_PORT} (default 1080)\n  -readTimeout string\n    \t[server] Read Timeout {SIMPLE_READ_TIMEOUT} (default \"5s\")\n  -shutdownTimeout string\n    \t[server] Shutdown Timeout {SIMPLE_SHUTDOWN_TIMEOUT} (default \"10s\")\n  -writeTimeout string\n    \t[server] Write Timeout {SIMPLE_WRITE_TIMEOUT} (default \"10s\")\n",
+			"Usage of simple:\n  -address string\n    \t[server] Listen address {SIMPLE_ADDRESS}\n  -cert string\n    \t[server] Certificate file {SIMPLE_CERT}\n  -idleTimeout string\n    \t[server] Idle Timeout {SIMPLE_IDLE_TIMEOUT} (default \"2m\")\n  -key string\n    \t[server] Key file {SIMPLE_KEY}\n  -port uint\n    \t[server] Listen port (0 to disable) {SIMPLE_PORT} (default 1080)\n  -readTimeout string\n    \t[server] Read Timeout {SIMPLE_READ_TIMEOUT} (default \"5s\")\n  -shutdownTimeout string\n    \t[server] Shutdown Timeout {SIMPLE_SHUTDOWN_TIMEOUT} (default \"10s\")\n  -writeTimeout string\n    \t[server] Write Timeout {SIMPLE_WRITE_TIMEOUT} (default \"10s\")\n",
 		},
 	}
 

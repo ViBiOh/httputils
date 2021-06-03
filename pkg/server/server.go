@@ -49,7 +49,7 @@ type app struct {
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		address:         flags.New(prefix, "server").Name("Address").Default(flags.Default("Address", "", overrides)).Label("Listen address").ToString(fs),
-		port:            flags.New(prefix, "server").Name("Port").Default(flags.Default("Port", 1080, overrides)).Label("Listen port").ToUint(fs),
+		port:            flags.New(prefix, "server").Name("Port").Default(flags.Default("Port", 1080, overrides)).Label("Listen port (0 to disable)").ToUint(fs),
 		cert:            flags.New(prefix, "server").Name("Cert").Default(flags.Default("Cert", "", overrides)).Label("Certificate file").ToString(fs),
 		key:             flags.New(prefix, "server").Name("Key").Default(flags.Default("Key", "", overrides)).Label("Key file").ToString(fs),
 		readTimeout:     flags.New(prefix, "server").Name("ReadTimeout").Default(flags.Default("ReadTimeout", "5s", overrides)).Label("Read Timeout").ToString(fs),
@@ -61,8 +61,17 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 
 // New creates new App from Config
 func New(config Config) App {
+	port := *config.port
+	done := make(chan struct{})
+
+	if port == 0 {
+		return app{
+			done: done,
+		}
+	}
+
 	return app{
-		listenAddress: fmt.Sprintf("%s:%d", strings.TrimSpace(*config.address), *config.port),
+		listenAddress: fmt.Sprintf("%s:%d", strings.TrimSpace(*config.address), port),
 		cert:          strings.TrimSpace(*config.cert),
 		key:           strings.TrimSpace(*config.key),
 
@@ -71,7 +80,7 @@ func New(config Config) App {
 		idleTimeout:     model.SafeParseDuration("IdleTimeout", *config.idleTimeout, 2*time.Minute),
 		shutdownTimeout: model.SafeParseDuration("ShutdownTimeout", *config.shutdownTimeout, 10*time.Second),
 
-		done: make(chan struct{}),
+		done: done,
 	}
 }
 
@@ -82,6 +91,10 @@ func (a app) Done() <-chan struct{} {
 
 func (a app) Start(name string, done <-chan struct{}, handler http.Handler) {
 	defer close(a.done)
+
+	if len(a.listenAddress) == 0 {
+		return
+	}
 
 	httpServer := http.Server{
 		Addr:         a.listenAddress,
