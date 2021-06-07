@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sync"
 
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
@@ -17,7 +18,15 @@ import (
 	"github.com/tdewolff/minify/v2/svg"
 )
 
-var minifier *minify.M
+var (
+	minifier *minify.M
+
+	bufferPool = sync.Pool{
+		New: func() interface{} {
+			return bytes.NewBuffer(nil)
+		},
+	}
+)
 
 func init() {
 	minifier = minify.New()
@@ -50,7 +59,10 @@ func GetTemplates(dir, ext string) ([]string, error) {
 
 // WriteTemplate write template name from given template into writer for provided content with given minification
 func WriteTemplate(tpl *template.Template, w io.Writer, content interface{}, mediatype string) error {
-	templateBuffer := bytes.NewBuffer(nil)
+	templateBuffer := bufferPool.Get().(*bytes.Buffer)
+	defer bufferPool.Put(templateBuffer)
+
+	templateBuffer.Reset()
 	if err := tpl.Execute(templateBuffer, content); err != nil {
 		return err
 	}
@@ -60,7 +72,10 @@ func WriteTemplate(tpl *template.Template, w io.Writer, content interface{}, med
 
 // ResponseHTMLTemplate write template name from given template into writer for provided content with HTML minification
 func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
-	templateBuffer := bytes.NewBuffer(nil)
+	templateBuffer := bufferPool.Get().(*bytes.Buffer)
+	defer bufferPool.Put(templateBuffer)
+
+	templateBuffer.Reset()
 	if err := tpl.Execute(templateBuffer, content); err != nil {
 		return err
 	}
@@ -74,14 +89,17 @@ func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content
 
 // ResponseXMLTemplate write template name from given template into writer for provided content with XML minification
 func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
-	var templateBuffer bytes.Buffer
+	templateBuffer := bufferPool.Get().(*bytes.Buffer)
+	defer bufferPool.Put(templateBuffer)
+
+	templateBuffer.Reset()
 	templateBuffer.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
-	if err := tpl.Execute(&templateBuffer, content); err != nil {
+	if err := tpl.Execute(templateBuffer, content); err != nil {
 		return err
 	}
 
 	w.Header().Set("Content-Type", "text/xml; charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.WriteHeader(status)
-	return minifier.Minify("text/xml", w, &templateBuffer)
+	return minifier.Minify("text/xml", w, templateBuffer)
 }

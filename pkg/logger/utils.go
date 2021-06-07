@@ -3,6 +3,15 @@ package logger
 import (
 	"bytes"
 	"strings"
+	"sync"
+)
+
+var (
+	bufferPool = sync.Pool{
+		New: func() interface{} {
+			return bytes.NewBuffer(nil)
+		},
+	}
 )
 
 // EscapeString escapes value from raw string to be JSON compatible
@@ -11,7 +20,10 @@ func EscapeString(content string) string {
 		return content
 	}
 
-	output := bytes.NewBuffer(nil)
+	output := bufferPool.Get().(*bytes.Buffer)
+	defer bufferPool.Put(output)
+
+	output.Reset()
 
 	for _, char := range content {
 		switch char {
