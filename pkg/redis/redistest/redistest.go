@@ -86,5 +86,9 @@ func (a *App) Delete(context.Context, string) error {
 
 // Exclusive mocks
 func (a *App) Exclusive(ctx context.Context, _ string, _ time.Duration, action func(context.Context) error) error {
+	if a.exclusiveErr != nil {
+		return a.exclusiveErr
+	}
+
 	return action(ctx)
 }

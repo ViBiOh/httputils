@@ -47,7 +47,6 @@ func New() *Cron {
 	return &Cron{
 		dayTime: time.Date(0, 1, 1, 8, 0, 0, 0, time.UTC),
 		now:     make(chan time.Time, 1),
-		errors:  make([]error, 0),
 		onError: func(err error) {
 			fmt.Println(err)
 		},
