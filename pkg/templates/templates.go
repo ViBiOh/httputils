@@ -38,7 +38,7 @@ func init() {
 
 // GetTemplates list files by extension
 func GetTemplates(dir, ext string) ([]string, error) {
-	output := make([]string, 0)
+	var output []string
 
 	if err := filepath.Walk(dir, func(walkedPath string, info os.FileInfo, err error) error {
 		if err != nil {

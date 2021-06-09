@@ -78,8 +78,13 @@ func TestString(t *testing.T) {
 		},
 		{
 			"full case",
-			New().In("UTC").Weekdays().At("09:45").In("Europe/Paris").Retry(time.Minute).MaxRetry(5),
-			"day: 0111110, at: 09:45, in: Europe/Paris, retry: 5 times every 1m0s",
+			New().In("UTC").Weekdays().At("09:45").In("Europe/Paris").Retry(time.Minute).MaxRetry(5).Exclusive(redistest.New(), "test", time.Minute),
+			"day: 0111110, at: 09:45, in: Europe/Paris, retry: 5 times every 1m0s, in exclusive mode as `test` with 1m0s timeout",
+		},
+		{
+			"error case",
+			New().In("UTC").Weekdays().At("25:45"),
+			"day: 0111110, at: 08:00, in: UTC, retry: 0 times every 0s, error=`parsing time \"25:45\": hour out of range`",
 		},
 	}
 
@@ -380,7 +385,7 @@ func TestStart(t *testing.T) {
 			},
 			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
 				return func(err error) {
-					t.Error(err)
+					t.Error(errors.New("should not be there"))
 				}
 			},
 		},
@@ -417,7 +422,9 @@ func TestStart(t *testing.T) {
 				}
 			},
 			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
-				return func(err error) {}
+				return func(err error) {
+					t.Error(fmt.Errorf("should not be there: %s", err))
+				}
 			},
 		},
 		{
@@ -443,7 +450,9 @@ func TestStart(t *testing.T) {
 				}
 			},
 			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
-				return func(err error) {}
+				return func(err error) {
+					t.Error(fmt.Errorf("should not be there: %s", err))
+				}
 			},
 		},
 		{
@@ -458,7 +467,23 @@ func TestStart(t *testing.T) {
 			},
 			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
 				return func(err error) {
-					t.Error(err)
+					t.Error(fmt.Errorf("should not be there: %s", err))
+				}
+			},
+		},
+		{
+			"run in exclusive error",
+			New().Days().At("12:00").Exclusive(redistest.New().SetExclusive(errors.New("redis error")), "test", time.Minute),
+			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
+				return func(_ context.Context) error {
+					t.Error(errors.New("should not be there"))
+					return nil
+				}
+			},
+			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
+				return func(err error) {
+					wg.Done()
 				}
 			},
 		},
@@ -490,17 +515,17 @@ func TestStart(t *testing.T) {
 
 			go tc.cron.OnError(tc.onError(&wg, tc.cron)).Start(tc.action(&wg, tc.cron), nil)
 
-			done := make(chan struct{})
+			actionDone := make(chan struct{})
 			go func() {
 				wg.Wait()
-				close(done)
+				close(actionDone)
 			}()
 
 			select {
 			case <-time.After(time.Second * 5):
 				tc.cron.Shutdown()
 				t.Errorf("Start() did not complete within 5 seconds")
-			case <-done:
+			case <-actionDone:
 				tc.cron.Shutdown()
 			}
 		})
