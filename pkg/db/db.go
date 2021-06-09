@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -33,6 +34,17 @@ var (
 	SQLTimeout = time.Second * 5
 )
 
+// App of package
+type App interface {
+	Ping() error
+	DoAtomic(ctx context.Context, action func(context.Context) error) error
+	List(ctx context.Context, scanner func(*sql.Rows) error, query string, args ...interface{}) error
+	Get(ctx context.Context, scanner func(*sql.Row) error, query string, args ...interface{}) error
+	Create(ctx context.Context, query string, args ...interface{}) (uint64, error)
+	Exec(ctx context.Context, query string, args ...interface{}) error
+	Bulk(ctx context.Context, feeder func(*sql.Stmt) error, schema, table string, columns ...string) error
+}
+
 // Config of package
 type Config struct {
 	host    *string
@@ -42,6 +54,10 @@ type Config struct {
 	name    *string
 	sslmode *string
 	maxConn *uint
+}
+
+type app struct {
+	db *sql.DB
 }
 
 // Flags adds flags for configuring package
@@ -58,7 +74,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 // New creates new App from Config
-func New(config Config) (*sql.DB, error) {
+func New(config Config) (App, error) {
 	host := strings.TrimSpace(*config.host)
 	if len(host) == 0 {
 		return nil, ErrNoHost
@@ -73,22 +89,21 @@ func New(config Config) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	if err = db.Ping(); err != nil {
-		return db, err
-	}
-
 	db.SetMaxOpenConns(int(*config.maxConn))
 
-	return db, nil
+	instance := app{
+		db: db,
+	}
+
+	return instance, instance.Ping()
 }
 
 // Ping indicate if database is ready or not
-func Ping(db *sql.DB) bool {
+func (a app) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
 	defer cancel()
 
-	return db != nil && db.PingContext(ctx) == nil
+	return a.db.PingContext(ctx)
 }
 
 // StoreTx stores given transaction in context
@@ -110,7 +125,7 @@ func readTx(ctx context.Context) *sql.Tx {
 }
 
 // DoAtomic execute given action in a transactionnal context
-func DoAtomic(ctx context.Context, db *sql.DB, action func(context.Context) error) error {
+func (a app) DoAtomic(ctx context.Context, action func(context.Context) error) (err error) {
 	if action == nil {
 		return errors.New("no action provided")
 	}
@@ -119,75 +134,67 @@ func DoAtomic(ctx context.Context, db *sql.DB, action func(context.Context) erro
 		return action(ctx)
 	}
 
-	tx, err := db.Begin()
+	var tx *sql.Tx
+
+	tx, err = a.db.Begin()
 	if err != nil {
-		return err
+		return
 	}
+
+	defer func() {
+		if err == nil {
+			err = tx.Commit()
+		} else if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			err = fmt.Errorf("%s: %w", err.Error(), rollbackErr)
+		}
+	}()
 
 	err = action(StoreTx(ctx, tx))
-	if err == nil {
-		return tx.Commit()
-	}
-
-	if rollbackErr := tx.Rollback(); rollbackErr != nil {
-		return fmt.Errorf("%s: %w", err.Error(), rollbackErr)
-	}
-
-	return err
+	return
 }
 
 // List execute multiple rows query
-func List(ctx context.Context, db *sql.DB, scanner func(*sql.Rows) error, query string, args ...interface{}) error {
+func (a app) List(ctx context.Context, scanner func(*sql.Rows) error, query string, args ...interface{}) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
 	var rows *sql.Rows
-	var err error
 
 	if tx := readTx(ctx); tx != nil {
 		rows, err = tx.QueryContext(ctx, query, args...)
-	} else if db != nil {
-		rows, err = db.QueryContext(ctx, query, args...)
 	} else {
-		return errors.New("no transaction or database provided")
+		rows, err = a.db.QueryContext(ctx, query, args...)
 	}
 
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		err = safeClose(rows, err)
+	}()
 
 	for rows.Next() && err == nil {
 		err = scanner(rows)
 	}
 
-	closeErr := rows.Close()
-	if err == nil {
-		return closeErr
-	}
-
-	if closeErr == nil {
-		return err
-	}
-
-	return fmt.Errorf("%s: %w", err.Error(), closeErr)
+	return
 }
 
 // Get execute single row query
-func Get(ctx context.Context, db *sql.DB, scanner func(*sql.Row) error, query string, args ...interface{}) error {
+func (a app) Get(ctx context.Context, scanner func(*sql.Row) error, query string, args ...interface{}) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
 	if tx := readTx(ctx); tx != nil {
 		return scanner(tx.QueryRowContext(ctx, query, args...))
-	} else if db != nil {
-		return scanner(db.QueryRowContext(ctx, query, args...))
 	}
 
-	return errors.New("no transaction or database provided")
+	return scanner(a.db.QueryRowContext(ctx, query, args...))
 }
 
 // Create execute query with a RETURNING id
-func Create(ctx context.Context, query string, args ...interface{}) (uint64, error) {
+func (a app) Create(ctx context.Context, query string, args ...interface{}) (uint64, error) {
 	tx := readTx(ctx)
 	if tx == nil {
 		return 0, ErrNoTransaction
@@ -201,7 +208,7 @@ func Create(ctx context.Context, query string, args ...interface{}) (uint64, err
 }
 
 // Exec execute query with specified timeout, disregarding result
-func Exec(ctx context.Context, query string, args ...interface{}) error {
+func (a app) Exec(ctx context.Context, query string, args ...interface{}) error {
 	tx := readTx(ctx)
 	if tx == nil {
 		return ErrNoTransaction
@@ -215,35 +222,52 @@ func Exec(ctx context.Context, query string, args ...interface{}) error {
 }
 
 // Bulk load data into schema and table by batch
-func Bulk(ctx context.Context, feeder func(*sql.Stmt) error, schema, table string, columns ...string) error {
+func (a app) Bulk(ctx context.Context, feeder func(*sql.Stmt) error, schema, table string, columns ...string) (err error) {
 	tx := readTx(ctx)
 	if tx == nil {
 		return ErrNoTransaction
 	}
 
-	stmt, err := tx.Prepare(pq.CopyInSchema(schema, table, columns...))
+	var stmt *sql.Stmt
+
+	stmt, err = tx.Prepare(pq.CopyInSchema(schema, table, columns...))
 	if err != nil {
 		return fmt.Errorf("unable to prepare context: %s", err)
 	}
+
+	defer func() {
+		err = safeClose(stmt, err)
+	}()
 
 	for err == nil {
 		err = feeder(stmt)
 	}
 
-	if err != ErrBulkEnded {
-		return fmt.Errorf("unable to feed bulk creation: %s", err)
+	if err == ErrBulkEnded {
+		err = nil
+	} else {
+		err = fmt.Errorf("unable to feed bulk creation: %s", err)
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	if _, err := stmt.ExecContext(ctx); err != nil {
-		return fmt.Errorf("unable to exec bulk creation: %s", err)
+	if _, err = stmt.ExecContext(ctx); err != nil {
+		err = fmt.Errorf("unable to exec bulk creation: %s", err)
 	}
 
-	if err := stmt.Close(); err != nil {
-		return fmt.Errorf("unable to close bulk creation: %s", err)
+	return
+}
+
+func safeClose(closer io.Closer, err error) error {
+	if closeErr := closer.Close(); closeErr != nil {
+		if err == nil {
+			return closeErr
+		}
+
+		return fmt.Errorf("%s: %w", err, closeErr)
 	}
 
-	return nil
+	return err
 }
