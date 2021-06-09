@@ -59,11 +59,11 @@ func TestPing(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+			mockDb, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 			if err != nil {
 				t.Fatalf("unable to create mock database: %s", err)
 			}
-			defer db.Close()
+			defer mockDb.Close()
 
 			expectedPing := mock.ExpectPing()
 
@@ -77,7 +77,9 @@ func TestPing(t *testing.T) {
 				expectedPing.WillDelayFor(time.Second * 2)
 			}
 
-			if got := Ping(db); got != tc.want {
+			instance := app{db: mockDb}
+
+			if got := instance.Ping(); (got == nil) != tc.want {
 				t.Errorf("Ping() = %t, want %t", got, tc.want)
 			}
 		})
@@ -236,7 +238,8 @@ func TestDoAtomic(t *testing.T) {
 				mock.ExpectRollback().WillReturnError(errors.New("cannot close transaction"))
 			}
 
-			gotErr := DoAtomic(ctx, mockDb, tc.args.action)
+			instance := app{db: mockDb}
+			gotErr := instance.DoAtomic(ctx, tc.args.action)
 
 			failed := false
 
@@ -279,11 +282,6 @@ func TestList(t *testing.T) {
 			"tx",
 			[]uint64{1, 2},
 			nil,
-		},
-		{
-			"no db",
-			nil,
-			errors.New("no transaction or database provided"),
 		},
 		{
 			"scan error",
@@ -341,11 +339,6 @@ func TestList(t *testing.T) {
 				}
 			}
 
-			usedDb := mockDb
-			if tc.intention == "no db" {
-				usedDb = nil
-			}
-
 			var got []uint64
 			testScanItem := func(row *sql.Rows) error {
 				var item uint64
@@ -360,7 +353,8 @@ func TestList(t *testing.T) {
 				return nil
 			}
 
-			gotErr := List(ctx, usedDb, testScanItem, "SELECT id FROM item", 1)
+			instance := app{db: mockDb}
+			gotErr := instance.List(ctx, testScanItem, "SELECT id FROM item", 1)
 
 			failed := false
 
@@ -406,11 +400,6 @@ func TestGet(t *testing.T) {
 			1,
 			nil,
 		},
-		{
-			"no db",
-			0,
-			errors.New("no transaction or database provided"),
-		},
 	}
 
 	for _, tc := range cases {
@@ -446,16 +435,13 @@ func TestGet(t *testing.T) {
 				}
 			}
 
-			usedDb := mockDb
-			if tc.intention == "no db" {
-				usedDb = nil
-			}
-
 			var got uint64
 			testScanItem := func(row *sql.Row) error {
 				return row.Scan(&got)
 			}
-			gotErr := Get(ctx, usedDb, testScanItem, "SELECT id FROM item WHERE id = $1", 1)
+
+			instance := app{db: mockDb}
+			gotErr := instance.Get(ctx, testScanItem, "SELECT id FROM item WHERE id = $1", 1)
 
 			failed := false
 
@@ -535,7 +521,8 @@ func TestCreate(t *testing.T) {
 				}
 			}
 
-			got, gotErr := Create(ctx, "INSERT INTO item VALUES ($1)", 1)
+			instance := app{db: mockDb}
+			got, gotErr := instance.Create(ctx, "INSERT INTO item VALUES ($1)", 1)
 
 			failed := false
 
@@ -610,7 +597,8 @@ func TestExec(t *testing.T) {
 				}
 			}
 
-			gotErr := Exec(ctx, "DELETE FROM item WHERE id = $1", 1)
+			instance := app{db: mockDb}
+			gotErr := instance.Exec(ctx, "DELETE FROM item WHERE id = $1", 1)
 
 			failed := false
 
@@ -706,7 +694,7 @@ func TestBulk(t *testing.T) {
 				table:   "users",
 				columns: []string{"name", "email"},
 			},
-			errors.New("unable to close bulk creation: invalid"),
+			errors.New("error while closing"),
 		},
 		{
 			"success",
@@ -751,23 +739,24 @@ func TestBulk(t *testing.T) {
 				}
 
 				if tc.intention == "exec error" || tc.intention == "close error" || tc.intention == "success" {
-					mock.ExpectExec(`COPY "business"\."users" \("name", "email"\) FROM STDIN`).WithArgs("vibioh", "nobody@localhost").WillReturnResult(sqlmock.NewResult(0, 0))
+					prepareStmt.ExpectExec().WithArgs("vibioh", "nobody@localhost").WillReturnResult(sqlmock.NewResult(0, 1))
 
-					exec := mock.ExpectExec(`COPY "business"\."users" \("name", "email"\) FROM STDIN`)
+					exec := prepareStmt.ExpectExec()
 					if tc.intention == "exec error" {
 						exec.WillReturnError(errors.New("invalid values"))
 					} else {
 						exec.WillReturnResult(sqlmock.NewResult(0, 1))
 
 						if tc.intention == "close error" {
-							prepareStmt.WillReturnCloseError(errors.New("invalid"))
+							prepareStmt.WillReturnCloseError(errors.New("error while closing"))
 						}
 					}
 				}
 			}
 
 			count = 0
-			gotErr := Bulk(ctx, tc.args.feeder, tc.args.schema, tc.args.table, tc.args.columns...)
+			instance := app{db: mockDb}
+			gotErr := instance.Bulk(ctx, tc.args.feeder, tc.args.schema, tc.args.table, tc.args.columns...)
 
 			failed := false
 
