@@ -86,6 +86,52 @@ func TestPing(t *testing.T) {
 	}
 }
 
+func TestClose(t *testing.T) {
+	var cases = []struct {
+		intention string
+		wantErr   error
+	}{
+		{
+			"simple",
+			nil,
+		},
+		{
+			"error",
+			errors.New("resource busy"),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			mockDb, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+			if err != nil {
+				t.Fatalf("unable to create mock database: %s", err)
+			}
+
+			expect := mock.ExpectClose()
+			if tc.intention == "error" {
+				expect.WillReturnError(errors.New("resource busy"))
+			}
+
+			gotErr := app{db: mockDb}.Close()
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("Close() = `%s`, want `%s`", gotErr, tc.wantErr)
+			}
+		})
+	}
+}
+
 func TestReadTx(t *testing.T) {
 	mockDb, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 	if err != nil {

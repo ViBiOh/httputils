@@ -37,6 +37,7 @@ var (
 // App of package
 type App interface {
 	Ping() error
+	Close() error
 	DoAtomic(ctx context.Context, action func(context.Context) error) error
 	List(ctx context.Context, scanner func(*sql.Rows) error, query string, args ...interface{}) error
 	Get(ctx context.Context, scanner func(*sql.Row) error, query string, args ...interface{}) error
@@ -104,6 +105,11 @@ func (a app) Ping() error {
 	defer cancel()
 
 	return a.db.PingContext(ctx)
+}
+
+// Close the database connection
+func (a app) Close() error {
+	return a.db.Close()
 }
 
 // StoreTx stores given transaction in context
