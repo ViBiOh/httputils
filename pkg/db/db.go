@@ -99,6 +99,13 @@ func New(config Config) (App, error) {
 	return instance, instance.Ping()
 }
 
+// NewFromSQL creates a db wrapper
+func NewFromSQL(db *sql.DB) App {
+	return app{
+		db: db,
+	}
+}
+
 // Ping indicate if database is ready or not
 func (a app) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
