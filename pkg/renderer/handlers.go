@@ -3,6 +3,7 @@ package renderer
 import (
 	"fmt"
 	"net/http"
+	"runtime"
 	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
@@ -43,6 +44,10 @@ func (a app) Error(w http.ResponseWriter, err error) {
 func (a app) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
 	defer func() {
 		if r := recover(); r != nil {
+			output := make([]byte, 1024)
+			runtime.Stack(output, false)
+			logger.Error("recovered from panic: %s\n%s", r, output)
+
 			a.Error(w, fmt.Errorf("recovered from panic: %s", r))
 		}
 	}()

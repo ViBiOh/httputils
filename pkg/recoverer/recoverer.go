@@ -17,7 +17,6 @@ func Middleware(next http.Handler) http.Handler {
 				runtime.Stack(output, false)
 
 				httperror.InternalServerError(w, fmt.Errorf("recovered from panic: %s\n%s", r, output))
-
 			}
 		}()
 
