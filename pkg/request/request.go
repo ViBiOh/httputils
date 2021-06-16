@@ -185,25 +185,29 @@ func DoWithClient(client http.Client, req *http.Request) (*http.Response, error)
 		}
 
 		if resp != nil {
-			errMessage.WriteString(fmt.Sprintf("HTTP/%d", resp.StatusCode))
-
-			for key, value := range resp.Header {
-				errMessage.WriteString(fmt.Sprintf("\n%s: %s", key, strings.Join(value, ",")))
-			}
-
-			if errBody, bodyErr := ReadBodyResponse(resp); bodyErr == nil && len(errBody) > 0 {
-				if len(errBody) > maxErrorBody {
-					errBody = errBody[:maxErrorBody]
-				}
-
-				errMessage.WriteString(fmt.Sprintf("\n\n%s", errBody))
-			}
+			appendRespError(&errMessage, resp)
 		}
 
 		err = errors.New(errMessage.String())
 	}
 
 	return resp, err
+}
+
+func appendRespError(errMessage *strings.Builder, resp *http.Response) {
+	errMessage.WriteString(fmt.Sprintf("HTTP/%d", resp.StatusCode))
+
+	for key, value := range resp.Header {
+		errMessage.WriteString(fmt.Sprintf("\n%s: %s", key, strings.Join(value, ",")))
+	}
+
+	if errBody, bodyErr := ReadBodyResponse(resp); bodyErr == nil && len(errBody) > 0 {
+		if len(errBody) > maxErrorBody {
+			errBody = errBody[:maxErrorBody]
+		}
+
+		errMessage.WriteString(fmt.Sprintf("\n\n%s", errBody))
+	}
 }
 
 // Do send request with default client
