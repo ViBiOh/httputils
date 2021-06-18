@@ -161,6 +161,84 @@ func TestInternalServerError(t *testing.T) {
 	}
 }
 
+func TestHandleError(t *testing.T) {
+	var cases = []struct {
+		intention   string
+		err         error
+		want        bool
+		wantStatus  int
+		wantMessage string
+	}{
+		{
+			"no error",
+			nil,
+			false,
+			http.StatusOK,
+			"",
+		},
+		{
+			"invalid",
+			model.WrapInvalid(errors.New("invalid value")),
+			true,
+			http.StatusBadRequest,
+			"invalid value: invalid\n",
+		},
+		{
+			"invalid",
+			model.WrapUnauthorized(errors.New("invalid auth")),
+			true,
+			http.StatusUnauthorized,
+			"invalid auth: unauthorized\n",
+		},
+		{
+			"invalid",
+			model.WrapForbidden(errors.New("invalid credentials")),
+			true,
+			http.StatusForbidden,
+			"invalid credentials: forbidden\n",
+		},
+		{
+			"not found",
+			model.WrapNotFound(errors.New("unknown id")),
+			true,
+			http.StatusNotFound,
+			"¯\\_(ツ)_/¯\n",
+		},
+		{
+			"method not allowed",
+			model.WrapMethodNotAllowed(errors.New("unknown method")),
+			true,
+			http.StatusMethodNotAllowed,
+			"unknown method: method not allowed\n",
+		},
+		{
+			"internal server error",
+			errors.New("bool"),
+			true,
+			http.StatusInternalServerError,
+			"Oops! Something went wrong. Server's logs contain more details.\n",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
+
+			if got := HandleError(writer, tc.err); got != tc.want {
+				t.Errorf("HandleError = %t, want %t", got, tc.want)
+			}
+
+			if got := writer.Code; got != tc.wantStatus {
+				t.Errorf("HandleError = HTTP/%d, want HTTP/%d", got, tc.wantStatus)
+			}
+
+			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.wantMessage {
+				t.Errorf("HandleError = `%s`, want `%s`", string(got), tc.wantMessage)
+			}
+		})
+	}
+}
+
 func TestErrorStatus(t *testing.T) {
 	type args struct {
 		err error

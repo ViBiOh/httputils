@@ -195,13 +195,19 @@ func DoWithClient(client http.Client, req *http.Request) (*http.Response, error)
 }
 
 func appendRespError(errMessage *strings.Builder, resp *http.Response) {
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			logger.Error("unable to close error body: %s", closeErr)
+		}
+	}()
+
 	errMessage.WriteString(fmt.Sprintf("HTTP/%d", resp.StatusCode))
 
 	for key, value := range resp.Header {
 		errMessage.WriteString(fmt.Sprintf("\n%s: %s", key, strings.Join(value, ",")))
 	}
 
-	if errBody, bodyErr := ReadBodyResponse(resp); bodyErr == nil && len(errBody) > 0 {
+	if errBody, bodyErr := io.ReadAll(io.LimitReader(resp.Body, 500)); bodyErr == nil && len(errBody) > 0 {
 		if len(errBody) > maxErrorBody {
 			errBody = errBody[:maxErrorBody]
 		}

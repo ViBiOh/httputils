@@ -68,7 +68,7 @@ func HandleError(w http.ResponseWriter, err error) bool {
 	case errors.Is(err, model.ErrNotFound):
 		NotFound(w)
 	case errors.Is(err, model.ErrMethodNotAllowed):
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		httpError(w, http.StatusMethodNotAllowed, err.Error(), err)
 	default:
 		InternalServerError(w, err)
 	}
