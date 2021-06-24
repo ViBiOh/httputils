@@ -16,6 +16,7 @@ import (
 
 const (
 	faviconPath = "/favicon"
+	imagesPath  = "/images"
 	svgPath     = "/svg"
 )
 
@@ -130,7 +131,7 @@ func (a app) Handler(templateFunc TemplateFunc) http.Handler {
 	svgHandler := http.StripPrefix(svgPath, a.svg())
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, faviconPath) || isStaticRootPaths(r.URL.Path) {
+		if strings.HasPrefix(r.URL.Path, imagesPath) || strings.HasPrefix(r.URL.Path, faviconPath) || isStaticRootPaths(r.URL.Path) {
 			if _, err := filesystem.Open(r.URL.Path); err == nil {
 				fileHandler.ServeHTTP(w, r)
 				return
