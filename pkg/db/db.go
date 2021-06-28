@@ -55,6 +55,7 @@ type Config struct {
 	name    *string
 	sslmode *string
 	maxConn *uint
+	timeout *uint
 }
 
 type app struct {
@@ -71,6 +72,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 		name:    flags.New(prefix, "database").Name("Name").Default(flags.Default("Name", "", overrides)).Label("Name").ToString(fs),
 		maxConn: flags.New(prefix, "database").Name("MaxConn").Default(flags.Default("MaxConn", 5, overrides)).Label("Max Open Connections").ToUint(fs),
 		sslmode: flags.New(prefix, "database").Name("Sslmode").Default(flags.Default("Sslmode", "disable", overrides)).Label("SSL Mode").ToString(fs),
+		timeout: flags.New(prefix, "database").Name("Timeout").Default(flags.Default("Timeout", 10, overrides)).Label("Connect timeout").ToUint(fs),
 	}
 }
 
@@ -86,7 +88,7 @@ func New(config Config) (App, error) {
 	name := strings.TrimSpace(*config.name)
 	sslmode := strings.TrimSpace(*config.sslmode)
 
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, *config.port, user, pass, name, sslmode))
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s connect_timeout=%d", host, *config.port, user, pass, name, sslmode, *config.timeout))
 	if err != nil {
 		return nil, err
 	}
