@@ -207,11 +207,7 @@ func appendRespError(errMessage *strings.Builder, resp *http.Response) {
 		errMessage.WriteString(fmt.Sprintf("\n%s: %s", key, strings.Join(value, ",")))
 	}
 
-	if errBody, bodyErr := io.ReadAll(io.LimitReader(resp.Body, 500)); bodyErr == nil && len(errBody) > 0 {
-		if len(errBody) > maxErrorBody {
-			errBody = errBody[:maxErrorBody]
-		}
-
+	if errBody, bodyErr := io.ReadAll(io.LimitReader(resp.Body, maxErrorBody)); bodyErr == nil && len(errBody) > 0 {
 		errMessage.WriteString(fmt.Sprintf("\n\n%s", errBody))
 	}
 }
