@@ -23,7 +23,7 @@ func TestFlags(t *testing.T) {
 	}{
 		{
 			"simple",
-			"Usage of simple:\n  -pathPrefix string\n    \tRoot Path Prefix {SIMPLE_PATH_PREFIX}\n  -publicURL string\n    \tPublic URL {SIMPLE_PUBLIC_URL} (default \"http://localhost\")\n  -title string\n    \tApplication title {SIMPLE_TITLE} (default \"App\")\n",
+			"Usage of simple:\n  -minify\n    \tMinify HTML {SIMPLE_MINIFY} (default true)\n  -pathPrefix string\n    \tRoot Path Prefix {SIMPLE_PATH_PREFIX}\n  -publicURL string\n    \tPublic URL {SIMPLE_PUBLIC_URL} (default \"http://localhost\")\n  -title string\n    \tApplication title {SIMPLE_TITLE} (default \"App\")\n",
 		},
 	}
 
@@ -165,11 +165,13 @@ func TestHandler(t *testing.T) {
 	publicURL := "http://localhost"
 	pathPrefix := "/app"
 	title := "Golang Test"
+	minify := true
 
 	configuredApp, err := New(Config{
 		publicURL:  &publicURL,
 		pathPrefix: &emptyString,
 		title:      &title,
+		minify:     &minify,
 	}, content, template.FuncMap{})
 	if err != nil {
 		t.Error(err)
@@ -179,6 +181,7 @@ func TestHandler(t *testing.T) {
 		publicURL:  &publicURL,
 		pathPrefix: &pathPrefix,
 		title:      &title,
+		minify:     &minify,
 	}, content, template.FuncMap{})
 	if err != nil {
 		t.Error(err)

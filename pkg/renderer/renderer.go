@@ -36,6 +36,7 @@ type Config struct {
 	publicURL  *string
 	pathPrefix *string
 	title      *string
+	minify     *bool
 }
 
 type app struct {
@@ -43,6 +44,7 @@ type app struct {
 	content    map[string]interface{}
 	staticFS   fs.FS
 	pathPrefix string
+	minify     bool
 }
 
 // Flags adds flags for configuring package
@@ -51,6 +53,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 		publicURL:  flags.New(prefix, "").Name("PublicURL").Default(flags.Default("PublicURL", "http://localhost", overrides)).Label("Public URL").ToString(fs),
 		pathPrefix: flags.New(prefix, "").Name("PathPrefix").Default(flags.Default("PathPrefix", "", overrides)).Label("Root Path Prefix").ToString(fs),
 		title:      flags.New(prefix, "").Name("Title").Default(flags.Default("Title", "App", overrides)).Label("Application title").ToString(fs),
+		minify:     flags.New(prefix, "").Name("Minify").Default(flags.Default("Minify", true, overrides)).Label("Minify HTML").ToBool(fs),
 	}
 }
 
@@ -71,6 +74,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 	instance := app{
 		staticFS:   staticFS,
 		pathPrefix: pathPrefix,
+		minify:     *config.minify,
 		content: map[string]interface{}{
 			"Title":   strings.TrimSpace(*config.title),
 			"Version": os.Getenv("VERSION"),

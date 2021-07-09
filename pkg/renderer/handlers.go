@@ -69,7 +69,12 @@ func (a app) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 		content["Message"] = message
 	}
 
-	if err := templates.ResponseHTMLTemplate(a.tpl.Lookup(templateName), w, content, status); err != nil {
+	responder := templates.ResponseHTMLTemplate
+	if !a.minify {
+		responder = templates.ResponseHTMLTemplateRaw
+	}
+
+	if err := responder(a.tpl.Lookup(templateName), w, content, status); err != nil {
 		httperror.InternalServerError(w, err)
 	}
 }
