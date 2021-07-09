@@ -140,6 +140,77 @@ func TestResponseHTMLTemplate(t *testing.T) {
 	}
 }
 
+func TestResponseHTMLTemplateRaw(t *testing.T) {
+	var cases = []struct {
+		intention string
+		tpl       *template.Template
+		want      string
+		wantErr   error
+	}{
+		{
+			"simple",
+			template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html")),
+			`<!doctype html>
+
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+
+  <title>Golang Testing</title>
+  <meta name="description" content="Golang Testing">
+  <meta name="author" content="ViBiOh">
+
+  <script>
+    function helloWorld() {
+      console.info('Hello world!');
+    }
+  </script>
+
+  <style>
+    html {
+      height: 100vh;
+      width: 100vw;
+    }
+  </style>
+</head>
+
+<body onload="helloWorld()">
+  <h1>It works!</h1>
+</body>
+</html>
+`,
+			nil,
+		},
+		{
+			"error",
+			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.html")),
+			"",
+			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
+			err := ResponseHTMLTemplateRaw(tc.tpl, writer, nil, 200)
+
+			result, _ := request.ReadBodyResponse(writer.Result())
+
+			failed := false
+
+			if tc.wantErr != nil && (err == nil || err.Error() != tc.wantErr.Error()) {
+				failed = true
+			} else if string(result) != tc.want {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("ResponseHTMLTemplateRaw() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, tc.want, tc.wantErr)
+			}
+		})
+	}
+}
+
 func TestResponseXMLTemplate(t *testing.T) {
 	var cases = []struct {
 		intention string

@@ -87,6 +87,16 @@ func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content
 	return minifier.Minify("text/html", w, templateBuffer)
 }
 
+// ResponseHTMLTemplateRaw write template name from given template into writer for provided content
+func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("X-UA-Compatible", "ie=edge")
+	w.WriteHeader(status)
+
+	return tpl.Execute(w, content)
+}
+
 // ResponseXMLTemplate write template name from given template into writer for provided content with XML minification
 func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
 	templateBuffer := bufferPool.Get().(*bytes.Buffer)
