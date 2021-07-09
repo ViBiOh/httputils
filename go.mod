@@ -7,6 +7,6 @@ require (
 	github.com/go-redis/redis/v8 v8.11.0
 	github.com/lib/pq v1.10.2
 	github.com/prometheus/client_golang v1.11.0
-	github.com/tdewolff/minify/v2 v2.9.18
+	github.com/tdewolff/minify/v2 v2.9.19
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
 )
