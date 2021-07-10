@@ -87,8 +87,8 @@ func TestIsStaticRootPaths(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			if got := isStaticRootPaths(tc.args.requestPath); got != tc.want {
-				t.Errorf("isStaticRootPaths() = %t, want %t", got, tc.want)
+			if got := isStaticPaths(tc.args.requestPath); got != tc.want {
+				t.Errorf("isStaticPaths() = %t, want %t", got, tc.want)
 			}
 		})
 	}
@@ -208,7 +208,7 @@ func TestHandler(t *testing.T) {
 		{
 			"favicon",
 			configuredApp,
-			httptest.NewRequest(http.MethodGet, "/favicon/manifest.json", nil),
+			httptest.NewRequest(http.MethodGet, "/images/favicon/manifest.json", nil),
 			nil,
 			"{}\n",
 			http.StatusOK,
