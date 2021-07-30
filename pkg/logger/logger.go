@@ -255,3 +255,25 @@ func safeErrorWrite(message string) {
 		fmt.Println(err)
 	}
 }
+
+// Providing function wrapper for interface compatibility
+
+// Errorf logs error message
+func (l Logger) Errorf(format string, a ...interface{}) {
+	l.Error(format, a...)
+}
+
+// Warningf logs warning message
+func (l Logger) Warningf(format string, a ...interface{}) {
+	l.Warn(format, a...)
+}
+
+// Infof logs info message
+func (l Logger) Infof(format string, a ...interface{}) {
+	l.Info(format, a...)
+}
+
+// Debugf logs debug message
+func (l Logger) Debugf(format string, a ...interface{}) {
+	l.Debug(format, a...)
+}
