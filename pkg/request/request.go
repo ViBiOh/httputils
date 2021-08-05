@@ -19,8 +19,9 @@ const (
 )
 
 var (
-	defaultHTTPClient = http.Client{
-		Timeout: 15 * time.Second,
+	defaultHTTPClient = &http.Client{
+		Timeout:   15 * time.Second,
+		Transport: http.DefaultTransport,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
@@ -29,13 +30,13 @@ var (
 
 // Request describe a complete request
 type Request struct {
+	client *http.Client
+	header http.Header
+
 	method   string
 	url      string
 	username string
 	password string
-
-	header http.Header
-	client http.Client
 }
 
 // New create a new Request
@@ -117,7 +118,7 @@ func (r *Request) ContentJSON() *Request {
 }
 
 // WithClient defines net/http client to use, instead of default one (30sec timeout and no redirect)
-func (r *Request) WithClient(client http.Client) *Request {
+func (r *Request) WithClient(client *http.Client) *Request {
 	r.client = client
 
 	return r
@@ -171,7 +172,7 @@ func (r *Request) JSON(ctx context.Context, body interface{}) (*http.Response, e
 }
 
 // DoWithClient send request with given client
-func DoWithClient(client http.Client, req *http.Request) (*http.Response, error) {
+func DoWithClient(client *http.Client, req *http.Request) (*http.Response, error) {
 	resp, err := client.Do(req)
 	if err != nil || resp.StatusCode >= http.StatusBadRequest {
 		errMessage := strings.Builder{}

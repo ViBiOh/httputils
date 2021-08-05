@@ -86,7 +86,7 @@ func TestSend(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	defaultHTTPClient = http.Client{
+	defaultHTTPClient = &http.Client{
 		Timeout: time.Second,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
@@ -159,7 +159,7 @@ func TestSend(t *testing.T) {
 		},
 		{
 			"with client",
-			New().Get(testServer.URL + "/client").WithClient(http.Client{}),
+			New().Get(testServer.URL + "/client").WithClient(&http.Client{}),
 			context.Background(),
 			nil,
 			"",
