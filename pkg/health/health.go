@@ -82,47 +82,29 @@ func (a app) Handler() http.Handler {
 			return
 		}
 
-		if a.isShutdown() {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			return
-		}
-
 		if r.URL.Path == HealthPath {
 			w.WriteHeader(a.okStatus)
 			return
 		}
 
-		for _, pinger := range a.pingers {
-			if err := pinger(); err != nil {
-				logger.Error("unable to ping: %s", err)
-
+		select {
+		case <-a.done:
+			w.WriteHeader(http.StatusServiceUnavailable)
+		default:
+			if a.isReady() {
+				w.WriteHeader(a.okStatus)
+			} else {
 				w.WriteHeader(http.StatusServiceUnavailable)
-				return
 			}
 		}
-
-		w.WriteHeader(a.okStatus)
 	})
 }
 
-// WaitForTermination waits for the SIGTERM signal or close of done
+// WaitForTermination waits for SIGTERM or done plus grace duration
 func (a app) WaitForTermination(done <-chan struct{}) {
 	defer close(a.end)
 
-	signals := make(chan os.Signal, 1)
-	defer close(signals)
-
-	signal.Notify(signals, syscall.SIGTERM)
-	defer signal.Stop(signals)
-
-	select {
-	case <-done:
-		close(a.done)
-		return
-	case sig := <-signals:
-		close(a.done)
-		logger.Info("%s received", sig)
-	}
+	a.waitForDone(done, syscall.SIGTERM)
 
 	if a.graceDuration != 0 {
 		logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
@@ -130,11 +112,30 @@ func (a app) WaitForTermination(done <-chan struct{}) {
 	}
 }
 
-func (a app) isShutdown() bool {
+// waitForDone waits for the SIGTERM signal or close of done
+func (a app) waitForDone(done <-chan struct{}, signals ...os.Signal) {
+	signalsChan := make(chan os.Signal, 1)
+	defer close(signalsChan)
+
+	signal.Notify(signalsChan, signals...)
+	defer signal.Stop(signalsChan)
+
+	defer close(a.done)
+
 	select {
-	case <-a.done:
-		return true
-	default:
-		return false
+	case <-done:
+	case sig := <-signalsChan:
+		logger.Info("%s received", sig)
 	}
+}
+
+func (a app) isReady() bool {
+	for _, pinger := range a.pingers {
+		if err := pinger(); err != nil {
+			logger.Error("unable to ping: %s", err)
+			return false
+		}
+	}
+
+	return true
 }
