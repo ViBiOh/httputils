@@ -87,7 +87,7 @@ func (a app) svg() http.Handler {
 			return
 		}
 
-		w.Header().Set("Content-Type", "image/svg+xml")
+		w.Header().Add("Content-Type", "image/svg+xml")
 		if err := templates.WriteTemplate(tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {
 			httperror.InternalServerError(w, err)
 		}

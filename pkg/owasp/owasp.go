@@ -52,19 +52,19 @@ func New(config Config) App {
 // Middleware for net/http package allowing owasp header
 func (a app) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("X-Xss-Protection", "1; mode=block")
-		w.Header().Set("X-Permitted-Cross-Domain-Policies", "none")
+		w.Header().Add("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Add("X-Content-Type-Options", "nosniff")
+		w.Header().Add("X-Xss-Protection", "1; mode=block")
+		w.Header().Add("X-Permitted-Cross-Domain-Policies", "none")
 
 		if len(a.csp) != 0 {
-			w.Header().Set("Content-Security-Policy", a.csp)
+			w.Header().Add("Content-Security-Policy", a.csp)
 		}
 		if len(a.frameOptions) != 0 {
-			w.Header().Set("X-Frame-Options", a.frameOptions)
+			w.Header().Add("X-Frame-Options", a.frameOptions)
 		}
 		if a.hsts {
-			w.Header().Set("Strict-Transport-Security", "max-age=10886400")
+			w.Header().Add("Strict-Transport-Security", "max-age=10886400")
 		}
 
 		if next != nil {

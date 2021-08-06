@@ -41,8 +41,8 @@ func Write(w http.ResponseWriter, status int, obj interface{}, pretty bool) {
 		encoder.SetIndent("", "  ")
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
+	w.Header().Add("Cache-Control", "no-cache")
 	w.WriteHeader(status)
 
 	if err := encoder.Encode(obj); err != nil {

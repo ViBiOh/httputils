@@ -13,7 +13,7 @@ const (
 )
 
 func httpError(w http.ResponseWriter, status int, payload string, err error) {
-	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Add("Cache-Control", "no-cache")
 	http.Error(w, payload, status)
 
 	if err == nil {

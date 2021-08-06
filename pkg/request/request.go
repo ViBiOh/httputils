@@ -97,7 +97,7 @@ func (r *Request) BasicAuth(username, password string) *Request {
 
 // Header add header to request
 func (r *Request) Header(name, value string) *Request {
-	r.header.Set(name, value)
+	r.header.Add(name, value)
 
 	return r
 }

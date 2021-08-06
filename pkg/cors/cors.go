@@ -62,19 +62,19 @@ func New(config Config) App {
 func (a app) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if len(a.origin) != 0 {
-			w.Header().Set("Access-Control-Allow-Origin", a.origin)
+			w.Header().Add("Access-Control-Allow-Origin", a.origin)
 		}
 		if len(a.headers) != 0 {
-			w.Header().Set("Access-Control-Allow-Headers", a.headers)
+			w.Header().Add("Access-Control-Allow-Headers", a.headers)
 		}
 		if len(a.methods) != 0 {
-			w.Header().Set("Access-Control-Allow-Methods", a.methods)
+			w.Header().Add("Access-Control-Allow-Methods", a.methods)
 		}
 		if len(a.exposes) != 0 {
-			w.Header().Set("Access-Control-Expose-Headers", a.exposes)
+			w.Header().Add("Access-Control-Expose-Headers", a.exposes)
 		}
 		if len(a.credentials) != 0 {
-			w.Header().Set("Access-Control-Allow-Credentials", a.credentials)
+			w.Header().Add("Access-Control-Allow-Credentials", a.credentials)
 		}
 
 		if next != nil {

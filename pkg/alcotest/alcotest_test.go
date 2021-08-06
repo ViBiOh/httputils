@@ -13,7 +13,7 @@ import (
 func createTestServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for key := range r.Header {
-			w.Header().Set(key, r.Header.Get(key))
+			w.Header().Add(key, r.Header.Get(key))
 		}
 
 		if r.URL.Path == "/ok" {

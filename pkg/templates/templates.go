@@ -80,7 +80,7 @@ func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content
 		return err
 	}
 
-	w.Header().Set("X-UA-Compatible", "ie=edge")
+	w.Header().Add("X-UA-Compatible", "ie=edge")
 	contentType(w, "text/html; charset=UTF-8")
 	noCache(w)
 	w.WriteHeader(status)
@@ -89,7 +89,7 @@ func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content
 
 // ResponseHTMLTemplateRaw write template name from given template into writer for provided content
 func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
-	w.Header().Set("X-UA-Compatible", "ie=edge")
+	w.Header().Add("X-UA-Compatible", "ie=edge")
 	contentType(w, "text/html; charset=UTF-8")
 	noCache(w)
 	w.WriteHeader(status)
@@ -115,9 +115,9 @@ func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content 
 }
 
 func contentType(w http.ResponseWriter, contentType string) {
-	w.Header().Set("Content-Type", contentType)
+	w.Header().Add("Content-Type", contentType)
 }
 
 func noCache(w http.ResponseWriter) {
-	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Add("Cache-Control", "no-cache")
 }
