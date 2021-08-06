@@ -91,8 +91,10 @@ func (a app) Done() <-chan struct{} {
 
 func (a app) Start(name string, done <-chan struct{}, handler http.Handler) {
 	defer close(a.done)
+	serverLogger := logger.WithField("server", name)
 
 	if len(a.listenAddress) == 0 {
+		serverLogger.Warn("No listen address")
 		return
 	}
 
@@ -111,15 +113,15 @@ func (a app) Start(name string, done <-chan struct{}, handler http.Handler) {
 
 		var err error
 		if len(a.cert) != 0 && len(a.key) != 0 {
-			logger.Info("[%s] Listening on %s with TLS", name, a.listenAddress)
+			serverLogger.Info("Listening on %s with TLS", a.listenAddress)
 			err = httpServer.ListenAndServeTLS(a.cert, a.key)
 		} else {
-			logger.Warn("[%s] Listening on %s without TLS", name, a.listenAddress)
+			serverLogger.Warn("Listening on %s without TLS", a.listenAddress)
 			err = httpServer.ListenAndServe()
 		}
 
 		if err != http.ErrServerClosed {
-			logger.Error("[%s] Server error: %s", name, err)
+			serverLogger.Error("[%s] Server error: %s", name, err)
 		}
 	}()
 
@@ -131,9 +133,9 @@ func (a app) Start(name string, done <-chan struct{}, handler http.Handler) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), a.shutdownTimeout)
 	defer cancelFn()
 
-	logger.Info("[%s] Server is shutting down", name)
+	serverLogger.Info("Server is shutting down")
 	if err := httpServer.Shutdown(ctx); err != nil {
-		logger.Error("[%s] unable to shutdown server: %s", name, err)
+		serverLogger.Error("unable to shutdown server: %s", err)
 	}
 }
 
