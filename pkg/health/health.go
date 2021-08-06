@@ -104,18 +104,21 @@ func (a app) Handler() http.Handler {
 func (a app) WaitForTermination(done <-chan struct{}) {
 	defer close(a.end)
 
-	if a.waitForDone(done, syscall.SIGTERM) {
-		return
-	}
+	a.waitForDone(done, syscall.SIGTERM)
 
-	if a.graceDuration != 0 {
-		logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
-		time.Sleep(a.graceDuration)
+	select {
+	case <-done:
+		return
+	default:
+		if a.graceDuration != 0 {
+			logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
+			time.Sleep(a.graceDuration)
+		}
 	}
 }
 
 // waitForDone waits for the SIGTERM signal or close of done
-func (a app) waitForDone(done <-chan struct{}, signals ...os.Signal) bool {
+func (a app) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	signalsChan := make(chan os.Signal, 1)
 	defer close(signalsChan)
 
@@ -126,12 +129,9 @@ func (a app) waitForDone(done <-chan struct{}, signals ...os.Signal) bool {
 
 	select {
 	case <-done:
-		return true
 	case sig := <-signalsChan:
 		logger.Info("%s received", sig)
 	}
-
-	return false
 }
 
 func (a app) isReady() bool {

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -120,8 +121,8 @@ func (a app) Start(name string, done <-chan struct{}, handler http.Handler) {
 			err = httpServer.ListenAndServe()
 		}
 
-		if err != http.ErrServerClosed {
-			serverLogger.Error("[%s] Server error: %s", name, err)
+		if !errors.Is(err, http.ErrServerClosed) {
+			serverLogger.Error("Server error: %s", err)
 		}
 	}()
 
@@ -136,12 +137,5 @@ func (a app) Start(name string, done <-chan struct{}, handler http.Handler) {
 	serverLogger.Info("Server is shutting down")
 	if err := httpServer.Shutdown(ctx); err != nil {
 		serverLogger.Error("unable to shutdown server: %s", err)
-	}
-}
-
-// GracefulWait wait for all done chan to be closed
-func GracefulWait(dones ...<-chan struct{}) {
-	for _, done := range dones {
-		<-done
 	}
 }
