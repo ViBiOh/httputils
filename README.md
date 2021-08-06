@@ -32,3 +32,32 @@ COPY bin/alcotest /alcotest
 
 Because main use is to healthcheck.
 Because it's a partial anagram of "ch**e**ck **stat**us **co**de ur**l**"
+
+## Server
+
+Server is provided in order to be compliant with [12 Factor](https://12factor.net).
+
+### Middlewares
+
+#### health
+
+Handle healthcheck status of the server.
+
+#### recoverer
+
+Catch `panic`, respond `HTTP/500` and log the beginning of the stacktrace.
+
+#### prometheus
+
+Increase metrics about HTTP requests.
+
+#### owasp / cors
+
+Enforce security best practices for serving web content.
+
+### Endpoints
+
+- `GET /health`: healthcheck of server, always respond [`okStatus (default 204)`](#usage)
+- `GET /ready`: checks external dependencies availability and then respond [`okStatus (default 204)`](#usage) or `503` during [`graceDuration`](#usage) when `SIGTERM` is received
+- `GET /version`: value of `VERSION` environment variable
+- `GET /metrics`: Prometheus metrics, on a dedicated port [`prometheusPort (default 9090)`](#usage)
