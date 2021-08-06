@@ -80,18 +80,18 @@ func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content
 		return err
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("X-UA-Compatible", "ie=edge")
+	contentType(w, "text/html; charset=UTF-8")
+	noCache(w)
 	w.WriteHeader(status)
 	return minifier.Minify("text/html", w, templateBuffer)
 }
 
 // ResponseHTMLTemplateRaw write template name from given template into writer for provided content
 func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
-	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("X-UA-Compatible", "ie=edge")
+	contentType(w, "text/html; charset=UTF-8")
+	noCache(w)
 	w.WriteHeader(status)
 
 	return tpl.Execute(w, content)
@@ -108,8 +108,16 @@ func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content 
 		return err
 	}
 
-	w.Header().Set("Content-Type", "text/xml; charset=UTF-8")
-	w.Header().Set("Cache-Control", "no-cache")
+	contentType(w, "text/xml; charset=UTF-8")
+	noCache(w)
 	w.WriteHeader(status)
 	return minifier.Minify("text/xml", w, templateBuffer)
+}
+
+func contentType(w http.ResponseWriter, contentType string) {
+	w.Header().Set("Content-Type", contentType)
+}
+
+func noCache(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "no-cache")
 }
