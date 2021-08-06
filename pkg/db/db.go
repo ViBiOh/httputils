@@ -97,6 +97,11 @@ func NewFromSQL(db *sql.DB) App {
 	}
 }
 
+// Enabled check if sql.DB is provided
+func (a App) Enabled() bool {
+	return a.db != nil
+}
+
 // Ping indicate if database is ready or not
 func (a App) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)

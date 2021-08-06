@@ -42,6 +42,43 @@ func TestFlags(t *testing.T) {
 	}
 }
 
+func TestEnabled(t *testing.T) {
+	var cases = []struct {
+		intention string
+		instance  App
+		want      bool
+	}{
+		{
+			"empty",
+			App{},
+			false,
+		},
+		{
+			"provided",
+			App{},
+			true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			mockDb, _, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+			if err != nil {
+				t.Fatalf("unable to create mock database: %s", err)
+			}
+			defer mockDb.Close()
+
+			if tc.intention == "provided" {
+				tc.instance.db = mockDb
+			}
+
+			if got := tc.instance.Enabled(); got != tc.want {
+				t.Errorf("Enabled() = %t, want %t", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestPing(t *testing.T) {
 	var cases = []struct {
 		intention string
