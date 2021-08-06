@@ -24,10 +24,12 @@ var (
 )
 
 // App of package
-type App interface {
-	Handler(TemplateFunc) http.Handler
-	Redirect(http.ResponseWriter, *http.Request, string, Message)
-	Error(http.ResponseWriter, error)
+type App struct {
+	tpl        *template.Template
+	content    map[string]interface{}
+	staticFS   fs.FS
+	pathPrefix string
+	minify     bool
 }
 
 // Config of package
@@ -36,14 +38,6 @@ type Config struct {
 	pathPrefix *string
 	title      *string
 	minify     *bool
-}
-
-type app struct {
-	tpl        *template.Template
-	content    map[string]interface{}
-	staticFS   fs.FS
-	pathPrefix string
-	minify     bool
 }
 
 // Flags adds flags for configuring package
@@ -60,7 +54,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
-		return nil, fmt.Errorf("unable to get static/ filesystem: %s", err)
+		return App{}, fmt.Errorf("unable to get static/ filesystem: %s", err)
 	}
 
 	if funcMap == nil {
@@ -70,7 +64,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 	pathPrefix := strings.TrimSuffix(strings.TrimSpace(*config.pathPrefix), "/")
 	publicURL := strings.TrimSuffix(strings.TrimSpace(*config.publicURL), "/")
 
-	instance := app{
+	instance := App{
 		staticFS:   staticFS,
 		pathPrefix: pathPrefix,
 		minify:     *config.minify,
@@ -87,7 +81,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 
 	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse templates/*.html templates: %s", err)
+		return App{}, fmt.Errorf("unable to parse templates/*.html templates: %s", err)
 	}
 
 	instance.tpl = tpl
@@ -95,7 +89,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 	return instance, nil
 }
 
-func (a app) url(url string) string {
+func (a App) url(url string) string {
 	prefixedURL := path.Join(a.pathPrefix, url)
 	if len(prefixedURL) > 1 && strings.HasSuffix(url, "/") {
 		return fmt.Sprintf("%s/", prefixedURL)
@@ -120,7 +114,7 @@ func isStaticPaths(requestPath string) bool {
 	return false
 }
 
-func (a app) feedContent(content map[string]interface{}) map[string]interface{} {
+func (a App) feedContent(content map[string]interface{}) map[string]interface{} {
 	if content == nil {
 		content = make(map[string]interface{})
 	}
@@ -134,7 +128,8 @@ func (a app) feedContent(content map[string]interface{}) map[string]interface{} 
 	return content
 }
 
-func (a app) Handler(templateFunc TemplateFunc) http.Handler {
+// Handler for request. Should be use with net/http
+func (a App) Handler(templateFunc TemplateFunc) http.Handler {
 	filesystem := http.FS(a.staticFS)
 	fileHandler := http.FileServer(filesystem)
 	svgHandler := http.StripPrefix(svgPath, a.svg())

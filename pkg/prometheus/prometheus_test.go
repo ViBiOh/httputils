@@ -114,12 +114,12 @@ func TestRegisterer(t *testing.T) {
 
 	var cases = []struct {
 		intention string
-		instance  app
+		instance  App
 		want      prometheus.Registerer
 	}{
 		{
 			"default",
-			app{
+			App{
 				registry: registry,
 			},
 			registry,
@@ -142,13 +142,13 @@ func TestIsIgnored(t *testing.T) {
 
 	var cases = []struct {
 		intention string
-		instance  app
+		instance  App
 		args      args
 		want      bool
 	}{
 		{
 			"empty",
-			app{},
+			App{},
 			args{
 				path: metricsEndpoint,
 			},
@@ -156,7 +156,7 @@ func TestIsIgnored(t *testing.T) {
 		},
 		{
 			"multiple",
-			app{
+			App{
 				ignore: []string{
 					metricsEndpoint,
 					"/api",
@@ -179,7 +179,7 @@ func TestIsIgnored(t *testing.T) {
 }
 
 func BenchmarkMiddleware(b *testing.B) {
-	app := app{
+	app := App{
 		registry: prometheus.NewRegistry(),
 	}
 

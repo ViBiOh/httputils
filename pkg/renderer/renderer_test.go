@@ -101,13 +101,13 @@ func TestFeedContent(t *testing.T) {
 
 	var cases = []struct {
 		intention string
-		instance  app
+		instance  App
 		args      args
 		want      map[string]interface{}
 	}{
 		{
 			"empty",
-			app{},
+			App{},
 			args{
 				content: nil,
 			},
@@ -115,7 +115,7 @@ func TestFeedContent(t *testing.T) {
 		},
 		{
 			"merge",
-			app{
+			App{
 				content: map[string]interface{}{
 					"Version": "test",
 				},
@@ -132,7 +132,7 @@ func TestFeedContent(t *testing.T) {
 		},
 		{
 			"no overwrite",
-			app{
+			App{
 				content: map[string]interface{}{
 					"Title": "test",
 				},
@@ -198,7 +198,7 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			"empty app",
-			app{},
+			App{},
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			nil,
 			"¯\\_(ツ)_/¯\n",

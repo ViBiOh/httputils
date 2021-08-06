@@ -45,7 +45,7 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			"simple",
-			app{
+			App{
 				origin:      "*",
 				headers:     "Content-Type",
 				methods:     http.MethodGet,
@@ -76,7 +76,7 @@ func TestMiddleware(t *testing.T) {
 	}{
 		{
 			"default param",
-			app{
+			App{
 				origin:      "*",
 				headers:     "Content-Type",
 				methods:     http.MethodGet,
@@ -95,7 +95,7 @@ func TestMiddleware(t *testing.T) {
 		},
 		{
 			"default param",
-			app{
+			App{
 				origin:      "*",
 				headers:     "Content-Type,Authorization",
 				methods:     http.MethodPost,
@@ -135,7 +135,7 @@ func TestMiddleware(t *testing.T) {
 }
 
 func BenchmarkMiddleware(b *testing.B) {
-	app := app{
+	app := App{
 		origin:      "*",
 		headers:     "Content-Type",
 		methods:     http.MethodGet,

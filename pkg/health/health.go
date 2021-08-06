@@ -22,20 +22,7 @@ const (
 )
 
 // App of package
-type App interface {
-	Handler() http.Handler
-	WaitForTermination(<-chan struct{})
-	Done() <-chan struct{}
-	End() <-chan struct{}
-}
-
-// Config of package
-type Config struct {
-	okStatus      *int
-	graceDuration *string
-}
-
-type app struct {
+type App struct {
 	done chan struct{}
 	end  chan struct{}
 
@@ -43,6 +30,12 @@ type app struct {
 
 	okStatus      int
 	graceDuration time.Duration
+}
+
+// Config of package
+type Config struct {
+	okStatus      *int
+	graceDuration *string
 }
 
 // Flags adds flags for configuring package
@@ -55,7 +48,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 
 // New creates new App from Config
 func New(config Config, pingers ...model.Pinger) App {
-	return app{
+	return App{
 		okStatus:      *config.okStatus,
 		graceDuration: model.SafeParseDuration("GraceDuration", *config.graceDuration, 30*time.Second),
 		pingers:       pingers,
@@ -66,16 +59,17 @@ func New(config Config, pingers ...model.Pinger) App {
 }
 
 // Done returns the chan closed when SIGTERM is received
-func (a app) Done() <-chan struct{} {
+func (a App) Done() <-chan struct{} {
 	return a.done
 }
 
 // End returns the chan closed when graceful duration is over
-func (a app) End() <-chan struct{} {
+func (a App) End() <-chan struct{} {
 	return a.end
 }
 
-func (a app) Handler() http.Handler {
+// Handler for request. Should be use with net/http
+func (a App) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -101,7 +95,7 @@ func (a app) Handler() http.Handler {
 }
 
 // WaitForTermination waits for SIGTERM or done plus grace duration
-func (a app) WaitForTermination(done <-chan struct{}) {
+func (a App) WaitForTermination(done <-chan struct{}) {
 	defer close(a.end)
 
 	a.waitForDone(done, syscall.SIGTERM)
@@ -118,7 +112,7 @@ func (a app) WaitForTermination(done <-chan struct{}) {
 }
 
 // waitForDone waits for the SIGTERM signal or close of done
-func (a app) waitForDone(done <-chan struct{}, signals ...os.Signal) {
+func (a App) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	signalsChan := make(chan os.Signal, 1)
 	defer close(signalsChan)
 
@@ -134,7 +128,7 @@ func (a app) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	}
 }
 
-func (a app) isReady() bool {
+func (a App) isReady() bool {
 	for _, pinger := range a.pingers {
 		if err := pinger(); err != nil {
 			logger.Error("unable to ping: %s", err)

@@ -45,7 +45,7 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			"simple",
-			app{
+			App{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         true,
 				frameOptions: "deny",
@@ -75,7 +75,7 @@ func TestMiddleware(t *testing.T) {
 	}{
 		{
 			"simple",
-			app{
+			App{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
 				frameOptions: "deny",
@@ -94,7 +94,7 @@ func TestMiddleware(t *testing.T) {
 		},
 		{
 			"no value",
-			app{
+			App{
 				csp:          "",
 				hsts:         false,
 				frameOptions: "",
@@ -111,7 +111,7 @@ func TestMiddleware(t *testing.T) {
 		},
 		{
 			"hsts",
-			app{
+			App{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         true,
 				frameOptions: "deny",
@@ -131,7 +131,7 @@ func TestMiddleware(t *testing.T) {
 		},
 		{
 			"next",
-			app{
+			App{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
 				frameOptions: "deny",
@@ -173,7 +173,7 @@ func TestMiddleware(t *testing.T) {
 }
 
 func BenchmarkMiddleware(b *testing.B) {
-	app := app{
+	app := App{
 		csp:          "default-src 'self'; base-uri 'self'",
 		hsts:         true,
 		frameOptions: "deny",

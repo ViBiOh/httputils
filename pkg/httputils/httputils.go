@@ -9,11 +9,6 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
-// App of package
-type App interface {
-	Handler(http.Handler, health.App, ...model.Middleware) http.Handler
-}
-
 // Handler creates the handler for default httputils behavior
 func Handler(handler http.Handler, healthApp health.App, middlewares ...model.Middleware) http.Handler {
 	versionHandler := versionHandler()

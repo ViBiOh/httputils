@@ -15,9 +15,17 @@ import (
 )
 
 // App of package
-type App interface {
-	Start(string, <-chan struct{}, http.Handler)
-	Done() <-chan struct{}
+type App struct {
+	done chan struct{}
+
+	listenAddress string
+	cert          string
+	key           string
+
+	readTimeout     time.Duration
+	writeTimeout    time.Duration
+	idleTimeout     time.Duration
+	shutdownTimeout time.Duration
 }
 
 // Config of package
@@ -31,19 +39,6 @@ type Config struct {
 	writeTimeout    *string
 	idleTimeout     *string
 	shutdownTimeout *string
-}
-
-type app struct {
-	done chan struct{}
-
-	listenAddress string
-	cert          string
-	key           string
-
-	readTimeout     time.Duration
-	writeTimeout    time.Duration
-	idleTimeout     time.Duration
-	shutdownTimeout time.Duration
 }
 
 // Flags adds flags for configuring package
@@ -66,12 +61,12 @@ func New(config Config) App {
 	done := make(chan struct{})
 
 	if port == 0 {
-		return app{
+		return App{
 			done: done,
 		}
 	}
 
-	return app{
+	return App{
 		listenAddress: fmt.Sprintf("%s:%d", strings.TrimSpace(*config.address), port),
 		cert:          strings.TrimSpace(*config.cert),
 		key:           strings.TrimSpace(*config.key),
@@ -86,11 +81,12 @@ func New(config Config) App {
 }
 
 // Done returns the chan closed when server is shutdown
-func (a app) Done() <-chan struct{} {
+func (a App) Done() <-chan struct{} {
 	return a.done
 }
 
-func (a app) Start(name string, done <-chan struct{}, handler http.Handler) {
+// Start http server for given handler, until done is closed
+func (a App) Start(name string, done <-chan struct{}, handler http.Handler) {
 	defer close(a.done)
 	serverLogger := logger.WithField("server", name)
 

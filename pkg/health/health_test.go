@@ -76,7 +76,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			"shutdown",
-			app{
+			App{
 				okStatus:      okStatus,
 				graceDuration: time.Second,
 				done:          closedChan,

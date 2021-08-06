@@ -11,12 +11,16 @@ import (
 )
 
 var (
-	_ model.Middleware = app{}.Middleware
+	_ model.Middleware = App{}.Middleware
 )
 
 // App of package
-type App interface {
-	Middleware(http.Handler) http.Handler
+type App struct {
+	origin      string
+	headers     string
+	methods     string
+	exposes     string
+	credentials string
 }
 
 // Config of package
@@ -26,14 +30,6 @@ type Config struct {
 	methods     *string
 	exposes     *string
 	credentials *bool
-}
-
-type app struct {
-	origin      string
-	headers     string
-	methods     string
-	exposes     string
-	credentials string
 }
 
 // Flags adds flags for configuring package
@@ -49,7 +45,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 
 // New creates new App from Config
 func New(config Config) App {
-	return app{
+	return App{
 		origin:      strings.TrimSpace(*config.origin),
 		headers:     strings.TrimSpace(*config.headers),
 		methods:     strings.TrimSpace(*config.methods),
@@ -59,7 +55,7 @@ func New(config Config) App {
 }
 
 // Middleware for net/http package allowing cors header
-func (a app) Middleware(next http.Handler) http.Handler {
+func (a App) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if len(a.origin) != 0 {
 			w.Header().Add("Access-Control-Allow-Origin", a.origin)

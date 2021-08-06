@@ -77,7 +77,7 @@ func TestPing(t *testing.T) {
 				expectedPing.WillDelayFor(time.Second * 2)
 			}
 
-			instance := app{db: mockDb}
+			instance := App{db: mockDb}
 
 			if got := instance.Ping(); (got == nil) != tc.want {
 				t.Errorf("Ping() = %t, want %t", got, tc.want)
@@ -113,7 +113,7 @@ func TestClose(t *testing.T) {
 				expect.WillReturnError(errors.New("resource busy"))
 			}
 
-			gotErr := app{db: mockDb}.Close()
+			gotErr := App{db: mockDb}.Close()
 
 			failed := false
 
@@ -284,7 +284,7 @@ func TestDoAtomic(t *testing.T) {
 				mock.ExpectRollback().WillReturnError(errors.New("cannot close transaction"))
 			}
 
-			instance := app{db: mockDb}
+			instance := App{db: mockDb}
 			gotErr := instance.DoAtomic(ctx, tc.args.action)
 
 			failed := false
@@ -399,7 +399,7 @@ func TestList(t *testing.T) {
 				return nil
 			}
 
-			instance := app{db: mockDb}
+			instance := App{db: mockDb}
 			gotErr := instance.List(ctx, testScanItem, "SELECT id FROM item", 1)
 
 			failed := false
@@ -486,7 +486,7 @@ func TestGet(t *testing.T) {
 				return row.Scan(&got)
 			}
 
-			instance := app{db: mockDb}
+			instance := App{db: mockDb}
 			gotErr := instance.Get(ctx, testScanItem, "SELECT id FROM item WHERE id = $1", 1)
 
 			failed := false
@@ -567,7 +567,7 @@ func TestCreate(t *testing.T) {
 				}
 			}
 
-			instance := app{db: mockDb}
+			instance := App{db: mockDb}
 			got, gotErr := instance.Create(ctx, "INSERT INTO item VALUES ($1)", 1)
 
 			failed := false
@@ -643,7 +643,7 @@ func TestExec(t *testing.T) {
 				}
 			}
 
-			instance := app{db: mockDb}
+			instance := App{db: mockDb}
 			gotErr := instance.Exec(ctx, "DELETE FROM item WHERE id = $1", 1)
 
 			failed := false
@@ -801,7 +801,7 @@ func TestBulk(t *testing.T) {
 			}
 
 			count = 0
-			instance := app{db: mockDb}
+			instance := App{db: mockDb}
 			gotErr := instance.Bulk(ctx, tc.args.feeder, tc.args.schema, tc.args.table, tc.args.columns...)
 
 			failed := false

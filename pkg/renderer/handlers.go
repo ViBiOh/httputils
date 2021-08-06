@@ -12,7 +12,7 @@ import (
 )
 
 // Redirect redirect user to a defined path with a message
-func (a app) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
+func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
 	joinChar := "?"
 	if strings.Contains(pathname, "?") {
 		joinChar = "&"
@@ -27,7 +27,7 @@ func (a app) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", a.url(parts[0]), joinChar, message, anchor), http.StatusFound)
 }
 
-func (a app) Error(w http.ResponseWriter, err error) {
+func (a App) Error(w http.ResponseWriter, err error) {
 	logger.Error("%s", err)
 	content := a.feedContent(nil)
 
@@ -41,7 +41,7 @@ func (a app) Error(w http.ResponseWriter, err error) {
 	}
 }
 
-func (a app) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
+func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
 	defer func() {
 		if r := recover(); r != nil {
 			output := make([]byte, 1024)
@@ -79,7 +79,7 @@ func (a app) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 	}
 }
 
-func (a app) svg() http.Handler {
+func (a App) svg() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tpl := a.tpl.Lookup(fmt.Sprintf("svg-%s", strings.Trim(r.URL.Path, "/")))
 		if tpl == nil {

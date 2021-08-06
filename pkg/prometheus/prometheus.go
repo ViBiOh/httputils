@@ -17,26 +17,24 @@ const (
 )
 
 var (
-	_ model.Middleware = (app{}).Middleware
+	_ model.Middleware = (App{}).Middleware
+
+	durationBuckets  = []float64{0.25, 0.5, 1, 2.5, 5, 10}
+	sizeBuckets      = []float64{200, 500, 900, 1500}
+	codeMethodLabels = []string{"code", "method"}
 )
 
 // App of package
-type App interface {
-	Middleware(http.Handler) http.Handler
-	Registerer() prometheus.Registerer
-	Handler() http.Handler
+type App struct {
+	registry *prometheus.Registry
+	ignore   []string
+	gzip     bool
 }
 
 // Config of package
 type Config struct {
 	ignore *string
 	gzip   *bool
-}
-
-type app struct {
-	registry *prometheus.Registry
-	ignore   []string
-	gzip     bool
 }
 
 // Flags adds flags for configuring package
@@ -60,7 +58,7 @@ func New(config Config) App {
 	registry.MustRegister(collectors.NewGoCollector())
 	registry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 
-	return app{
+	return App{
 		ignore:   ignore,
 		gzip:     *config.gzip,
 		registry: registry,
@@ -68,7 +66,7 @@ func New(config Config) App {
 }
 
 // Handler for request. Should be use with net/http
-func (a app) Handler() http.Handler {
+func (a App) Handler() http.Handler {
 	instrumentHandler := promhttp.InstrumentMetricHandler(
 		a.registry, promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{
 			DisableCompression: !a.gzip,
@@ -87,7 +85,7 @@ func (a app) Handler() http.Handler {
 }
 
 // Middleware for net/http
-func (a app) Middleware(next http.Handler) http.Handler {
+func (a App) Middleware(next http.Handler) http.Handler {
 	if next == nil {
 		return next
 	}
@@ -104,25 +102,25 @@ func (a app) Middleware(next http.Handler) http.Handler {
 }
 
 // Registerer return served registerer
-func (a app) Registerer() prometheus.Registerer {
+func (a App) Registerer() prometheus.Registerer {
 	return a.registry
 }
 
-func (a app) instrumentHandler(next http.Handler) http.Handler {
+func (a App) instrumentHandler(next http.Handler) http.Handler {
 	instrumentedHandler := next
 
 	durationVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "http_request_duration_seconds",
 		Help:    "A histogram of latencies for requests.",
-		Buckets: []float64{0.25, 0.5, 1, 2.5, 5, 10},
-	}, []string{"code", "method"})
+		Buckets: durationBuckets,
+	}, codeMethodLabels)
 	a.registry.MustRegister(durationVec)
 	instrumentedHandler = promhttp.InstrumentHandlerDuration(durationVec, instrumentedHandler)
 
 	sizeVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "http_response_size_bytes",
 		Help:    "A histogram of response sizes for requests.",
-		Buckets: []float64{200, 500, 900, 1500},
+		Buckets: sizeBuckets,
 	}, nil)
 	a.registry.MustRegister(sizeVec)
 	instrumentedHandler = promhttp.InstrumentHandlerResponseSize(sizeVec, instrumentedHandler)
@@ -131,14 +129,14 @@ func (a app) instrumentHandler(next http.Handler) http.Handler {
 		Name: "http_requests_total",
 		Help: "A counter for requests to the wrapped handler.",
 	},
-		[]string{"code", "method"})
+		codeMethodLabels)
 	a.registry.MustRegister(counterVec)
 	instrumentedHandler = promhttp.InstrumentHandlerCounter(counterVec, instrumentedHandler)
 
 	return instrumentedHandler
 }
 
-func (a app) isIgnored(path string) bool {
+func (a App) isIgnored(path string) bool {
 	for _, prefix := range a.ignore {
 		if strings.HasPrefix(path, prefix) {
 			return true

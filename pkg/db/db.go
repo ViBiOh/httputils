@@ -35,15 +35,8 @@ var (
 )
 
 // App of package
-type App interface {
-	Ping() error
-	Close() error
-	DoAtomic(ctx context.Context, action func(context.Context) error) error
-	List(ctx context.Context, scanner func(*sql.Rows) error, query string, args ...interface{}) error
-	Get(ctx context.Context, scanner func(*sql.Row) error, query string, args ...interface{}) error
-	Create(ctx context.Context, query string, args ...interface{}) (uint64, error)
-	Exec(ctx context.Context, query string, args ...interface{}) error
-	Bulk(ctx context.Context, feeder func(*sql.Stmt) error, schema, table string, columns ...string) error
+type App struct {
+	db *sql.DB
 }
 
 // Config of package
@@ -56,10 +49,6 @@ type Config struct {
 	sslmode *string
 	maxConn *uint
 	timeout *uint
-}
-
-type app struct {
-	db *sql.DB
 }
 
 // Flags adds flags for configuring package
@@ -80,7 +69,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 func New(config Config) (App, error) {
 	host := strings.TrimSpace(*config.host)
 	if len(host) == 0 {
-		return nil, ErrNoHost
+		return App{}, ErrNoHost
 	}
 
 	user := strings.TrimSpace(*config.user)
@@ -90,11 +79,11 @@ func New(config Config) (App, error) {
 
 	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s connect_timeout=%d", host, *config.port, user, pass, name, sslmode, *config.timeout))
 	if err != nil {
-		return nil, err
+		return App{}, err
 	}
 	db.SetMaxOpenConns(int(*config.maxConn))
 
-	instance := app{
+	instance := App{
 		db: db,
 	}
 
@@ -103,13 +92,13 @@ func New(config Config) (App, error) {
 
 // NewFromSQL creates a db wrapper
 func NewFromSQL(db *sql.DB) App {
-	return app{
+	return App{
 		db: db,
 	}
 }
 
 // Ping indicate if database is ready or not
-func (a app) Ping() error {
+func (a App) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
 	defer cancel()
 
@@ -117,7 +106,7 @@ func (a app) Ping() error {
 }
 
 // Close the database connection
-func (a app) Close() error {
+func (a App) Close() error {
 	return a.db.Close()
 }
 
@@ -140,7 +129,7 @@ func readTx(ctx context.Context) *sql.Tx {
 }
 
 // DoAtomic execute given action in a transactionnal context
-func (a app) DoAtomic(ctx context.Context, action func(context.Context) error) (err error) {
+func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) (err error) {
 	if action == nil {
 		return errors.New("no action provided")
 	}
@@ -169,7 +158,7 @@ func (a app) DoAtomic(ctx context.Context, action func(context.Context) error) (
 }
 
 // List execute multiple rows query
-func (a app) List(ctx context.Context, scanner func(*sql.Rows) error, query string, args ...interface{}) (err error) {
+func (a App) List(ctx context.Context, scanner func(*sql.Rows) error, query string, args ...interface{}) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
@@ -197,7 +186,7 @@ func (a app) List(ctx context.Context, scanner func(*sql.Rows) error, query stri
 }
 
 // Get execute single row query
-func (a app) Get(ctx context.Context, scanner func(*sql.Row) error, query string, args ...interface{}) error {
+func (a App) Get(ctx context.Context, scanner func(*sql.Row) error, query string, args ...interface{}) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
@@ -209,7 +198,7 @@ func (a app) Get(ctx context.Context, scanner func(*sql.Row) error, query string
 }
 
 // Create execute query with a RETURNING id
-func (a app) Create(ctx context.Context, query string, args ...interface{}) (uint64, error) {
+func (a App) Create(ctx context.Context, query string, args ...interface{}) (uint64, error) {
 	tx := readTx(ctx)
 	if tx == nil {
 		return 0, ErrNoTransaction
@@ -223,7 +212,7 @@ func (a app) Create(ctx context.Context, query string, args ...interface{}) (uin
 }
 
 // Exec execute query with specified timeout, disregarding result
-func (a app) Exec(ctx context.Context, query string, args ...interface{}) error {
+func (a App) Exec(ctx context.Context, query string, args ...interface{}) error {
 	tx := readTx(ctx)
 	if tx == nil {
 		return ErrNoTransaction
@@ -237,7 +226,7 @@ func (a app) Exec(ctx context.Context, query string, args ...interface{}) error 
 }
 
 // Bulk load data into schema and table by batch
-func (a app) Bulk(ctx context.Context, feeder func(*sql.Stmt) error, schema, table string, columns ...string) (err error) {
+func (a App) Bulk(ctx context.Context, feeder func(*sql.Stmt) error, schema, table string, columns ...string) (err error) {
 	tx := readTx(ctx)
 	if tx == nil {
 		return ErrNoTransaction

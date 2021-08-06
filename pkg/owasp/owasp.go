@@ -10,12 +10,14 @@ import (
 )
 
 var (
-	_ model.Middleware = app{}.Middleware
+	_ model.Middleware = App{}.Middleware
 )
 
 // App of package
-type App interface {
-	Middleware(http.Handler) http.Handler
+type App struct {
+	csp          string
+	frameOptions string
+	hsts         bool
 }
 
 // Config of package
@@ -23,12 +25,6 @@ type Config struct {
 	csp          *string
 	hsts         *bool
 	frameOptions *string
-}
-
-type app struct {
-	csp          string
-	frameOptions string
-	hsts         bool
 }
 
 // Flags adds flags for configuring package
@@ -42,7 +38,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 
 // New creates new App from Config
 func New(config Config) App {
-	return app{
+	return App{
 		csp:          strings.TrimSpace(*config.csp),
 		hsts:         *config.hsts,
 		frameOptions: strings.TrimSpace(*config.frameOptions),
@@ -50,7 +46,7 @@ func New(config Config) App {
 }
 
 // Middleware for net/http package allowing owasp header
-func (a app) Middleware(next http.Handler) http.Handler {
+func (a App) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Referrer-Policy", "strict-origin-when-cross-origin")
 		w.Header().Add("X-Content-Type-Options", "nosniff")
