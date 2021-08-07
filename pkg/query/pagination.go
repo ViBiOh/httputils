@@ -37,15 +37,15 @@ func (p Pagination) LinkNextHeader(urlPath string, extraArgs url.Values) string 
 		}
 	}
 
-	data.Set("pageSize", fmt.Sprintf("%d", p.PageSize))
-	data.Set("last", p.Last)
+	data.Add("pageSize", fmt.Sprintf("%d", p.PageSize))
+	data.Add("last", p.Last)
 
 	if len(p.Sort) != 0 {
-		data.Set("sort", p.Sort)
+		data.Add("sort", p.Sort)
 	}
 
 	if p.Desc {
-		data.Set("desc", strconv.FormatBool(p.Desc))
+		data.Add("desc", strconv.FormatBool(p.Desc))
 	}
 
 	return fmt.Sprintf(`<%s?%s>; rel="next"`, urlPath, data.Encode())
