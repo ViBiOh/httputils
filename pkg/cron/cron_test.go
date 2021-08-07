@@ -12,7 +12,8 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/clock"
-	"github.com/ViBiOh/httputils/v4/pkg/redis/redistest"
+	"github.com/ViBiOh/httputils/v4/pkg/mocks"
+	"github.com/golang/mock/gomock"
 )
 
 func TestString(t *testing.T) {
@@ -78,7 +79,7 @@ func TestString(t *testing.T) {
 		},
 		{
 			"full case",
-			New().In("UTC").Weekdays().At("09:45").In("Europe/Paris").Retry(time.Minute).MaxRetry(5).Exclusive(redistest.New(), "test", time.Minute),
+			New().In("UTC").Weekdays().At("09:45").In("Europe/Paris").Retry(time.Minute).MaxRetry(5),
 			"day: 0111110, at: 09:45, in: Europe/Paris, retry: 5 times every 1m0s, in exclusive mode as `test` with 1m0s timeout",
 		},
 		{
@@ -90,6 +91,15 @@ func TestString(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			redisMock := mocks.NewRedis(ctrl)
+
+			if tc.intention == "full case" {
+				tc.cron.Exclusive(redisMock, "test", time.Minute)
+			}
+
 			if result := tc.cron.String(); result != tc.want {
 				t.Errorf("String() = `%s`, want `%s`", result, tc.want)
 			}
@@ -456,24 +466,8 @@ func TestStart(t *testing.T) {
 			},
 		},
 		{
-			"run in exclusive",
-			New().Days().At("12:00").Exclusive(redistest.New().SetExclusive(nil), "test", time.Minute),
-			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
-			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
-				return func(_ context.Context) error {
-					wg.Done()
-					return nil
-				}
-			},
-			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
-				return func(err error) {
-					t.Error(fmt.Errorf("should not be there: %s", err))
-				}
-			},
-		},
-		{
 			"run in exclusive error",
-			New().Days().At("12:00").Exclusive(redistest.New().SetExclusive(errors.New("redis error")), "test", time.Minute),
+			New().Days().At("12:00"),
 			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				return func(_ context.Context) error {
@@ -509,6 +503,16 @@ func TestStart(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			redisMock := mocks.NewRedis(ctrl)
+
+			if tc.intention == "run in exclusive error" {
+				tc.cron.Exclusive(redisMock, "test", time.Minute)
+				redisMock.EXPECT().Exclusive(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("redis error"))
+			}
+
 			var wg sync.WaitGroup
 			wg.Add(1)
 			tc.cron.clock = tc.clock

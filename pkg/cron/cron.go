@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/clock"
-	"github.com/ViBiOh/httputils/v4/pkg/redis"
 )
 
 const (
@@ -24,7 +23,7 @@ var (
 // Cron definition
 type Cron struct {
 	clock    *clock.Clock
-	redisApp redis.App
+	redisApp Redis
 
 	signal  os.Signal
 	dayTime time.Time
@@ -148,7 +147,7 @@ func (c *Cron) At(hour string) *Cron {
 }
 
 // Exclusive runs cron in an exclusive manner with a distributed lock on Redis
-func (c *Cron) Exclusive(redisApp redis.App, name string, timeout time.Duration) *Cron {
+func (c *Cron) Exclusive(redisApp Redis, name string, timeout time.Duration) *Cron {
 	c.redisApp = redisApp
 	c.name = name
 	c.timeout = timeout

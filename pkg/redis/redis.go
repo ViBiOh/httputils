@@ -12,12 +12,8 @@ import (
 )
 
 // App of package
-type App interface {
-	Ping() error
-	Store(context.Context, string, string, time.Duration) error
-	Load(context.Context, string) (string, error)
-	Delete(context.Context, string) error
-	Exclusive(context.Context, string, time.Duration, func(context.Context) error) error
+type App struct {
+	redisClient *redis.Client
 }
 
 // Config of package
@@ -25,10 +21,6 @@ type Config struct {
 	redisAddress  *string
 	redisPassword *string
 	redisDatabase *int
-}
-
-type app struct {
-	redisClient *redis.Client
 }
 
 // Flags adds flags for configuring package
@@ -42,7 +34,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 
 // New creates new App from Config
 func New(config Config) App {
-	return app{
+	return App{
 		redisClient: redis.NewClient(&redis.Options{
 			Addr:     strings.TrimSpace(*config.redisAddress),
 			Password: strings.TrimSpace(*config.redisPassword),
@@ -51,23 +43,28 @@ func New(config Config) App {
 	}
 }
 
-func (a app) Ping() error {
+// Ping check redis availability
+func (a App) Ping() error {
 	return a.redisClient.Ping(context.Background()).Err()
 }
 
-func (a app) Store(ctx context.Context, key, value string, duration time.Duration) error {
+// Store store give key/val with duration
+func (a App) Store(ctx context.Context, key, value string, duration time.Duration) error {
 	return a.redisClient.SetEX(ctx, key, value, duration).Err()
 }
 
-func (a app) Load(ctx context.Context, key string) (string, error) {
+// Load given key
+func (a App) Load(ctx context.Context, key string) (string, error) {
 	return a.redisClient.Get(ctx, key).Result()
 }
 
-func (a app) Delete(ctx context.Context, key string) error {
+// Delete given key
+func (a App) Delete(ctx context.Context, key string) error {
 	return a.redisClient.Del(ctx, key).Err()
 }
 
-func (a app) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) error {
+// Exclusive get an exclusive lock for given name during duration
+func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) error {
 	if !a.redisClient.SetNX(ctx, name, "acquired", timeout).Val() {
 		return nil
 	}
