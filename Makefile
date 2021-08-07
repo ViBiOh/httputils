@@ -66,7 +66,7 @@ style:
 ## mocks: Generate mocks
 .PHONY: mocks
 mocks:
-	find . -name "mocks" -type d -exec rm {} \;
+	find . -name "mocks" -type d -exec rm -r "{}" \+
 	mockgen -destination pkg/mocks/redis.go -mock_names Redis=Redis -package mocks github.com/ViBiOh/httputils/v4/pkg/cron Redis
 
 ## test: Shortcut to launch all the test tasks (unit, functional and integration).
