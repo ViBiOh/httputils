@@ -95,7 +95,7 @@ func buildSignatureString(r *http.Request, parts []string) []byte {
 			signatureString.WriteString(strings.ToLower(fmt.Sprintf("%s %s", r.Method, r.URL.Path)))
 		} else {
 			signatureString.WriteString(strings.ToLower(header))
-			signatureString.WriteString(":")
+			signatureString.WriteString(": ")
 
 			for j, value := range r.Header.Values(header) {
 				if j != 0 {
