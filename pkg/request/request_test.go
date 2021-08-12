@@ -80,6 +80,17 @@ func TestSend(t *testing.T) {
 			time.Sleep(time.Second * 2)
 			w.WriteHeader(http.StatusNoContent)
 			return
+		} else if r.URL.Path == "/signed" {
+			if ok, err := ValidateSignature(r, []byte(`secret`)); err != nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				safeWrite(w, []byte(err.Error()))
+			} else if ok {
+				w.WriteHeader(http.StatusNoContent)
+			} else {
+				w.WriteHeader(http.StatusForbidden)
+				safeWrite(w, []byte("signature doesn't match"))
+			}
+			return
 		}
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -97,7 +108,7 @@ func TestSend(t *testing.T) {
 		intention string
 		request   *Request
 		ctx       context.Context
-		payload   io.Reader
+		payload   io.ReadCloser
 		want      string
 		wantErr   error
 	}{
@@ -113,7 +124,7 @@ func TestSend(t *testing.T) {
 			"simple post",
 			New().Post(testServer.URL + "/simple"),
 			context.Background(),
-			strings.NewReader("posted"),
+			io.NopCloser(strings.NewReader("posted")),
 			"it posts!",
 			nil,
 		},
@@ -121,7 +132,7 @@ func TestSend(t *testing.T) {
 			"simple put",
 			New().Put(testServer.URL + "/simple"),
 			context.Background(),
-			strings.NewReader("puted"),
+			io.NopCloser(strings.NewReader("puted")),
 			"it puts!",
 			nil,
 		},
@@ -129,7 +140,7 @@ func TestSend(t *testing.T) {
 			"simple patch",
 			New().Patch(testServer.URL + "/simple"),
 			context.Background(),
-			strings.NewReader("patched"),
+			io.NopCloser(strings.NewReader("patched")),
 			"it patches!",
 			nil,
 		},
@@ -212,6 +223,14 @@ func TestSend(t *testing.T) {
 			nil,
 			"",
 			errors.New("context deadline exceeded (Client.Timeout exceeded while awaiting headers)"),
+		},
+		{
+			"signed",
+			New().Post(testServer.URL+"/signed").WithSignatureAuthorization("httputils", []byte(`secret`)),
+			context.Background(),
+			io.NopCloser(strings.NewReader(`It works!`)),
+			"",
+			nil,
 		},
 	}
 

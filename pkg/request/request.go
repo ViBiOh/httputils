@@ -1,6 +1,7 @@
 package request
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -37,6 +38,9 @@ type Request struct {
 	url      string
 	username string
 	password string
+
+	signatureKeydID string
+	signatureSecret []byte
 }
 
 // New create a new Request
@@ -124,8 +128,28 @@ func (r *Request) WithClient(client *http.Client) *Request {
 	return r
 }
 
+// WithSignatureAuthorization add Authorization header when sending request by calculating digest and HMAC signature header
+func (r *Request) WithSignatureAuthorization(keyID string, secret []byte) *Request {
+	r.signatureKeydID = keyID
+	r.signatureSecret = secret
+
+	return r
+}
+
 // Build create request for given context and payload
-func (r *Request) Build(ctx context.Context, payload io.Reader) (*http.Request, error) {
+func (r *Request) Build(ctx context.Context, payload io.ReadCloser) (*http.Request, error) {
+	var content []byte
+
+	if len(r.signatureSecret) != 0 {
+		body, err := readContent(payload)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read content before signing it: %s", err)
+		}
+
+		content = body
+		payload = io.NopCloser(bytes.NewBuffer(body))
+	}
+
 	req, err := http.NewRequestWithContext(ctx, r.method, r.url, payload)
 	if err != nil {
 		return nil, err
@@ -136,11 +160,15 @@ func (r *Request) Build(ctx context.Context, payload io.Reader) (*http.Request, 
 		req.SetBasicAuth(r.username, r.password)
 	}
 
+	if len(content) != 0 {
+		AddSignature(req, r.signatureKeydID, r.signatureSecret, content)
+	}
+
 	return req, nil
 }
 
 // Send build request and send it with defined client
-func (r *Request) Send(ctx context.Context, payload io.Reader) (*http.Response, error) {
+func (r *Request) Send(ctx context.Context, payload io.ReadCloser) (*http.Response, error) {
 	req, err := r.Build(ctx, payload)
 	if err != nil {
 		return nil, err
@@ -151,7 +179,7 @@ func (r *Request) Send(ctx context.Context, payload io.Reader) (*http.Response, 
 
 // Form send request with given context and url.Values as payload
 func (r *Request) Form(ctx context.Context, data url.Values) (*http.Response, error) {
-	return r.ContentForm().Send(ctx, strings.NewReader(data.Encode()))
+	return r.ContentForm().Send(ctx, io.NopCloser(strings.NewReader(data.Encode())))
 }
 
 // JSON send request with given context and given interface as JSON payload
