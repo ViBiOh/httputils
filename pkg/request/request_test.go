@@ -106,7 +106,7 @@ func TestSend(t *testing.T) {
 
 	var cases = []struct {
 		intention string
-		request   *Request
+		request   Request
 		ctx       context.Context
 		payload   io.ReadCloser
 		want      string
@@ -272,7 +272,7 @@ func TestForm(t *testing.T) {
 
 	var cases = []struct {
 		intention string
-		request   *Request
+		request   Request
 		ctx       context.Context
 		payload   url.Values
 		want      string
@@ -331,7 +331,7 @@ func TestJSON(t *testing.T) {
 
 	var cases = []struct {
 		intention string
-		request   *Request
+		request   Request
 		ctx       context.Context
 		payload   interface{}
 		want      string
