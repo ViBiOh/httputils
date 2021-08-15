@@ -67,13 +67,13 @@ func TestNew(t *testing.T) {
 		intention string
 		prefix    string
 		docPrefix string
-		want      *Flag
+		want      Flag
 	}{
 		{
 			"simple",
 			"new",
 			"test",
-			&Flag{
+			Flag{
 				prefix:    "New",
 				docPrefix: "new",
 			},
@@ -82,7 +82,7 @@ func TestNew(t *testing.T) {
 			"without prefix",
 			"",
 			"test",
-			&Flag{
+			Flag{
 				prefix:    "",
 				docPrefix: "test",
 			},

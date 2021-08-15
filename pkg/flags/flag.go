@@ -43,41 +43,41 @@ type Flag struct {
 }
 
 // New creates new instance of Flag
-func New(prefix, docPrefix string) *Flag {
+func New(prefix, docPrefix string) Flag {
 	docPrefixValue := prefix
 	if len(prefix) == 0 {
 		docPrefixValue = docPrefix
 	}
 
-	return &Flag{
+	return Flag{
 		prefix:    FirstUpperCase(prefix),
 		docPrefix: docPrefixValue,
 	}
 }
 
 // Name defines name of Flag
-func (f *Flag) Name(name string) *Flag {
+func (f Flag) Name(name string) Flag {
 	f.name = name
 
 	return f
 }
 
 // Default defines default value of Flag
-func (f *Flag) Default(value interface{}) *Flag {
+func (f Flag) Default(value interface{}) Flag {
 	f.value = value
 
 	return f
 }
 
 // Label defines label of Flag
-func (f *Flag) Label(format string, a ...interface{}) *Flag {
+func (f Flag) Label(format string, a ...interface{}) Flag {
 	f.label = fmt.Sprintf(format, a...)
 
 	return f
 }
 
 // ToString build Flag Set for string
-func (f *Flag) ToString(fs *flag.FlagSet) *string {
+func (f Flag) ToString(fs *flag.FlagSet) *string {
 	if f.value == nil {
 		return nil
 	}
@@ -87,7 +87,7 @@ func (f *Flag) ToString(fs *flag.FlagSet) *string {
 }
 
 // ToInt build Flag Set for int
-func (f *Flag) ToInt(fs *flag.FlagSet) *int {
+func (f Flag) ToInt(fs *flag.FlagSet) *int {
 	if f.value == nil {
 		return nil
 	}
@@ -97,7 +97,7 @@ func (f *Flag) ToInt(fs *flag.FlagSet) *int {
 }
 
 // ToUint build Flag Set for uint
-func (f *Flag) ToUint(fs *flag.FlagSet) *uint {
+func (f Flag) ToUint(fs *flag.FlagSet) *uint {
 	if f.value == nil {
 		return nil
 	}
@@ -118,7 +118,7 @@ func (f *Flag) ToUint(fs *flag.FlagSet) *uint {
 }
 
 // ToFloat64 build Flag Set for float64
-func (f *Flag) ToFloat64(fs *flag.FlagSet) *float64 {
+func (f Flag) ToFloat64(fs *flag.FlagSet) *float64 {
 	if f.value == nil {
 		return nil
 	}
@@ -128,7 +128,7 @@ func (f *Flag) ToFloat64(fs *flag.FlagSet) *float64 {
 }
 
 // ToBool build Flag Set for bool
-func (f *Flag) ToBool(fs *flag.FlagSet) *bool {
+func (f Flag) ToBool(fs *flag.FlagSet) *bool {
 	if f.value == nil {
 		return nil
 	}
@@ -137,12 +137,12 @@ func (f *Flag) ToBool(fs *flag.FlagSet) *bool {
 	return fs.Bool(FirstLowerCase(name), LookupEnvBool(envName, f.value.(bool)), f.formatLabel(envName))
 }
 
-func (f *Flag) getNameAndEnv(fs *flag.FlagSet) (string, string) {
+func (f Flag) getNameAndEnv(fs *flag.FlagSet) (string, string) {
 	name := fmt.Sprintf("%s%s", f.prefix, FirstUpperCase(f.name))
 	return name, strings.ToUpper(SnakeCase(fmt.Sprintf("%s%s", FirstUpperCase(fs.Name()), FirstUpperCase(name))))
 }
 
-func (f *Flag) formatLabel(envName string) string {
+func (f Flag) formatLabel(envName string) string {
 	builder := strings.Builder{}
 
 	if len(f.docPrefix) != 0 {
