@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	_ model.Middleware = (App{}).Middleware
+	_ model.Middleware = App{}.Middleware
 
 	durationBuckets  = []float64{0.25, 0.5, 1, 2.5, 5, 10}
 	sizeBuckets      = []float64{200, 500, 900, 1500}
@@ -128,8 +128,7 @@ func (a App) instrumentHandler(next http.Handler) http.Handler {
 	counterVec := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "http_requests_total",
 		Help: "A counter for requests to the wrapped handler.",
-	},
-		codeMethodLabels)
+	}, codeMethodLabels)
 	a.registry.MustRegister(counterVec)
 	instrumentedHandler = promhttp.InstrumentHandlerCounter(counterVec, instrumentedHandler)
 
