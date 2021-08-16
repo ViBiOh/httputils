@@ -117,3 +117,45 @@ func TestVersionHandler(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkMux(b *testing.B) {
+	fs := flag.NewFlagSet("BenchmarkMux", flag.ContinueOnError)
+
+	healthConfig := health.Flags(fs, "BenchmarkMux")
+
+	healthHandler := health.New(healthConfig).Handler()
+	versionHandler := versionHandler()
+	var appHandler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle(health.HealthPath, healthHandler)
+	mux.Handle(health.ReadyPath, healthHandler)
+	mux.Handle("/version", versionHandler)
+	mux.Handle("/", appHandler)
+
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	for i := 0; i < b.N; i++ {
+		mux.ServeHTTP(httptest.NewRecorder(), request)
+	}
+}
+
+func BenchmarkHandler(b *testing.B) {
+	fs := flag.NewFlagSet("BenchmarkHandler", flag.ContinueOnError)
+
+	healthConfig := health.Flags(fs, "BenchmarkHandler")
+
+	var appHandler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}
+
+	handler := Handler(appHandler, health.New(healthConfig))
+
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(httptest.NewRecorder(), request)
+	}
+}
