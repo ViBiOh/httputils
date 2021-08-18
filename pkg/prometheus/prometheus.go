@@ -19,8 +19,9 @@ const (
 var (
 	_ model.Middleware = App{}.Middleware
 
-	durationBuckets  = []float64{0.25, 0.5, 1, 2.5, 5, 10}
+	durationBuckets  = []float64{0.1, 0.3, 1.2, 5}
 	sizeBuckets      = []float64{200, 500, 900, 1500}
+	methodLabels     = []string{"method"}
 	codeMethodLabels = []string{"code", "method"}
 )
 
@@ -113,7 +114,7 @@ func (a App) instrumentHandler(next http.Handler) http.Handler {
 		Name:    "http_request_duration_seconds",
 		Help:    "A histogram of latencies for requests.",
 		Buckets: durationBuckets,
-	}, codeMethodLabels)
+	}, methodLabels)
 	a.registry.MustRegister(durationVec)
 	instrumentedHandler = promhttp.InstrumentHandlerDuration(durationVec, instrumentedHandler)
 
