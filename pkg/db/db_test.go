@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"flag"
+	"io"
 	"reflect"
 	"strings"
 	"testing"
@@ -857,6 +858,70 @@ func TestBulk(t *testing.T) {
 
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("sqlmock unfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
+type errClose func() error
+
+func (ec errClose) Close() error {
+	return errors.New("close error")
+}
+
+func TestSafeClose(t *testing.T) {
+	type args struct {
+		closer io.Closer
+		err    error
+	}
+
+	var cases = []struct {
+		intention string
+		args      args
+		wantErr   error
+	}{
+		{
+			"no error",
+			args{
+				closer: io.NopCloser(strings.NewReader("")),
+				err:    nil,
+			},
+			nil,
+		},
+		{
+			"close error",
+			args{
+				closer: new(errClose),
+				err:    nil,
+			},
+			errors.New("close error"),
+		},
+		{
+			"nested error",
+			args{
+				closer: new(errClose),
+				err:    sql.ErrNoRows,
+			},
+			sql.ErrNoRows,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			gotErr := safeClose(tc.args.closer, tc.args.err)
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && errors.Is(gotErr, tc.wantErr) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("safeClose() = (`%s`), want (`%s`)", gotErr, tc.wantErr)
 			}
 		})
 	}

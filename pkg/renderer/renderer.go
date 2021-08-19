@@ -43,10 +43,10 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		publicURL:  flags.New(prefix, "").Name("PublicURL").Default(flags.Default("PublicURL", "http://localhost", overrides)).Label("Public URL").ToString(fs),
-		pathPrefix: flags.New(prefix, "").Name("PathPrefix").Default(flags.Default("PathPrefix", "", overrides)).Label("Root Path Prefix").ToString(fs),
-		title:      flags.New(prefix, "").Name("Title").Default(flags.Default("Title", "App", overrides)).Label("Application title").ToString(fs),
-		minify:     flags.New(prefix, "").Name("Minify").Default(flags.Default("Minify", true, overrides)).Label("Minify HTML").ToBool(fs),
+		publicURL:  flags.New(prefix, "", "PublicURL").Default("http://localhost", overrides).Label("Public URL").ToString(fs),
+		pathPrefix: flags.New(prefix, "", "PathPrefix").Default("", overrides).Label("Root Path Prefix").ToString(fs),
+		title:      flags.New(prefix, "", "Title").Default("App", overrides).Label("Application title").ToString(fs),
+		minify:     flags.New(prefix, "", "Minify").Default(true, overrides).Label("Minify HTML").ToBool(fs),
 	}
 }
 
@@ -61,15 +61,15 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 		funcMap = template.FuncMap{}
 	}
 
-	pathPrefix := strings.TrimSuffix(strings.TrimSpace(*config.pathPrefix), "/")
-	publicURL := strings.TrimSuffix(strings.TrimSpace(*config.publicURL), "/")
+	pathPrefix := strings.TrimSuffix(*config.pathPrefix, "/")
+	publicURL := strings.TrimSuffix(*config.publicURL, "/")
 
 	instance := App{
 		staticFS:   staticFS,
 		pathPrefix: pathPrefix,
 		minify:     *config.minify,
 		content: map[string]interface{}{
-			"Title":   strings.TrimSpace(*config.title),
+			"Title":   *config.title,
 			"Version": os.Getenv("VERSION"),
 		},
 	}

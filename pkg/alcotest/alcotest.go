@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
@@ -34,8 +33,8 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		url:       flags.New(prefix, "alcotest").Name("Url").Default(flags.Default("Url", "", overrides)).Label("URL to check").ToString(fs),
-		userAgent: flags.New(prefix, "alcotest").Name("UserAgent").Default(flags.Default("UserAgent", "Alcotest", overrides)).Label("User-Agent for check").ToString(fs),
+		url:       flags.New(prefix, "alcotest", "Url").Default("", overrides).Label("URL to check").ToString(fs),
+		userAgent: flags.New(prefix, "alcotest", "UserAgent").Default("Alcotest", overrides).Label("User-Agent for check").ToString(fs),
 	}
 }
 
@@ -65,12 +64,12 @@ func Do(url, userAgent string) error {
 
 // DoAndExit test status code of given URL (if present) and exit program with correct status
 func DoAndExit(config Config) {
-	url := strings.TrimSpace(*config.url)
+	url := *config.url
 	if len(url) == 0 {
 		return
 	}
 
-	if err := Do(url, strings.TrimSpace(*config.userAgent)); err != nil {
+	if err := Do(url, *config.userAgent); err != nil {
 		fmt.Println(err)
 		exitFunc(1)
 		return

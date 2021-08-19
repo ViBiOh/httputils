@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/clock"
@@ -52,11 +51,11 @@ type Logger struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		level:      flags.New(prefix, "logger").Name("Level").Default(flags.Default("Level", "INFO", overrides)).Label("Logger level").ToString(fs),
-		json:       flags.New(prefix, "logger").Name("Json").Default(flags.Default("Json", false, overrides)).Label("Log format as JSON").ToBool(fs),
-		timeKey:    flags.New(prefix, "logger").Name("TimeKey").Default(flags.Default("TimeKey", "time", overrides)).Label("Key for timestamp in JSON").ToString(fs),
-		levelKey:   flags.New(prefix, "logger").Name("LevelKey").Default(flags.Default("LevelKey", "level", overrides)).Label("Key for level in JSON").ToString(fs),
-		messageKey: flags.New(prefix, "logger").Name("MessageKey").Default(flags.Default("MessageKey", "message", overrides)).Label("Key for message in JSON").ToString(fs),
+		level:      flags.New(prefix, "logger", "Level").Default("INFO", overrides).Label("Logger level").ToString(fs),
+		json:       flags.New(prefix, "logger", "Json").Default(false, overrides).Label("Log format as JSON").ToBool(fs),
+		timeKey:    flags.New(prefix, "logger", "TimeKey").Default("time", overrides).Label("Key for timestamp in JSON").ToString(fs),
+		levelKey:   flags.New(prefix, "logger", "LevelKey").Default("level", overrides).Label("Key for level in JSON").ToString(fs),
+		messageKey: flags.New(prefix, "logger", "MessageKey").Default("message", overrides).Label("Key for message in JSON").ToString(fs),
 	}
 }
 
@@ -67,9 +66,9 @@ func init() {
 
 // New creates a Logger
 func New(config Config) Logger {
-	level, err := parseLevel(strings.TrimSpace(*config.level))
+	level, err := parseLevel(*config.level)
 
-	logger := newLogger(os.Stdout, os.Stderr, level, *config.json, strings.TrimSpace(*config.timeKey), strings.TrimSpace(*config.levelKey), strings.TrimSpace(*config.messageKey))
+	logger := newLogger(os.Stdout, os.Stderr, level, *config.json, *config.timeKey, *config.levelKey, *config.messageKey)
 
 	go logger.Start()
 

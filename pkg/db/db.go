@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
@@ -54,28 +53,28 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		host:    flags.New(prefix, "database").Name("Host").Default(flags.Default("Host", "", overrides)).Label("Host").ToString(fs),
-		port:    flags.New(prefix, "database").Name("Port").Default(flags.Default("Port", 5432, overrides)).Label("Port").ToUint(fs),
-		user:    flags.New(prefix, "database").Name("User").Default(flags.Default("User", "", overrides)).Label("User").ToString(fs),
-		pass:    flags.New(prefix, "database").Name("Pass").Default(flags.Default("Pass", "", overrides)).Label("Pass").ToString(fs),
-		name:    flags.New(prefix, "database").Name("Name").Default(flags.Default("Name", "", overrides)).Label("Name").ToString(fs),
-		maxConn: flags.New(prefix, "database").Name("MaxConn").Default(flags.Default("MaxConn", 5, overrides)).Label("Max Open Connections").ToUint(fs),
-		sslmode: flags.New(prefix, "database").Name("Sslmode").Default(flags.Default("Sslmode", "disable", overrides)).Label("SSL Mode").ToString(fs),
-		timeout: flags.New(prefix, "database").Name("Timeout").Default(flags.Default("Timeout", 10, overrides)).Label("Connect timeout").ToUint(fs),
+		host:    flags.New(prefix, "database", "Host").Default("", overrides).Label("Host").ToString(fs),
+		port:    flags.New(prefix, "database", "Port").Default(5432, overrides).Label("Port").ToUint(fs),
+		user:    flags.New(prefix, "database", "User").Default("", overrides).Label("User").ToString(fs),
+		pass:    flags.New(prefix, "database", "Pass").Default("", overrides).Label("Pass").ToString(fs),
+		name:    flags.New(prefix, "database", "Name").Default("", overrides).Label("Name").ToString(fs),
+		maxConn: flags.New(prefix, "database", "MaxConn").Default(5, overrides).Label("Max Open Connections").ToUint(fs),
+		sslmode: flags.New(prefix, "database", "Sslmode").Default("disable", overrides).Label("SSL Mode").ToString(fs),
+		timeout: flags.New(prefix, "database", "Timeout").Default(10, overrides).Label("Connect timeout").ToUint(fs),
 	}
 }
 
 // New creates new App from Config
 func New(config Config) (App, error) {
-	host := strings.TrimSpace(*config.host)
+	host := *config.host
 	if len(host) == 0 {
 		return App{}, ErrNoHost
 	}
 
-	user := strings.TrimSpace(*config.user)
-	pass := strings.TrimSpace(*config.pass)
-	name := strings.TrimSpace(*config.name)
-	sslmode := strings.TrimSpace(*config.sslmode)
+	user := *config.user
+	pass := *config.pass
+	name := *config.name
+	sslmode := *config.sslmode
 
 	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s connect_timeout=%d", host, *config.port, user, pass, name, sslmode, *config.timeout))
 	if err != nil {

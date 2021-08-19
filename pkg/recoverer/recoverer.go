@@ -10,6 +10,10 @@ import (
 
 // Middleware for request. Should be use with net/http
 func Middleware(next http.Handler) http.Handler {
+	if next == nil {
+		return next
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
@@ -20,8 +24,6 @@ func Middleware(next http.Handler) http.Handler {
 			}
 		}()
 
-		if next != nil {
-			next.ServeHTTP(w, r)
-		}
+		next.ServeHTTP(w, r)
 	})
 }

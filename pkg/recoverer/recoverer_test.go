@@ -54,7 +54,9 @@ func TestMiddleware(t *testing.T) {
 }
 
 func BenchmarkMiddleware(b *testing.B) {
-	middleware := Middleware(nil)
+	middleware := Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	writer := httptest.NewRecorder()
 

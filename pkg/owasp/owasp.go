@@ -3,7 +3,6 @@ package owasp
 import (
 	"flag"
 	"net/http"
-	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
@@ -30,37 +29,43 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		csp:          flags.New(prefix, "owasp").Name("Csp").Default(flags.Default("Csp", "default-src 'self'; base-uri 'self'", overrides)).Label("Content-Security-Policy").ToString(fs),
-		hsts:         flags.New(prefix, "owasp").Name("Hsts").Default(flags.Default("Hsts", true, overrides)).Label("Indicate Strict Transport Security").ToBool(fs),
-		frameOptions: flags.New(prefix, "owasp").Name("FrameOptions").Default(flags.Default("FrameOptions", "deny", overrides)).Label("X-Frame-Options").ToString(fs),
+		csp:          flags.New(prefix, "owasp", "Csp").Default("default-src 'self'; base-uri 'self'", overrides).Label("Content-Security-Policy").ToString(fs),
+		hsts:         flags.New(prefix, "owasp", "Hsts").Default(true, overrides).Label("Indicate Strict Transport Security").ToBool(fs),
+		frameOptions: flags.New(prefix, "owasp", "FrameOptions").Default("deny", overrides).Label("X-Frame-Options").ToString(fs),
 	}
 }
 
 // New creates new App from Config
 func New(config Config) App {
 	return App{
-		csp:          strings.TrimSpace(*config.csp),
+		csp:          *config.csp,
 		hsts:         *config.hsts,
-		frameOptions: strings.TrimSpace(*config.frameOptions),
+		frameOptions: *config.frameOptions,
 	}
 }
 
 // Middleware for net/http package allowing owasp header
 func (a App) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Referrer-Policy", "strict-origin-when-cross-origin")
-		w.Header().Add("X-Content-Type-Options", "nosniff")
-		w.Header().Add("X-Xss-Protection", "1; mode=block")
-		w.Header().Add("X-Permitted-Cross-Domain-Policies", "none")
+	headers := http.Header{}
 
-		if len(a.csp) != 0 {
-			w.Header().Add("Content-Security-Policy", a.csp)
-		}
-		if len(a.frameOptions) != 0 {
-			w.Header().Add("X-Frame-Options", a.frameOptions)
-		}
-		if a.hsts {
-			w.Header().Add("Strict-Transport-Security", "max-age=10886400")
+	headers.Add("Referrer-Policy", "strict-origin-when-cross-origin")
+	headers.Add("X-Content-Type-Options", "nosniff")
+	headers.Add("X-Xss-Protection", "1; mode=block")
+	headers.Add("X-Permitted-Cross-Domain-Policies", "none")
+
+	if len(a.csp) != 0 {
+		headers.Add("Content-Security-Policy", a.csp)
+	}
+	if len(a.frameOptions) != 0 {
+		headers.Add("X-Frame-Options", a.frameOptions)
+	}
+	if a.hsts {
+		headers.Add("Strict-Transport-Security", "max-age=10886400")
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for key, values := range headers {
+			w.Header()[key] = values
 		}
 
 		if next != nil {

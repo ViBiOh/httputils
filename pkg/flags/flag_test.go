@@ -8,60 +8,6 @@ import (
 	"testing"
 )
 
-func TestDefault(t *testing.T) {
-	type args struct {
-		name      string
-		value     interface{}
-		overrides []Override
-	}
-
-	var cases = []struct {
-		intention string
-		args      args
-		want      interface{}
-	}{
-		{
-			"empty",
-			args{
-				name:  "value",
-				value: "empty",
-			},
-			"empty",
-		},
-		{
-			"match",
-			args{
-				name:  "value",
-				value: "empty",
-				overrides: []Override{
-					NewOverride("VALUE", "found"),
-				},
-			},
-			"found",
-		},
-		{
-			"no match",
-			args{
-				name:  "value",
-				value: "empty",
-				overrides: []Override{
-					NewOverride("value1", "found"),
-					NewOverride("value2", "found"),
-				},
-			},
-			"empty",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			if got := Default(tc.args.name, tc.args.value, tc.args.overrides); got != tc.want {
-				t.Errorf("Default() = %v, want %v", got, tc.want)
-			}
-		})
-	}
-}
-
 func TestNew(t *testing.T) {
 	var cases = []struct {
 		intention string
@@ -91,7 +37,7 @@ func TestNew(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			if result := New(tc.prefix, tc.docPrefix); !reflect.DeepEqual(result, tc.want) {
+			if result := New(tc.prefix, tc.docPrefix, ""); !reflect.DeepEqual(result, tc.want) {
 				t.Errorf("New() = %#v, want %#v", result, tc.want)
 			}
 		})
@@ -151,7 +97,7 @@ func TestToString(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			fs := flag.NewFlagSet("ToString", flag.ContinueOnError)
-			fg := New(tc.prefix, tc.docPrefix).Name(tc.name).Default(tc.defaultValue).Label(tc.label)
+			fg := New(tc.prefix, tc.docPrefix, tc.name).Default(tc.defaultValue, nil).Label(tc.label)
 			fg.ToString(fs)
 
 			var writer strings.Builder
@@ -228,7 +174,7 @@ func TestToInt(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			fs := flag.NewFlagSet("ToInt", flag.ContinueOnError)
-			fg := New(tc.prefix, tc.docPrefix).Name(tc.name).Default(tc.defaultValue).Label(tc.label)
+			fg := New(tc.prefix, tc.docPrefix, tc.name).Default(tc.defaultValue, nil).Label(tc.label)
 			fg.ToInt(fs)
 
 			var writer strings.Builder
@@ -323,7 +269,7 @@ func TestToUint(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			fs := flag.NewFlagSet("ToUint", flag.ContinueOnError)
-			fg := New(tc.prefix, tc.docPrefix).Name(tc.name).Default(tc.defaultValue).Label(tc.label)
+			fg := New(tc.prefix, tc.docPrefix, tc.name).Default(tc.defaultValue, nil).Label(tc.label)
 			fg.ToUint(fs)
 
 			var writer strings.Builder
@@ -400,7 +346,7 @@ func TestToFloat64(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			fs := flag.NewFlagSet("ToFloat64", flag.ContinueOnError)
-			fg := New(tc.prefix, tc.docPrefix).Name(tc.name).Default(tc.defaultValue).Label(tc.label)
+			fg := New(tc.prefix, tc.docPrefix, tc.name).Default(tc.defaultValue, nil).Label(tc.label)
 			fg.ToFloat64(fs)
 
 			var writer strings.Builder
@@ -477,7 +423,7 @@ func TestToBool(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			fs := flag.NewFlagSet("ToBool", flag.ContinueOnError)
-			fg := New(tc.prefix, tc.docPrefix).Name(tc.name).Default(tc.defaultValue).Label(tc.label)
+			fg := New(tc.prefix, tc.docPrefix, tc.name).Default(tc.defaultValue, nil).Label(tc.label)
 			fg.ToBool(fs)
 
 			var writer strings.Builder

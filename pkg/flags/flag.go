@@ -22,17 +22,6 @@ func NewOverride(name string, value interface{}) Override {
 	}
 }
 
-// Default returns default value for param's name based on default value and overrides
-func Default(name string, value interface{}, overrides []Override) interface{} {
-	for _, override := range overrides {
-		if strings.EqualFold(name, override.name) {
-			return override.value
-		}
-	}
-
-	return value
-}
-
 // Flag describe a flag
 type Flag struct {
 	value     interface{}
@@ -43,7 +32,7 @@ type Flag struct {
 }
 
 // New creates new instance of Flag
-func New(prefix, docPrefix string) Flag {
+func New(prefix, docPrefix, name string) Flag {
 	docPrefixValue := prefix
 	if len(prefix) == 0 {
 		docPrefixValue = docPrefix
@@ -52,6 +41,7 @@ func New(prefix, docPrefix string) Flag {
 	return Flag{
 		prefix:    FirstUpperCase(prefix),
 		docPrefix: docPrefixValue,
+		name:      name,
 	}
 }
 
@@ -63,7 +53,14 @@ func (f Flag) Name(name string) Flag {
 }
 
 // Default defines default value of Flag
-func (f Flag) Default(value interface{}) Flag {
+func (f Flag) Default(value interface{}, overrides []Override) Flag {
+	for _, override := range overrides {
+		if strings.EqualFold(f.name, override.name) {
+			f.value = override.value
+			return f
+		}
+	}
+
 	f.value = value
 
 	return f
@@ -105,11 +102,11 @@ func (f Flag) ToUint(fs *flag.FlagSet) *uint {
 	name, envName := f.getNameAndEnv(fs)
 
 	var value uint
-	switch f.value.(type) {
+	switch typedValue := f.value.(type) {
 	case int:
-		value = uint(f.value.(int))
+		value = uint(typedValue)
 	case uint:
-		value = f.value.(uint)
+		value = typedValue
 	default:
 		value = 0
 	}

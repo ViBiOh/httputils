@@ -41,15 +41,15 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		ignore: flags.New(prefix, "prometheus").Name("Ignore").Default(flags.Default("Ignore", "", overrides)).Label("Ignored path prefixes for metrics, comma separated").ToString(fs),
-		gzip:   flags.New(prefix, "prometheus").Name("Gzip").Default(flags.Default("Gzip", true, overrides)).Label("Enable gzip compression of metrics output").ToBool(fs),
+		ignore: flags.New(prefix, "prometheus", "Ignore").Default("", overrides).Label("Ignored path prefixes for metrics, comma separated").ToString(fs),
+		gzip:   flags.New(prefix, "prometheus", "Gzip").Default(true, overrides).Label("Enable gzip compression of metrics output").ToBool(fs),
 	}
 }
 
 // New creates new App from Config
 func New(config Config) App {
 	var ignore []string
-	ignoredPaths := strings.TrimSpace(*config.ignore)
+	ignoredPaths := *config.ignore
 	if len(ignoredPaths) != 0 {
 		ignore = strings.Split(ignoredPaths, ",")
 	}

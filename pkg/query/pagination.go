@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 )
 
 var (
@@ -64,7 +63,7 @@ func ParsePagination(r *http.Request, defaultPageSize, maxPageSize uint) (pagina
 	}
 
 	pagination.PageSize = defaultPageSize
-	rawPageSize := strings.TrimSpace(params.Get("pageSize"))
+	rawPageSize := params.Get("pageSize")
 	if len(rawPageSize) != 0 {
 		parsed, err = strconv.ParseUint(rawPageSize, 10, 32)
 		parsedUint = uint(parsed)
@@ -87,13 +86,13 @@ func ParsePagination(r *http.Request, defaultPageSize, maxPageSize uint) (pagina
 	}
 
 	pagination.Sort = ""
-	rawSortKey := strings.TrimSpace(params.Get("sort"))
+	rawSortKey := params.Get("sort")
 	if len(rawSortKey) != 0 {
 		pagination.Sort = rawSortKey
 	}
 
 	pagination.Desc = GetBool(r, "desc")
-	pagination.Last = strings.TrimSpace(params.Get("last"))
+	pagination.Last = params.Get("last")
 
 	return
 }

@@ -41,8 +41,8 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		okStatus:      flags.New(prefix, "http").Name("OkStatus").Default(flags.Default("OkStatus", http.StatusNoContent, overrides)).Label("Healthy HTTP Status code").ToInt(fs),
-		graceDuration: flags.New(prefix, "http").Name("GraceDuration").Default(flags.Default("GraceDuration", "30s", overrides)).Label("Grace duration when SIGTERM received").ToString(fs),
+		okStatus:      flags.New(prefix, "http", "OkStatus").Default(http.StatusNoContent, overrides).Label("Healthy HTTP Status code").ToInt(fs),
+		graceDuration: flags.New(prefix, "http", "GraceDuration").Default("30s", overrides).Label("Grace duration when SIGTERM received").ToString(fs),
 	}
 }
 

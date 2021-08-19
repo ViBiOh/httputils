@@ -3,7 +3,6 @@ package redis
 import (
 	"context"
 	"flag"
-	"strings"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
@@ -26,9 +25,9 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		redisAddress:  flags.New(prefix, "redis").Name("Address").Default(flags.Default("Address", "localhost:6379", overrides)).Label("Redis Address").ToString(fs),
-		redisPassword: flags.New(prefix, "redis").Name("Password").Default(flags.Default("Password", "", overrides)).Label("Redis Password, if any").ToString(fs),
-		redisDatabase: flags.New(prefix, "redis").Name("Database").Default(flags.Default("Database", 0, overrides)).Label("Redis Database").ToInt(fs),
+		redisAddress:  flags.New(prefix, "redis", "Address").Default("localhost:6379", overrides).Label("Redis Address").ToString(fs),
+		redisPassword: flags.New(prefix, "redis", "Password").Default("", overrides).Label("Redis Password, if any").ToString(fs),
+		redisDatabase: flags.New(prefix, "redis", "Database").Default(0, overrides).Label("Redis Database").ToInt(fs),
 	}
 }
 
@@ -36,8 +35,8 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 func New(config Config) App {
 	return App{
 		redisClient: redis.NewClient(&redis.Options{
-			Addr:     strings.TrimSpace(*config.redisAddress),
-			Password: strings.TrimSpace(*config.redisPassword),
+			Addr:     *config.redisAddress,
+			Password: *config.redisPassword,
 			DB:       *config.redisDatabase,
 		}),
 	}
