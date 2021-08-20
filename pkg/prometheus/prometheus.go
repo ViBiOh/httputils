@@ -134,12 +134,8 @@ func (a App) instrumentHandler(next http.Handler) http.Handler {
 		d := newDelegator(w)
 		next.ServeHTTP(d, r)
 
-		labels := prometheus.Labels{"method": r.Method}
-		durationVec.With(labels).Observe(time.Since(now).Seconds())
-
-		labels["code"] = strconv.Itoa(d.Status())
-		counterVec.With(labels).Inc()
-
+		durationVec.WithLabelValues(r.Method).Observe(time.Since(now).Seconds())
+		counterVec.WithLabelValues(strconv.Itoa(d.Status()), r.Method).Inc()
 		sizeVec.Observe(float64(d.Written()))
 	})
 }
