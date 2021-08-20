@@ -45,13 +45,6 @@ func New(prefix, docPrefix, name string) Flag {
 	}
 }
 
-// Name defines name of Flag
-func (f Flag) Name(name string) Flag {
-	f.name = name
-
-	return f
-}
-
 // Default defines default value of Flag
 func (f Flag) Default(value interface{}, overrides []Override) Flag {
 	for _, override := range overrides {
