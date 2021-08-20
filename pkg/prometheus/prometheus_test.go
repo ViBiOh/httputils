@@ -72,7 +72,7 @@ func TestMiddleware(t *testing.T) {
 			[]*http.Request{
 				httptest.NewRequest(http.MethodGet, "/", nil),
 			},
-			"http_requests_total{code=\"204\",method=\"get\"} 1",
+			"http_requests_total{code=\"204\",method=\"GET\"} 1",
 		},
 		{
 			"http_requests_total",
@@ -85,7 +85,7 @@ func TestMiddleware(t *testing.T) {
 				httptest.NewRequest(http.MethodPost, "/", nil),
 				httptest.NewRequest(http.MethodPost, "/api", nil),
 			},
-			"http_requests_total{code=\"204\",method=\"post\"} 2",
+			"http_requests_total{code=\"204\",method=\"POST\"} 2",
 		},
 	}
 
@@ -186,9 +186,11 @@ func BenchmarkMiddleware(b *testing.B) {
 	middleware := app.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
+
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	recorder := httptest.NewRecorder()
 
 	for i := 0; i < b.N; i++ {
-		middleware.ServeHTTP(httptest.NewRecorder(), request)
+		middleware.ServeHTTP(recorder, request)
 	}
 }

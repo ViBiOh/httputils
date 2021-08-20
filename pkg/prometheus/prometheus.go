@@ -3,7 +3,9 @@ package prometheus
 import (
 	"flag"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
@@ -68,11 +70,9 @@ func New(config Config) App {
 
 // Handler for request. Should be use with net/http
 func (a App) Handler() http.Handler {
-	instrumentHandler := promhttp.InstrumentMetricHandler(
-		a.registry, promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{
-			DisableCompression: !a.gzip,
-		}),
-	)
+	instrumentHandler := promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{
+		DisableCompression: !a.gzip,
+	})
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -108,32 +108,40 @@ func (a App) Registerer() prometheus.Registerer {
 }
 
 func (a App) instrumentHandler(next http.Handler) http.Handler {
-	instrumentedHandler := next
-
 	durationVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "http_request_duration_seconds",
 		Help:    "A histogram of latencies for requests.",
 		Buckets: durationBuckets,
 	}, methodLabels)
 	a.registry.MustRegister(durationVec)
-	instrumentedHandler = promhttp.InstrumentHandlerDuration(durationVec, instrumentedHandler)
 
-	sizeVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	sizeVec := prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "http_response_size_bytes",
 		Help:    "A histogram of response sizes for requests.",
 		Buckets: sizeBuckets,
-	}, nil)
+	})
 	a.registry.MustRegister(sizeVec)
-	instrumentedHandler = promhttp.InstrumentHandlerResponseSize(sizeVec, instrumentedHandler)
 
 	counterVec := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "http_requests_total",
 		Help: "A counter for requests to the wrapped handler.",
 	}, codeMethodLabels)
 	a.registry.MustRegister(counterVec)
-	instrumentedHandler = promhttp.InstrumentHandlerCounter(counterVec, instrumentedHandler)
 
-	return instrumentedHandler
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		now := time.Now()
+
+		d := newDelegator(w)
+		next.ServeHTTP(d, r)
+
+		labels := prometheus.Labels{"method": r.Method}
+		durationVec.With(labels).Observe(time.Since(now).Seconds())
+
+		labels["code"] = strconv.Itoa(d.Status())
+		counterVec.With(labels).Inc()
+
+		sizeVec.Observe(float64(d.Written()))
+	})
 }
 
 func (a App) isIgnored(path string) bool {
