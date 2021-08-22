@@ -9,8 +9,8 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"sync"
 
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/html"
@@ -21,11 +21,8 @@ import (
 var (
 	minifier *minify.M
 
-	bufferPool = sync.Pool{
-		New: func() interface{} {
-			return bytes.NewBuffer(nil)
-		},
-	}
+	htmlHeaders = http.Header{}
+	xmlHeaders  = http.Header{}
 )
 
 func init() {
@@ -34,6 +31,13 @@ func init() {
 	minifier.AddFunc("text/css", css.Minify)
 	minifier.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
 	minifier.AddFunc("text/xml", svg.Minify)
+
+	htmlHeaders.Add("X-UA-Compatible", "ie=edge")
+	htmlHeaders.Add("Content-Type", "text/html; charset=UTF-8")
+	htmlHeaders.Add("Cache-Control", "no-cache")
+
+	xmlHeaders.Add("Content-Type", "text/xml; charset=UTF-8")
+	xmlHeaders.Add("Cache-Control", "no-cache")
 }
 
 // GetTemplates list files by extension
@@ -59,8 +63,8 @@ func GetTemplates(dir, ext string) ([]string, error) {
 
 // WriteTemplate write template name from given template into writer for provided content with given minification
 func WriteTemplate(tpl *template.Template, w io.Writer, content interface{}, mediatype string) error {
-	templateBuffer := bufferPool.Get().(*bytes.Buffer)
-	defer bufferPool.Put(templateBuffer)
+	templateBuffer := model.BufferPool.Get().(*bytes.Buffer)
+	defer model.BufferPool.Put(templateBuffer)
 
 	templateBuffer.Reset()
 	if err := tpl.Execute(templateBuffer, content); err != nil {
@@ -72,26 +76,27 @@ func WriteTemplate(tpl *template.Template, w io.Writer, content interface{}, med
 
 // ResponseHTMLTemplate write template name from given template into writer for provided content with HTML minification
 func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
-	templateBuffer := bufferPool.Get().(*bytes.Buffer)
-	defer bufferPool.Put(templateBuffer)
+	templateBuffer := model.BufferPool.Get().(*bytes.Buffer)
+	defer model.BufferPool.Put(templateBuffer)
 
 	templateBuffer.Reset()
 	if err := tpl.Execute(templateBuffer, content); err != nil {
 		return err
 	}
 
-	w.Header().Add("X-UA-Compatible", "ie=edge")
-	contentType(w, "text/html; charset=UTF-8")
-	noCache(w)
+	for key, value := range htmlHeaders {
+		w.Header()[key] = value
+	}
 	w.WriteHeader(status)
+
 	return minifier.Minify("text/html", w, templateBuffer)
 }
 
 // ResponseHTMLTemplateRaw write template name from given template into writer for provided content
 func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
-	w.Header().Add("X-UA-Compatible", "ie=edge")
-	contentType(w, "text/html; charset=UTF-8")
-	noCache(w)
+	for key, value := range htmlHeaders {
+		w.Header()[key] = value
+	}
 	w.WriteHeader(status)
 
 	return tpl.Execute(w, content)
@@ -99,8 +104,8 @@ func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, cont
 
 // ResponseXMLTemplate write template name from given template into writer for provided content with XML minification
 func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
-	templateBuffer := bufferPool.Get().(*bytes.Buffer)
-	defer bufferPool.Put(templateBuffer)
+	templateBuffer := model.BufferPool.Get().(*bytes.Buffer)
+	defer model.BufferPool.Put(templateBuffer)
 
 	templateBuffer.Reset()
 	templateBuffer.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
@@ -108,16 +113,10 @@ func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content 
 		return err
 	}
 
-	contentType(w, "text/xml; charset=UTF-8")
-	noCache(w)
+	for key, value := range xmlHeaders {
+		w.Header()[key] = value
+	}
 	w.WriteHeader(status)
+
 	return minifier.Minify("text/xml", w, templateBuffer)
-}
-
-func contentType(w http.ResponseWriter, contentType string) {
-	w.Header().Add("Content-Type", contentType)
-}
-
-func noCache(w http.ResponseWriter) {
-	w.Header().Add("Cache-Control", "no-cache")
 }

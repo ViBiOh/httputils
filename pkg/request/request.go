@@ -10,10 +10,10 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 const (
@@ -26,12 +26,6 @@ var (
 		Transport: http.DefaultTransport,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
-		},
-	}
-
-	bufferPool = sync.Pool{
-		New: func() interface{} {
-			return bytes.NewBuffer(make([]byte, 1024))
 		},
 	}
 )
@@ -240,8 +234,8 @@ func convertResponseError(resp *http.Response) string {
 	}
 
 	// Discard remaining content
-	buffer := bufferPool.Get().(*bytes.Buffer)
-	defer bufferPool.Put(buffer)
+	buffer := model.BufferPool.Get().(*bytes.Buffer)
+	defer model.BufferPool.Put(buffer)
 	if _, err := io.CopyBuffer(io.Discard, resp.Body, buffer.Bytes()); err != nil {
 		logger.Error("unable to discard error body response: %s", err)
 	}
