@@ -15,7 +15,14 @@ import (
 var (
 	// ErrCannotMarshall occurs when marshaller failed
 	ErrCannotMarshall = errors.New("cannot marshall json")
+
+	headers = http.Header{}
 )
+
+func init() {
+	headers.Add("Content-Type", "application/json; charset=utf-8")
+	headers.Add("Cache-Control", "no-cache")
+}
 
 type items struct {
 	Items interface{} `json:"items"`
@@ -41,8 +48,9 @@ func Write(w http.ResponseWriter, status int, obj interface{}, pretty bool) {
 		encoder.SetIndent("", "  ")
 	}
 
-	w.Header().Add("Content-Type", "application/json; charset=utf-8")
-	w.Header().Add("Cache-Control", "no-cache")
+	for key, value := range headers {
+		w.Header()[key] = value
+	}
 	w.WriteHeader(status)
 
 	if err := encoder.Encode(obj); err != nil {

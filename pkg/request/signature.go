@@ -10,6 +10,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 const (
@@ -38,12 +40,12 @@ func ValidateSignature(r *http.Request, secret []byte) (bool, error) {
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	if fmt.Sprintf("SHA-512=%x", sha512.Sum512(body)) != r.Header.Get("Digest") {
-		return false, errors.New("SHA-512 signature of body doesn't match")
+		return false, model.WrapInvalid(errors.New("SHA-512 signature of body doesn't match"))
 	}
 
 	signatureString, signature, err := parseAuthorizationHeader(r)
 	if err != nil {
-		return false, fmt.Errorf("unable to parse authorization header: %s", err)
+		return false, model.WrapInvalid(fmt.Errorf("unable to parse authorization header: %s", err))
 	}
 
 	return hmac.Equal(signContent(secret, signatureString), signature), nil

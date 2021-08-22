@@ -1,12 +1,31 @@
 package model
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/ViBiOh/httputils/v4/pkg/request"
 )
+
+func readContent(body io.ReadCloser) (content []byte, err error) {
+	if body == nil {
+		return
+	}
+
+	defer func() {
+		if closeErr := body.Close(); closeErr != nil {
+			if err == nil {
+				err = closeErr
+			} else {
+				err = fmt.Errorf("%s: %w", err, closeErr)
+			}
+		}
+	}()
+
+	content, err = io.ReadAll(body)
+	return
+}
 
 func TestChainMiddlewares(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +76,7 @@ func TestChainMiddlewares(t *testing.T) {
 				t.Errorf("ChainMiddlewares = %d, want %d", result, tc.wantStatus)
 			}
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
+			if result, _ := readContent(writer.Result().Body); string(result) != tc.want {
 				t.Errorf("ChainMiddlewares = `%s`, want `%s`", string(result), tc.want)
 			}
 
