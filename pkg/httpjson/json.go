@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	// ErrCannotMarshall occurs when marshaller failed
-	ErrCannotMarshall = errors.New("cannot marshall json")
+	// ErrCannotMarshal occurs when marshaller failed
+	ErrCannotMarshal = errors.New("cannot marshall json")
 
 	headers = http.Header{}
 )
@@ -41,20 +41,28 @@ func IsPretty(r *http.Request) bool {
 	return query.GetBool(r, "pretty")
 }
 
-// Write writes marshalled obj to http.ResponseWriter with correct header
-func Write(w http.ResponseWriter, status int, obj interface{}, pretty bool) {
+// RawWrite writes marshalled obj to io.Writer
+func RawWrite(w io.Writer, obj interface{}, pretty bool) error {
 	encoder := json.NewEncoder(w)
 	if pretty {
 		encoder.SetIndent("", "  ")
 	}
 
+	if err := encoder.Encode(obj); err != nil {
+		return fmt.Errorf("%s: %w", err, ErrCannotMarshal)
+	}
+	return nil
+}
+
+// Write writes marshalled obj to http.ResponseWriter with correct header
+func Write(w http.ResponseWriter, status int, obj interface{}, pretty bool) {
 	for key, value := range headers {
 		w.Header()[key] = value
 	}
 	w.WriteHeader(status)
 
-	if err := encoder.Encode(obj); err != nil {
-		httperror.InternalServerError(w, fmt.Errorf("%s: %w", err, ErrCannotMarshall))
+	if err := RawWrite(w, obj, pretty); err != nil {
+		httperror.InternalServerError(w, err)
 	}
 }
 
@@ -73,27 +81,30 @@ func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, la
 	Write(w, status, pagination{Items: array, PageSize: pageSize, PageCount: pageCount, Total: total, Last: last}, pretty)
 }
 
-// Parse read body resquest and unmarshall it into given interface
+// Parse read body resquest and unmarshal it into given interface
 func Parse(req *http.Request, obj interface{}) (err error) {
 	return decode(req.Body, obj)
 }
 
-// Read read body response and unmarshall it into given interface
+// Read read body response and unmarshal it into given interface
 func Read(resp *http.Response, obj interface{}) (err error) {
 	return decode(resp.Body, obj)
 }
 
-func decode(input io.ReadCloser, obj interface{}) (err error) {
+func decode(input io.Reader, obj interface{}) (err error) {
 	decoder := json.NewDecoder(input)
-	defer func() {
-		if closeErr := input.Close(); closeErr != nil {
-			if err == nil {
-				err = closeErr
-			}
 
-			err = fmt.Errorf("%s: %w", err, closeErr)
-		}
-	}()
+	if closer, ok := input.(io.Closer); ok {
+		defer func() {
+			if closeErr := closer.Close(); closeErr != nil {
+				if err == nil {
+					err = closeErr
+				}
+
+				err = fmt.Errorf("%s: %w", err, closeErr)
+			}
+		}()
+	}
 
 	if err = decoder.Decode(obj); err != nil {
 		err = fmt.Errorf("unable to parse JSON body: %s", err)

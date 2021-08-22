@@ -41,6 +41,79 @@ func TestIsPretty(t *testing.T) {
 	}
 }
 
+func TestRawWrite(t *testing.T) {
+	type args struct {
+		writer *bytes.Buffer
+		obj    interface{}
+		pretty bool
+	}
+
+	var cases = []struct {
+		intention string
+		args      args
+		want      string
+		wantErr   error
+	}{
+		{
+			"invalid",
+			args{
+				writer: bytes.NewBufferString(""),
+				obj:    func() {},
+			},
+			"",
+			ErrCannotMarshal,
+		},
+		{
+			"simple",
+			args{
+				writer: bytes.NewBufferString(""),
+				obj: map[string]interface{}{
+					"key":   "value",
+					"valid": true,
+				},
+				pretty: false,
+			},
+			"{\"key\":\"value\",\"valid\":true}\n",
+			nil,
+		},
+		{
+			"pretty",
+			args{
+				writer: bytes.NewBufferString(""),
+				obj: map[string]interface{}{
+					"key":   "value",
+					"valid": true,
+				},
+				pretty: true,
+			},
+			"{\n  \"key\": \"value\",\n  \"valid\": true\n}\n",
+			nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			gotErr := RawWrite(tc.args.writer, tc.args.obj, tc.args.pretty)
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			} else if tc.args.writer.String() != tc.want {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("RawWrite() = (`%s`, `%s`), want (`%s`, `%s`)", tc.args.writer.String(), gotErr, tc.want, tc.wantErr)
+			}
+		})
+	}
+}
+
 func TestWrite(t *testing.T) {
 	var cases = []struct {
 		intention  string
@@ -64,14 +137,6 @@ func TestWrite(t *testing.T) {
 			testStruct{id: "Test"},
 			false,
 			"{\"Active\":false,\"Amount\":0}\n",
-			http.StatusOK,
-			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
-		},
-		{
-			"pretty",
-			testStruct{id: "Test", Active: true, Amount: 12.34},
-			true,
-			"{\n  \"Active\": true,\n  \"Amount\": 12.34\n}\n",
 			http.StatusOK,
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
@@ -109,6 +174,14 @@ func TestWrite(t *testing.T) {
 	}
 }
 
+func BenchmarkRawWrite(b *testing.B) {
+	obj := testStruct{id: "Test", Active: true, Amount: 12.34}
+
+	for i := 0; i < b.N; i++ {
+		RawWrite(io.Discard, &obj, false)
+	}
+}
+
 func BenchmarkWrite(b *testing.B) {
 	var tc = struct {
 		obj interface{}
@@ -119,7 +192,7 @@ func BenchmarkWrite(b *testing.B) {
 	writer := httptest.NewRecorder()
 
 	for i := 0; i < b.N; i++ {
-		Write(writer, http.StatusOK, tc.obj, false)
+		Write(writer, http.StatusOK, &tc.obj, false)
 	}
 }
 
