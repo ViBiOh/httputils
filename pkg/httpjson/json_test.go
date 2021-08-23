@@ -178,7 +178,9 @@ func BenchmarkRawWrite(b *testing.B) {
 	obj := testStruct{id: "Test", Active: true, Amount: 12.34}
 
 	for i := 0; i < b.N; i++ {
-		RawWrite(io.Discard, &obj, false)
+		if err := RawWrite(io.Discard, &obj, false); err != nil {
+			b.Error(err)
+		}
 	}
 }
 
