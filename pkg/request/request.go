@@ -188,14 +188,10 @@ func (r Request) JSON(ctx context.Context, body interface{}) (*http.Response, er
 	reader, writer := io.Pipe()
 
 	go func() {
-		if err := json.NewEncoder(writer).Encode(body); err != nil {
-			logger.Error("unable to send json: %s", err)
-		}
-
-		if err := writer.Close(); err != nil {
-			logger.Error("unable to close json writer: %s", err)
-		}
+		// CloseWithError always return nil
+		_ = writer.CloseWithError(json.NewEncoder(writer).Encode(body))
 	}()
+	defer loggedClose(reader)
 
 	return r.ContentJSON().Send(ctx, reader)
 }
@@ -246,4 +242,10 @@ func convertResponseError(resp *http.Response) string {
 // Do send request with default client
 func Do(req *http.Request) (*http.Response, error) {
 	return DoWithClient(defaultHTTPClient, req)
+}
+
+func loggedClose(closer io.Closer) {
+	if err := closer.Close(); err != nil {
+		logger.Error("unable to close: %s", err)
+	}
 }

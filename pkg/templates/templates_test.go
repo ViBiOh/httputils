@@ -6,54 +6,10 @@ import (
 	"html/template"
 	"io"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 
 	"github.com/ViBiOh/httputils/v4/pkg/request"
 )
-
-func TestGetTemplates(t *testing.T) {
-	var cases = []struct {
-		intention string
-		dir       string
-		ext       string
-		want      []string
-		wantErr   error
-	}{
-		{
-			"simple",
-			"../../templates/",
-			".xml",
-			[]string{"../../templates/sitemap.xml"},
-			nil,
-		},
-		{
-			"error",
-			".xml",
-			".xml",
-			nil,
-			nil,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			result, err := GetTemplates(tc.dir, tc.ext)
-
-			failed := false
-
-			if tc.wantErr != nil && (err == nil || err.Error() != tc.wantErr.Error()) {
-				failed = true
-			} else if !reflect.DeepEqual(result, tc.want) {
-				failed = true
-			}
-
-			if failed {
-				t.Errorf("GetTemplates() = (%#v, `%s`), want (%#v, `%s`)", result, err, tc.want, tc.wantErr)
-			}
-		})
-	}
-}
 
 func TestWriteTemplate(t *testing.T) {
 	var cases = []struct {
@@ -259,7 +215,7 @@ func BenchmarkWriteTemplate(b *testing.B) {
 	tpl := template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html"))
 
 	for i := 0; i < b.N; i++ {
-		if err := WriteTemplate(tpl, io.Discard, nil, "text/css"); err != nil {
+		if err := WriteTemplate(tpl, io.Discard, nil, "text/html"); err != nil {
 			b.Error(err)
 		}
 	}

@@ -5,9 +5,6 @@ import (
 	"html/template"
 	"io"
 	"net/http"
-	"os"
-	"path"
-	"path/filepath"
 	"regexp"
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
@@ -38,27 +35,6 @@ func init() {
 
 	xmlHeaders.Add("Content-Type", "text/xml; charset=UTF-8")
 	xmlHeaders.Add("Cache-Control", "no-cache")
-}
-
-// GetTemplates list files by extension
-func GetTemplates(dir, ext string) ([]string, error) {
-	var output []string
-
-	if err := filepath.Walk(dir, func(walkedPath string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if path.Ext(info.Name()) == ext {
-			output = append(output, walkedPath)
-		}
-
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return output, nil
 }
 
 // WriteTemplate write template name from given template into writer for provided content with given minification

@@ -351,7 +351,7 @@ func TestJSON(t *testing.T) {
 			context.Background(),
 			func() {},
 			"",
-			errors.New("HTTP/500"),
+			errors.New("json: unsupported type: func()"),
 		},
 	}
 
