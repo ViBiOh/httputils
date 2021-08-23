@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
-	"github.com/ViBiOh/httputils/v4/pkg/query"
 )
 
 var (
@@ -36,49 +35,39 @@ type pagination struct {
 	Total     uint        `json:"total"`
 }
 
-// IsPretty determine if pretty is defined in query params
-func IsPretty(r *http.Request) bool {
-	return query.GetBool(r, "pretty")
-}
-
 // RawWrite writes marshalled obj to io.Writer
-func RawWrite(w io.Writer, obj interface{}, pretty bool) error {
-	encoder := json.NewEncoder(w)
-	if pretty {
-		encoder.SetIndent("", "  ")
-	}
-
-	if err := encoder.Encode(obj); err != nil {
+func RawWrite(w io.Writer, obj interface{}) error {
+	if err := json.NewEncoder(w).Encode(obj); err != nil {
 		return fmt.Errorf("%s: %w", err, ErrCannotMarshal)
 	}
 	return nil
 }
 
 // Write writes marshalled obj to http.ResponseWriter with correct header
-func Write(w http.ResponseWriter, status int, obj interface{}, pretty bool) {
+func Write(w http.ResponseWriter, status int, obj interface{}) {
 	for key, value := range headers {
 		w.Header()[key] = value
 	}
 	w.WriteHeader(status)
 
-	if err := RawWrite(w, obj, pretty); err != nil {
+	if err := RawWrite(w, obj); err != nil {
 		httperror.InternalServerError(w, err)
 	}
 }
 
 // WriteArray write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func WriteArray(w http.ResponseWriter, status int, array interface{}, pretty bool) {
-	Write(w, status, items{array}, pretty)
+func WriteArray(w http.ResponseWriter, status int, array interface{}) {
+	Write(w, status, items{array})
 }
 
 // WritePagination write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, last string, array interface{}, pretty bool) {
+func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, last string, array interface{}) {
 	pageCount := total / pageSize
 	if total%pageSize != 0 {
 		pageCount++
 	}
 
-	Write(w, status, pagination{Items: array, PageSize: pageSize, PageCount: pageCount, Total: total, Last: last}, pretty)
+	Write(w, status, pagination{Items: array, PageSize: pageSize, PageCount: pageCount, Total: total, Last: last})
 }
 
 // Parse read body resquest and unmarshal it into given interface

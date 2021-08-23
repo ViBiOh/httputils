@@ -378,3 +378,23 @@ func TestJSON(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkJSON(b *testing.B) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := ReadBodyRequest(r); err != nil {
+			b.Error(err)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer testServer.Close()
+
+	ctx := context.Background()
+	req := New().Post(testServer.URL + "/simple")
+	payload := testStruct{id: "Test", Active: true, Amount: 12.34}
+
+	for i := 0; i < b.N; i++ {
+		if _, err := req.JSON(ctx, &payload); err != nil {
+			b.Error(err)
+		}
+	}
+}

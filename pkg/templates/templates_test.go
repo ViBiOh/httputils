@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http/httptest"
 	"reflect"
 	"testing"
@@ -251,5 +252,15 @@ func TestResponseXMLTemplate(t *testing.T) {
 				t.Errorf("ResponseXMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, tc.want, tc.wantErr)
 			}
 		})
+	}
+}
+
+func BenchmarkWriteTemplate(b *testing.B) {
+	tpl := template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html"))
+
+	for i := 0; i < b.N; i++ {
+		if err := WriteTemplate(tpl, io.Discard, nil, "text/css"); err != nil {
+			b.Error(err)
+		}
 	}
 }

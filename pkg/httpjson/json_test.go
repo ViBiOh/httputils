@@ -19,33 +19,10 @@ type testStruct struct {
 	Amount float64
 }
 
-func TestIsPretty(t *testing.T) {
-	var cases = []struct {
-		intention string
-		input     *http.Request
-		want      bool
-	}{
-		{
-			"empty",
-			httptest.NewRequest(http.MethodGet, "/?pretty", nil),
-			true,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			if result := IsPretty(tc.input); result != tc.want {
-				t.Errorf("IsPretty() = %t, want %t", result, tc.want)
-			}
-		})
-	}
-}
-
 func TestRawWrite(t *testing.T) {
 	type args struct {
 		writer *bytes.Buffer
 		obj    interface{}
-		pretty bool
 	}
 
 	var cases = []struct {
@@ -71,29 +48,15 @@ func TestRawWrite(t *testing.T) {
 					"key":   "value",
 					"valid": true,
 				},
-				pretty: false,
 			},
 			"{\"key\":\"value\",\"valid\":true}\n",
-			nil,
-		},
-		{
-			"pretty",
-			args{
-				writer: bytes.NewBufferString(""),
-				obj: map[string]interface{}{
-					"key":   "value",
-					"valid": true,
-				},
-				pretty: true,
-			},
-			"{\n  \"key\": \"value\",\n  \"valid\": true\n}\n",
 			nil,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			gotErr := RawWrite(tc.args.writer, tc.args.obj, tc.args.pretty)
+			gotErr := RawWrite(tc.args.writer, tc.args.obj)
 
 			failed := false
 
@@ -118,7 +81,6 @@ func TestWrite(t *testing.T) {
 	var cases = []struct {
 		intention  string
 		obj        interface{}
-		pretty     bool
 		want       string
 		wantStatus int
 		wantHeader map[string]string
@@ -127,7 +89,6 @@ func TestWrite(t *testing.T) {
 		{
 			"nil",
 			nil,
-			false,
 			"null\n",
 			http.StatusOK,
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
@@ -135,7 +96,6 @@ func TestWrite(t *testing.T) {
 		{
 			"simple object",
 			testStruct{id: "Test"},
-			false,
 			"{\"Active\":false,\"Amount\":0}\n",
 			http.StatusOK,
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
@@ -145,7 +105,6 @@ func TestWrite(t *testing.T) {
 			func() string {
 				return "test"
 			},
-			false,
 			"Oops! Something went wrong. Server's logs contain more details.\n",
 			http.StatusOK, // might not occur in real life
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
@@ -155,7 +114,7 @@ func TestWrite(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			Write(writer, http.StatusOK, tc.obj, tc.pretty)
+			Write(writer, http.StatusOK, tc.obj)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
 				t.Errorf("Write() = `%s`, want `%s`", string(result), tc.want)
@@ -178,7 +137,7 @@ func BenchmarkRawWrite(b *testing.B) {
 	obj := testStruct{id: "Test", Active: true, Amount: 12.34}
 
 	for i := 0; i < b.N; i++ {
-		if err := RawWrite(io.Discard, &obj, false); err != nil {
+		if err := RawWrite(io.Discard, &obj); err != nil {
 			b.Error(err)
 		}
 	}
@@ -194,7 +153,7 @@ func BenchmarkWrite(b *testing.B) {
 	writer := httptest.NewRecorder()
 
 	for i := 0; i < b.N; i++ {
-		Write(writer, http.StatusOK, &tc.obj, false)
+		Write(writer, http.StatusOK, &tc.obj)
 	}
 }
 
@@ -222,7 +181,7 @@ func TestWriteArray(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			WriteArray(writer, http.StatusOK, tc.obj, false)
+			WriteArray(writer, http.StatusOK, tc.obj)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
 				t.Errorf("TestWriteArray() = `%s`, want `%s`", string(result), tc.want)
@@ -279,7 +238,7 @@ func TestWritePagination(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			WritePagination(writer, http.StatusOK, tc.pageSize, tc.total, tc.last, tc.obj, false)
+			WritePagination(writer, http.StatusOK, tc.pageSize, tc.total, tc.last, tc.obj)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
 				t.Errorf("WritePagination() = `%s`, want `%s`", string(result), tc.want)
