@@ -172,13 +172,14 @@ func (l Logger) WithField(name string, value interface{}) FieldsContext {
 	return FieldsContext{
 		outputFn: l.output,
 		closeFn:  l.Close,
-		fields: map[string]interface{}{
-			name: value,
-		},
+		fields: []field{{
+			name:  name,
+			value: value,
+		}},
 	}
 }
 
-func (l Logger) output(lev level, fields map[string]interface{}, format string, a ...interface{}) {
+func (l Logger) output(lev level, fields []field, format string, a ...interface{}) {
 	if l.level < lev {
 		return
 	}
@@ -208,18 +209,18 @@ func (l Logger) json(e event) []byte {
 	l.outputBuffer.WriteString(EscapeString(e.message))
 	l.outputBuffer.WriteString(`"`)
 
-	for key, value := range e.fields {
+	for _, field := range e.fields {
 		l.outputBuffer.WriteString(`,"`)
-		l.outputBuffer.WriteString(EscapeString(key))
+		l.outputBuffer.WriteString(EscapeString(field.name))
 		l.outputBuffer.WriteString(`":`)
 
-		switch content := value.(type) {
+		switch content := field.value.(type) {
 		case string:
 			l.outputBuffer.WriteString(`"`)
 			l.outputBuffer.WriteString(EscapeString(content))
 			l.outputBuffer.WriteString(`"`)
 		default:
-			l.outputBuffer.WriteString(fmt.Sprintf("%v", value))
+			l.outputBuffer.WriteString(EscapeString(fmt.Sprintf("%v", field.value)))
 		}
 	}
 
@@ -238,11 +239,11 @@ func (l Logger) text(e event) []byte {
 	l.outputBuffer.WriteString(` `)
 	l.outputBuffer.WriteString(e.message)
 
-	for key, value := range e.fields {
+	for _, field := range e.fields {
 		l.outputBuffer.WriteString(" ")
-		l.outputBuffer.WriteString(key)
+		l.outputBuffer.WriteString(field.name)
 		l.outputBuffer.WriteString("=")
-		l.outputBuffer.WriteString(fmt.Sprintf("%#v", value))
+		l.outputBuffer.WriteString(fmt.Sprintf("%#v", field.value))
 	}
 	l.outputBuffer.WriteString("\n")
 

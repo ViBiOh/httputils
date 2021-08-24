@@ -336,10 +336,17 @@ func TestJSON(t *testing.T) {
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
 					level:     levelInfo,
 					message:   "Hello world",
-					fields: map[string]interface{}{
-						"count":   7,
-						"name":    "test",
-						"success": true,
+					fields: []field{
+						{
+							name:  "count",
+							value: 7,
+						}, {
+							name:  "name",
+							value: "test",
+						}, {
+							name:  "success",
+							value: true,
+						},
 					},
 				},
 			},
@@ -396,10 +403,19 @@ func BenchmarkJSONWithFields(b *testing.B) {
 		timestamp: time.Now(),
 		level:     levelInfo,
 		message:   "Hello world",
-		fields: map[string]interface{}{
-			"count":   7,
-			"name":    "test",
-			"success": true,
+		fields: []field{
+			{
+				name:  "count",
+				value: 7,
+			},
+			{
+				name:  "name",
+				value: "test",
+			},
+			{
+				name:  "success",
+				value: true,
+			},
 		},
 	}
 
@@ -436,8 +452,11 @@ func TestText(t *testing.T) {
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
 					level:     levelInfo,
 					message:   "Hello world",
-					fields: map[string]interface{}{
-						"name": "test",
+					fields: []field{
+						{
+							name:  "name",
+							value: "test",
+						},
 					},
 				},
 			},
@@ -450,8 +469,11 @@ func TestText(t *testing.T) {
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
 					level:     levelInfo,
 					message:   "Hello world",
-					fields: map[string]interface{}{
-						"count": 7,
+					fields: []field{
+						{
+							name:  "count",
+							value: 7,
+						},
 					},
 				},
 			},
@@ -493,10 +515,19 @@ func BenchmarkTextWithFields(b *testing.B) {
 		timestamp: time.Now(),
 		level:     levelInfo,
 		message:   "Hello world",
-		fields: map[string]interface{}{
-			"count":   7,
-			"name":    "test",
-			"success": true,
+		fields: []field{
+			{
+				name:  "count",
+				value: 7,
+			},
+			{
+				name:  "name",
+				value: "test",
+			},
+			{
+				name:  "success",
+				value: true,
+			},
 		},
 	}
 

@@ -4,8 +4,13 @@ import (
 	"time"
 )
 
+type field struct {
+	name  string
+	value interface{}
+}
+
 type event struct {
-	fields    map[string]interface{}
+	fields    []field
 	timestamp time.Time
 	message   string
 	level     level
@@ -13,14 +18,17 @@ type event struct {
 
 // FieldsContext contains field context
 type FieldsContext struct {
-	fields   map[string]interface{}
-	outputFn func(level, map[string]interface{}, string, ...interface{})
+	fields   []field
+	outputFn func(level, []field, string, ...interface{})
 	closeFn  func()
 }
 
 // WithField add a field to current context
 func (f FieldsContext) WithField(name string, value interface{}) FieldsContext {
-	f.fields[name] = value
+	f.fields = append(f.fields, field{
+		name:  name,
+		value: value,
+	})
 
 	return f
 }

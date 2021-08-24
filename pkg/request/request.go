@@ -139,30 +139,23 @@ func (r Request) WithSignatureAuthorization(keyID string, secret []byte) Request
 
 // Build create request for given context and payload
 func (r Request) Build(ctx context.Context, payload io.ReadCloser) (*http.Request, error) {
-	var content []byte
-
-	if len(r.signatureSecret) != 0 {
-		body, err := readContent(payload)
-		if err != nil {
-			return nil, fmt.Errorf("unable to read content before signing it: %s", err)
-		}
-
-		content = body
-		payload = io.NopCloser(bytes.NewBuffer(body))
-	}
-
 	req, err := http.NewRequestWithContext(ctx, r.method, r.url, payload)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header = r.header
-	if len(r.username) != 0 || len(r.password) != 0 {
-		req.SetBasicAuth(r.username, r.password)
-	}
 
-	if len(content) != 0 {
-		AddSignature(req, r.signatureKeydID, r.signatureSecret, content)
+	if len(r.signatureSecret) != 0 {
+		body, err := readContent(payload)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read content for signature: %s", err)
+		}
+
+		AddSignature(req, r.signatureKeydID, r.signatureSecret, body)
+		req.Body = io.NopCloser(bytes.NewBuffer(body))
+	} else if len(r.username) != 0 || len(r.password) != 0 {
+		req.SetBasicAuth(r.username, r.password)
 	}
 
 	return req, nil
@@ -172,7 +165,7 @@ func (r Request) Build(ctx context.Context, payload io.ReadCloser) (*http.Reques
 func (r Request) Send(ctx context.Context, payload io.ReadCloser) (*http.Response, error) {
 	req, err := r.Build(ctx, payload)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to build request: %s", err)
 	}
 
 	return DoWithClient(r.client, req)
