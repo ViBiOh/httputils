@@ -212,14 +212,14 @@ func convertResponseError(resp *http.Response) string {
 		}
 	}()
 
-	builder.WriteString(fmt.Sprintf("HTTP/%d", resp.StatusCode))
+	fmt.Fprintf(&builder, "HTTP/%d", resp.StatusCode)
 
 	for key, value := range resp.Header {
-		builder.WriteString(fmt.Sprintf("\n%s: %s", key, strings.Join(value, ",")))
+		fmt.Fprintf(&builder, "\n%s: %s", key, strings.Join(value, ","))
 	}
 
 	if errBody, bodyErr := io.ReadAll(io.LimitReader(resp.Body, maxErrorBody)); bodyErr == nil && len(errBody) > 0 {
-		builder.WriteString(fmt.Sprintf("\n\n%s", errBody))
+		fmt.Fprintf(&builder, "\n\n%s", errBody)
 	}
 
 	// Discard remaining content

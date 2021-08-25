@@ -136,10 +136,10 @@ func (f Flag) formatLabel(envName string) string {
 	builder := strings.Builder{}
 
 	if len(f.docPrefix) != 0 {
-		builder.WriteString(fmt.Sprintf("[%s] ", f.docPrefix))
+		fmt.Fprintf(&builder, "[%s] ", f.docPrefix)
 	}
+	fmt.Fprintf(&builder, "%s {%s}", f.label, envName)
 
-	builder.WriteString(fmt.Sprintf("%s {%s}", f.label, envName))
 	return builder.String()
 }
 

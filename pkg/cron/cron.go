@@ -56,19 +56,19 @@ func (c *Cron) String() string {
 	var buffer strings.Builder
 
 	if c.interval != 0 {
-		buffer.WriteString(fmt.Sprintf("each: %s", c.interval))
+		fmt.Fprintf(&buffer, "each: %s", c.interval)
 	} else {
-		buffer.WriteString(fmt.Sprintf("day: %07b, at: %02d:%02d, in: %s", c.day, c.dayTime.Hour(), c.dayTime.Minute(), c.dayTime.Location()))
+		fmt.Fprintf(&buffer, "day: %07b, at: %02d:%02d, in: %s", c.day, c.dayTime.Hour(), c.dayTime.Minute(), c.dayTime.Location())
 	}
 
-	buffer.WriteString(fmt.Sprintf(", retry: %d times every %s", c.maxRetry, c.retryInterval))
+	fmt.Fprintf(&buffer, ", retry: %d times every %s", c.maxRetry, c.retryInterval)
 
 	if c.redisApp != nil {
-		buffer.WriteString(fmt.Sprintf(", in exclusive mode as `%s` with %s timeout", c.name, c.timeout))
+		fmt.Fprintf(&buffer, ", in exclusive mode as `%s` with %s timeout", c.name, c.timeout)
 	}
 
 	for _, err := range c.errors {
-		buffer.WriteString(fmt.Sprintf(", error=`%s`", err))
+		fmt.Fprintf(&buffer, ", error=`%s`", err)
 	}
 
 	return buffer.String()
