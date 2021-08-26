@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 const (
@@ -223,9 +222,7 @@ func convertResponseError(resp *http.Response) string {
 	}
 
 	// Discard remaining content
-	buffer := model.BufferPool.Get().(*bytes.Buffer)
-	defer model.BufferPool.Put(buffer)
-	if _, err := io.CopyBuffer(io.Discard, resp.Body, buffer.Bytes()); err != nil {
+	if _, err := io.Copy(io.Discard, resp.Body); err != nil {
 		logger.Error("unable to discard error body response: %s", err)
 	}
 

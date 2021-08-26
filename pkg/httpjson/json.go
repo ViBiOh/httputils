@@ -80,22 +80,18 @@ func Read(resp *http.Response, obj interface{}) (err error) {
 	return decode(resp.Body, obj)
 }
 
-func decode(input io.Reader, obj interface{}) (err error) {
-	decoder := json.NewDecoder(input)
-
-	if closer, ok := input.(io.Closer); ok {
-		defer func() {
-			if closeErr := closer.Close(); closeErr != nil {
-				if err == nil {
-					err = closeErr
-				}
-
-				err = fmt.Errorf("%s: %w", err, closeErr)
+func decode(input io.ReadCloser, obj interface{}) (err error) {
+	defer func() {
+		if closeErr := input.Close(); closeErr != nil {
+			if err == nil {
+				err = closeErr
 			}
-		}()
-	}
 
-	if err = decoder.Decode(obj); err != nil {
+			err = fmt.Errorf("%s: %w", err, closeErr)
+		}
+	}()
+
+	if err = json.NewDecoder(input).Decode(obj); err != nil {
 		err = fmt.Errorf("unable to parse JSON body: %s", err)
 	}
 

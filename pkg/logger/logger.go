@@ -117,7 +117,7 @@ func (l Logger) Start() {
 		}
 
 		if err != nil {
-			safeErrorWrite(fmt.Sprintf("unable to write log: %s\n", err))
+			fmt.Fprintf(os.Stderr, "unable to write log: %s\n", err)
 		}
 	}
 
@@ -243,17 +243,11 @@ func (l Logger) text(e event) []byte {
 		l.outputBuffer.WriteString(" ")
 		l.outputBuffer.WriteString(field.name)
 		l.outputBuffer.WriteString("=")
-		l.outputBuffer.WriteString(fmt.Sprintf("%#v", field.value))
+		fmt.Fprintf(l.outputBuffer, "%#v", field.value)
 	}
 	l.outputBuffer.WriteString("\n")
 
 	return l.outputBuffer.Bytes()
-}
-
-func safeErrorWrite(message string) {
-	if _, err := os.Stderr.WriteString(message); err != nil {
-		fmt.Println(err)
-	}
 }
 
 // Providing function wrapper for interface compatibility

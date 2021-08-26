@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"sync"
 
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/html"
@@ -20,6 +20,12 @@ var (
 
 	htmlHeaders = http.Header{}
 	xmlHeaders  = http.Header{}
+
+	bufferPool = sync.Pool{
+		New: func() interface{} {
+			return bytes.NewBuffer(make([]byte, 4*1024))
+		},
+	}
 )
 
 func init() {
@@ -39,24 +45,24 @@ func init() {
 
 // WriteTemplate write template name from given template into writer for provided content with given minification
 func WriteTemplate(tpl *template.Template, w io.Writer, content interface{}, mediatype string) error {
-	templateBuffer := model.BufferPool.Get().(*bytes.Buffer)
-	defer model.BufferPool.Put(templateBuffer)
+	buffer := bufferPool.Get().(*bytes.Buffer)
+	defer bufferPool.Put(buffer)
 
-	templateBuffer.Reset()
-	if err := tpl.Execute(templateBuffer, content); err != nil {
+	buffer.Reset()
+	if err := tpl.Execute(buffer, content); err != nil {
 		return err
 	}
 
-	return minifier.Minify(mediatype, w, templateBuffer)
+	return minifier.Minify(mediatype, w, buffer)
 }
 
 // ResponseHTMLTemplate write template name from given template into writer for provided content with HTML minification
 func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
-	templateBuffer := model.BufferPool.Get().(*bytes.Buffer)
-	defer model.BufferPool.Put(templateBuffer)
+	buffer := bufferPool.Get().(*bytes.Buffer)
+	defer bufferPool.Put(buffer)
 
-	templateBuffer.Reset()
-	if err := tpl.Execute(templateBuffer, content); err != nil {
+	buffer.Reset()
+	if err := tpl.Execute(buffer, content); err != nil {
 		return err
 	}
 
@@ -65,7 +71,7 @@ func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content
 	}
 	w.WriteHeader(status)
 
-	return minifier.Minify("text/html", w, templateBuffer)
+	return minifier.Minify("text/html", w, buffer)
 }
 
 // ResponseHTMLTemplateRaw write template name from given template into writer for provided content
@@ -80,12 +86,12 @@ func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, cont
 
 // ResponseXMLTemplate write template name from given template into writer for provided content with XML minification
 func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
-	templateBuffer := model.BufferPool.Get().(*bytes.Buffer)
-	defer model.BufferPool.Put(templateBuffer)
+	buffer := bufferPool.Get().(*bytes.Buffer)
+	defer bufferPool.Put(buffer)
 
-	templateBuffer.Reset()
-	templateBuffer.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
-	if err := tpl.Execute(templateBuffer, content); err != nil {
+	buffer.Reset()
+	buffer.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
+	if err := tpl.Execute(buffer, content); err != nil {
 		return err
 	}
 
@@ -94,5 +100,5 @@ func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content 
 	}
 	w.WriteHeader(status)
 
-	return minifier.Minify("text/xml", w, templateBuffer)
+	return minifier.Minify("text/xml", w, buffer)
 }
