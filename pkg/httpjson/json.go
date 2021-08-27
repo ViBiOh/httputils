@@ -71,31 +71,31 @@ func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, la
 }
 
 // Parse read body resquest and unmarshal it into given interface
-func Parse(req *http.Request, obj interface{}) (err error) {
-	return decode(req.Body, obj)
+func Parse(req *http.Request, obj interface{}) error {
+	if err := json.NewDecoder(req.Body).Decode(obj); err != nil {
+		return fmt.Errorf("unable to parse JSON: %s", err)
+	}
+
+	return nil
 }
 
 // Read read body response and unmarshal it into given interface
-func Read(resp *http.Response, obj interface{}) (err error) {
-	return decode(resp.Body, obj)
-}
+func Read(resp *http.Response, obj interface{}) error {
+	var err error
 
-func decode(input io.ReadCloser, obj interface{}) (err error) {
-	defer func() {
-		if closeErr := input.Close(); closeErr != nil {
-			if err == nil {
-				err = closeErr
-			}
-
-			err = fmt.Errorf("%s: %w", err, closeErr)
-		}
-	}()
-
-	if err = json.NewDecoder(input).Decode(obj); err != nil {
-		err = fmt.Errorf("unable to parse JSON body: %s", err)
+	if err = json.NewDecoder(resp.Body).Decode(obj); err != nil {
+		err = fmt.Errorf("unable to parse JSON: %s", err)
 	}
 
-	return
+	if closeErr := resp.Body.Close(); closeErr != nil {
+		if err == nil {
+			return fmt.Errorf("unable to close body: %s", closeErr)
+		}
+
+		return fmt.Errorf("%s: %w", err, closeErr)
+	}
+
+	return err
 }
 
 // Stream reads io.Reader and stream array or map content to given chan

@@ -330,7 +330,7 @@ func TestRead(t *testing.T) {
 				},
 			},
 			nil,
-			errors.New("unable to parse JSON body"),
+			errors.New("unable to parse JSON"),
 		},
 		{
 			"close error",
@@ -354,7 +354,7 @@ func TestRead(t *testing.T) {
 				},
 			},
 			nil,
-			errors.New("unable to parse JSON body: invalid character 'i' looking for beginning of value: close error"),
+			errors.New("unable to parse JSON: invalid character 'i' looking for beginning of value: close error"),
 		},
 		{
 			"valid",
