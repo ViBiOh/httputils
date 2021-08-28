@@ -71,6 +71,33 @@ func (r Request) URL(url string) Request {
 	return r
 }
 
+// Path appends given path to the current URL
+func (r Request) Path(path string) Request {
+	if len(path) == 0 {
+		return r
+	}
+
+	var status uint
+
+	if strings.HasPrefix(path, "/") {
+		status |= 1
+	}
+	if strings.HasSuffix(r.url, "/") {
+		status |= 1 << 1
+	}
+
+	switch status {
+	case 0:
+		r.url = fmt.Sprintf("%s/%s", r.url, path)
+	case 1, 2:
+		r.url += path
+	case 3:
+		r.url += strings.TrimPrefix(path, "/")
+	}
+
+	return r
+}
+
 // Get set GET to given url
 func (r Request) Get(url string) Request {
 	return r.Method(http.MethodGet).URL(url)

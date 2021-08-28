@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -47,6 +48,68 @@ func TestIsZero(t *testing.T) {
 		t.Run(tc.intention, func(t *testing.T) {
 			if got := tc.instance.IsZero(); got != tc.want {
 				t.Errorf("IsZero() = %t, want %t", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestPath(t *testing.T) {
+	type args struct {
+		path string
+	}
+
+	var cases = []struct {
+		intention string
+		instance  Request
+		args      args
+		want      Request
+	}{
+		{
+			"empty",
+			New().Get("http://localhost"),
+			args{
+				path: "",
+			},
+			New().Get("http://localhost"),
+		},
+		{
+			"no prefix",
+			New().Get("http://localhost"),
+			args{
+				path: "hello",
+			},
+			New().Get("http://localhost/hello"),
+		},
+		{
+			"trailing slash url",
+			New().Get("http://localhost/"),
+			args{
+				path: "hello",
+			},
+			New().Get("http://localhost/hello"),
+		},
+		{
+			"prefix path",
+			New().Get("http://localhost"),
+			args{
+				path: "/hello",
+			},
+			New().Get("http://localhost/hello"),
+		},
+		{
+			"full slash",
+			New().Get("http://localhost/"),
+			args{
+				path: "/hello",
+			},
+			New().Get("http://localhost/hello"),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if got := tc.instance.Path(tc.args.path); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("Path() = %#v, want %#v", got, tc.want)
 			}
 		})
 	}
