@@ -283,6 +283,101 @@ func TestToUint(t *testing.T) {
 	}
 }
 
+func TestToUint64(t *testing.T) {
+	var cases = []struct {
+		intention    string
+		prefix       string
+		docPrefix    string
+		name         string
+		defaultValue interface{}
+		label        string
+		want         string
+	}{
+		{
+			"simple",
+			"",
+			"cli",
+			"test",
+			0,
+			"Test flag",
+			"Usage of ToUint64:\n  -test uint\n    \t[cli] Test flag {TO_UINT64_TEST}\n",
+		},
+		{
+			"uint",
+			"",
+			"cli",
+			"test",
+			uint(10),
+			"Test flag",
+			"Usage of ToUint64:\n  -test uint\n    \t[cli] Test flag {TO_UINT64_TEST} (default 10)\n",
+		},
+		{
+			"uint",
+			"",
+			"cli",
+			"test",
+			"test",
+			"Test flag",
+			"Usage of ToUint64:\n  -test uint\n    \t[cli] Test flag {TO_UINT64_TEST}\n",
+		},
+		{
+			"with prefix",
+			"context",
+			"cli",
+			"test",
+			8000,
+			"Test flag",
+			"Usage of ToUint64:\n  -contextTest uint\n    \t[context] Test flag {TO_UINT64_CONTEXT_TEST} (default 8000)\n",
+		},
+		{
+			"env",
+			"",
+			"cli",
+			"value",
+			8000,
+			"Test flag",
+			"Usage of ToUint64:\n  -value uint\n    \t[cli] Test flag {TO_UINT64_VALUE} (default 6000)\n",
+		},
+		{
+			"invalid env",
+			"",
+			"cli",
+			"invalidValue",
+			8000,
+			"Test flag",
+			"Usage of ToUint64:\n  -invalidValue uint\n    \t[cli] Test flag {TO_UINT64_INVALID_VALUE} (default 8000)\n",
+		},
+		{
+			"nil",
+			"",
+			"cli",
+			"empty",
+			nil,
+			"Test flag",
+			"Usage of ToUint64:\n",
+		},
+	}
+
+	os.Setenv("TO_UINT64_VALUE", "6000")
+	os.Setenv("TO_UINT64_INVALID_VALUE", "-6000")
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet("ToUint64", flag.ContinueOnError)
+			fg := New(tc.prefix, tc.docPrefix, tc.name).Default(tc.defaultValue, nil).Label(tc.label)
+			fg.ToUint64(fs)
+
+			var writer strings.Builder
+			fs.SetOutput(&writer)
+			fs.Usage()
+
+			if result := writer.String(); result != tc.want {
+				t.Errorf("ToUint64() = `%s`, want `%s`", result, tc.want)
+			}
+		})
+	}
+}
+
 func TestToFloat64(t *testing.T) {
 	var cases = []struct {
 		intention    string
