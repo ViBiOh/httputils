@@ -11,12 +11,14 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
 const (
 	maxErrorBody = 500
+)
+
+var (
+	discarder = io.Discard.(io.ReaderFrom)
 )
 
 var (
@@ -133,6 +135,7 @@ func (r Request) BasicAuth(username, password string) Request {
 
 // Header add header to request
 func (r Request) Header(name, value string) Request {
+	r.header = r.header.Clone()
 	r.header.Add(name, value)
 
 	return r
@@ -215,9 +218,18 @@ func (r Request) JSON(ctx context.Context, body interface{}) (*http.Response, er
 		// CloseWithError always return nil
 		_ = writer.CloseWithError(json.NewEncoder(writer).Encode(body))
 	}()
-	defer loggedClose(reader)
 
-	return r.ContentJSON().Send(ctx, reader)
+	resp, err := r.ContentJSON().Send(ctx, reader)
+
+	if closeErr := reader.Close(); closeErr != nil {
+		if err == nil {
+			err = closeErr
+		} else {
+			err = fmt.Errorf("%s: %w", err, closeErr)
+		}
+	}
+
+	return resp, err
 }
 
 // DoWithClient send request with given client
@@ -237,12 +249,6 @@ func DoWithClient(client *http.Client, req *http.Request) (*http.Response, error
 func convertResponseError(resp *http.Response) string {
 	builder := strings.Builder{}
 
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			logger.Error("unable to close error body: %s", closeErr)
-		}
-	}()
-
 	fmt.Fprintf(&builder, "HTTP/%d", resp.StatusCode)
 
 	for key, value := range resp.Header {
@@ -253,21 +259,33 @@ func convertResponseError(resp *http.Response) string {
 		fmt.Fprintf(&builder, "\n\n%s", errBody)
 	}
 
-	// Discard remaining content
-	if _, err := io.Copy(io.Discard, resp.Body); err != nil {
-		logger.Error("unable to discard error body response: %s", err)
+	if err := DiscardBody(resp.Body); err != nil {
+		fmt.Fprintf(&builder, "\nunable to discard body response: %s", err)
 	}
 
 	return builder.String()
 }
 
+// DiscardBody of a response
+func DiscardBody(body io.ReadCloser) error {
+	var err error
+
+	if _, readErr := discarder.ReadFrom(body); readErr != nil {
+		err = readErr
+	}
+
+	if closeErr := body.Close(); closeErr != nil {
+		if err == nil {
+			err = closeErr
+		} else {
+			err = fmt.Errorf("%s: %w", err, closeErr)
+		}
+	}
+
+	return err
+}
+
 // Do send request with default client
 func Do(req *http.Request) (*http.Response, error) {
 	return DoWithClient(defaultHTTPClient, req)
-}
-
-func loggedClose(closer io.Closer) {
-	if err := closer.Close(); err != nil {
-		logger.Error("unable to close: %s", err)
-	}
 }

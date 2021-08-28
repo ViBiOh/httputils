@@ -86,6 +86,26 @@ func (f Flag) ToInt(fs *flag.FlagSet) *int {
 	return fs.Int(FirstLowerCase(name), LookupEnvInt(envName, f.value.(int)), f.formatLabel(envName))
 }
 
+// ToInt64 build Flag Set for int64
+func (f Flag) ToInt64(fs *flag.FlagSet) *int64 {
+	if f.value == nil {
+		return nil
+	}
+
+	var value int64
+	switch typedValue := f.value.(type) {
+	case int:
+		value = int64(typedValue)
+	case int64:
+		value = typedValue
+	default:
+		value = 0
+	}
+
+	name, envName := f.getNameAndEnv(fs)
+	return fs.Int64(FirstLowerCase(name), LookupEnvInt64(envName, value), f.formatLabel(envName))
+}
+
 // ToUint build Flag Set for uint
 func (f Flag) ToUint(fs *flag.FlagSet) *uint {
 	if f.value == nil {
@@ -186,6 +206,22 @@ func LookupEnvInt(key string, value int) int {
 	}
 
 	intVal, err := strconv.Atoi(val)
+	if err == nil {
+		return intVal
+	}
+
+	return value
+}
+
+// LookupEnvInt64 search for given key in environment as int64
+func LookupEnvInt64(key string, value int64) int64 {
+	val, ok := os.LookupEnv(key)
+
+	if !ok {
+		return value
+	}
+
+	intVal, err := strconv.ParseInt(val, 10, 64)
 	if err == nil {
 		return intVal
 	}

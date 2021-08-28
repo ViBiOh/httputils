@@ -188,6 +188,83 @@ func TestToInt(t *testing.T) {
 	}
 }
 
+func TestToInt64(t *testing.T) {
+	var cases = []struct {
+		intention    string
+		prefix       string
+		docPrefix    string
+		name         string
+		defaultValue interface{}
+		label        string
+		want         string
+	}{
+		{
+			"simple",
+			"",
+			"cli",
+			"test",
+			0,
+			"Test flag",
+			"Usage of ToInt64:\n  -test int\n    \t[cli] Test flag {TO_INT64_TEST}\n",
+		},
+		{
+			"with prefix",
+			"context",
+			"cli",
+			"test",
+			8000,
+			"Test flag",
+			"Usage of ToInt64:\n  -contextTest int\n    \t[context] Test flag {TO_INT64_CONTEXT_TEST} (default 8000)\n",
+		},
+		{
+			"env",
+			"",
+			"cli",
+			"value",
+			8000,
+			"Test flag",
+			"Usage of ToInt64:\n  -value int\n    \t[cli] Test flag {TO_INT64_VALUE} (default 6000)\n",
+		},
+		{
+			"invalid env",
+			"",
+			"cli",
+			"invalidValue",
+			8000,
+			"Test flag",
+			"Usage of ToInt64:\n  -invalidValue int\n    \t[cli] Test flag {TO_INT64_INVALID_VALUE} (default 8000)\n",
+		},
+		{
+			"nil",
+			"",
+			"cli",
+			"empty",
+			nil,
+			"Test flag",
+			"Usage of ToInt64:\n",
+		},
+	}
+
+	os.Setenv("TO_INT64_VALUE", "6000")
+	os.Setenv("TO_INT64_INVALID_VALUE", "test")
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			fs := flag.NewFlagSet("ToInt64", flag.ContinueOnError)
+			fg := New(tc.prefix, tc.docPrefix, tc.name).Default(tc.defaultValue, nil).Label(tc.label)
+			fg.ToInt64(fs)
+
+			var writer strings.Builder
+			fs.SetOutput(&writer)
+			fs.Usage()
+
+			if result := writer.String(); result != tc.want {
+				t.Errorf("ToInt64() = `%s`, want `%s`", result, tc.want)
+			}
+		})
+	}
+}
+
 func TestToUint(t *testing.T) {
 	var cases = []struct {
 		intention    string

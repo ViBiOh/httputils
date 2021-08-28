@@ -12,6 +12,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ViBiOh/httputils/v4/pkg/mocks"
+	"github.com/golang/mock/gomock"
 )
 
 type testStruct struct {
@@ -464,6 +467,65 @@ func TestJSON(t *testing.T) {
 
 			if failed {
 				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestDiscardBody(t *testing.T) {
+	var cases = []struct {
+		intention string
+		wantErr   error
+	}{
+		{
+			"read error",
+			errors.New("read error"),
+		},
+		{
+			"close error",
+			errors.New("close error"),
+		},
+		{
+			"valid",
+			nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockReadCloser := mocks.NewReadCloser(ctrl)
+
+			body := mockReadCloser
+
+			switch tc.intention {
+			case "read error":
+				mockReadCloser.EXPECT().Read(gomock.Any()).Return(0, errors.New("read error"))
+				mockReadCloser.EXPECT().Close().Return(nil)
+			case "close error":
+				mockReadCloser.EXPECT().Read(gomock.Any()).Return(0, io.EOF)
+				mockReadCloser.EXPECT().Close().Return(errors.New("close error"))
+			case "valid":
+				mockReadCloser.EXPECT().Read(gomock.Any()).Return(0, io.EOF)
+				mockReadCloser.EXPECT().Close().Return(nil)
+			}
+
+			gotErr := DiscardBody(body)
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("DiscardBody() = `%s`, want `%s`", gotErr, tc.wantErr)
 			}
 		})
 	}
