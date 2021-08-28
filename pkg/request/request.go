@@ -52,6 +52,11 @@ func New() Request {
 	}
 }
 
+// IsZero checks if instance is valued
+func (r Request) IsZero() bool {
+	return len(r.method) == 0
+}
+
 // Method set method of Request
 func (r Request) Method(method string) Request {
 	r.method = method

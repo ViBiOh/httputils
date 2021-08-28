@@ -25,6 +25,33 @@ func safeWrite(writer io.Writer, content []byte) {
 	}
 }
 
+func TestIsZero(t *testing.T) {
+	var cases = []struct {
+		intention string
+		instance  Request
+		want      bool
+	}{
+		{
+			"simple",
+			Request{},
+			true,
+		},
+		{
+			"simple",
+			New(),
+			false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if got := tc.instance.IsZero(); got != tc.want {
+				t.Errorf("IsZero() = %t, want %t", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestSend(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/simple" {
