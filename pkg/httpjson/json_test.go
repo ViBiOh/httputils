@@ -330,7 +330,7 @@ func TestRead(t *testing.T) {
 				},
 			},
 			nil,
-			errors.New("unable to parse JSON"),
+			errors.New("unable to read JSON"),
 		},
 		{
 			"close error",
@@ -354,7 +354,7 @@ func TestRead(t *testing.T) {
 				},
 			},
 			nil,
-			errors.New("unable to parse JSON: invalid character 'i' looking for beginning of value: close error"),
+			errors.New("unable to read JSON: invalid character 'i' looking for beginning of value: close error"),
 		},
 		{
 			"valid",
@@ -418,7 +418,7 @@ func TestStream(t *testing.T) {
 				key:    "items",
 			},
 			nil,
-			errors.New("unable to read token"),
+			errors.New("unable to decode token"),
 		},
 		{
 			"no opening token",

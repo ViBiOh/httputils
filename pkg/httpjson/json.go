@@ -84,7 +84,7 @@ func Read(resp *http.Response, obj interface{}) error {
 	var err error
 
 	if err = json.NewDecoder(resp.Body).Decode(obj); err != nil {
-		err = fmt.Errorf("unable to parse JSON: %s", err)
+		err = fmt.Errorf("unable to read JSON: %s", err)
 	}
 
 	if closeErr := resp.Body.Close(); closeErr != nil {
@@ -108,7 +108,7 @@ func Stream(stream io.Reader, newObj func() interface{}, output chan<- interface
 	for !strings.EqualFold(fmt.Sprintf("%s", token), key) {
 		token, err = decoder.Token()
 		if err != nil {
-			return fmt.Errorf("unable to read token: %s", err)
+			return fmt.Errorf("unable to decode token: %s", err)
 		}
 	}
 
@@ -119,7 +119,7 @@ func Stream(stream io.Reader, newObj func() interface{}, output chan<- interface
 	for decoder.More() {
 		obj := newObj()
 		if err := decoder.Decode(obj); err != nil {
-			return fmt.Errorf("unable to parse JSON: %s", err)
+			return fmt.Errorf("unable to decode item: %s", err)
 		}
 		output <- obj
 	}
