@@ -92,9 +92,9 @@ func newLogger(outWriter, errWriter io.Writer, lev level, json bool, timeKey, le
 		errWriter: errWriter,
 
 		jsonFormat: json,
-		timeKey:    EscapeString(timeKey),
-		levelKey:   EscapeString(levelKey),
-		messageKey: EscapeString(messageKey),
+		timeKey:    timeKey,
+		levelKey:   levelKey,
+		messageKey: messageKey,
 	}
 }
 
@@ -206,21 +206,21 @@ func (l Logger) json(e event) []byte {
 	l.outputBuffer.WriteString(`","`)
 	l.outputBuffer.WriteString(l.messageKey)
 	l.outputBuffer.WriteString(`":"`)
-	l.outputBuffer.WriteString(EscapeString(e.message))
+	WriteEscapedJSON(e.message, l.outputBuffer)
 	l.outputBuffer.WriteString(`"`)
 
 	for _, field := range e.fields {
 		l.outputBuffer.WriteString(`,"`)
-		l.outputBuffer.WriteString(EscapeString(field.name))
+		WriteEscapedJSON(field.name, l.outputBuffer)
 		l.outputBuffer.WriteString(`":`)
 
 		switch content := field.value.(type) {
 		case string:
 			l.outputBuffer.WriteString(`"`)
-			l.outputBuffer.WriteString(EscapeString(content))
+			WriteEscapedJSON(content, l.outputBuffer)
 			l.outputBuffer.WriteString(`"`)
 		default:
-			l.outputBuffer.WriteString(EscapeString(fmt.Sprintf("%v", field.value)))
+			WriteEscapedJSON(fmt.Sprintf("%v", field.value), l.outputBuffer)
 		}
 	}
 

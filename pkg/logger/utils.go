@@ -3,27 +3,14 @@ package logger
 import (
 	"bytes"
 	"strings"
-	"sync"
 )
 
-var (
-	bufferPool = sync.Pool{
-		New: func() interface{} {
-			return bytes.NewBuffer(make([]byte, 1024))
-		},
-	}
-)
-
-// EscapeString escapes value from raw string to be JSON compatible
-func EscapeString(content string) string {
+// WriteEscapedJSON escapes value from raw string to be JSON compatible
+func WriteEscapedJSON(content string, output *bytes.Buffer) {
 	if !strings.ContainsRune(content, '\\') && !strings.ContainsRune(content, '\b') && !strings.ContainsRune(content, '\f') && !strings.ContainsRune(content, '\r') && !strings.ContainsRune(content, '\n') && !strings.ContainsRune(content, '\t') && !strings.ContainsRune(content, '"') {
-		return content
+		output.WriteString(content)
+		return
 	}
-
-	output := bufferPool.Get().(*bytes.Buffer)
-	defer bufferPool.Put(output)
-
-	output.Reset()
 
 	for _, char := range content {
 		switch char {
@@ -45,6 +32,4 @@ func EscapeString(content string) string {
 			output.WriteRune(char)
 		}
 	}
-
-	return output.String()
 }

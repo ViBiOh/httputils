@@ -1,8 +1,11 @@
 package logger
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
-func TestEscapeString(t *testing.T) {
+func TestWriteEscapedJSON(t *testing.T) {
 	type args struct {
 		content string
 	}
@@ -30,21 +33,30 @@ func TestEscapeString(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			if got := EscapeString(tc.args.content); got != tc.want {
-				t.Errorf("EscapeString() = `%s`, want `%s`", got, tc.want)
+			output := bytes.NewBuffer(nil)
+
+			WriteEscapedJSON(tc.args.content, output)
+			if got := output.String(); got != tc.want {
+				t.Errorf("WriteEscapedJSON() = `%s`, want `%s`", got, tc.want)
 			}
 		})
 	}
 }
 
-func BenchmarkEscapeStringSimple(b *testing.B) {
+func BenchmarkWriteEscapedJSONSimple(b *testing.B) {
+	output := bytes.NewBuffer(nil)
+
 	for i := 0; i < b.N; i++ {
-		EscapeString("Text with simple character.")
+		output.Reset()
+		WriteEscapedJSON("Text with simple character.", output)
 	}
 }
 
-func BenchmarkEscapeStringComplex(b *testing.B) {
+func BenchmarkWriteEscapedJSONComplex(b *testing.B) {
+	output := bytes.NewBuffer(nil)
+
 	for i := 0; i < b.N; i++ {
-		EscapeString("Text with special character /\"'\b\f\t\r\n.")
+		output.Reset()
+		WriteEscapedJSON("Text with special character /\"'\b\f\t\r\n.", output)
 	}
 }
