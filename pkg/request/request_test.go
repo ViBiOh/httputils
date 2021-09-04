@@ -29,6 +29,38 @@ func safeWrite(writer io.Writer, content []byte) {
 	}
 }
 
+func TestString(t *testing.T) {
+	var cases = []struct {
+		intention string
+		instance  Request
+		want      string
+	}{
+		{
+			"simple",
+			New(),
+			"GET",
+		},
+		{
+			"basic auth",
+			New().Post("http://localhost").BasicAuth("admin", "password").ContentType("text/plain"),
+			"POST http://localhost, BasicAuth with user `%s`admin, Header Content-Type: `text/plain`",
+		},
+		{
+			"signature auth",
+			New().Post("http://localhost").WithSignatureAuthorization("secret", []byte("password")),
+			"POST http://localhost, SignatureAuthorization with key `secret`",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			if got := tc.instance.String(); got != tc.want {
+				t.Errorf("String() = `%s`, want `%s`", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestIsZero(t *testing.T) {
 	var cases = []struct {
 		intention string

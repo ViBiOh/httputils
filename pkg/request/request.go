@@ -54,6 +54,39 @@ func New() Request {
 	}
 }
 
+// String representation of the request
+func (r Request) String() string {
+	var builder strings.Builder
+
+	if len(r.method) != 0 {
+		builder.WriteString(strings.ToUpper(r.method))
+	}
+
+	if len(r.url) != 0 {
+		builder.WriteString(" ")
+		builder.WriteString(r.url)
+	}
+
+	if len(r.signatureSecret) != 0 {
+		builder.WriteString(", SignatureAuthorization with key `")
+		builder.WriteString(r.signatureKeydID)
+		builder.WriteString("`")
+	} else if len(r.username) != 0 || len(r.password) != 0 {
+		builder.WriteString(", BasicAuth with user `%s`")
+		builder.WriteString(r.username)
+	}
+
+	for key, values := range r.header {
+		builder.WriteString(", Header ")
+		builder.WriteString(key)
+		builder.WriteString(": `")
+		builder.WriteString(strings.Join(values, ", "))
+		builder.WriteString("`")
+	}
+
+	return builder.String()
+}
+
 // IsZero checks if instance is valued
 func (r Request) IsZero() bool {
 	return len(r.method) == 0
