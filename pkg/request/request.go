@@ -89,7 +89,7 @@ func (r Request) String() string {
 
 // IsZero checks if instance is valued
 func (r Request) IsZero() bool {
-	return len(r.method) == 0
+	return len(r.method) == 0 || len(r.url) == 0
 }
 
 // Method set method of Request

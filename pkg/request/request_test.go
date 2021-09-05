@@ -68,13 +68,13 @@ func TestIsZero(t *testing.T) {
 		want      bool
 	}{
 		{
-			"simple",
-			Request{},
+			"empty",
+			New(),
 			true,
 		},
 		{
 			"simple",
-			New(),
+			New().Get("/"),
 			false,
 		},
 	}
