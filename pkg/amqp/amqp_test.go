@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ViBiOh/httputils/v4/pkg/mocks"
+	"github.com/golang/mock/gomock"
 	"github.com/streadway/amqp"
 )
 
@@ -46,19 +48,28 @@ func TestPing(t *testing.T) {
 		{
 			"empty",
 			&Client{},
-			errors.New("amqp client disabled"),
+			nil,
 		},
 		{
 			"not opened",
-			&Client{
-				connection: &amqp.Connection{},
-			},
-			nil,
+			&Client{},
+			errors.New("amqp client closed"),
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockAMQPConnection := mocks.NewAMQPConnection(ctrl)
+
+			switch tc.intention {
+			case "not opened":
+				tc.instance.connection = mockAMQPConnection
+				mockAMQPConnection.EXPECT().IsClosed().Return(true)
+			}
+
 			got := tc.instance.Ping()
 
 			failed := false

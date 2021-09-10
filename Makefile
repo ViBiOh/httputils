@@ -68,6 +68,7 @@ style:
 mocks:
 	find . -name "mocks" -type d -exec rm -r "{}" \+
 	mockgen -destination pkg/mocks/redis.go -mock_names Redis=Redis -package mocks github.com/ViBiOh/httputils/v4/pkg/cron Redis
+	mockgen -destination pkg/mocks/amqp.go -mock_names Connection=AMQPConnection -package mocks github.com/ViBiOh/httputils/v4/pkg/amqp Connection
 	mockgen -destination pkg/mocks/io.go -mock_names ReadCloser=ReadCloser -package mocks io ReadCloser
 
 ## test: Shortcut to launch all the test tasks (unit, functional and integration).

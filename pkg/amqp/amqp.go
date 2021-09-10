@@ -12,10 +12,16 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// Connection for AMQP
+type Connection interface {
+	io.Closer
+	IsClosed() bool
+}
+
 // Client wraps all object required for AMQP usage
 type Client struct {
 	channel            *amqp.Channel
-	connection         *amqp.Connection
+	connection         Connection
 	vhost              string
 	clientName         string
 	uri                string
@@ -199,7 +205,7 @@ func (a *Client) Enabled() bool {
 // Ping checks if connection is live
 func (a *Client) Ping() error {
 	if !a.Enabled() {
-		return errors.New("amqp client disabled")
+		return nil
 	}
 
 	a.mutex.RLock()
@@ -247,15 +253,15 @@ func (a *Client) Listen(queue string) (<-chan amqp.Delivery, error) {
 
 // Ack ack a message with error handling
 func (a *Client) Ack(message amqp.Delivery) {
-	a.loggedConfirm(message, true, false)
+	a.loggerMessageDeliveryAckReject(message, true, false)
 }
 
 // Reject reject a message with error handling
 func (a *Client) Reject(message amqp.Delivery, requeue bool) {
-	a.loggedConfirm(message, false, requeue)
+	a.loggerMessageDeliveryAckReject(message, false, requeue)
 }
 
-func (a *Client) loggedConfirm(message amqp.Delivery, ack bool, value bool) {
+func (a *Client) loggerMessageDeliveryAckReject(message amqp.Delivery, ack bool, value bool) {
 	for {
 		var err error
 
@@ -270,13 +276,13 @@ func (a *Client) loggedConfirm(message amqp.Delivery, ack bool, value bool) {
 		}
 
 		if err != amqp.ErrClosed {
-			logger.Error("unable to confirm message: %s", err)
+			logger.Error("unable to ack/reject message: %s", err)
 			return
 		}
 
-		logger.Error("unable to confirm message due to a closed connection")
+		logger.Error("unable to ack/reject message due to a closed connection")
 
-		logger.Info("Waiting 30 seconds before attempting to confirm message again...")
+		logger.Info("Waiting 30 seconds before attempting to ack/reject message again...")
 		time.Sleep(time.Second * 30)
 
 		func() {
