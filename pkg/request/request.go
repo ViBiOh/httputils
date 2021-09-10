@@ -127,7 +127,7 @@ func (r Request) Path(path string) Request {
 	case 1, 2:
 		r.url += path
 	case 3:
-		r.url += strings.TrimPrefix(path, "/")
+		r.url += path[1:]
 	}
 
 	return r

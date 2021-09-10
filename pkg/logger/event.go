@@ -5,22 +5,22 @@ import (
 )
 
 type field struct {
-	name  string
 	value interface{}
+	name  string
 }
 
 type event struct {
-	fields    []field
 	timestamp time.Time
 	message   string
+	fields    []field
 	level     level
 }
 
 // FieldsContext contains field context
 type FieldsContext struct {
-	fields   []field
 	outputFn func(level, []field, string, ...interface{})
 	closeFn  func()
+	fields   []field
 }
 
 // WithField add a field to current context
