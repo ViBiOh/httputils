@@ -128,33 +128,36 @@ func (a *Client) notifyListeners() {
 	}
 }
 
-// Consumer configures client for consumming from given queue, bind to given exchange
-func (a *Client) Consumer(queueName, topic, exchangeName string, retryDelay time.Duration) error {
+// Consumer configures client for consumming from given queue, bind to given exchange, and return delayed Exchange name to publish
+func (a *Client) Consumer(queueName, topic, exchangeName string, retryDelay time.Duration) (string, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
 	queue, err := a.channel.QueueDeclare(queueName, true, false, false, false, nil)
 	if err != nil {
-		return fmt.Errorf("unable to declare queue: %s", err)
+		return "", fmt.Errorf("unable to declare queue: %s", err)
 	}
 
 	if err := a.channel.QueueBind(queue.Name, topic, exchangeName, false, nil); err != nil {
-		return fmt.Errorf("unable to bind queue `%s` to `%s`: %s", queue.Name, exchangeName, err)
+		return "", fmt.Errorf("unable to bind queue `%s` to `%s`: %s", queue.Name, exchangeName, err)
 	}
 
+	var delayExchange string
 	if retryDelay != 0 {
-		err := a.declareExchange(getDelayedExchangeName(exchangeName), "direct", map[string]interface{}{
+		delayExchange := fmt.Sprintf("%s-delay", exchangeName)
+
+		err := a.declareExchange(delayExchange, "direct", map[string]interface{}{
 			"x-dead-letter-exchange": exchangeName,
 			"x-message-ttl":          retryDelay.Milliseconds(),
 		}, false)
 		if err != nil {
-			return fmt.Errorf("unable to declare delayed exchange: %s", getDelayedExchangeName(exchangeName))
+			return "", fmt.Errorf("unable to declare delayed exchange: %s", delayExchange)
 		}
 	}
 
 	a.ensureClientName()
 
-	return nil
+	return delayExchange, nil
 }
 
 // Publisher configures client for publishing to given exchange
@@ -174,10 +177,6 @@ func (a *Client) declareExchange(exchangeName, exchangeType string, args amqp.Ta
 	}
 
 	return nil
-}
-
-func getDelayedExchangeName(exchangeName string) string {
-	return fmt.Sprintf("%s-delay", exchangeName)
 }
 
 func (a *Client) ensureClientName() {
