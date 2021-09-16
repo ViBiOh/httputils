@@ -70,6 +70,8 @@ mocks:
 	mockgen -destination pkg/mocks/redis.go -mock_names Redis=Redis -package mocks github.com/ViBiOh/httputils/v4/pkg/cron Redis
 	mockgen -destination pkg/mocks/amqp.go -mock_names Connection=AMQPConnection -package mocks github.com/ViBiOh/httputils/v4/pkg/amqp Connection
 	mockgen -destination pkg/mocks/io.go -mock_names ReadCloser=ReadCloser -package mocks io ReadCloser
+	mockgen -destination pkg/mocks/database.go -mock_names Database=Database -package mocks github.com/ViBiOh/httputils/v4/pkg/db Database
+	mockgen -destination pkg/mocks/pgx.go -mock_names Tx=Tx,Row=Row,Rows=Rows -package mocks github.com/jackc/pgx/v4 Tx,Row,Rows
 
 ## test: Shortcut to launch all the test tasks (unit, functional and integration).
 .PHONY: test

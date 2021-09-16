@@ -2,15 +2,15 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
-	"io"
+	"strings"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type key int
@@ -33,9 +33,18 @@ var (
 	SQLTimeout = time.Second * 5
 )
 
+// Database interface needed for working
+type Database interface {
+	Ping(context.Context) error
+	Close()
+	Begin(context.Context) (pgx.Tx, error)
+	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
+	QueryRow(context.Context, string, ...interface{}) pgx.Row
+}
+
 // App of package
 type App struct {
-	db *sql.DB
+	db Database
 }
 
 // Config of package
@@ -66,21 +75,20 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 
 // New creates new App from Config
 func New(config Config) (App, error) {
-	host := *config.host
+	host := strings.TrimSpace(*config.host)
 	if len(host) == 0 {
 		return App{}, ErrNoHost
 	}
 
-	user := *config.user
+	user := strings.TrimSpace(*config.user)
 	pass := *config.pass
-	name := *config.name
+	name := strings.TrimSpace(*config.name)
 	sslmode := *config.sslmode
 
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s connect_timeout=%d", host, *config.port, user, pass, name, sslmode, *config.timeout))
+	db, err := pgxpool.Connect(context.Background(), fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s connect_timeout=%d pool_max_conns=%d", host, *config.port, user, pass, name, sslmode, *config.timeout, *config.maxConn))
 	if err != nil {
-		return App{}, err
+		return App{}, fmt.Errorf("unable to connect to postgres: %s", err)
 	}
-	db.SetMaxOpenConns(int(*config.maxConn))
 
 	instance := App{
 		db: db,
@@ -89,8 +97,20 @@ func New(config Config) (App, error) {
 	return instance, instance.Ping()
 }
 
-// NewFromSQL creates a db wrapper
-func NewFromSQL(db *sql.DB) App {
+// NewFromString creates a db wrapper
+func NewFromString(uri string) (App, error) {
+	db, err := pgxpool.Connect(context.Background(), uri)
+	if err != nil {
+		return App{}, fmt.Errorf("unable to connect to postgres: %s", err)
+	}
+
+	return App{
+		db: db,
+	}, nil
+}
+
+// NewFromDatabase creates a db wrapper
+func NewFromDatabase(db Database) App {
 	return App{
 		db: db,
 	}
@@ -106,26 +126,26 @@ func (a App) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
 	defer cancel()
 
-	return a.db.PingContext(ctx)
+	return a.db.Ping(ctx)
 }
 
 // Close the database connection
-func (a App) Close() error {
-	return a.db.Close()
+func (a App) Close() {
+	a.db.Close()
 }
 
 // StoreTx stores given transaction in context
-func StoreTx(ctx context.Context, tx *sql.Tx) context.Context {
+func StoreTx(ctx context.Context, tx pgx.Tx) context.Context {
 	return context.WithValue(ctx, ctxTxKey, tx)
 }
 
-func readTx(ctx context.Context) *sql.Tx {
+func readTx(ctx context.Context) pgx.Tx {
 	value := ctx.Value(ctxTxKey)
 	if value == nil {
 		return nil
 	}
 
-	if tx, ok := value.(*sql.Tx); ok {
+	if tx, ok := value.(pgx.Tx); ok {
 		return tx
 	}
 
@@ -142,17 +162,17 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) (
 		return action(ctx)
 	}
 
-	var tx *sql.Tx
+	var tx pgx.Tx
 
-	tx, err = a.db.Begin()
+	tx, err = a.db.Begin(ctx)
 	if err != nil {
 		return
 	}
 
 	defer func() {
 		if err == nil {
-			err = tx.Commit()
-		} else if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			err = tx.Commit(ctx)
+		} else if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
 			err = fmt.Errorf("%s: %w", err.Error(), rollbackErr)
 		}
 	}()
@@ -162,43 +182,41 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) (
 }
 
 // List execute multiple rows query
-func (a App) List(ctx context.Context, scanner func(*sql.Rows) error, query string, args ...interface{}) (err error) {
+func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...interface{}) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	var rows *sql.Rows
+	var rows pgx.Rows
 
 	if tx := readTx(ctx); tx != nil {
-		rows, err = tx.QueryContext(ctx, query, args...)
+		rows, err = tx.Query(ctx, query, args...)
 	} else {
-		rows, err = a.db.QueryContext(ctx, query, args...)
+		rows, err = a.db.Query(ctx, query, args...)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	defer func() {
-		err = safeClose(rows, err)
-	}()
-
 	for rows.Next() && err == nil {
 		err = scanner(rows)
 	}
+
+	rows.Close()
 
 	return
 }
 
 // Get execute single row query
-func (a App) Get(ctx context.Context, scanner func(*sql.Row) error, query string, args ...interface{}) error {
+func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...interface{}) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
 	if tx := readTx(ctx); tx != nil {
-		return scanner(tx.QueryRowContext(ctx, query, args...))
+		return scanner(tx.QueryRow(ctx, query, args...))
 	}
 
-	return scanner(a.db.QueryRowContext(ctx, query, args...))
+	return scanner(a.db.QueryRow(ctx, query, args...))
 }
 
 // Create execute query with a RETURNING id
@@ -212,7 +230,7 @@ func (a App) Create(ctx context.Context, query string, args ...interface{}) (uin
 	defer cancel()
 
 	var newID uint64
-	return newID, tx.QueryRowContext(ctx, query, args...).Scan(&newID)
+	return newID, tx.QueryRow(ctx, query, args...).Scan(&newID)
 }
 
 // Exec execute query with specified timeout, disregarding result
@@ -225,57 +243,42 @@ func (a App) Exec(ctx context.Context, query string, args ...interface{}) error 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	_, err := tx.ExecContext(ctx, query, args...)
+	_, err := tx.Exec(ctx, query, args...)
 	return err
 }
 
+type feeder struct {
+	fetcher func() ([]interface{}, error)
+	values  []interface{}
+	err     error
+}
+
+func (bc *feeder) Next() bool {
+	bc.values, bc.err = bc.fetcher()
+	return bc.err != nil && len(bc.values) != 0
+}
+
+func (bc *feeder) Values() ([]interface{}, error) {
+	return bc.values, bc.err
+}
+
+func (bc *feeder) Err() error {
+	return bc.err
+}
+
 // Bulk load data into schema and table by batch
-func (a App) Bulk(ctx context.Context, feeder func(*sql.Stmt) error, schema, table string, columns ...string) (err error) {
+func (a App) Bulk(ctx context.Context, fetcher func() ([]interface{}, error), schema, table string, columns ...string) error {
 	tx := readTx(ctx)
 	if tx == nil {
 		return ErrNoTransaction
 	}
 
-	var stmt *sql.Stmt
-
-	stmt, err = tx.Prepare(pq.CopyInSchema(schema, table, columns...))
-	if err != nil {
-		return fmt.Errorf("unable to prepare context: %s", err)
-	}
-
-	defer func() {
-		err = safeClose(stmt, err)
-	}()
-
-	for err == nil {
-		err = feeder(stmt)
-	}
-
-	if err == ErrBulkEnded {
-		err = nil
-	} else {
-		err = fmt.Errorf("unable to feed bulk creation: %s", err)
-		return
-	}
-
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	if _, err = stmt.ExecContext(ctx); err != nil {
-		err = fmt.Errorf("unable to exec bulk creation: %s", err)
+	if _, err := tx.CopyFrom(ctx, pgx.Identifier{schema, table}, columns, &feeder{fetcher: fetcher}); err != nil {
+		return fmt.Errorf("unable to copy from: %s", err)
 	}
 
-	return
-}
-
-func safeClose(closer io.Closer, err error) error {
-	if closeErr := closer.Close(); closeErr != nil {
-		if err == nil {
-			return closeErr
-		}
-
-		return fmt.Errorf("%s: %w", err, closeErr)
-	}
-
-	return err
+	return nil
 }
