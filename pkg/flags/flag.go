@@ -173,8 +173,8 @@ func (f Flag) ToBool(fs *flag.FlagSet) *bool {
 }
 
 func (f Flag) getNameAndEnv(fs *flag.FlagSet) (string, string) {
-	name := fmt.Sprintf("%s%s", f.prefix, FirstUpperCase(f.name))
-	return name, strings.ToUpper(SnakeCase(fmt.Sprintf("%s%s", FirstUpperCase(fs.Name()), FirstUpperCase(name))))
+	name := f.prefix + FirstUpperCase(f.name)
+	return name, strings.ToUpper(SnakeCase(FirstUpperCase(fs.Name()) + FirstUpperCase(name)))
 }
 
 func (f Flag) formatLabel(envName string) string {

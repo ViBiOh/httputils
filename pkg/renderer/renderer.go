@@ -76,7 +76,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 
 	funcMap["url"] = instance.url
 	funcMap["publicURL"] = func(url string) string {
-		return fmt.Sprintf("%s%s", publicURL, instance.url(url))
+		return publicURL + instance.url(url)
 	}
 
 	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
@@ -92,7 +92,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 func (a App) url(url string) string {
 	prefixedURL := path.Join(a.pathPrefix, url)
 	if len(prefixedURL) > 1 && strings.HasSuffix(url, "/") {
-		return fmt.Sprintf("%s/", prefixedURL)
+		return prefixedURL + "/"
 	}
 
 	return prefixedURL

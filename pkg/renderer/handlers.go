@@ -21,7 +21,7 @@ func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 	var anchor string
 	parts := strings.SplitN(pathname, "#", 2)
 	if len(parts) == 2 && len(parts[1]) > 0 {
-		anchor = fmt.Sprintf("#%s", parts[1])
+		anchor = "#" + parts[1]
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", a.url(parts[0]), joinChar, message, anchor), http.StatusFound)
@@ -81,7 +81,7 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 
 func (a App) svg() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tpl := a.tpl.Lookup(fmt.Sprintf("svg-%s", strings.Trim(r.URL.Path, "/")))
+		tpl := a.tpl.Lookup("svg-" + strings.Trim(r.URL.Path, "/"))
 		if tpl == nil {
 			httperror.NotFound(w)
 			return

@@ -90,14 +90,14 @@ func TestGetStatusCode(t *testing.T) {
 		},
 		{
 			"should return valid status from server",
-			fmt.Sprintf("%s/ok", testServer.URL),
+			testServer.URL + "/ok",
 			"",
 			http.StatusOK,
 			nil,
 		},
 		{
 			"should return wrong status from server",
-			fmt.Sprintf("%s/ko", testServer.URL),
+			testServer.URL + "/ko",
 			"",
 			http.StatusInternalServerError,
 			errors.New("HTTP/500"),

@@ -144,7 +144,7 @@ func (a *Client) Consumer(queueName, topic, exchangeName string, retryDelay time
 
 	var delayExchange string
 	if retryDelay != 0 {
-		delayExchange := fmt.Sprintf("%s-delay", exchangeName)
+		delayExchange := exchangeName + "-delay"
 
 		err := a.declareExchange(delayExchange, "direct", map[string]interface{}{
 			"x-dead-letter-exchange": exchangeName,
