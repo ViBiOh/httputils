@@ -97,25 +97,6 @@ func New(config Config) (App, error) {
 	return instance, instance.Ping()
 }
 
-// NewFromString creates a db wrapper
-func NewFromString(uri string) (App, error) {
-	db, err := pgxpool.Connect(context.Background(), uri)
-	if err != nil {
-		return App{}, fmt.Errorf("unable to connect to postgres: %s", err)
-	}
-
-	return App{
-		db: db,
-	}, nil
-}
-
-// NewFromDatabase creates a db wrapper
-func NewFromDatabase(db Database) App {
-	return App{
-		db: db,
-	}
-}
-
 // Enabled check if sql.DB is provided
 func (a App) Enabled() bool {
 	return a.db != nil
