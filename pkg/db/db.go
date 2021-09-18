@@ -255,7 +255,7 @@ type feeder struct {
 
 func (bc *feeder) Next() bool {
 	bc.values, bc.err = bc.fetcher()
-	return bc.err != nil && len(bc.values) != 0
+	return bc.err == nil && len(bc.values) != 0
 }
 
 func (bc *feeder) Values() ([]interface{}, error) {
