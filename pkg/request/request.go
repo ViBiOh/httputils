@@ -32,9 +32,9 @@ var (
 			ExpectContinueTimeout: 1 * time.Second,
 			ResponseHeaderTimeout: 5 * time.Second,
 
-			MaxConnsPerHost:     20,
-			MaxIdleConns:        50,
-			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     100,
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 100,
 			IdleConnTimeout:     60 * time.Second,
 		},
 
