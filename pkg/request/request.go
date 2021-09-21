@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -19,12 +20,26 @@ const (
 
 var (
 	discarder = io.Discard.(io.ReaderFrom)
-)
 
-var (
 	defaultHTTPClient = &http.Client{
-		Timeout:   15 * time.Second,
-		Transport: http.DefaultTransport,
+		Transport: &http.Transport{
+			DialContext: (&net.Dialer{
+				Timeout:   5 * time.Second,
+				KeepAlive: 15 * time.Second,
+			}).DialContext,
+
+			TLSHandshakeTimeout:   5 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			ResponseHeaderTimeout: 5 * time.Second,
+
+			MaxConnsPerHost:     20,
+			MaxIdleConns:        50,
+			MaxIdleConnsPerHost: 10,
+			IdleConnTimeout:     60 * time.Second,
+		},
+
+		Timeout: 15 * time.Second,
+
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
@@ -189,7 +204,7 @@ func (r Request) ContentJSON() Request {
 	return r.ContentType("application/json")
 }
 
-// WithClient defines net/http client to use, instead of default one (30sec timeout and no redirect)
+// WithClient defines net/http client to use, instead of default one (15sec timeout and no redirect)
 func (r Request) WithClient(client *http.Client) Request {
 	r.client = client
 
