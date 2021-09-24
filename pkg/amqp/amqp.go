@@ -35,7 +35,8 @@ func New(uri string) (*Client, error) {
 	}
 
 	client := &Client{
-		uri: uri,
+		uri:       uri,
+		listeners: make(map[string]chan bool),
 	}
 
 	connection, channel, err := connect(uri, client.onDisconnect)
