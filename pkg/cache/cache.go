@@ -4,12 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/uuid"
 	"github.com/go-redis/redis/v8"
@@ -18,7 +15,6 @@ import (
 
 // Redis client
 type Redis interface {
-	Ping() error
 	Load(ctx context.Context, key string) (string, error)
 	Store(ctx context.Context, key string, value interface{}, duration time.Duration) error
 	Delete(ctx context.Context, key string) error
@@ -26,7 +22,6 @@ type Redis interface {
 
 // Amqp client
 type Amqp interface {
-	Ping() error
 	Consumer(queueName, topic, exchangeName string, retryDelay time.Duration) (string, error)
 	Publisher(exchangeName, exchangeType string, args amqp.Table) error
 	Publish(payload amqp.Publishing, exchange string) error
@@ -40,32 +35,18 @@ type App struct {
 	exchange string
 }
 
-// Config of package
-type Config struct {
-	exchange *string
-}
-
-// Flags adds flags for configuring package
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		exchange: flags.New(prefix, "cache", "Exchange").Default("", overrides).Label("Exchange name for distributed cache eviction").ToString(fs),
-	}
-}
-
 // New creates new App from Config
-func New(config Config, redisApp Redis, amqpApp Amqp) (App, error) {
-	exchangeName := strings.TrimSpace(*config.exchange)
-
+func New(redisApp Redis, amqpApp Amqp, exchange string) (App, error) {
 	if redisApp == nil {
 		return App{}, errors.New("redis client is required")
 	}
 
-	if len(exchangeName) != 0 {
+	if len(exchange) != 0 {
 		if amqpApp == nil {
 			return App{}, errors.New("amqp client is required")
 		}
 
-		if err := amqpApp.Publisher(exchangeName, "fanout", nil); err != nil {
+		if err := amqpApp.Publisher(exchange, "fanout", nil); err != nil {
 			return App{}, fmt.Errorf("unable to configure cache publisher: %s", err)
 		}
 	}
@@ -73,7 +54,7 @@ func New(config Config, redisApp Redis, amqpApp Amqp) (App, error) {
 	return App{
 		redisApp: redisApp,
 		amqpApp:  amqpApp,
-		exchange: exchangeName,
+		exchange: exchange,
 	}, nil
 }
 
@@ -82,14 +63,13 @@ func (a App) Enabled() bool {
 	return a.redisApp != nil
 }
 
-// AmqpEnabled checks that distributed cache eviction is enabled
-func (a App) AmqpEnabled() bool {
+func (a App) amqpEnabled() bool {
 	return a.amqpApp != nil
 }
 
 // ListenEvictions listens on amqp for cache eviction message
 func (a App) ListenEvictions(handler func(string)) {
-	if !a.AmqpEnabled() {
+	if !a.amqpEnabled() {
 		logger.Error("no distributed cache eviction configured")
 		return
 	}
@@ -122,7 +102,7 @@ func (a App) Evict(ctx context.Context, key string) error {
 		logger.Error("unable to delete key `%s` from cache: %s", key, err)
 	}
 
-	if !a.AmqpEnabled() {
+	if !a.amqpEnabled() {
 		return nil
 	}
 
