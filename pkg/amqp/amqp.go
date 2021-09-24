@@ -237,7 +237,20 @@ func (a *Client) Publish(payload amqp.Publishing, exchange string) error {
 }
 
 // Listen listens to configured queue
-func (a *Client) Listen(queue string) (<-chan amqp.Delivery, error) {
+func (a *Client) Listen(done <-chan struct{}, queue string) (<-chan amqp.Delivery, error) {
+	messages, err := a.listen(queue)
+	if err != nil {
+		return nil, err
+	}
+
+	listener := make(chan amqp.Delivery)
+
+	go a.forwarder(done, queue, messages, listener)
+
+	return listener, nil
+}
+
+func (a *Client) listen(queue string) (<-chan amqp.Delivery, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
@@ -248,7 +261,39 @@ func (a *Client) Listen(queue string) (<-chan amqp.Delivery, error) {
 		return nil, fmt.Errorf("unable to consume queue: %s", err)
 	}
 
-	return messages, nil
+	return messages, err
+}
+
+func (a *Client) forwarder(done <-chan struct{}, queue string, input <-chan amqp.Delivery, output chan<- amqp.Delivery) {
+	defer close(output)
+	reconnect := a.ListenReconnect()
+
+forward:
+	for delivery := range input {
+		output <- delivery
+	}
+
+	select {
+	case <-done:
+		return
+	case _, ok := <-reconnect:
+		if !ok {
+			return
+		}
+	}
+
+reconnect:
+	messages, err := a.listen(queue)
+	if err != nil {
+		logger.Error("unable to reopen listener: %s", err)
+
+		logger.Info("Waiting 30 seconds before attempting to listen again...")
+		time.Sleep(time.Second * 30)
+		goto reconnect
+	}
+
+	input = messages
+	goto forward
 }
 
 // Ack ack a message with error handling

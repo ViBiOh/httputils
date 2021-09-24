@@ -48,7 +48,7 @@ func (a App) Ping() error {
 }
 
 // Store store give key/val with duration
-func (a App) Store(ctx context.Context, key, value string, duration time.Duration) error {
+func (a App) Store(ctx context.Context, key string, value interface{}, duration time.Duration) error {
 	return a.redisClient.SetEX(ctx, key, value, duration).Err()
 }
 
