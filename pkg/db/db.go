@@ -230,9 +230,9 @@ func (a App) Exec(ctx context.Context, query string, args ...interface{}) error 
 }
 
 type feeder struct {
+	err     error
 	fetcher func() ([]interface{}, error)
 	values  []interface{}
-	err     error
 }
 
 func (bc *feeder) Next() bool {
