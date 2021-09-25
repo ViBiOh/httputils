@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
@@ -33,47 +34,48 @@ type App struct {
 	redisApp Redis
 	amqpApp  Amqp
 	exchange string
+	mutex    sync.RWMutex
+	cache    map[string]interface{}
 }
 
 // New creates new App from Config
-func New(redisApp Redis, amqpApp Amqp, exchange string) (App, error) {
-	if redisApp == nil {
-		return App{}, errors.New("redis client is required")
+func New(redisApp Redis, amqpApp Amqp, exchange string) (*App, error) {
+	if redisApp == nil && amqpApp == nil {
+		return nil, errors.New("redis or amqp is required")
 	}
 
 	if len(exchange) != 0 {
 		if amqpApp == nil {
-			return App{}, errors.New("amqp client is required")
+			return nil, errors.New("amqp client is required")
 		}
 
 		if err := amqpApp.Publisher(exchange, "fanout", nil); err != nil {
-			return App{}, fmt.Errorf("unable to configure cache publisher: %s", err)
+			return nil, fmt.Errorf("unable to configure cache publisher: %s", err)
 		}
+	} else if amqpApp != nil {
+		return nil, errors.New("exchange name is required")
 	}
 
-	return App{
+	app := App{
 		redisApp: redisApp,
 		amqpApp:  amqpApp,
 		exchange: exchange,
-	}, nil
+		cache:    make(map[string]interface{}),
+	}
+
+	if redisApp == nil {
+		go app.listenForEvictions()
+	}
+
+	return &app, nil
 }
 
 // Enabled checks that requirements are met
-func (a App) Enabled() bool {
+func (a *App) Enabled() bool {
 	return a.redisApp != nil
 }
 
-func (a App) amqpEnabled() bool {
-	return a.amqpApp != nil
-}
-
-// ListenEvictions listens on amqp for cache eviction message
-func (a App) ListenEvictions(handler func(string)) {
-	if !a.amqpEnabled() {
-		logger.Error("no distributed cache eviction configured")
-		return
-	}
-
+func (a *App) listenForEvictions() {
 	queueName, err := uuid.New()
 	if err != nil {
 		logger.Error("unable to generate queue name: %s", err)
@@ -92,17 +94,21 @@ func (a App) ListenEvictions(handler func(string)) {
 	}
 
 	for event := range events {
-		handler(string(event.Body))
+		a.deleteFromCache(string(event.Body))
 	}
 }
 
 // Evict given key from cache
-func (a App) Evict(ctx context.Context, key string) error {
-	if err := a.redisApp.Delete(ctx, key); err != nil {
-		logger.Error("unable to delete key `%s` from cache: %s", key, err)
+func (a *App) Evict(ctx context.Context, key string) error {
+	if a.redisApp != nil {
+		if err := a.deleteFromRedis(ctx, key); err != nil {
+			return err
+		}
+	} else {
+		a.deleteFromCache(key)
 	}
 
-	if !a.amqpEnabled() {
+	if a.amqpApp == nil {
 		return nil
 	}
 
@@ -118,18 +124,25 @@ func (a App) Evict(ctx context.Context, key string) error {
 	return nil
 }
 
+func (a *App) deleteFromCache(key string) {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	delete(a.cache, key)
+}
+
+func (a *App) deleteFromRedis(ctx context.Context, key string) error {
+	if err := a.redisApp.Delete(ctx, key); err != nil {
+		return fmt.Errorf("unable to delete key `%s` from cache: %s", key, err)
+	}
+
+	return nil
+}
+
 // Get an item from cache of by given getter. Refactor with generics.
-func (a App) Get(ctx context.Context, key string, getter func() (interface{}, error), newObj func() interface{}) (interface{}, error) {
-	content, err := a.redisApp.Load(ctx, key)
-	if err == nil {
-		obj := newObj()
-		if jsonErr := json.Unmarshal([]byte(content), obj); jsonErr != nil {
-			logger.Warn("unable to unmarshal content for key `%s`: %s", key, jsonErr)
-		} else {
-			return obj, nil
-		}
-	} else if err != redis.Nil {
-		logger.Warn("unable to load key `%s` from cache: %s", key, err)
+func (a *App) Get(ctx context.Context, key string, getter func() (interface{}, error), newObj func() interface{}) (interface{}, error) {
+	if content := a.get(ctx, key, newObj); content != nil {
+		return content, nil
 	}
 
 	obj, err := getter()
@@ -149,4 +162,26 @@ func (a App) Get(ctx context.Context, key string, getter func() (interface{}, er
 	}
 
 	return obj, err
+}
+
+func (a *App) get(ctx context.Context, key string, newObj func() interface{}) interface{} {
+	if a.redisApp == nil {
+		a.mutex.RLock()
+		defer a.mutex.RUnlock()
+		return a.cache[key]
+	}
+
+	content, err := a.redisApp.Load(ctx, key)
+	if err == nil {
+		obj := newObj()
+		if jsonErr := json.Unmarshal([]byte(content), obj); jsonErr != nil {
+			logger.Warn("unable to unmarshal content for key `%s`: %s", key, jsonErr)
+		} else {
+			return obj
+		}
+	} else if err != redis.Nil {
+		logger.Warn("unable to load key `%s` from cache: %s", key, err)
+	}
+
+	return nil
 }
