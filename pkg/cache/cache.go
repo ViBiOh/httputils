@@ -100,12 +100,10 @@ func (a *App) listenForEvictions() {
 
 // Evict given key from cache
 func (a *App) Evict(ctx context.Context, key string) error {
-	if a.redisApp != nil {
-		if err := a.deleteFromRedis(ctx, key); err != nil {
-			return err
-		}
-	} else {
+	if a.redisApp == nil {
 		a.deleteFromCache(key)
+	} else if err := a.deleteFromRedis(ctx, key); err != nil {
+		return err
 	}
 
 	if a.amqpApp == nil {
@@ -124,23 +122,8 @@ func (a *App) Evict(ctx context.Context, key string) error {
 	return nil
 }
 
-func (a *App) deleteFromCache(key string) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	delete(a.cache, key)
-}
-
-func (a *App) deleteFromRedis(ctx context.Context, key string) error {
-	if err := a.redisApp.Delete(ctx, key); err != nil {
-		return fmt.Errorf("unable to delete key `%s` from cache: %s", key, err)
-	}
-
-	return nil
-}
-
 // Get an item from cache of by given getter. Refactor with generics.
-func (a *App) Get(ctx context.Context, key string, getter func() (interface{}, error), newObj func() interface{}) (interface{}, error) {
+func (a *App) Get(ctx context.Context, key string, getter func() (interface{}, error), newObj func() interface{}, duration time.Duration) (interface{}, error) {
 	if content := a.get(ctx, key, newObj); content != nil {
 		return content, nil
 	}
@@ -149,14 +132,10 @@ func (a *App) Get(ctx context.Context, key string, getter func() (interface{}, e
 
 	if err == nil {
 		go func() {
-			payload, jsonErr := json.Marshal(obj)
-			if jsonErr != nil {
-				logger.Warn("unable to marshal content for key `%s`: %s", key, jsonErr)
-				return
-			}
-
-			if redisErr := a.redisApp.Store(context.Background(), key, payload, 0); redisErr != nil {
-				logger.Warn("unable to store key `%s` in cache: %s", key, redisErr)
+			if a.redisApp == nil {
+				a.saveInCache(key, obj)
+			} else if err := a.saveInRedis(context.Background(), key, obj, duration); err != nil {
+				logger.Warn("unable to save key `%s` in redis: %s", key, err)
 			}
 		}()
 	}
@@ -166,21 +145,71 @@ func (a *App) Get(ctx context.Context, key string, getter func() (interface{}, e
 
 func (a *App) get(ctx context.Context, key string, newObj func() interface{}) interface{} {
 	if a.redisApp == nil {
-		a.mutex.RLock()
-		defer a.mutex.RUnlock()
-		return a.cache[key]
+		return a.getFromCache(key)
 	}
 
+	content, err := a.getFromRedis(ctx, key, newObj)
+	if err != nil {
+		logger.Warn("unable to get key `%s` from cache: %s", key, err)
+		return nil
+	}
+
+	return content
+}
+
+func (a *App) getFromCache(key string) interface{} {
+	a.mutex.RLock()
+	defer a.mutex.RUnlock()
+
+	return a.cache[key]
+}
+
+func (a *App) saveInCache(key string, content interface{}) {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	a.cache[key] = content
+}
+
+func (a *App) deleteFromCache(key string) {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	delete(a.cache, key)
+}
+
+func (a *App) getFromRedis(ctx context.Context, key string, newObj func() interface{}) (interface{}, error) {
 	content, err := a.redisApp.Load(ctx, key)
 	if err == nil {
 		obj := newObj()
 		if jsonErr := json.Unmarshal([]byte(content), obj); jsonErr != nil {
-			logger.Warn("unable to unmarshal content for key `%s`: %s", key, jsonErr)
-		} else {
-			return obj
+			return nil, fmt.Errorf("unable to unmarshal content: %s", jsonErr)
 		}
+
+		return obj, nil
 	} else if err != redis.Nil {
-		logger.Warn("unable to load key `%s` from cache: %s", key, err)
+		return nil, fmt.Errorf("unable to load: %s", err)
+	}
+
+	return nil, nil
+}
+
+func (a *App) saveInRedis(ctx context.Context, key string, content interface{}, duration time.Duration) error {
+	payload, err := json.Marshal(content)
+	if err != nil {
+		return fmt.Errorf("unable to marshal content: %s", err)
+	}
+
+	if err = a.redisApp.Store(ctx, key, payload, duration); err != nil {
+		return fmt.Errorf("unable to store: %s", err)
+	}
+
+	return nil
+}
+
+func (a *App) deleteFromRedis(ctx context.Context, key string) error {
+	if err := a.redisApp.Delete(ctx, key); err != nil {
+		return fmt.Errorf("unable to delete key `%s` from cache: %s", key, err)
 	}
 
 	return nil
