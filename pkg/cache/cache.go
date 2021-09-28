@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/uuid"
 	"github.com/go-redis/redis/v8"
 	"github.com/prometheus/client_golang/prometheus"
@@ -41,24 +42,16 @@ type App struct {
 }
 
 // New creates new App from Config
-func New(redisApp Redis, amqpApp Amqp, exchange string, prometheusRegisterer prometheus.Registerer) (*App, error) {
+func New(redisApp Redis, amqpApp Amqp, name string, prometheusRegisterer prometheus.Registerer) (*App, error) {
 	if redisApp == nil && amqpApp == nil {
 		return nil, errors.New("redis or amqp is required")
 	}
 
-	if len(exchange) != 0 {
-		if amqpApp == nil {
-			return nil, errors.New("amqp client is required")
-		}
-
-		if err := amqpApp.Publisher(exchange, "fanout", nil); err != nil {
-			return nil, fmt.Errorf("unable to configure cache publisher: %s", err)
-		}
-	} else if amqpApp != nil {
-		return nil, errors.New("exchange name is required")
+	if len(name) != 0 {
+		return nil, errors.New("cache name is required")
 	}
 
-	metrics, err := createMetrics(prometheusRegisterer, "hit", "miss", "evict", "store", "notify")
+	metrics, err := prom.Counters(prometheusRegisterer, "cache", name, "hit", "miss", "evict", "store", "notify")
 	if err != nil {
 		return nil, fmt.Errorf("unable to configure metrics: %s", err)
 	}
@@ -66,13 +59,17 @@ func New(redisApp Redis, amqpApp Amqp, exchange string, prometheusRegisterer pro
 	app := App{
 		redisApp: redisApp,
 		amqpApp:  amqpApp,
-		exchange: exchange,
-		cache:    make(map[string]interface{}),
 		metrics:  metrics,
 	}
 
 	if redisApp == nil {
+		app.cache = make(map[string]interface{})
 		go app.listenForEvictions()
+	} else {
+		app.exchange = name + "-cache"
+		if err := amqpApp.Publisher(app.exchange, "fanout", nil); err != nil {
+			return nil, fmt.Errorf("unable to configure cache publisher: %s", err)
+		}
 	}
 
 	return &app, nil
@@ -230,4 +227,10 @@ func (a *App) deleteFromRedis(ctx context.Context, key string) error {
 	}
 
 	return nil
+}
+
+func (a *App) increase(name string) {
+	if gauge, ok := a.metrics[name]; ok {
+		gauge.Inc()
+	}
 }
