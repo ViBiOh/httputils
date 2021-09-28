@@ -11,6 +11,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/uuid"
 	"github.com/go-redis/redis/v8"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/streadway/amqp"
 )
 
@@ -36,10 +37,11 @@ type App struct {
 	exchange string
 	mutex    sync.RWMutex
 	cache    map[string]interface{}
+	metrics  map[string]prometheus.Counter
 }
 
 // New creates new App from Config
-func New(redisApp Redis, amqpApp Amqp, exchange string) (*App, error) {
+func New(redisApp Redis, amqpApp Amqp, exchange string, prometheusRegisterer prometheus.Registerer) (*App, error) {
 	if redisApp == nil && amqpApp == nil {
 		return nil, errors.New("redis or amqp is required")
 	}
@@ -56,11 +58,17 @@ func New(redisApp Redis, amqpApp Amqp, exchange string) (*App, error) {
 		return nil, errors.New("exchange name is required")
 	}
 
+	metrics, err := createMetrics(prometheusRegisterer, "hit", "miss", "evict", "store", "notify")
+	if err != nil {
+		return nil, fmt.Errorf("unable to configure metrics: %s", err)
+	}
+
 	app := App{
 		redisApp: redisApp,
 		amqpApp:  amqpApp,
 		exchange: exchange,
 		cache:    make(map[string]interface{}),
+		metrics:  metrics,
 	}
 
 	if redisApp == nil {
@@ -106,6 +114,8 @@ func (a *App) Evict(ctx context.Context, key string) error {
 		return err
 	}
 
+	a.increase("evict")
+
 	if a.amqpApp == nil {
 		return nil
 	}
@@ -114,6 +124,8 @@ func (a *App) Evict(ctx context.Context, key string) error {
 		ContentType: "text/plain",
 		Body:        []byte(key),
 	}
+
+	a.increase("notify")
 
 	if err := a.amqpApp.Publish(message, a.exchange); err != nil {
 		return fmt.Errorf("unable to publish eviction message: %s", err)
@@ -125,13 +137,18 @@ func (a *App) Evict(ctx context.Context, key string) error {
 // Get an item from cache of by given getter. Refactor with generics.
 func (a *App) Get(ctx context.Context, key string, getter func() (interface{}, error), newObj func() interface{}, duration time.Duration) (interface{}, error) {
 	if content := a.get(ctx, key, newObj); content != nil {
+		a.increase("hit")
 		return content, nil
 	}
+
+	a.increase("miss")
 
 	obj, err := getter()
 
 	if err == nil {
 		go func() {
+			a.increase("store")
+
 			if a.redisApp == nil {
 				a.saveInCache(key, obj)
 			} else if err := a.saveInRedis(context.Background(), key, obj, duration); err != nil {
