@@ -53,6 +53,7 @@ func (a *Client) forward(name, queue string, reconnect <-chan bool, input <-chan
 
 forward:
 	for delivery := range input {
+		a.increase("consumed")
 		output <- delivery
 	}
 

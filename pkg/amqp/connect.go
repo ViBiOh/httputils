@@ -61,6 +61,8 @@ func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, 
 
 func (a *Client) onDisconnect() {
 	for {
+		a.increaseConnection("reconnect")
+
 		if err := a.close(true); err != nil {
 			logger.Error("unable to reconnect: %s", err)
 

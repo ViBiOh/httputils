@@ -8,7 +8,13 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/streadway/amqp"
+)
+
+const (
+	metricNamespace = "amqp"
 )
 
 // Connection for AMQP
@@ -20,23 +26,37 @@ type Connection interface {
 
 // Client wraps all object required for AMQP usage
 type Client struct {
-	channel    *amqp.Channel
-	connection Connection
-	listeners  map[string]chan bool
-	vhost      string
-	uri        string
-	mutex      sync.RWMutex
+	channel           *amqp.Channel
+	connection        Connection
+	listeners         map[string]chan bool
+	connectionMetrics map[string]prometheus.Counter
+	messageMetrics    map[string]prometheus.Counter
+	vhost             string
+	uri               string
+	mutex             sync.RWMutex
 }
 
 // New inits AMQP connection, channel and queue
-func New(uri string) (*Client, error) {
+func New(uri string, prometheusRegister prometheus.Registerer) (*Client, error) {
 	if len(uri) == 0 {
 		return nil, errors.New("URI is required")
 	}
 
+	connectionMetrics, err := prom.Counters(prometheusRegister, metricNamespace, "connection", "reconnect", "listener")
+	if err != nil {
+		return nil, fmt.Errorf("unable to create connection metrics: %s", err)
+	}
+
+	messageMetrics, err := prom.Counters(prometheusRegister, metricNamespace, "message", "published", "consumed", "ack", "rejected")
+	if err != nil {
+		return nil, fmt.Errorf("unable to create messages metrics: %s", err)
+	}
+
 	client := &Client{
-		uri:       uri,
-		listeners: make(map[string]chan bool),
+		uri:               uri,
+		listeners:         make(map[string]chan bool),
+		connectionMetrics: connectionMetrics,
+		messageMetrics:    messageMetrics,
 	}
 
 	connection, channel, err := connect(uri, client.onDisconnect)
@@ -58,26 +78,30 @@ func (a *Client) Publish(payload amqp.Publishing, exchange string) error {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
 
+	a.increase("published")
+
 	return a.channel.Publish(exchange, "", false, false, payload)
 }
 
 // Ack ack a message with error handling
 func (a *Client) Ack(message amqp.Delivery) {
-	a.loggerMessageDeliveryAckReject(message, true, false)
+	a.ackRejectDelivery(message, true, false)
 }
 
 // Reject reject a message with error handling
 func (a *Client) Reject(message amqp.Delivery, requeue bool) {
-	a.loggerMessageDeliveryAckReject(message, false, requeue)
+	a.ackRejectDelivery(message, false, requeue)
 }
 
-func (a *Client) loggerMessageDeliveryAckReject(message amqp.Delivery, ack bool, value bool) {
+func (a *Client) ackRejectDelivery(message amqp.Delivery, ack bool, value bool) {
 	for {
 		var err error
 
 		if ack {
+			a.increase("ack")
 			err = message.Ack(value)
 		} else {
+			a.increase("rejected")
 			err = message.Reject(value)
 		}
 
@@ -101,6 +125,18 @@ func (a *Client) loggerMessageDeliveryAckReject(message amqp.Delivery, ack bool,
 
 			message.Acknowledger = a.channel
 		}()
+	}
+}
+
+func (a *Client) increase(name string) {
+	if gauge, ok := a.messageMetrics[name]; ok {
+		gauge.Inc()
+	}
+}
+
+func (a *Client) increaseConnection(name string) {
+	if gauge, ok := a.connectionMetrics[name]; ok {
+		gauge.Inc()
 	}
 }
 

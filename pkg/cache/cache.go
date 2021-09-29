@@ -35,10 +35,10 @@ type Amqp interface {
 type App struct {
 	redisApp Redis
 	amqpApp  Amqp
-	exchange string
-	mutex    sync.RWMutex
 	cache    map[string]interface{}
 	metrics  map[string]prometheus.Counter
+	exchange string
+	mutex    sync.RWMutex
 }
 
 // New creates new App from Config
@@ -51,7 +51,7 @@ func New(redisApp Redis, amqpApp Amqp, name string, prometheusRegisterer prometh
 		return nil, errors.New("cache name is required")
 	}
 
-	metrics, err := prom.Counters(prometheusRegisterer, "cache", name, "hit", "miss", "evict", "store", "notify")
+	metrics, err := prom.Counters(prometheusRegisterer, "cache", name, "hit", "miss", "evict", "error", "notify")
 	if err != nil {
 		return nil, fmt.Errorf("unable to configure metrics: %s", err)
 	}
@@ -144,8 +144,6 @@ func (a *App) Get(ctx context.Context, key string, getter func() (interface{}, e
 
 	if err == nil {
 		go func() {
-			a.increase("store")
-
 			if a.redisApp == nil {
 				a.saveInCache(key, obj)
 			} else if err := a.saveInRedis(context.Background(), key, obj, duration); err != nil {
@@ -202,6 +200,7 @@ func (a *App) getFromRedis(ctx context.Context, key string, newObj func() interf
 
 		return obj, nil
 	} else if err != redis.Nil {
+		a.increase("error")
 		return nil, fmt.Errorf("unable to load: %s", err)
 	}
 
@@ -215,6 +214,7 @@ func (a *App) saveInRedis(ctx context.Context, key string, content interface{}, 
 	}
 
 	if err = a.redisApp.Store(ctx, key, payload, duration); err != nil {
+		a.increase("error")
 		return fmt.Errorf("unable to store: %s", err)
 	}
 
@@ -223,6 +223,7 @@ func (a *App) saveInRedis(ctx context.Context, key string, content interface{}, 
 
 func (a *App) deleteFromRedis(ctx context.Context, key string) error {
 	if err := a.redisApp.Delete(ctx, key); err != nil {
+		a.increase("error")
 		return fmt.Errorf("unable to delete key `%s` from cache: %s", key, err)
 	}
 

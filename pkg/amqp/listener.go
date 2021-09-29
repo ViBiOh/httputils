@@ -23,6 +23,8 @@ identity:
 	listener := make(chan bool)
 	a.listeners[name] = listener
 
+	a.increaseConnection("listener")
+
 	return name, listener, nil
 }
 

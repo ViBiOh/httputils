@@ -15,29 +15,27 @@ func Counters(prometheusRegisterer prometheus.Registerer, namespace, subsystem s
 	metrics := make(map[string]prometheus.Counter)
 
 	for _, name := range names {
-		metric, fullname, err := createCounter(prometheusRegisterer, namespace, subsystem, name)
+		metric, err := createCounter(prometheusRegisterer, namespace, subsystem, name)
 		if err != nil {
 			return nil, err
 		}
 
-		metrics[fullname] = metric
+		metrics[name] = metric
 	}
 
 	return metrics, nil
 }
 
-func createCounter(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string) (prometheus.Counter, string, error) {
+func createCounter(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string) (prometheus.Counter, error) {
 	counter := prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      name,
 	})
 
-	fullname := prometheus.BuildFQName(namespace, subsystem, name)
-
 	if err := prometheusRegisterer.Register(counter); err != nil {
-		return nil, fullname, fmt.Errorf("unable to register `%s` metric: %s", name, err)
+		return nil, fmt.Errorf("unable to register `%s` metric: %s", name, err)
 	}
 
-	return counter, fullname, nil
+	return counter, nil
 }
