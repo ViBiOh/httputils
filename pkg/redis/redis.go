@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
@@ -12,16 +13,21 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+const (
+	metricsNamespace = "redis"
+)
+
 // App of package
 type App struct {
 	redisClient *redis.Client
-	metrics     map[string]prometheus.Counter
+	metric      *prometheus.CounterVec
 }
 
 // Config of package
 type Config struct {
 	redisAddress  *string
 	redisPassword *string
+	redisAlias    *string
 	redisDatabase *int
 }
 
@@ -31,24 +37,20 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 		redisAddress:  flags.New(prefix, "redis", "Address").Default("localhost:6379", overrides).Label("Redis Address").ToString(fs),
 		redisPassword: flags.New(prefix, "redis", "Password").Default("", overrides).Label("Redis Password, if any").ToString(fs),
 		redisDatabase: flags.New(prefix, "redis", "Database").Default(0, overrides).Label("Redis Database").ToInt(fs),
+		redisAlias:    flags.New(prefix, "redis", "Alias").Default("", overrides).Label("Connection alias, for metric").ToString(fs),
 	}
 }
 
 // New creates new App from Config
-func New(config Config, prometheusRegisterer prometheus.Registerer) (App, error) {
-	metrics, err := prom.Counters(prometheusRegisterer, "redis", "", "store", "load", "delete", "exclusive", "error")
-	if err != nil {
-		return App{}, fmt.Errorf("unable to configure metrics: %s", err)
-	}
-
+func New(config Config, prometheusRegisterer prometheus.Registerer) App {
 	return App{
 		redisClient: redis.NewClient(&redis.Options{
 			Addr:     *config.redisAddress,
 			Password: *config.redisPassword,
 			DB:       *config.redisDatabase,
 		}),
-		metrics: metrics,
-	}, nil
+		metric: prom.CounterVec(prometheusRegisterer, metricsNamespace, strings.TrimSpace(*config.redisAlias), "item", "state"),
+	}
 }
 
 // Ping check redis availability
@@ -125,7 +127,9 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 }
 
 func (a App) increase(name string) {
-	if gauge, ok := a.metrics[name]; ok {
-		gauge.Inc()
+	if a.metric == nil {
+		return
 	}
+
+	a.metric.WithLabelValues(name).Inc()
 }

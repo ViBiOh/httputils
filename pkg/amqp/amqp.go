@@ -30,7 +30,7 @@ type Client struct {
 	connection        Connection
 	listeners         map[string]chan bool
 	connectionMetrics map[string]prometheus.Counter
-	messageMetrics    map[string]prometheus.Counter
+	messageMetrics    *prometheus.CounterVec
 	vhost             string
 	uri               string
 	mutex             sync.RWMutex
@@ -42,21 +42,11 @@ func New(uri string, prometheusRegister prometheus.Registerer) (*Client, error) 
 		return nil, errors.New("URI is required")
 	}
 
-	connectionMetrics, err := prom.Counters(prometheusRegister, metricNamespace, "connection", "reconnect", "listener")
-	if err != nil {
-		return nil, fmt.Errorf("unable to create connection metrics: %s", err)
-	}
-
-	messageMetrics, err := prom.Counters(prometheusRegister, metricNamespace, "message", "published", "consumed", "ack", "rejected")
-	if err != nil {
-		return nil, fmt.Errorf("unable to create messages metrics: %s", err)
-	}
-
 	client := &Client{
 		uri:               uri,
 		listeners:         make(map[string]chan bool),
-		connectionMetrics: connectionMetrics,
-		messageMetrics:    messageMetrics,
+		connectionMetrics: prom.Counters(prometheusRegister, metricNamespace, "connection", "reconnect", "listener"),
+		messageMetrics:    prom.CounterVec(prometheusRegister, metricNamespace, "", "message", "published", "consumed", "ack", "rejected"),
 	}
 
 	connection, channel, err := connect(uri, client.onDisconnect)
@@ -129,9 +119,11 @@ func (a *Client) ackRejectDelivery(message amqp.Delivery, ack bool, value bool) 
 }
 
 func (a *Client) increase(name string) {
-	if gauge, ok := a.messageMetrics[name]; ok {
-		gauge.Inc()
+	if a.messageMetrics == nil {
+		return
 	}
+
+	a.messageMetrics.WithLabelValues(name).Inc()
 }
 
 func (a *Client) increaseConnection(name string) {

@@ -36,7 +36,7 @@ type App struct {
 	redisApp Redis
 	amqpApp  Amqp
 	cache    map[string]interface{}
-	metrics  map[string]prometheus.Counter
+	metric   *prometheus.CounterVec
 	exchange string
 	mutex    sync.RWMutex
 }
@@ -51,15 +51,10 @@ func New(redisApp Redis, amqpApp Amqp, name string, prometheusRegisterer prometh
 		return nil, errors.New("cache name is required")
 	}
 
-	metrics, err := prom.Counters(prometheusRegisterer, "cache", name, "hit", "miss", "evict", "error", "notify")
-	if err != nil {
-		return nil, fmt.Errorf("unable to configure metrics: %s", err)
-	}
-
 	app := App{
 		redisApp: redisApp,
 		amqpApp:  amqpApp,
-		metrics:  metrics,
+		metric:   prom.CounterVec(prometheusRegisterer, "cache", name, "state", "hit", "miss", "evict", "error", "notify"),
 	}
 
 	if redisApp == nil {
@@ -231,7 +226,9 @@ func (a *App) deleteFromRedis(ctx context.Context, key string) error {
 }
 
 func (a *App) increase(name string) {
-	if gauge, ok := a.metrics[name]; ok {
-		gauge.Inc()
+	if a.metric == nil {
+		return
 	}
+
+	a.metric.WithLabelValues(name).Inc()
 }

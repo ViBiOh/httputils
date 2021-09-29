@@ -155,7 +155,7 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) (
 		if err == nil {
 			err = tx.Commit(ctx)
 		} else if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
-			err = fmt.Errorf("%s: %w", err.Error(), rollbackErr)
+			err = fmt.Errorf("%s: %w", err, rollbackErr)
 		}
 	}()
 

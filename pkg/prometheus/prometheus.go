@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	metricsEndpoint = "/metrics"
+	metricsNamespace = "http"
+	metricsEndpoint  = "/metrics"
 )
 
 var (
@@ -109,22 +110,28 @@ func (a App) Registerer() prometheus.Registerer {
 
 func (a App) instrumentHandler(next http.Handler) http.Handler {
 	durationVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "http_request_duration_seconds",
-		Help:    "A histogram of latencies for requests.",
-		Buckets: durationBuckets,
+		Namespace: metricsNamespace,
+		Subsystem: "request",
+		Name:      "duration_seconds",
+		Help:      "A histogram of latencies for requests.",
+		Buckets:   durationBuckets,
 	}, methodLabels)
 	a.registry.MustRegister(durationVec)
 
 	sizeVec := prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name:    "http_response_size_bytes",
-		Help:    "A histogram of response sizes for requests.",
-		Buckets: sizeBuckets,
+		Namespace: metricsNamespace,
+		Subsystem: "response",
+		Name:      "size_bytes",
+		Help:      "A histogram of response sizes for requests.",
+		Buckets:   sizeBuckets,
 	})
 	a.registry.MustRegister(sizeVec)
 
 	counterVec := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_total",
-		Help: "A counter for requests to the wrapped handler.",
+		Namespace: metricsNamespace,
+		Subsystem: "requests",
+		Name:      "total",
+		Help:      "A counter for requests to the wrapped handler.",
 	}, codeMethodLabels)
 	a.registry.MustRegister(counterVec)
 
