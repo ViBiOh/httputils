@@ -46,7 +46,7 @@ func New(uri string, prometheusRegister prometheus.Registerer) (*Client, error) 
 		uri:               uri,
 		listeners:         make(map[string]chan bool),
 		connectionMetrics: prom.Counters(prometheusRegister, metricNamespace, "connection", "reconnect", "listener"),
-		messageMetrics:    prom.CounterVec(prometheusRegister, metricNamespace, "", "message", "published", "consumed", "ack", "rejected"),
+		messageMetrics:    prom.CounterVec(prometheusRegister, metricNamespace, "", "message", "state"),
 	}
 
 	connection, channel, err := connect(uri, client.onDisconnect)

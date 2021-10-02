@@ -45,7 +45,7 @@ func (a *Client) listen(name, queue string) (<-chan amqp.Delivery, error) {
 		return nil, fmt.Errorf("unable to consume queue: %s", err)
 	}
 
-	return messages, err
+	return messages, nil
 }
 
 func (a *Client) forward(name, queue string, reconnect <-chan bool, input <-chan amqp.Delivery, output chan<- amqp.Delivery) {
