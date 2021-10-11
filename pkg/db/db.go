@@ -135,7 +135,7 @@ func readTx(ctx context.Context) pgx.Tx {
 }
 
 // DoAtomic execute given action in a transactionnal context
-func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) (err error) {
+func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) error {
 	if action == nil {
 		return errors.New("no action provided")
 	}
@@ -144,23 +144,22 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) (
 		return action(ctx)
 	}
 
-	var tx pgx.Tx
-
-	tx, err = a.db.Begin(ctx)
+	tx, err := a.db.Begin(ctx)
 	if err != nil {
-		return
+		return err
 	}
 
-	defer func() {
-		if err == nil {
-			err = tx.Commit(ctx)
-		} else if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
-			err = fmt.Errorf("%s: %w", err, rollbackErr)
-		}
-	}()
-
 	err = action(StoreTx(ctx, tx))
-	return
+
+	if err == nil {
+		return tx.Commit(ctx)
+	}
+
+	if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+		return fmt.Errorf("%s: %w", err, rollbackErr)
+	}
+
+	return err
 }
 
 // List execute multiple rows query

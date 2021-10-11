@@ -6,7 +6,7 @@ import (
 
 // Counters creates and registers counters
 func Counters(prometheusRegisterer prometheus.Registerer, namespace, subsystem string, names ...string) map[string]prometheus.Counter {
-	if prometheusRegisterer == nil {
+	if isNil(prometheusRegisterer) {
 		return nil
 	}
 
@@ -33,7 +33,7 @@ func createCounter(prometheusRegisterer prometheus.Registerer, namespace, subsys
 
 // CounterVec creates and register a counter vector
 func CounterVec(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string, labels ...string) *prometheus.CounterVec {
-	if prometheusRegisterer == nil {
+	if isNil(prometheusRegisterer) {
 		return nil
 	}
 

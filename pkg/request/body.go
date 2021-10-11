@@ -6,23 +6,22 @@ import (
 	"net/http"
 )
 
-func readContent(body io.ReadCloser) (content []byte, err error) {
+func readContent(body io.ReadCloser) ([]byte, error) {
 	if body == nil {
-		return
+		return nil, nil
 	}
 
-	defer func() {
-		if closeErr := body.Close(); closeErr != nil {
-			if err == nil {
-				err = closeErr
-			} else {
-				err = fmt.Errorf("%s: %w", err, closeErr)
-			}
-		}
-	}()
+	content, err := io.ReadAll(body)
 
-	content, err = io.ReadAll(body)
-	return
+	if closeErr := body.Close(); closeErr != nil {
+		if err == nil {
+			err = closeErr
+		} else {
+			err = fmt.Errorf("%s: %w", err, closeErr)
+		}
+	}
+
+	return content, err
 }
 
 // ReadBodyRequest return content of a body request (defined as a ReadCloser)

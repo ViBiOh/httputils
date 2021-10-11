@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/common/expfmt"
 )
 
-func TestCounterVec(t *testing.T) {
+func TestGaugeVec(t *testing.T) {
 	type args struct {
 		registry  *prometheus.Registry
 		namespace string
@@ -32,17 +32,17 @@ func TestCounterVec(t *testing.T) {
 			args{
 				registry:  prometheus.NewRegistry(),
 				namespace: "test",
-				subsystem: "countervec",
+				subsystem: "gaugevec",
 				name:      "item",
 				labels:    []string{"item"},
 			},
-			"# HELP test_countervec_item \n# TYPE test_countervec_item counter\ntest_countervec_item{item=\"output\"} 1\n",
+			"# HELP test_gaugevec_item \n# TYPE test_gaugevec_item gauge\ntest_gaugevec_item{item=\"output\"} 1\n",
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			counter := CounterVec(tc.args.registry, tc.args.namespace, tc.args.subsystem, tc.args.name, tc.args.labels...)
+			counter := GaugeVec(tc.args.registry, tc.args.namespace, tc.args.subsystem, tc.args.name, tc.args.labels...)
 
 			var buffer strings.Builder
 
@@ -65,23 +65,5 @@ func TestCounterVec(t *testing.T) {
 				t.Errorf("CounterVec() = `%s`, want `%s`", got, tc.want)
 			}
 		})
-	}
-}
-
-func BenchmarkCounterVec(b *testing.B) {
-	registry := prometheus.NewRegistry()
-	counter := CounterVec(registry, "benchmark", "prometheus", "vector", "state")
-
-	for i := 0; i < b.N; i++ {
-		counter.WithLabelValues("valid").Inc()
-	}
-}
-
-func BenchmarkCounter(b *testing.B) {
-	registry := prometheus.NewRegistry()
-	counter := createCounter(registry, "benchmark", "prometheus", "counter")
-
-	for i := 0; i < b.N; i++ {
-		counter.Inc()
 	}
 }
