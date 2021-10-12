@@ -58,7 +58,9 @@ func TestCounterVec(t *testing.T) {
 					t.Error("no metric gathered")
 				}
 
-				expfmt.MetricFamilyToText(&buffer, metrics[0])
+				if _, err = expfmt.MetricFamilyToText(&buffer, metrics[0]); err != nil {
+					t.Errorf("unable to format metric: %s", err)
+				}
 			}
 
 			if got := buffer.String(); got != tc.want {
