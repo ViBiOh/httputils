@@ -588,6 +588,72 @@ func TestExec(t *testing.T) {
 	}
 }
 
+func TestOne(t *testing.T) {
+	var cases = []struct {
+		intention string
+		wantErr   error
+	}{
+		{
+			"error",
+			errors.New("timeout"),
+		},
+		{
+			"zero",
+			errors.New("0 rows affected, wanted 1"),
+		},
+		{
+			"one",
+			nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockDatabase := mocks.NewDatabase(ctrl)
+
+			instance := App{db: mockDatabase}
+
+			ctx := context.Background()
+
+			switch tc.intention {
+			case "error":
+				tx := mocks.NewTx(ctrl)
+				ctx = StoreTx(ctx, tx)
+				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return(nil, errors.New("timeout"))
+
+			case "zero":
+				tx := mocks.NewTx(ctrl)
+				ctx = StoreTx(ctx, tx)
+				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return([]byte("0"), nil)
+
+			case "one":
+				tx := mocks.NewTx(ctrl)
+				ctx = StoreTx(ctx, tx)
+				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return([]byte("1"), nil)
+			}
+
+			gotErr := instance.One(ctx, "DELETE FROM item WHERE id = $1", 1)
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("One() = `%s`, want `%s`", gotErr, tc.wantErr)
+			}
+		})
+	}
+}
+
 func TestBulk(t *testing.T) {
 
 	var cases = []struct {

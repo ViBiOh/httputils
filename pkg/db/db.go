@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -216,16 +217,34 @@ func (a App) Create(ctx context.Context, query string, args ...interface{}) (uin
 
 // Exec execute query with specified timeout, disregarding result
 func (a App) Exec(ctx context.Context, query string, args ...interface{}) error {
+	_, err := a.exec(ctx, query, args...)
+	return err
+}
+
+// One execute query with specified timeout, for exactly one row
+func (a App) One(ctx context.Context, query string, args ...interface{}) error {
+	output, err := a.exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	if count := output.RowsAffected(); count != 1 {
+		return fmt.Errorf("%d rows affected, wanted 1", count)
+	}
+
+	return nil
+}
+
+func (a App) exec(ctx context.Context, query string, args ...interface{}) (pgconn.CommandTag, error) {
 	tx := readTx(ctx)
 	if tx == nil {
-		return ErrNoTransaction
+		return nil, ErrNoTransaction
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	_, err := tx.Exec(ctx, query, args...)
-	return err
+	return tx.Exec(ctx, query, args...)
 }
 
 type feeder struct {
