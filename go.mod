@@ -9,7 +9,7 @@ require (
 	github.com/jackc/pgproto3/v2 v2.1.1
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/prometheus/client_golang v1.11.0
-	github.com/prometheus/common v0.26.0
+	github.com/prometheus/common v0.31.1
 	github.com/streadway/amqp v1.0.0
 	github.com/tdewolff/minify/v2 v2.9.22
 )
