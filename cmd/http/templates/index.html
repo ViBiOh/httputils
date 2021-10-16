@@ -13,6 +13,11 @@
       <a href="{{ url "/" }}">Hello {{ .Version }}!</a>
     </h1>
   </body>
+  <script type="text/javascript" nonce="{{ .nonce }}">
+    window.addEventListener("DOMContentLoaded", (event) => {
+      console.log("Hello World!");
+    });
+  </script>
 </html>
 {{ end }}
 

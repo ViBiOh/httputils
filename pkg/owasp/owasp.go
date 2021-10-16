@@ -1,11 +1,21 @@
 package owasp
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"flag"
 	"net/http"
+	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
+)
+
+type key int
+
+const (
+	ctxNonceKey key = iota
 )
 
 var (
@@ -53,8 +63,13 @@ func (a App) Middleware(next http.Handler) http.Handler {
 	headers.Add("X-Xss-Protection", "1; mode=block")
 	headers.Add("X-Permitted-Cross-Domain-Policies", "none")
 
+	nonce := false
 	if len(a.csp) != 0 {
-		headers.Add("Content-Security-Policy", a.csp)
+		if strings.Contains(a.csp, "nonce") {
+			nonce = true
+		} else {
+			headers.Add("Content-Security-Policy", a.csp)
+		}
 	}
 	if len(a.frameOptions) != 0 {
 		headers.Add("X-Frame-Options", a.frameOptions)
@@ -68,8 +83,42 @@ func (a App) Middleware(next http.Handler) http.Handler {
 			w.Header()[key] = values
 		}
 
+		if nonce {
+			nonceValue := generateNonce()
+			w.Header().Add("Content-Security-Policy", strings.ReplaceAll(a.csp, "nonce", "nonce-"+nonceValue))
+			r = r.WithContext(nonceInCtx(r.Context(), nonceValue))
+		}
+
 		if next != nil {
 			next.ServeHTTP(w, r)
 		}
 	})
+}
+
+func nonceInCtx(ctx context.Context, nonce string) context.Context {
+	return context.WithValue(ctx, ctxNonceKey, nonce)
+}
+
+// NonceFromCtx retrieves nonce from context
+func NonceFromCtx(ctx context.Context) string {
+	rawUser := ctx.Value(ctxNonceKey)
+	if rawUser == nil {
+		return ""
+	}
+
+	if nonce, ok := rawUser.(string); ok {
+		return nonce
+	}
+
+	return ""
+}
+
+func generateNonce() string {
+	raw := make([]byte, 16)
+	_, err := rand.Read(raw)
+	if err != nil {
+		return "r4nd0m"
+	}
+
+	return base64.StdEncoding.EncodeToString(raw)
 }

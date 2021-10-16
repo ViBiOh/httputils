@@ -8,6 +8,7 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
 )
 
@@ -63,6 +64,7 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 	}
 
 	content = a.feedContent(content)
+	content["nonce"] = owasp.NonceFromCtx(r.Context())
 
 	message := ParseMessage(r)
 	if len(message.Content) > 0 {
