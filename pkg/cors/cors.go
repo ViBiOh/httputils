@@ -9,9 +9,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
-var (
-	_ model.Middleware = App{}.Middleware
-)
+var _ model.Middleware = App{}.Middleware
 
 // App of package
 type App struct {

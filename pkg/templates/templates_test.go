@@ -12,7 +12,7 @@ import (
 )
 
 func TestWriteTemplate(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		tpl       *template.Template
 		want      string
@@ -55,7 +55,7 @@ func TestWriteTemplate(t *testing.T) {
 }
 
 func TestResponseHTMLTemplate(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		tpl       *template.Template
 		want      string
@@ -98,7 +98,7 @@ func TestResponseHTMLTemplate(t *testing.T) {
 }
 
 func TestResponseHTMLTemplateRaw(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		tpl       *template.Template
 		want      string
@@ -169,7 +169,7 @@ func TestResponseHTMLTemplateRaw(t *testing.T) {
 }
 
 func TestResponseXMLTemplate(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		tpl       *template.Template
 		want      string

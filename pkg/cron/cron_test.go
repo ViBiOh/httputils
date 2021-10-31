@@ -17,7 +17,7 @@ import (
 )
 
 func TestString(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		cron      *Cron
 		want      string
@@ -108,7 +108,7 @@ func TestString(t *testing.T) {
 }
 
 func TestAt(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		cron      *Cron
 		input     string
@@ -165,7 +165,7 @@ func TestIn(t *testing.T) {
 		tz string
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  *Cron
 		args      args
@@ -211,13 +211,12 @@ func TestIn(t *testing.T) {
 			if failed {
 				t.Errorf("In() = (`%s`, `%s`), want (`%s`, `%s`)", tc.instance.dayTime, tc.instance.errors, tc.want, tc.wantErr)
 			}
-
 		})
 	}
 }
 
 func TestFindMatchingDay(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		cron      *Cron
 		input     time.Time
@@ -253,7 +252,7 @@ func TestFindMatchingDay(t *testing.T) {
 }
 
 func TestGetTickerDuration(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		cron      *Cron
 		clock     *clock.Clock
@@ -323,7 +322,7 @@ func TestGetTickerDuration(t *testing.T) {
 }
 
 func TestHasError(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		cron      *Cron
 		want      bool
@@ -375,7 +374,7 @@ func TestHasError(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		cron      *Cron
 		clock     *clock.Clock

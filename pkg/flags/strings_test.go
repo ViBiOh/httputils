@@ -3,7 +3,7 @@ package flags
 import "testing"
 
 func TestFirstLowerCase(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		input     string
 		want      string
@@ -35,7 +35,7 @@ func TestFirstLowerCase(t *testing.T) {
 }
 
 func TestFirstUpperCase(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		input     string
 		want      string
@@ -67,7 +67,7 @@ func TestFirstUpperCase(t *testing.T) {
 }
 
 func TestSnakeCase(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		input     string
 		want      string

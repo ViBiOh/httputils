@@ -43,7 +43,7 @@ func (errReaderCloser) Close() error {
 }
 
 func TestReadContent(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		reader    io.ReadCloser
 		want      []byte
@@ -107,7 +107,7 @@ func TestReadContent(t *testing.T) {
 }
 
 func TestReadBodyRequest(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		input     *http.Request
 		want      []byte
@@ -147,7 +147,7 @@ func TestReadBodyRequest(t *testing.T) {
 }
 
 func TestReadBodyResponse(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		input     []byte
 		want      []byte

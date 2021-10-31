@@ -11,7 +11,7 @@ import (
 )
 
 func TestEnabled(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  *Client
 		want      bool
@@ -40,7 +40,7 @@ func TestEnabled(t *testing.T) {
 }
 
 func TestPing(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  *Client
 		want      error

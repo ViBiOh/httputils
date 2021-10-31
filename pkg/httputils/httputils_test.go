@@ -22,7 +22,7 @@ func TestHandler(t *testing.T) {
 
 	os.Setenv("VERSION", "httputils/TestHandler")
 
-	var cases = []struct {
+	cases := []struct {
 		intention  string
 		request    *http.Request
 		want       string
@@ -71,7 +71,7 @@ func TestHandler(t *testing.T) {
 }
 
 func TestVersionHandler(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention   string
 		request     *http.Request
 		environment string

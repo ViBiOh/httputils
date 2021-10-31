@@ -15,7 +15,7 @@ func TestLinkNextHeader(t *testing.T) {
 		extraArgs url.Values
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  Pagination
 		args      args
@@ -72,7 +72,7 @@ func TestLinkNextHeader(t *testing.T) {
 }
 
 func TestParsePagination(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention       string
 		request         *http.Request
 		defaultPageSize uint

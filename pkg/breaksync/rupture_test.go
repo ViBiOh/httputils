@@ -3,7 +3,7 @@ package breaksync
 import "testing"
 
 func TestCompute(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  *Rupture
 		current   string

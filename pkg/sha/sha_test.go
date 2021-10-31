@@ -9,7 +9,7 @@ func TestNew(t *testing.T) {
 
 	value := "test"
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      string

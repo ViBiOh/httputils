@@ -26,7 +26,7 @@ func (wc writeCloser) Close() error {
 }
 
 func TestFlags(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		want      string
 	}{
@@ -59,7 +59,7 @@ func TestStart(t *testing.T) {
 		e event
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  Logger
 		args      args
@@ -134,7 +134,7 @@ func TestClose(t *testing.T) {
 		err io.Writer
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      bool
@@ -187,7 +187,7 @@ func TestOutput(t *testing.T) {
 		a      []interface{}
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      string
@@ -309,7 +309,7 @@ func TestJSON(t *testing.T) {
 		e event
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      map[string]interface{}
@@ -429,7 +429,7 @@ func TestText(t *testing.T) {
 		e event
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      string

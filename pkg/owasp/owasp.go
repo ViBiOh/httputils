@@ -18,9 +18,7 @@ const (
 	ctxNonceKey key = iota
 )
 
-var (
-	_ model.Middleware = App{}.Middleware
-)
+var _ model.Middleware = App{}.Middleware
 
 // App of package
 type App struct {

@@ -67,7 +67,7 @@ func TestRun(t *testing.T) {
 		}
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention    string
 		instance     *Synchronization
 		businessFail bool

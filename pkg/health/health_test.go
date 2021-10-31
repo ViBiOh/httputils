@@ -13,7 +13,7 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		want      string
 	}{
@@ -47,7 +47,7 @@ func TestHandler(t *testing.T) {
 	closedChan := make(chan struct{})
 	close(closedChan)
 
-	var cases = []struct {
+	cases := []struct {
 		intention  string
 		instance   App
 		request    *http.Request

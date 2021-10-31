@@ -30,7 +30,7 @@ func safeWrite(writer io.Writer, content []byte) {
 }
 
 func TestString(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  Request
 		want      string
@@ -62,7 +62,7 @@ func TestString(t *testing.T) {
 }
 
 func TestIsZero(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  Request
 		want      bool
@@ -93,7 +93,7 @@ func TestPath(t *testing.T) {
 		path string
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  Request
 		args      args
@@ -229,7 +229,7 @@ func TestSend(t *testing.T) {
 		},
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		request   Request
 		ctx       context.Context
@@ -395,7 +395,7 @@ func TestForm(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		request   Request
 		ctx       context.Context
@@ -454,7 +454,7 @@ func TestJSON(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		request   Request
 		ctx       context.Context
@@ -505,7 +505,7 @@ func TestJSON(t *testing.T) {
 }
 
 func TestDiscardBody(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		wantErr   error
 	}{

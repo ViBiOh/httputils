@@ -9,7 +9,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		prefix    string
 		docPrefix string
@@ -45,7 +45,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestToString(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention    string
 		prefix       string
 		docPrefix    string
@@ -112,7 +112,7 @@ func TestToString(t *testing.T) {
 }
 
 func TestToInt(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention    string
 		prefix       string
 		docPrefix    string
@@ -189,7 +189,7 @@ func TestToInt(t *testing.T) {
 }
 
 func TestToInt64(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention    string
 		prefix       string
 		docPrefix    string
@@ -266,7 +266,7 @@ func TestToInt64(t *testing.T) {
 }
 
 func TestToUint(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention    string
 		prefix       string
 		docPrefix    string
@@ -361,7 +361,7 @@ func TestToUint(t *testing.T) {
 }
 
 func TestToUint64(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention    string
 		prefix       string
 		docPrefix    string
@@ -456,7 +456,7 @@ func TestToUint64(t *testing.T) {
 }
 
 func TestToFloat64(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention    string
 		prefix       string
 		docPrefix    string
@@ -533,7 +533,7 @@ func TestToFloat64(t *testing.T) {
 }
 
 func TestToBool(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention    string
 		prefix       string
 		docPrefix    string

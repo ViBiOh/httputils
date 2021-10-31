@@ -14,7 +14,7 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		want      string
 	}{
@@ -43,7 +43,7 @@ func TestFlags(t *testing.T) {
 }
 
 func TestEnabled(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  App
 		want      bool
@@ -80,7 +80,7 @@ func TestEnabled(t *testing.T) {
 }
 
 func TestPing(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		want      bool
 	}{
@@ -118,7 +118,7 @@ func TestPing(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		wantErr   error
 	}{
@@ -154,7 +154,7 @@ func TestReadTx(t *testing.T) {
 		ctx context.Context
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      pgx.Tx
@@ -197,7 +197,7 @@ func TestDoAtomic(t *testing.T) {
 		action func(context.Context) error
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		wantErr   error
@@ -310,7 +310,7 @@ func TestDoAtomic(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		wantErr   error
 	}{
@@ -386,7 +386,7 @@ func TestList(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		wantErr   error
 	}{
@@ -460,7 +460,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		wantErr   error
 	}{
@@ -528,7 +528,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestExec(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		wantErr   error
 	}{
@@ -589,7 +589,7 @@ func TestExec(t *testing.T) {
 }
 
 func TestOne(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		wantErr   error
 	}{
@@ -655,8 +655,7 @@ func TestOne(t *testing.T) {
 }
 
 func TestBulk(t *testing.T) {
-
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		wantErr   error
 	}{

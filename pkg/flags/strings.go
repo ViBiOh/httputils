@@ -6,9 +6,7 @@ import (
 	"unicode"
 )
 
-var (
-	upperCaseRegex = regexp.MustCompile(`(?m)([A-Z])([A-Z]*)`)
-)
+var upperCaseRegex = regexp.MustCompile(`(?m)([A-Z])([A-Z]*)`)
 
 func changeFirstCase(s string, upper bool) string {
 	if len(s) == 0 {

@@ -25,7 +25,7 @@ func TestRawWrite(t *testing.T) {
 		obj    interface{}
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      string
@@ -78,7 +78,7 @@ func TestRawWrite(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention  string
 		obj        interface{}
 		want       string
@@ -144,7 +144,7 @@ func BenchmarkRawWrite(b *testing.B) {
 }
 
 func BenchmarkWrite(b *testing.B) {
-	var tc = struct {
+	tc := struct {
 		obj interface{}
 	}{
 		testStruct{id: "Test", Active: true, Amount: 12.34},
@@ -158,7 +158,7 @@ func BenchmarkWrite(b *testing.B) {
 }
 
 func TestWriteArray(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention  string
 		obj        interface{}
 		want       string
@@ -197,7 +197,7 @@ func TestWriteArray(t *testing.T) {
 }
 
 func TestWritePagination(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention  string
 		pageSize   uint
 		total      uint
@@ -259,7 +259,7 @@ func TestParse(t *testing.T) {
 		obj interface{}
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      interface{}
@@ -316,7 +316,7 @@ func TestRead(t *testing.T) {
 		obj  interface{}
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      interface{}
@@ -405,7 +405,7 @@ func TestStream(t *testing.T) {
 		key    string
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      []string

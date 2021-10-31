@@ -17,7 +17,7 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		want      string
 	}{
@@ -50,7 +50,7 @@ func TestIsStaticRootPaths(t *testing.T) {
 		requestPath string
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      bool
@@ -99,7 +99,7 @@ func TestFeedContent(t *testing.T) {
 		content map[string]interface{}
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  App
 		args      args
@@ -187,7 +187,7 @@ func TestHandler(t *testing.T) {
 		t.Error(err)
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention    string
 		instance     App
 		request      *http.Request

@@ -10,7 +10,7 @@ func TestWriteEscapedJSON(t *testing.T) {
 		content string
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      string

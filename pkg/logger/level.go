@@ -16,9 +16,7 @@ const (
 	levelTrace
 )
 
-var (
-	levelValues = []string{"FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"}
-)
+var levelValues = []string{"FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"}
 
 func parseLevel(line string) (level, error) {
 	for i, l := range levelValues {

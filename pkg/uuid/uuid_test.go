@@ -6,7 +6,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		want      string
 		wantErr   error

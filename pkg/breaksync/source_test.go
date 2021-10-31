@@ -10,7 +10,7 @@ func TestComputeSynchro(t *testing.T) {
 	simple := NewSource(nil, nil, nil)
 	simple.currentKey = "AAAAA00000"
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  *Source
 		input     string
@@ -53,7 +53,7 @@ func TestComputeSynchro(t *testing.T) {
 }
 
 func TestSourceRead(t *testing.T) {
-	var errRead = errors.New("read error")
+	errRead := errors.New("read error")
 
 	copyErr := NewSource(func() (interface{}, error) {
 		return nil, errRead
@@ -67,7 +67,7 @@ func TestSourceRead(t *testing.T) {
 	copyEnd.next = "Golang Test"
 	copyEnd.nextKey = "Golang"
 
-	var cases = []struct {
+	cases := []struct {
 		intention      string
 		instance       *Source
 		want           error

@@ -11,7 +11,7 @@ func TestParseLevel(t *testing.T) {
 		line string
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      level

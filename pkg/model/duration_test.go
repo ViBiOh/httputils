@@ -12,7 +12,7 @@ func TestSafeParseDuration(t *testing.T) {
 		defaultDuration time.Duration
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      time.Duration

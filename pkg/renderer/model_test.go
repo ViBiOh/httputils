@@ -12,7 +12,7 @@ func TestParseMessage(t *testing.T) {
 		r *http.Request
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      Message

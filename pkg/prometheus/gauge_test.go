@@ -17,7 +17,7 @@ func TestGaugeVec(t *testing.T) {
 		labels    []string
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      string

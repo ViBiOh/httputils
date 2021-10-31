@@ -7,7 +7,7 @@ import (
 )
 
 func TestIsRoot(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		input     *http.Request
 		want      bool

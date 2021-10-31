@@ -16,9 +16,7 @@ const (
 	hourFormat = "15:04"
 )
 
-var (
-	_ fmt.Stringer = New()
-)
+var _ fmt.Stringer = New()
 
 // Cron definition
 type Cron struct {

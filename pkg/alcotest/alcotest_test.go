@@ -35,7 +35,7 @@ func createTestServer() *httptest.Server {
 }
 
 func TestFlags(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		want      string
 	}{
@@ -67,7 +67,7 @@ func TestGetStatusCode(t *testing.T) {
 	testServer := createTestServer()
 	defer testServer.Close()
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		url       string
 		userAgent string
@@ -138,7 +138,7 @@ func TestDo(t *testing.T) {
 	testServer := createTestServer()
 	defer testServer.Close()
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		url       string
 		userAgent string
@@ -200,7 +200,7 @@ func TestDoAndExit(t *testing.T) {
 	unhealthy := testServer.URL + "/ko"
 	userAgent := "TestDoAndExit"
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		input     Config
 		want      int

@@ -11,7 +11,7 @@ import (
 )
 
 func TestBadRequest(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention  string
 		err        error
 		want       string
@@ -42,7 +42,7 @@ func TestBadRequest(t *testing.T) {
 }
 
 func TestUnauthorized(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention  string
 		err        error
 		want       string
@@ -73,7 +73,7 @@ func TestUnauthorized(t *testing.T) {
 }
 
 func TestForbidden(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention  string
 		want       string
 		wantStatus int
@@ -102,7 +102,7 @@ func TestForbidden(t *testing.T) {
 }
 
 func TestNotFound(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention  string
 		want       string
 		wantStatus int
@@ -131,7 +131,7 @@ func TestNotFound(t *testing.T) {
 }
 
 func TestInternalServerError(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention  string
 		err        error
 		want       string
@@ -162,7 +162,7 @@ func TestInternalServerError(t *testing.T) {
 }
 
 func TestHandleError(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention   string
 		err         error
 		want        bool
@@ -244,7 +244,7 @@ func TestErrorStatus(t *testing.T) {
 		err error
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention   string
 		args        args
 		want        int

@@ -14,11 +14,9 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 )
 
-var (
-	handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-)
+var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+})
 
 func benchmarkHandler(b *testing.B, handler http.Handler) {
 	request := httptest.NewRequest(http.MethodGet, "/", nil)

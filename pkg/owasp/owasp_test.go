@@ -10,7 +10,7 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		want      string
 	}{
@@ -39,7 +39,7 @@ func TestFlags(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		want      App
 	}{
@@ -65,7 +65,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestMiddleware(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention  string
 		app        App
 		next       http.Handler

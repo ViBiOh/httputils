@@ -13,7 +13,7 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		want      string
 	}{
@@ -46,7 +46,7 @@ func TestMiddleware(t *testing.T) {
 	metricsIgnoreValue := "/api"
 	gzip := true
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  App
 		requests  []*http.Request
@@ -112,7 +112,7 @@ func TestMiddleware(t *testing.T) {
 func TestRegisterer(t *testing.T) {
 	registry := prometheus.NewRegistry()
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  App
 		want      prometheus.Registerer
@@ -140,7 +140,7 @@ func TestIsIgnored(t *testing.T) {
 		path string
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		instance  App
 		args      args

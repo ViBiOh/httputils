@@ -18,7 +18,7 @@ func TestAddSignature(t *testing.T) {
 		payload []byte
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		intention         string
 		args              args
 		wantDigest        string
@@ -84,7 +84,7 @@ func TestValidateSignature(t *testing.T) {
 	reqInvalidSecret.Header.Add("Authorization", `headers="(request-target) digest"`)
 	reqInvalidSecret.Header.Add("Authorization", `signature="5lf5ogggfJ1LXJciRS2BscNtMnYHWDOr2myJ9TJyZnu+37EXUpmchhl6LxyzU0bfpqAloLFEFw+1NEBSgNC+lQ=="`)
 
-	var cases = []struct {
+	cases := []struct {
 		intention string
 		args      args
 		want      bool
