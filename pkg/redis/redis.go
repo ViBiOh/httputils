@@ -85,16 +85,29 @@ func (a App) Load(ctx context.Context, key string) (string, error) {
 }
 
 // Delete given key
-func (a App) Delete(ctx context.Context, key string) error {
-	err := a.redisClient.Del(ctx, key).Err()
+func (a App) Delete(ctx context.Context, keys ...string) error {
+	pipeline := a.redisClient.Pipeline()
 
-	if err == nil {
-		a.increase("delete")
-	} else {
-		a.increase("error")
+	for _, key := range keys {
+		pipeline.Del(ctx, key)
 	}
 
-	return err
+	results, err := pipeline.Exec(ctx)
+	if err != nil {
+		a.increase("error")
+		return fmt.Errorf("unable to exec delete pipeline: %s", err)
+	}
+
+	for _, result := range results {
+		if err := result.Err(); err != nil {
+			a.increase("error")
+			return fmt.Errorf("unable to delete key: %s", err)
+		}
+
+		a.increase("delete")
+	}
+
+	return nil
 }
 
 // Exclusive get an exclusive lock for given name during duration

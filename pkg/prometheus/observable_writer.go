@@ -18,7 +18,6 @@ var writers = make([]func(*observableResponseWriter) responseWriter, 16)
 
 type responseWriter interface {
 	http.ResponseWriter
-
 	Status() int
 	Written() int64
 }

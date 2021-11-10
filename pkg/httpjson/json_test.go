@@ -85,7 +85,6 @@ func TestWrite(t *testing.T) {
 		wantStatus int
 		wantHeader map[string]string
 	}{
-
 		{
 			"nil",
 			nil,
