@@ -77,11 +77,16 @@ func (a App) Load(ctx context.Context, key string) (string, error) {
 
 	if err == nil {
 		a.increase("load")
-	} else if err != redis.Nil {
-		a.increase("error")
+		return content, nil
 	}
 
-	return content, err
+	if err != redis.Nil {
+		a.increase("error")
+		return "", fmt.Errorf("unable to load: %s", err)
+	}
+
+	a.increase("miss")
+	return "", nil
 }
 
 // Delete given key
