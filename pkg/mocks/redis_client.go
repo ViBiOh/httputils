@@ -35,6 +35,25 @@ func (m *RedisClient) EXPECT() *RedisClientMockRecorder {
 	return m.recorder
 }
 
+// Delete mocks base method.
+func (m *RedisClient) Delete(arg0 context.Context, arg1 ...string) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Delete", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *RedisClientMockRecorder) Delete(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*RedisClient)(nil).Delete), varargs...)
+}
+
 // Load mocks base method.
 func (m *RedisClient) Load(arg0 context.Context, arg1 string) (string, error) {
 	m.ctrl.T.Helper()

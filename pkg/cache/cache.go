@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
@@ -13,15 +14,11 @@ import (
 type RedisClient interface {
 	Load(ctx context.Context, key string) (string, error)
 	Store(ctx context.Context, key string, value interface{}, duration time.Duration) error
+	Delete(ctx context.Context, keys ...string) error
 }
 
-// Cacheable object that provide a key
-type Cacheable interface {
-	GetKey() string
-}
-
-// Read an item from the cache for given key or retrieve it (and store it in cache after)
-func Read(ctx context.Context, redisClient RedisClient, key string, item Cacheable, onMiss func() (Cacheable, error), duration time.Duration) (Cacheable, error) {
+// Retrieve loads an item from the cache for given key or retrieve it (and store it in cache after)
+func Retrieve(ctx context.Context, redisClient RedisClient, key string, item interface{}, onMiss func() (interface{}, error), duration time.Duration) (interface{}, error) {
 	content, err := redisClient.Load(ctx, key)
 	if err != nil {
 		logger.Error("unable to read from cache: %s", err)
@@ -34,6 +31,7 @@ func Read(ctx context.Context, redisClient RedisClient, key string, item Cacheab
 	}
 
 	item, err = onMiss()
+
 	if err == nil {
 		go func() {
 			storeCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -48,4 +46,17 @@ func Read(ctx context.Context, redisClient RedisClient, key string, item Cacheab
 	}
 
 	return item, err
+}
+
+// OnModify handle an item update and evict the cache for given key
+func OnModify(ctx context.Context, redisClient RedisClient, key string, err error) error {
+	if err != nil {
+		return err
+	}
+
+	if err = redisClient.Delete(ctx, key); err != nil {
+		return fmt.Errorf("unable to evict key `%s` from cache: %s", key, err)
+	}
+
+	return nil
 }
