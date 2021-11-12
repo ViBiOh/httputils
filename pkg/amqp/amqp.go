@@ -2,11 +2,14 @@ package amqp
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/ViBiOh/httputils/v4/pkg/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/prometheus/client_golang/prometheus"
@@ -36,8 +39,21 @@ type Client struct {
 	mutex             sync.RWMutex
 }
 
+// Config of package
+type Config struct {
+	uri *string
+}
+
+// Flags adds flags for configuring package
+func Flags(fs *flag.FlagSet, prefix string) Config {
+	return Config{
+		uri: flags.New(prefix, "amqp", "URI").Default("", nil).Label("Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>").ToString(fs),
+	}
+}
+
 // New inits AMQP connection, channel and queue
-func New(uri string, prometheusRegister prometheus.Registerer) (*Client, error) {
+func New(config Config, prometheusRegister prometheus.Registerer) (*Client, error) {
+	uri := strings.TrimSpace(*config.uri)
 	if len(uri) == 0 {
 		return nil, errors.New("URI is required")
 	}
