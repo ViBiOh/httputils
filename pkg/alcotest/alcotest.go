@@ -13,15 +13,8 @@ import (
 )
 
 var (
-	httpClient = &http.Client{
-		Timeout:   5 * time.Second,
-		Transport: http.DefaultTransport,
-		CheckRedirect: func(*http.Request, []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-
-	exitFunc = os.Exit
+	httpClient = request.CreateClient(5*time.Second, request.NoRedirection)
+	exitFunc   = os.Exit
 )
 
 // Config of package

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,32 +20,7 @@ const (
 var (
 	discarder = io.Discard.(io.ReaderFrom)
 
-	defaultHTTPClient = &http.Client{
-		Transport: &http.Transport{
-			Proxy:             http.ProxyFromEnvironment,
-			ForceAttemptHTTP2: true,
-
-			DialContext: (&net.Dialer{
-				Timeout:   5 * time.Second,
-				KeepAlive: 15 * time.Second,
-			}).DialContext,
-
-			TLSHandshakeTimeout:   5 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-			ResponseHeaderTimeout: 5 * time.Second,
-
-			MaxConnsPerHost:     100,
-			MaxIdleConns:        100,
-			MaxIdleConnsPerHost: 100,
-			IdleConnTimeout:     60 * time.Second,
-		},
-
-		Timeout: 15 * time.Second,
-
-		CheckRedirect: func(*http.Request, []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
+	defaultHTTPClient = CreateClient(15*time.Second, NoRedirection)
 )
 
 // Request describe a complete request

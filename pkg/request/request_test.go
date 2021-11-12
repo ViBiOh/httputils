@@ -222,12 +222,7 @@ func TestSend(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	defaultHTTPClient = &http.Client{
-		Timeout: time.Second,
-		CheckRedirect: func(*http.Request, []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
+	defaultHTTPClient = CreateClient(time.Second, NoRedirection)
 
 	cases := []struct {
 		intention string
