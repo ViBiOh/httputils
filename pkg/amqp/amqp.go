@@ -51,9 +51,13 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 	}
 }
 
-// New inits AMQP connection, channel and queue
+// New inits AMQP connection from Config
 func New(config Config, prometheusRegister prometheus.Registerer) (*Client, error) {
-	uri := strings.TrimSpace(*config.uri)
+	return NewFromURI(strings.TrimSpace(*config.uri), prometheusRegister)
+}
+
+// NewFromURI inits AMQP connection from given URI
+func NewFromURI(uri string, prometheusRegister prometheus.Registerer) (*Client, error) {
 	if len(uri) == 0 {
 		return nil, errors.New("URI is required")
 	}
