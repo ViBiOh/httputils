@@ -21,7 +21,7 @@ func (a App) Retry(message amqp.Delivery) error {
 		}
 
 		if count < a.maxRetry {
-			if err := a.amqpClient.Publish(amqpclient.ConvertDeliveryToPublishing(message), a.delayExchange); err != nil {
+			if err := a.amqpClient.Publish(amqpclient.ConvertDeliveryToPublishing(message), a.delayExchange, message.RoutingKey); err != nil {
 				a.amqpClient.Reject(message, true)
 				return fmt.Errorf("unable to delay message: %s", err)
 			}

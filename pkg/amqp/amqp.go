@@ -88,13 +88,13 @@ func NewFromURI(uri string, prometheusRegister prometheus.Registerer) (*Client, 
 }
 
 // Publish sends payload to the underlying exchange
-func (a *Client) Publish(payload amqp.Publishing, exchange string) error {
+func (a *Client) Publish(payload amqp.Publishing, exchange, routingKey string) error {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
 
 	a.increase("published")
 
-	return a.channel.Publish(exchange, "", false, false, payload)
+	return a.channel.Publish(exchange, routingKey, false, false, payload)
 }
 
 // Ack ack a message with error handling
