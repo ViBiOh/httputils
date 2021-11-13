@@ -118,8 +118,11 @@ func (a App) Start(done <-chan struct{}) {
 			continue
 		}
 
+		messageSha := sha.New(message.Body)
+		log.Error("unable to handle message with sha `%s`: %s", messageSha, err)
+
 		if err = a.Retry(message); err != nil {
-			log.Info("unable to retry message with sha `%s`: %s", sha.New(message.Body), err)
+			log.Info("unable to retry message with sha `%s`: %s", messageSha, err)
 		}
 	}
 }
