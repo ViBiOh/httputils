@@ -15,8 +15,7 @@ var NoRedirection = func(*http.Request, []*http.Request) error {
 func CreateClient(timeout time.Duration, onRedirect func(*http.Request, []*http.Request) error) *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
-			Proxy:             http.ProxyFromEnvironment,
-			ForceAttemptHTTP2: true,
+			Proxy: http.ProxyFromEnvironment,
 
 			DialContext: (&net.Dialer{
 				Timeout:   5 * time.Second,
