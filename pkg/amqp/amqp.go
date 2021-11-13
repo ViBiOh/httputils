@@ -80,6 +80,10 @@ func NewFromURI(uri string, prometheusRegister prometheus.Registerer) (*Client, 
 
 	logger.WithField("vhost", client.vhost).Info("Connected to AMQP!")
 
+	if err = client.Ping(); err != nil {
+		return client, fmt.Errorf("unable to ping amqp: %s", err)
+	}
+
 	return client, nil
 }
 

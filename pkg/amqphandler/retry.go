@@ -1,48 +1,35 @@
-package amqp
+package amqphandler
 
 import (
 	"errors"
 	"fmt"
 
+	amqpclient "github.com/ViBiOh/httputils/v4/pkg/amqp"
 	"github.com/streadway/amqp"
-)
-
-// DeliveryStatus on error
-type DeliveryStatus int
-
-const (
-	// DeliveryRejected when message is dropped
-	DeliveryRejected DeliveryStatus = iota
-	// DeliveryDelayed when message is sent in delay queue
-	DeliveryDelayed
 )
 
 // ErrNoDeathCount occurs when no death count is found in message
 var ErrNoDeathCount = errors.New("no death count")
 
 // Retry a message if possible on error
-func (c *Client) Retry(message amqp.Delivery, maxRetry int64, delayExchange string) (DeliveryStatus, error) {
-	status := DeliveryRejected
-
-	if maxRetry != 0 {
+func (a App) Retry(message amqp.Delivery) error {
+	if a.retry {
 		count, err := GetDeathCount(message)
 		if err != nil && !errors.Is(err, ErrNoDeathCount) {
-			c.Reject(message, false)
-			return DeliveryRejected, fmt.Errorf("unable to get death count from message: %s", err)
+			a.amqpClient.Reject(message, false)
+			return fmt.Errorf("unable to get death count from message: %s", err)
 		}
 
-		if count < maxRetry && len(delayExchange) > 0 {
-			if err := c.Publish(ConvertDeliveryToPublishing(message), delayExchange); err != nil {
-				c.Reject(message, true)
-				return DeliveryRejected, fmt.Errorf("unable to delay message: %s", err)
+		if count < a.maxRetry {
+			if err := a.amqpClient.Publish(amqpclient.ConvertDeliveryToPublishing(message), a.delayExchange); err != nil {
+				a.amqpClient.Reject(message, true)
+				return fmt.Errorf("unable to delay message: %s", err)
 			}
-
-			status = DeliveryDelayed
 		}
 	}
 
-	c.Ack(message)
-	return status, nil
+	a.amqpClient.Ack(message)
+	return nil
 }
 
 // GetDeathCount of a message
