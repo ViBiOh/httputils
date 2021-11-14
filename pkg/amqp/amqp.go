@@ -20,6 +20,9 @@ const (
 	metricNamespace = "amqp"
 )
 
+// ErrNoConfig occurs when URI is not provided
+var ErrNoConfig = errors.New("URI is required")
+
 // Connection for AMQP
 //go:generate mockgen -destination ../mocks/amqp.go -mock_names Connection=AMQPConnection -package mocks github.com/ViBiOh/httputils/v4/pkg/amqp Connection
 type Connection interface {
@@ -59,7 +62,7 @@ func New(config Config, prometheusRegister prometheus.Registerer) (*Client, erro
 // NewFromURI inits AMQP connection from given URI
 func NewFromURI(uri string, prometheusRegister prometheus.Registerer) (*Client, error) {
 	if len(uri) == 0 {
-		return nil, errors.New("URI is required")
+		return nil, ErrNoConfig
 	}
 
 	client := &Client{
