@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	amqpclient "github.com/ViBiOh/httputils/v4/pkg/amqp"
+	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/sha"
 	"github.com/streadway/amqp"
 )
 
@@ -25,6 +27,8 @@ func (a App) Retry(message amqp.Delivery) error {
 				a.amqpClient.Reject(message, true)
 				return fmt.Errorf("unable to delay message: %s", err)
 			}
+
+			logger.Info("message with sha `%s` has been delayed in `%s`", sha.New(message.Body), a.delayExchange)
 		}
 	}
 
