@@ -118,11 +118,11 @@ func (a App) Start(done <-chan struct{}) {
 			continue
 		}
 
-		messageSha := sha.New(message.Body)
-		log.Error("unable to handle message with sha `%s`: %s", messageSha, err)
+		messageLog := log.WithField("exchange", message.Exchange).WithField("routingKey", message.RoutingKey).WithField("sha", sha.New(message.Body))
+		messageLog.Error("unable to handle message: %s", err)
 
-		if err = a.Retry(message); err != nil {
-			log.Info("unable to retry message with sha `%s`: %s", messageSha, err)
+		if err = a.Retry(messageLog, message); err != nil {
+			messageLog.Info("unable to retry message: %s", err)
 		}
 	}
 }

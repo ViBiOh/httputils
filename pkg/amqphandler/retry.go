@@ -6,7 +6,6 @@ import (
 
 	amqpclient "github.com/ViBiOh/httputils/v4/pkg/amqp"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/ViBiOh/httputils/v4/pkg/sha"
 	"github.com/streadway/amqp"
 )
 
@@ -14,7 +13,7 @@ import (
 var ErrNoDeathCount = errors.New("no death count")
 
 // Retry a message if possible on error
-func (a App) Retry(message amqp.Delivery) error {
+func (a App) Retry(log logger.Provider, message amqp.Delivery) error {
 	if a.retry {
 		count, err := GetDeathCount(message)
 		if err != nil && !errors.Is(err, ErrNoDeathCount) {
@@ -28,7 +27,7 @@ func (a App) Retry(message amqp.Delivery) error {
 				return fmt.Errorf("unable to delay message: %s", err)
 			}
 
-			logger.Info("message with sha `%s` has been delayed in `%s`", sha.New(message.Body), a.delayExchange)
+			log.Info("message has been delayed in `%s`", a.delayExchange)
 		}
 	}
 
