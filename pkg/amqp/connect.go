@@ -46,7 +46,7 @@ func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, 
 	}
 
 	go func() {
-		log := logger.WithField("addr", connection.LocalAddr())
+		log := logger.WithField("addr", connection.LocalAddr().String())
 		log.Info("Start listening close connection notifications")
 		defer log.Info("End listening close connection notifications")
 

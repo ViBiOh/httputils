@@ -23,7 +23,7 @@ func (a *Client) Consumer(queueName, routingKey, exchangeName string, retryDelay
 
 	var delayExchange string
 	if retryDelay != 0 {
-		delayExchange := exchangeName + "-delay"
+		delayExchange = exchangeName + "-delay"
 
 		err := a.declareExchange(delayExchange, "direct", map[string]interface{}{
 			"x-dead-letter-exchange": exchangeName,
