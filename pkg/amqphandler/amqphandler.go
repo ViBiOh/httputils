@@ -1,6 +1,7 @@
 package amqphandler
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"strings"
@@ -39,8 +40,8 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 		exchange:      flags.New(prefix, "amqp", "Exchange").Default("", overrides).Label("Exchange name").ToString(fs),
 		queue:         flags.New(prefix, "amqp", "Queue").Default("", overrides).Label("Queue name").ToString(fs),
 		routingKey:    flags.New(prefix, "amqp", "RoutingKey").Default("", overrides).Label("RoutingKey name").ToString(fs),
-		retryInterval: flags.New(prefix, "amqp", "RetryInterval").Default("1h", nil).Label("Interval duration when send fails").ToString(fs),
-		maxRetry:      flags.New(prefix, "amqp", "MaxRetry").Default(3, nil).Label("Max send retries").ToUint(fs),
+		retryInterval: flags.New(prefix, "amqp", "RetryInterval").Default("1h", overrides).Label("Interval duration when send fails").ToString(fs),
+		maxRetry:      flags.New(prefix, "amqp", "MaxRetry").Default(3, overrides).Label("Max send retries").ToUint(fs),
 	}
 }
 
@@ -68,6 +69,10 @@ func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) er
 		return app, fmt.Errorf("unable to parse retry duration: %s", err)
 	}
 	app.retry = retryIntervalDuration > 0 && app.maxRetry > 0
+
+	if app.retry && len(exchange) == 0 {
+		return app, errors.New("no exchange name for delaying retries")
+	}
 
 	if app.delayExchange, err = app.amqpClient.Consumer(app.queue, routingKey, exchange, retryIntervalDuration); err != nil {
 		return app, fmt.Errorf("unable to configure amqp consumer: %s", err)
