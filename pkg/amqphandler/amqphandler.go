@@ -67,10 +67,9 @@ func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) er
 	if err != nil {
 		return app, fmt.Errorf("unable to parse retry duration: %s", err)
 	}
-	app.retry = retryIntervalDuration != 0 && app.maxRetry > 0
+	app.retry = retryIntervalDuration > 0 && app.maxRetry > 0
 
-	app.delayExchange, err = app.amqpClient.Consumer(app.queue, routingKey, exchange, retryIntervalDuration)
-	if err != nil {
+	if app.delayExchange, err = app.amqpClient.Consumer(app.queue, routingKey, exchange, retryIntervalDuration); err != nil {
 		return app, fmt.Errorf("unable to configure amqp consumer: %s", err)
 	}
 
