@@ -12,6 +12,12 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/clock"
 )
 
+// Semaphore client
+//go:generate mockgen -destination ../mocks/redis.go -mock_names Semaphore=Semaphore -package mocks github.com/ViBiOh/httputils/v4/pkg/cron Semaphore
+type Semaphore interface {
+	Exclusive(context.Context, string, time.Duration, func(context.Context) error) error
+}
+
 const (
 	hourFormat = "15:04"
 )
@@ -20,8 +26,8 @@ var _ fmt.Stringer = New()
 
 // Cron definition
 type Cron struct {
-	clock    *clock.Clock
-	redisApp Redis
+	clock        *clock.Clock
+	semaphoreApp Semaphore
 
 	signal  os.Signal
 	dayTime time.Time
@@ -61,7 +67,7 @@ func (c *Cron) String() string {
 
 	fmt.Fprintf(&buffer, ", retry: %d times every %s", c.maxRetry, c.retryInterval)
 
-	if c.redisApp != nil {
+	if c.semaphoreApp != nil {
 		fmt.Fprintf(&buffer, ", in exclusive mode as `%s` with %s timeout", c.name, c.timeout)
 	}
 
@@ -145,8 +151,8 @@ func (c *Cron) At(hour string) *Cron {
 }
 
 // Exclusive runs cron in an exclusive manner with a distributed lock on Redis
-func (c *Cron) Exclusive(redisApp Redis, name string, timeout time.Duration) *Cron {
-	c.redisApp = redisApp
+func (c *Cron) Exclusive(semaphoreApp Semaphore, name string, timeout time.Duration) *Cron {
+	c.semaphoreApp = semaphoreApp
 	c.name = name
 	c.timeout = timeout
 
@@ -289,12 +295,12 @@ func (c *Cron) Start(action func(context.Context) error, done <-chan struct{}) {
 	}
 
 	run := func() {
-		if c.redisApp == nil {
+		if c.semaphoreApp == nil {
 			do(context.Background())
 			return
 		}
 
-		if err := c.redisApp.Exclusive(context.Background(), c.name, c.timeout, func(ctx context.Context) error {
+		if err := c.semaphoreApp.Exclusive(context.Background(), c.name, c.timeout, func(ctx context.Context) error {
 			do(ctx)
 			return nil
 		}); err != nil {

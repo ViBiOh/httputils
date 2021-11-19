@@ -94,7 +94,7 @@ func TestString(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			redisMock := mocks.NewRedis(ctrl)
+			redisMock := mocks.NewSemaphore(ctrl)
 
 			if tc.intention == "full case" {
 				tc.cron.Exclusive(redisMock, "test", time.Minute)
@@ -505,7 +505,7 @@ func TestStart(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			redisMock := mocks.NewRedis(ctrl)
+			redisMock := mocks.NewSemaphore(ctrl)
 
 			if tc.intention == "run in exclusive error" {
 				tc.cron.Exclusive(redisMock, "test", time.Minute)

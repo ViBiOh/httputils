@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	amqp "github.com/streadway/amqp"
 )
 
 // AMQPConnection is a mock of Connection interface.
@@ -31,6 +32,21 @@ func NewAMQPConnection(ctrl *gomock.Controller) *AMQPConnection {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *AMQPConnection) EXPECT() *AMQPConnectionMockRecorder {
 	return m.recorder
+}
+
+// Channel mocks base method.
+func (m *AMQPConnection) Channel() (*amqp.Channel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Channel")
+	ret0, _ := ret[0].(*amqp.Channel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Channel indicates an expected call of Channel.
+func (mr *AMQPConnectionMockRecorder) Channel() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Channel", reflect.TypeOf((*AMQPConnection)(nil).Channel))
 }
 
 // Close mocks base method.
