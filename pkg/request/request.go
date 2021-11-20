@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 const (
@@ -247,11 +249,7 @@ func (r Request) JSON(ctx context.Context, body interface{}) (*http.Response, er
 	resp, err := r.ContentJSON().Send(ctx, reader)
 
 	if closeErr := reader.Close(); closeErr != nil {
-		if err == nil {
-			err = closeErr
-		} else {
-			err = fmt.Errorf("%s: %w", err, closeErr)
-		}
+		err = model.WrapError(err, closeErr)
 	}
 
 	return resp, err
@@ -300,11 +298,7 @@ func DiscardBody(body io.ReadCloser) error {
 	}
 
 	if closeErr := body.Close(); closeErr != nil {
-		if err == nil {
-			err = closeErr
-		} else {
-			err = fmt.Errorf("%s: %w", err, closeErr)
-		}
+		err = model.WrapError(err, closeErr)
 	}
 
 	return err

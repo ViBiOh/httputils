@@ -1,9 +1,10 @@
 package request
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 func readContent(body io.ReadCloser) ([]byte, error) {
@@ -14,11 +15,7 @@ func readContent(body io.ReadCloser) ([]byte, error) {
 	content, err := io.ReadAll(body)
 
 	if closeErr := body.Close(); closeErr != nil {
-		if err == nil {
-			err = closeErr
-		} else {
-			err = fmt.Errorf("%s: %w", err, closeErr)
-		}
+		err = model.WrapError(err, closeErr)
 	}
 
 	return content, err

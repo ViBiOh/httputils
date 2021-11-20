@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/go-redis/redis/v8"
 	"github.com/prometheus/client_golang/prometheus"
@@ -133,12 +134,7 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 
 	if delErr := a.redisClient.Del(ctx, name).Err(); delErr != nil {
 		a.increase("error")
-
-		if err == nil {
-			err = delErr
-		} else {
-			err = fmt.Errorf("%s: %w", err, delErr)
-		}
+		err = model.WrapError(err, delErr)
 	}
 
 	return err

@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -16,11 +15,7 @@ func readContent(body io.ReadCloser) ([]byte, error) {
 	content, err := io.ReadAll(body)
 
 	if closeErr := body.Close(); closeErr != nil {
-		if err == nil {
-			err = closeErr
-		} else {
-			err = fmt.Errorf("%s: %w", err, closeErr)
-		}
+		err = WrapError(err, closeErr)
 	}
 
 	return content, err

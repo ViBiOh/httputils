@@ -11,6 +11,11 @@ import (
 
 // SetupExclusive configure the exclusive queue
 func (c *Client) SetupExclusive(name string) (err error) {
+	create, count := c.shouldCreateExclusiveQueue(name)
+	if !create || count > 0 {
+		return nil
+	}
+
 	channel, err := c.connection.Channel()
 	if err != nil {
 		return fmt.Errorf("unable to open channel: %s", err)
@@ -22,17 +27,13 @@ func (c *Client) SetupExclusive(name string) (err error) {
 		}
 	}()
 
-	var queue amqp.Queue
-	queue, err = channel.QueueInspect(name)
-	if err != nil {
-		if _, err = c.channel.QueueDeclare(name, true, false, false, false, nil); err != nil {
+	if create {
+		if _, err = channel.QueueDeclare(name, true, false, true, false, nil); err != nil {
 			return fmt.Errorf("unable to declare queue: %s", err)
 		}
-	} else if queue.Messages > 0 {
-		return nil
 	}
 
-	if err = c.channel.Publish("", name, false, false, amqp.Publishing{
+	if err = channel.Publish("", name, false, false, amqp.Publishing{
 		ContentType: "text/plain",
 		Body:        []byte("semaphore"),
 	}); err != nil {
@@ -40,6 +41,26 @@ func (c *Client) SetupExclusive(name string) (err error) {
 	}
 
 	return nil
+}
+
+func (c *Client) shouldCreateExclusiveQueue(name string) (bool, int) {
+	channel, err := c.connection.Channel()
+	if err != nil {
+		return false, 0
+	}
+
+	defer func() {
+		if closeErr := channel.Close(); closeErr != nil {
+			err = model.WrapError(err, closeErr)
+		}
+	}()
+
+	queue, err := channel.QueueInspect(name)
+	if err != nil {
+		return true, 0
+	}
+
+	return false, queue.Messages
 }
 
 // Exclusive get an exclusive lock from given queue during duration
