@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -99,6 +100,23 @@ func (a *Client) Publish(payload amqp.Publishing, exchange, routingKey string) e
 	a.increase("published")
 
 	return a.channel.Publish(exchange, routingKey, false, false, payload)
+}
+
+// PublishJSON sends JSON payload to the underlying exchange
+func (a *Client) PublishJSON(item interface{}, exchange, routingKey string) error {
+	payload, err := json.Marshal(item)
+	if err != nil {
+		return fmt.Errorf("unable to marshal: %s", err)
+	}
+
+	if err = a.Publish(amqp.Publishing{
+		ContentType: "application/json",
+		Body:        payload,
+	}, exchange, routingKey); err != nil {
+		return fmt.Errorf("unable to publish: %s", err)
+	}
+
+	return nil
 }
 
 // Ack ack a message with error handling
