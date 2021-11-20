@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/streadway/amqp"
 )
 
@@ -17,7 +18,7 @@ func (c *Client) SetupExclusive(name string) (err error) {
 
 	defer func() {
 		if closeErr := channel.Close(); closeErr != nil {
-			err = wrapError(err, closeErr)
+			err = model.WrapError(err, closeErr)
 		}
 	}()
 

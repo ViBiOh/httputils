@@ -26,38 +26,43 @@ var (
 	ErrInternalError = errors.New("internal error")
 )
 
-func wrapError(err, wrapper error) error {
+// WrapError wraps err with the given wrapper
+func WrapError(err, wrapper error) error {
+	if err == nil {
+		return wrapper
+	}
+
 	return fmt.Errorf("%s: %w", err, wrapper)
 }
 
 // WrapInvalid wraps given error with invalid err
 func WrapInvalid(err error) error {
-	return wrapError(err, ErrInvalid)
+	return WrapError(err, ErrInvalid)
 }
 
 // WrapUnauthorized wraps given error with unauthorized err
 func WrapUnauthorized(err error) error {
-	return wrapError(err, ErrUnauthorized)
+	return WrapError(err, ErrUnauthorized)
 }
 
 // WrapForbidden wraps given error with forbidden err
 func WrapForbidden(err error) error {
-	return wrapError(err, ErrForbidden)
+	return WrapError(err, ErrForbidden)
 }
 
 // WrapNotFound wraps given error with not found err
 func WrapNotFound(err error) error {
-	return wrapError(err, ErrNotFound)
+	return WrapError(err, ErrNotFound)
 }
 
 // WrapMethodNotAllowed wraps given error with not method not allowed err
 func WrapMethodNotAllowed(err error) error {
-	return wrapError(err, ErrMethodNotAllowed)
+	return WrapError(err, ErrMethodNotAllowed)
 }
 
 // WrapInternal wraps given error with internal err
 func WrapInternal(err error) error {
-	return wrapError(err, ErrInternalError)
+	return WrapError(err, ErrInternalError)
 }
 
 // ConcatError concat errors to a single string

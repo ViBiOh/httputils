@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/streadway/amqp"
 )
 
@@ -25,7 +26,7 @@ func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, 
 		err := fmt.Errorf("unable to open communication channel: %s", err)
 
 		if closeErr := connection.Close(); closeErr != nil {
-			err = wrapError(err, closeErr)
+			err = model.WrapError(err, closeErr)
 		}
 
 		return nil, nil, err
@@ -35,11 +36,11 @@ func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, 
 		err := fmt.Errorf("unable to configure QoS on channel: %s", err)
 
 		if closeErr := channel.Close(); closeErr != nil {
-			err = wrapError(err, closeErr)
+			err = model.WrapError(err, closeErr)
 		}
 
 		if closeErr := connection.Close(); closeErr != nil {
-			err = wrapError(err, closeErr)
+			err = model.WrapError(err, closeErr)
 		}
 
 		return nil, nil, err
@@ -72,8 +73,4 @@ func (a *Client) onDisconnect() {
 			return
 		}
 	}
-}
-
-func wrapError(err, wrapped error) error {
-	return fmt.Errorf("%s: %w", err, wrapped)
 }
