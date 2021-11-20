@@ -32,6 +32,7 @@ type Config struct {
 	routingKey    *string
 	retryInterval *string
 	maxRetry      *uint
+	exclusive     *bool
 }
 
 // Flags adds flags for configuring package
@@ -39,6 +40,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	return Config{
 		exchange:      flags.New(prefix, "amqp", "Exchange").Default("", overrides).Label("Exchange name").ToString(fs),
 		queue:         flags.New(prefix, "amqp", "Queue").Default("", overrides).Label("Queue name").ToString(fs),
+		exclusive:     flags.New(prefix, "amqp", "Exclusive").Default(false, overrides).Label("Queue exclusive mode (for fanout exchange)").ToBool(fs),
 		routingKey:    flags.New(prefix, "amqp", "RoutingKey").Default("", overrides).Label("RoutingKey name").ToString(fs),
 		retryInterval: flags.New(prefix, "amqp", "RetryInterval").Default("1h", overrides).Label("Interval duration when send fails").ToString(fs),
 		maxRetry:      flags.New(prefix, "amqp", "MaxRetry").Default(3, overrides).Label("Max send retries").ToUint(fs),
@@ -47,11 +49,11 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 
 // New creates new App from Config
 func New(config Config, amqpClient *amqpclient.Client, handler func(amqp.Delivery) error) (App, error) {
-	return NewFromString(amqpClient, handler, strings.TrimSpace(*config.exchange), strings.TrimSpace(*config.queue), strings.TrimSpace(*config.routingKey), strings.TrimSpace(*config.retryInterval), *config.maxRetry)
+	return NewFromString(amqpClient, handler, strings.TrimSpace(*config.exchange), strings.TrimSpace(*config.queue), strings.TrimSpace(*config.routingKey), strings.TrimSpace(*config.retryInterval), *config.exclusive, *config.maxRetry)
 }
 
 // NewFromString creates new App from string configuration
-func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) error, exchange, queue, routingKey, retryInterval string, maxRetry uint) (App, error) {
+func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) error, exchange, queue, routingKey, retryInterval string, exclusive bool, maxRetry uint) (App, error) {
 	app := App{
 		amqpClient: amqpClient,
 		queue:      queue,
@@ -74,7 +76,7 @@ func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) er
 		return app, errors.New("no exchange name for delaying retries")
 	}
 
-	if app.delayExchange, err = app.amqpClient.Consumer(app.queue, routingKey, exchange, retryIntervalDuration); err != nil {
+	if app.delayExchange, err = app.amqpClient.Consumer(app.queue, routingKey, exchange, exclusive, retryIntervalDuration); err != nil {
 		return app, fmt.Errorf("unable to configure amqp consumer: %s", err)
 	}
 

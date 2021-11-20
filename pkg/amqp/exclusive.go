@@ -28,7 +28,7 @@ func (c *Client) SetupExclusive(name string) (err error) {
 	}()
 
 	if create {
-		if _, err = channel.QueueDeclare(name, true, false, true, false, nil); err != nil {
+		if _, err = channel.QueueDeclare(name, true, false, false, false, nil); err != nil {
 			return fmt.Errorf("unable to declare queue: %s", err)
 		}
 	}

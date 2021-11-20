@@ -8,11 +8,11 @@ import (
 )
 
 // Consumer configures client for consumming from given queue, bind to given exchange, and return delayed Exchange name to publish
-func (a *Client) Consumer(queueName, routingKey, exchangeName string, retryDelay time.Duration) (string, error) {
+func (a *Client) Consumer(queueName, routingKey, exchangeName string, exclusive bool, retryDelay time.Duration) (string, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	queue, err := a.channel.QueueDeclare(queueName, true, false, false, false, nil)
+	queue, err := a.channel.QueueDeclare(queueName, true, false, exclusive, false, nil)
 	if err != nil {
 		return "", fmt.Errorf("unable to declare queue: %s", err)
 	}
