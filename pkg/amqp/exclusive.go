@@ -24,14 +24,14 @@ func (c *Client) SetupExclusive(name string) (err error) {
 	var queue amqp.Queue
 	queue, err = channel.QueueInspect(name)
 	if err != nil {
-		if _, err = channel.QueueDeclare(name, true, false, false, false, nil); err != nil {
+		if _, err = c.channel.QueueDeclare(name, true, false, false, false, nil); err != nil {
 			return fmt.Errorf("unable to declare queue: %s", err)
 		}
 	} else if queue.Messages > 0 {
 		return nil
 	}
 
-	if err = channel.Publish("", name, false, false, amqp.Publishing{
+	if err = c.channel.Publish("", name, false, false, amqp.Publishing{
 		ContentType: "text/plain",
 		Body:        []byte("semaphore"),
 	}); err != nil {
