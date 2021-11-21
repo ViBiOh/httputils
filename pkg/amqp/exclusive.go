@@ -65,7 +65,18 @@ func (c *Client) shouldCreateExclusiveQueue(name string) (bool, int) {
 
 // Exclusive get an exclusive lock from given queue during duration
 func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) error {
-	message, acquired, err := c.channel.Get(name, false)
+	channel, err := c.connection.Channel()
+	if err != nil {
+		return fmt.Errorf("unable to create channel: %s", err)
+	}
+
+	defer func() {
+		if closeErr := channel.Close(); closeErr != nil {
+			err = model.WrapError(err, closeErr)
+		}
+	}()
+
+	message, acquired, err := channel.Get(name, false)
 	if err != nil {
 		return fmt.Errorf("unable to get semaphore: %s", err)
 	} else if !acquired {

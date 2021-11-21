@@ -60,11 +60,11 @@ func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, 
 	return connection, channel, nil
 }
 
-func (a *Client) onDisconnect() {
+func (c *Client) onDisconnect() {
 	for {
-		a.increaseConnection("reconnect")
+		c.increaseConnection("reconnect")
 
-		if err := a.close(true); err != nil {
+		if err := c.close(true); err != nil {
 			logger.Error("unable to reconnect: %s", err)
 
 			logger.Info("Waiting one minute before attempting to reconnect again...")

@@ -3,23 +3,23 @@ package amqp
 import "errors"
 
 // Enabled checks if connection is setup
-func (a *Client) Enabled() bool {
-	a.mutex.RLock()
-	defer a.mutex.RUnlock()
+func (c *Client) Enabled() bool {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
-	return a.connection != nil
+	return c.connection != nil
 }
 
 // Ping checks if connection is live
-func (a *Client) Ping() error {
-	if !a.Enabled() {
+func (c *Client) Ping() error {
+	if !c.Enabled() {
 		return nil
 	}
 
-	a.mutex.RLock()
-	defer a.mutex.RUnlock()
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
-	if a.connection.IsClosed() {
+	if c.connection.IsClosed() {
 		return errors.New("amqp client closed")
 	}
 
@@ -27,6 +27,6 @@ func (a *Client) Ping() error {
 }
 
 // Vhost returns connection Vhost
-func (a *Client) Vhost() string {
-	return a.vhost
+func (c *Client) Vhost() string {
+	return c.vhost
 }

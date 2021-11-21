@@ -8,79 +8,79 @@ import (
 )
 
 // Close closes opened ressources
-func (a *Client) Close() {
-	if err := a.close(false); err != nil {
+func (c *Client) Close() {
+	if err := c.close(false); err != nil {
 		logger.Error("unable to close: %s", err)
 	}
 }
 
-func (a *Client) close(reconnect bool) error {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
+func (c *Client) close(reconnect bool) error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
-	for name := range a.listeners {
-		if err := a.cancelConsumer(name); err != nil {
+	for name := range c.listeners {
+		if err := c.cancelConsumer(name); err != nil {
 			logger.WithField("name", name).Error("unable to cancel consumer: %s", err)
 		}
 	}
 
-	a.closeChannel()
-	a.closeConnection()
+	c.closeChannel()
+	c.closeConnection()
 
 	if !reconnect {
-		a.closeListeners()
+		c.closeListeners()
 		return nil
 	}
 
-	newConnection, newChannel, err := connect(a.uri, a.onDisconnect)
+	newConnection, newChannel, err := connect(c.uri, c.onDisconnect)
 	if err != nil {
 		return fmt.Errorf("unable to reconnect to amqp: %s", err)
 	}
 
-	a.connection = newConnection
-	a.channel = newChannel
-	a.vhost = newConnection.Config.Vhost
+	c.connection = newConnection
+	c.channel = newChannel
+	c.vhost = newConnection.Config.Vhost
 
 	logger.Info("Connection reopened.")
 
-	go a.notifyListeners()
+	go c.notifyListeners()
 
 	return nil
 }
 
-func (a *Client) cancelConsumer(consumer string) error {
-	if err := a.channel.Cancel(consumer, false); err != nil {
+func (c *Client) cancelConsumer(consumer string) error {
+	if err := c.channel.Cancel(consumer, false); err != nil {
 		return fmt.Errorf("unable to cancel channel for consumer: %s", err)
 	}
 
 	return nil
 }
 
-func (a *Client) closeChannel() {
-	if a.channel == nil {
+func (c *Client) closeChannel() {
+	if c.channel == nil {
 		return
 	}
 
 	logger.Info("Closing AMQP channel")
-	loggedClose(a.channel)
+	loggedClose(c.channel)
 
-	a.channel = nil
+	c.channel = nil
 }
 
-func (a *Client) closeConnection() {
-	if a.connection == nil {
+func (c *Client) closeConnection() {
+	if c.connection == nil {
 		return
 	}
 
-	if a.connection.IsClosed() {
-		a.connection = nil
+	if c.connection.IsClosed() {
+		c.connection = nil
 		return
 	}
 
-	logger.WithField("vhost", a.Vhost()).Info("Closing AMQP connection")
-	loggedClose(a.connection)
+	logger.WithField("vhost", c.Vhost()).Info("Closing AMQP connection")
+	loggedClose(c.connection)
 
-	a.connection = nil
+	c.connection = nil
 }
 
 func loggedClose(closer io.Closer) {

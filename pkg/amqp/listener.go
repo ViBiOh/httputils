@@ -6,9 +6,9 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/uuid"
 )
 
-func (a *Client) getListener() (string, <-chan bool, error) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
+func (c *Client) getListener() (string, <-chan bool, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 identity:
 	name, err := uuid.New()
@@ -16,32 +16,32 @@ identity:
 		return "", nil, fmt.Errorf("unable to generate uuid: %s", err)
 	}
 
-	if a.listeners[name] != nil {
+	if c.listeners[name] != nil {
 		goto identity
 	}
 
 	listener := make(chan bool)
-	a.listeners[name] = listener
+	c.listeners[name] = listener
 
-	a.increaseConnection("listener")
+	c.increaseConnection("listener")
 
 	return name, listener, nil
 }
 
-func (a *Client) notifyListeners() {
-	for _, listener := range a.listeners {
+func (c *Client) notifyListeners() {
+	for _, listener := range c.listeners {
 		listener <- true
 	}
 }
 
-func (a *Client) closeListeners() {
-	for name := range a.listeners {
-		a.removeListener(name)
+func (c *Client) closeListeners() {
+	for name := range c.listeners {
+		c.removeListener(name)
 	}
 }
 
-func (a *Client) removeListener(name string) {
-	listener := a.listeners[name]
+func (c *Client) removeListener(name string) {
+	listener := c.listeners[name]
 	if listener == nil {
 		return
 	}
@@ -49,5 +49,5 @@ func (a *Client) removeListener(name string) {
 	close(listener)
 	<-listener // drain eventually
 
-	delete(a.listeners, name)
+	delete(c.listeners, name)
 }

@@ -12,6 +12,7 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/streadway/amqp"
@@ -93,23 +94,34 @@ func NewFromURI(uri string, prometheusRegister prometheus.Registerer) (*Client, 
 }
 
 // Publish sends payload to the underlying exchange
-func (a *Client) Publish(payload amqp.Publishing, exchange, routingKey string) error {
-	a.mutex.RLock()
-	defer a.mutex.RUnlock()
+func (c *Client) Publish(payload amqp.Publishing, exchange, routingKey string) error {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
-	a.increase("published")
+	channel, err := c.connection.Channel()
+	if err != nil {
+		return fmt.Errorf("unable to create channel: %s", err)
+	}
 
-	return a.channel.Publish(exchange, routingKey, false, false, payload)
+	defer func() {
+		if closeErr := channel.Close(); closeErr != nil {
+			err = model.WrapError(err, closeErr)
+		}
+	}()
+
+	c.increase("published")
+
+	return channel.Publish(exchange, routingKey, false, false, payload)
 }
 
 // PublishJSON sends JSON payload to the underlying exchange
-func (a *Client) PublishJSON(item interface{}, exchange, routingKey string) error {
+func (c *Client) PublishJSON(item interface{}, exchange, routingKey string) error {
 	payload, err := json.Marshal(item)
 	if err != nil {
 		return fmt.Errorf("unable to marshal: %s", err)
 	}
 
-	if err = a.Publish(amqp.Publishing{
+	if err = c.Publish(amqp.Publishing{
 		ContentType: "application/json",
 		Body:        payload,
 	}, exchange, routingKey); err != nil {
@@ -120,24 +132,24 @@ func (a *Client) PublishJSON(item interface{}, exchange, routingKey string) erro
 }
 
 // Ack ack a message with error handling
-func (a *Client) Ack(message amqp.Delivery) {
-	a.ackRejectDelivery(message, true, false)
+func (c *Client) Ack(message amqp.Delivery) {
+	c.ackRejectDelivery(message, true, false)
 }
 
 // Reject reject a message with error handling
-func (a *Client) Reject(message amqp.Delivery, requeue bool) {
-	a.ackRejectDelivery(message, false, requeue)
+func (c *Client) Reject(message amqp.Delivery, requeue bool) {
+	c.ackRejectDelivery(message, false, requeue)
 }
 
-func (a *Client) ackRejectDelivery(message amqp.Delivery, ack bool, value bool) {
+func (c *Client) ackRejectDelivery(message amqp.Delivery, ack bool, value bool) {
 	for {
 		var err error
 
 		if ack {
-			a.increase("ack")
+			c.increase("ack")
 			err = message.Ack(value)
 		} else {
-			a.increase("rejected")
+			c.increase("rejected")
 			err = message.Reject(value)
 		}
 
@@ -156,24 +168,24 @@ func (a *Client) ackRejectDelivery(message amqp.Delivery, ack bool, value bool) 
 		time.Sleep(time.Second * 30)
 
 		func() {
-			a.mutex.RLock()
-			defer a.mutex.RUnlock()
+			c.mutex.RLock()
+			defer c.mutex.RUnlock()
 
-			message.Acknowledger = a.channel
+			message.Acknowledger = c.channel
 		}()
 	}
 }
 
-func (a *Client) increase(name string) {
-	if a.messageMetrics == nil {
+func (c *Client) increase(name string) {
+	if c.messageMetrics == nil {
 		return
 	}
 
-	a.messageMetrics.WithLabelValues(name).Inc()
+	c.messageMetrics.WithLabelValues(name).Inc()
 }
 
-func (a *Client) increaseConnection(name string) {
-	if gauge, ok := a.connectionMetrics[name]; ok {
+func (c *Client) increaseConnection(name string) {
+	if gauge, ok := c.connectionMetrics[name]; ok {
 		gauge.Inc()
 	}
 }
