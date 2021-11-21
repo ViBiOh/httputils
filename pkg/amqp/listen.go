@@ -12,7 +12,7 @@ import (
 func (a *Client) Listen(queue string) (string, <-chan amqp.Delivery, error) {
 	name, reconnect, err := a.getListener()
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to get listener name: %s", err)
+		return "", nil, fmt.Errorf("unable to get listener name for queue `%s`: %s", queue, err)
 	}
 
 	messages, err := a.listen(name, queue)
@@ -28,12 +28,17 @@ func (a *Client) Listen(queue string) (string, <-chan amqp.Delivery, error) {
 }
 
 // StopListener cancel consumer listening
-func (a *Client) StopListener(consumer string) {
+func (a *Client) StopListener(consumer string) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	a.cancelConsumer(consumer)
+	var err error
+	if err = a.cancelConsumer(consumer); err != nil {
+		err = fmt.Errorf("unable to cancel consumer: %s", err)
+	}
+
 	a.removeListener(consumer)
+	return err
 }
 
 func (a *Client) listen(name, queue string) (<-chan amqp.Delivery, error) {

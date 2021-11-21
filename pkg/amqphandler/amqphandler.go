@@ -111,10 +111,12 @@ func (a App) Start(done <-chan struct{}) {
 
 	go func() {
 		<-done
-		a.amqpClient.StopListener(consumerName)
+		if err := a.amqpClient.StopListener(consumerName); err != nil {
+			logger.WithField("name", consumerName).WithField("queue", a.queue).Error("error while stopping listener: %s", err)
+		}
 	}()
 
-	log := logger.WithField("queue", a.queue).WithField("vhost", a.amqpClient.Vhost())
+	log := logger.WithField("queue", a.queue).WithField("name", consumerName).WithField("vhost", a.amqpClient.Vhost())
 	log.Info("Start listening messages")
 	defer log.Info("End listening messages")
 

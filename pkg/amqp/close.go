@@ -19,7 +19,9 @@ func (a *Client) close(reconnect bool) error {
 	defer a.mutex.Unlock()
 
 	for name := range a.listeners {
-		a.cancelConsumer(name)
+		if err := a.cancelConsumer(name); err != nil {
+			logger.WithField("name", name).Error("unable to cancel consumer: %s", err)
+		}
 	}
 
 	a.closeChannel()
@@ -46,13 +48,12 @@ func (a *Client) close(reconnect bool) error {
 	return nil
 }
 
-func (a *Client) cancelConsumer(consumer string) {
-	log := logger.WithField("consumer", consumer)
-
-	log.Info("Canceling AMQP channel")
+func (a *Client) cancelConsumer(consumer string) error {
 	if err := a.channel.Cancel(consumer, false); err != nil {
-		log.Error("unable to cancel consumer: %s", err)
+		return fmt.Errorf("unable to cancel channel for consumer: %s", err)
 	}
+
+	return nil
 }
 
 func (a *Client) closeChannel() {
