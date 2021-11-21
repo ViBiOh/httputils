@@ -21,6 +21,7 @@ type App struct {
 	handler       func(amqp.Delivery) error
 	queue         string
 	delayExchange string
+	routingKey    string
 	maxRetry      int64
 	retry         bool
 }
@@ -57,6 +58,7 @@ func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) er
 	app := App{
 		amqpClient: amqpClient,
 		queue:      queue,
+		routingKey: routingKey,
 		done:       make(chan struct{}),
 		handler:    handler,
 		maxRetry:   int64(maxRetry),
