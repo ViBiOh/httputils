@@ -293,8 +293,8 @@ func convertResponseError(resp *http.Response) string {
 func DiscardBody(body io.ReadCloser) error {
 	var err error
 
-	if _, readErr := discarder.ReadFrom(body); readErr != nil {
-		err = readErr
+	if _, err = discarder.ReadFrom(body); err != nil {
+		err = fmt.Errorf("unable to read from body: %s", err)
 	}
 
 	if closeErr := body.Close(); closeErr != nil {

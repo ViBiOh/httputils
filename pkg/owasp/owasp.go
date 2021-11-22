@@ -16,6 +16,8 @@ type key int
 
 const (
 	ctxNonceKey key = iota
+
+	cspHeader = "Content-Security-Policy"
 )
 
 var _ model.Middleware = App{}.Middleware
@@ -37,7 +39,7 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		csp:          flags.New(prefix, "owasp", "Csp").Default("default-src 'self'; base-uri 'self'", overrides).Label("Content-Security-Policy").ToString(fs),
+		csp:          flags.New(prefix, "owasp", "Csp").Default("default-src 'self'; base-uri 'self'", overrides).Label(cspHeader).ToString(fs),
 		hsts:         flags.New(prefix, "owasp", "Hsts").Default(true, overrides).Label("Indicate Strict Transport Security").ToBool(fs),
 		frameOptions: flags.New(prefix, "owasp", "FrameOptions").Default("deny", overrides).Label("X-Frame-Options").ToString(fs),
 	}
@@ -66,7 +68,7 @@ func (a App) Middleware(next http.Handler) http.Handler {
 		if strings.Contains(a.csp, "nonce") {
 			nonce = true
 		} else {
-			headers.Add("Content-Security-Policy", a.csp)
+			headers.Add(cspHeader, a.csp)
 		}
 	}
 	if len(a.frameOptions) != 0 {
@@ -83,7 +85,7 @@ func (a App) Middleware(next http.Handler) http.Handler {
 
 		if nonce {
 			nonceValue := generateNonce()
-			w.Header().Add("Content-Security-Policy", strings.ReplaceAll(a.csp, "nonce", "nonce-"+nonceValue))
+			w.Header().Add(cspHeader, strings.ReplaceAll(a.csp, "nonce", "nonce-"+nonceValue))
 			r = r.WithContext(nonceInCtx(r.Context(), nonceValue))
 		}
 
