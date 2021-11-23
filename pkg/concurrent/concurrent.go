@@ -42,9 +42,7 @@ func (g *Group) Go(f func() error) {
 
 		go func() {
 			defer g.wg.Done()
-			if g.limiter != nil {
-				defer func() { <-g.limiter }()
-			}
+			defer func() { <-g.limiter }()
 
 			if err := f(); err != nil {
 				g.close(err)
