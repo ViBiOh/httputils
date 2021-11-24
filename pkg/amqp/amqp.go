@@ -8,7 +8,6 @@ import (
 	"io"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
@@ -142,38 +141,26 @@ func (c *Client) Reject(message amqp.Delivery, requeue bool) {
 }
 
 func (c *Client) ackRejectDelivery(message amqp.Delivery, ack bool, value bool) {
-	for {
-		var err error
+	var err error
 
-		if ack {
-			c.increase("ack")
-			err = message.Ack(value)
-		} else {
-			c.increase("rejected")
-			err = message.Reject(value)
-		}
-
-		if err == nil {
-			return
-		}
-
-		if err != amqp.ErrClosed {
-			logger.Error("unable to ack/reject message: %s", err)
-			return
-		}
-
-		logger.Error("unable to ack/reject message due to a closed connection")
-
-		logger.Info("Waiting 30 seconds before attempting to ack/reject message again...")
-		time.Sleep(time.Second * 30)
-
-		func() {
-			c.mutex.RLock()
-			defer c.mutex.RUnlock()
-
-			message.Acknowledger = c.channel
-		}()
+	if ack {
+		c.increase("ack")
+		err = message.Ack(value)
+	} else {
+		c.increase("rejected")
+		err = message.Reject(value)
 	}
+
+	if err == nil {
+		return
+	}
+
+	if err != amqp.ErrClosed {
+		logger.Error("unable to ack/reject message: %s", err)
+		return
+	}
+
+	logger.Error("unable to ack/reject message due to a closed connection")
 }
 
 func (c *Client) increase(name string) {

@@ -42,7 +42,7 @@ func TestGo(t *testing.T) {
 		},
 		{
 			"two errors",
-			NewGroup(2),
+			NewGroup(1),
 			args{
 				funcs: []func() error{
 					func() error { return errors.New("failed one") },

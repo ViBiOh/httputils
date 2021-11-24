@@ -52,7 +52,7 @@ func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, 
 		defer log.Info("End listening close connection notifications")
 
 		for range connection.NotifyClose(make(chan *amqp.Error)) {
-			log.Warn("Connection closed, trying to reconnect.")
+			log.Warn("Connection closed, trying to reconnect...")
 			onDisconnect()
 		}
 	}()
