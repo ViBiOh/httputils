@@ -43,7 +43,12 @@ func (c *Client) close(reconnect bool) error {
 
 	logger.Info("Connection reopened.")
 
-	go c.notifyListeners()
+	go func() {
+		c.mutex.RLock()
+		defer c.mutex.RUnlock()
+
+		c.notifyListeners()
+	}()
 
 	return nil
 }
