@@ -24,7 +24,6 @@ func CreateClient(timeout time.Duration, onRedirect func(*http.Request, []*http.
 
 			TLSHandshakeTimeout:   5 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
-			ResponseHeaderTimeout: 5 * time.Second,
 
 			MaxConnsPerHost:     100,
 			MaxIdleConns:        100,
