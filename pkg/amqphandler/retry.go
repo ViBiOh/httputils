@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	amqpclient "github.com/ViBiOh/httputils/v4/pkg/amqp"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/streadway/amqp"
 )
@@ -14,25 +13,16 @@ var ErrNoDeathCount = errors.New("no death count")
 
 // Retry a message if possible on error
 func (a App) Retry(log logger.Provider, message amqp.Delivery) error {
-	if a.retry {
-		count, err := GetDeathCount(message)
-		if err != nil && !errors.Is(err, ErrNoDeathCount) {
-			a.amqpClient.Reject(message, false)
-			return fmt.Errorf("unable to get death count from message: %s", err)
-		}
-
-		if count < a.maxRetry {
-			if err := a.amqpClient.Publish(amqpclient.ConvertDeliveryToPublishing(message), a.delayExchange, a.routingKey); err != nil {
-				a.amqpClient.Reject(message, true)
-				return fmt.Errorf("unable to delay message: %s", err)
-			}
-
-			log.Info("message has been delayed in `%s`", a.delayExchange)
-		}
+	count, err := GetDeathCount(message)
+	if err != nil && !errors.Is(err, ErrNoDeathCount) {
+		return fmt.Errorf("unable to get death count from message: %s", err)
 	}
 
-	a.amqpClient.Ack(message)
-	return nil
+	if count >= a.maxRetry {
+		return message.Ack(false)
+	}
+
+	return message.Nack(false, false)
 }
 
 // GetDeathCount of a message

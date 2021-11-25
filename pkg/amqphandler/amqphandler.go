@@ -1,6 +1,7 @@
 package amqphandler
 
 import (
+	"crypto/rand"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,7 +11,6 @@ import (
 	amqpclient "github.com/ViBiOh/httputils/v4/pkg/amqp"
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/ViBiOh/httputils/v4/pkg/sha"
 	"github.com/streadway/amqp"
 )
 
@@ -19,11 +19,13 @@ type App struct {
 	amqpClient    *amqpclient.Client
 	done          chan struct{}
 	handler       func(amqp.Delivery) error
-	queue         string
+	exchange      string
 	delayExchange string
+	queue         string
 	routingKey    string
 	maxRetry      int64
-	retry         bool
+	retryInterval time.Duration
+	exclusive     bool
 }
 
 // Config of package
@@ -57,7 +59,9 @@ func New(config Config, amqpClient *amqpclient.Client, handler func(amqp.Deliver
 func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) error, exchange, queue, routingKey, retryInterval string, exclusive bool, maxRetry uint) (App, error) {
 	app := App{
 		amqpClient: amqpClient,
+		exchange:   exchange,
 		queue:      queue,
+		exclusive:  exclusive,
 		routingKey: routingKey,
 		done:       make(chan struct{}),
 		handler:    handler,
@@ -68,26 +72,23 @@ func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) er
 		return app, nil
 	}
 
-	retryIntervalDuration, err := time.ParseDuration(retryInterval)
+	var err error
+	app.retryInterval, err = time.ParseDuration(retryInterval)
 	if err != nil {
 		return app, fmt.Errorf("unable to parse retry duration: %s", err)
 	}
-	app.retry = retryIntervalDuration > 0 && app.maxRetry > 0
 
-	if app.retry && len(exchange) == 0 {
-		return app, errors.New("no exchange name for delaying retries")
-	}
+	if app.retryInterval > 0 && app.maxRetry > 0 {
+		if len(exchange) == 0 {
+			return app, errors.New("no exchange name for delaying retries")
+		}
 
-	if app.delayExchange, err = app.amqpClient.Consumer(app.queue, routingKey, exchange, exclusive, retryIntervalDuration); err != nil {
-		return app, fmt.Errorf("unable to configure amqp consumer: %s", err)
+		if app.delayExchange, err = app.amqpClient.DelayedExchange(queue, exchange, app.retryInterval); err != nil {
+			return app, fmt.Errorf("unable to configure dead-letter exchange: %s", err)
+		}
 	}
 
 	return app, nil
-}
-
-// Enabled checks if requirements are met
-func (a App) Enabled() bool {
-	return a.amqpClient != nil
 }
 
 // Done returns the chan used for synchronization
@@ -99,24 +100,32 @@ func (a App) Done() <-chan struct{} {
 func (a App) Start(done <-chan struct{}) {
 	defer close(a.done)
 
-	if !a.Enabled() {
+	if a.amqpClient == nil {
 		return
 	}
 
-	consumerName, messages, err := a.amqpClient.Listen(a.queue)
+	init := true
+	log := logger.WithField("exchange", a.exchange).WithField("queue", a.queue).WithField("routingKey", a.routingKey).WithField("vhost", a.amqpClient.Vhost())
+
+	consumerName, messages, err := a.amqpClient.Listen(func() (string, error) {
+		queueName, err := a.configure(init)
+		init = false
+		return queueName, err
+	})
 	if err != nil {
-		logger.Error("unable to listen `%s`: %s", a.queue, err)
+		log.Error("unable to listen: %s", err)
 		return
 	}
+
+	log = log.WithField("name", consumerName)
 
 	go func() {
 		<-done
 		if err := a.amqpClient.StopListener(consumerName); err != nil {
-			logger.WithField("name", consumerName).WithField("queue", a.queue).Error("error while stopping listener: %s", err)
+			log.Error("error while stopping listener: %s", err)
 		}
 	}()
 
-	log := logger.WithField("queue", a.queue).WithField("name", consumerName).WithField("vhost", a.amqpClient.Vhost())
 	log.Info("Start listening messages")
 	defer log.Info("End listening messages")
 
@@ -124,15 +133,51 @@ func (a App) Start(done <-chan struct{}) {
 		err := a.handler(message)
 
 		if err == nil {
-			a.amqpClient.Ack(message)
+			if err = message.Ack(false); err != nil {
+				log.Error("unable to ack message: %s", err)
+			}
 			continue
 		}
 
-		messageLog := log.WithField("exchange", message.Exchange).WithField("routingKey", message.RoutingKey).WithField("sha", sha.New(message.Body))
-		messageLog.Error("unable to handle message: %s", err)
+		log.Error("unable to handle message: %s", err)
 
-		if err = a.Retry(messageLog, message); err != nil {
-			messageLog.Info("unable to retry message: %s", err)
+		if a.retryInterval > 0 && a.maxRetry > 0 {
+			if err = a.Retry(log, message); err == nil {
+				continue
+			}
+
+			log.Error("unable to retry message: %s", err)
+		}
+
+		if err = message.Ack(false); err != nil {
+			log.Error("unable to ack message to trash it: %s", err)
 		}
 	}
+}
+
+func (a App) configure(init bool) (string, error) {
+	if !a.exclusive && !init {
+		return a.queue, nil
+	}
+
+	queue := a.queue
+	if a.exclusive {
+		queue = fmt.Sprintf("%s-%s", a.queue, generateIdentityName())
+	}
+
+	if err := a.amqpClient.Consumer(queue, a.routingKey, a.exchange, a.exclusive, a.delayExchange); err != nil {
+		return "", fmt.Errorf("unable to configure amqp consumer for routingKey `%s` and exchange `%s`: %s", a.routingKey, a.exchange, err)
+	}
+
+	return queue, nil
+}
+
+func generateIdentityName() string {
+	raw := make([]byte, 4)
+	if _, err := rand.Read(raw); err != nil {
+		logger.Error("unable to generate identity name: %s", err)
+		return "error"
+	}
+
+	return fmt.Sprintf("%x", raw)
 }

@@ -2,42 +2,71 @@ package amqp
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/ViBiOh/httputils/v4/pkg/uuid"
+	"github.com/streadway/amqp"
 )
 
-func (c *Client) getListener() (string, <-chan bool, error) {
+type listener struct {
+	reconnect chan bool
+	done      chan struct{}
+	channel   *amqp.Channel
+	name      string
+	sync.RWMutex
+}
+
+func (c *Client) getListener() (*listener, error) {
+	listener, err := c.createListener()
+	if err != nil {
+		return listener, fmt.Errorf("unable to create listener: %s", err)
+	}
+
+	listener.channel, err = c.createChannel()
+	if err != nil {
+		return listener, fmt.Errorf("unable to create channel: %s", err)
+	}
+
+	return listener, nil
+}
+
+func (c *Client) createListener() (*listener, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
+	var output listener
+
 identity:
-	name, err := uuid.New()
+	var err error
+	output.name, err = uuid.New()
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to generate uuid: %s", err)
+		return &output, fmt.Errorf("unable to generate uuid: %s", err)
 	}
 
-	if c.listeners[name] != nil {
+	if c.listeners[output.name] != nil {
 		goto identity
 	}
 
-	listener := make(chan bool)
-	c.listeners[name] = listener
+	output.reconnect = make(chan bool, 1)
+	output.done = make(chan struct{})
 
+	c.listeners[output.name] = &output
 	c.increaseConnection("listener")
 
-	return name, listener, nil
+	return &output, nil
 }
 
-func (c *Client) notifyListeners() {
-	for _, listener := range c.listeners {
-		listener <- true
-	}
+func (l *listener) cancel() error {
+	close(l.reconnect)
+	<-l.reconnect // drain eventually
+
+	return l.channel.Cancel(l.name, false)
 }
 
-func (c *Client) closeListeners() {
-	for name := range c.listeners {
-		c.removeListener(name)
-	}
+func (l *listener) close() error {
+	<-l.done
+
+	return l.channel.Close()
 }
 
 func (c *Client) removeListener(name string) {
@@ -45,9 +74,6 @@ func (c *Client) removeListener(name string) {
 	if listener == nil {
 		return
 	}
-
-	close(listener)
-	<-listener // drain eventually
 
 	delete(c.listeners, name)
 }

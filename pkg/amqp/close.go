@@ -5,32 +5,28 @@ import (
 	"io"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 // Close closes opened ressources
 func (c *Client) Close() {
-	if err := c.close(false); err != nil {
-		logger.Error("unable to close: %s", err)
-	}
-}
-
-func (c *Client) close(reconnect bool) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	for name := range c.listeners {
-		if err := c.cancelConsumer(name); err != nil {
-			logger.WithField("name", name).Error("unable to cancel consumer: %s", err)
-		}
+	if err := c.cancelListeners(); err != nil {
+		logger.Error("unable to cancel listeners: %s", err)
+	}
+	if err := c.closeListeners(); err != nil {
+		logger.Error("unable to close listeners: %s", err)
 	}
 
 	c.closeChannel()
 	c.closeConnection()
+}
 
-	if !reconnect {
-		c.closeListeners()
-		return nil
-	}
+func (c *Client) reconnect() error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	newConnection, newChannel, err := connect(c.uri, c.onDisconnect)
 	if err != nil {
@@ -43,22 +39,47 @@ func (c *Client) close(reconnect bool) error {
 
 	logger.Info("Connection reopened.")
 
-	go func() {
-		c.mutex.RLock()
-		defer c.mutex.RUnlock()
-
-		c.notifyListeners()
-	}()
+	go c.reconnectListeners()
 
 	return nil
 }
 
-func (c *Client) cancelConsumer(consumer string) error {
-	if err := c.channel.Cancel(consumer, false); err != nil {
-		return fmt.Errorf("unable to cancel channel for consumer: %s", err)
+func (c *Client) cancelListeners() (err error) {
+	for _, listener := range c.listeners {
+		if cancelErr := listener.cancel(); cancelErr != nil {
+			err = model.WrapError(err, fmt.Errorf("unable to cancel listener `%s`: %s", listener.name, cancelErr))
+		}
+	}
+
+	return err
+}
+
+func (c *Client) closeListeners() (err error) {
+	for _, listener := range c.listeners {
+		if cancelErr := listener.close(); cancelErr != nil {
+			err = model.WrapError(err, fmt.Errorf("unable to close listener `%s`: %s", listener.name, cancelErr))
+		}
 	}
 
 	return nil
+}
+
+func (c *Client) reconnectListeners() {
+	for _, item := range c.listeners {
+		func(listener *listener) {
+			listener.Lock()
+			defer listener.Unlock()
+
+			listener.channel = nil
+
+			if channel, err := c.createChannel(); err != nil {
+				logger.WithField("name", listener.name).Error("unable to recreate channel: %s", err)
+			} else {
+				listener.channel = channel
+				listener.reconnect <- true
+			}
+		}(item)
+	}
 }
 
 func (c *Client) closeChannel() {
