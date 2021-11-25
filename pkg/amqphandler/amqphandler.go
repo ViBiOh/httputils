@@ -130,28 +130,32 @@ func (a App) Start(done <-chan struct{}) {
 	defer log.Info("End listening messages")
 
 	for message := range messages {
-		err := a.handler(message)
+		a.handleMessage(log, message)
+	}
+}
 
-		if err == nil {
-			if err = message.Ack(false); err != nil {
-				log.Error("unable to ack message: %s", err)
-			}
-			continue
-		}
+func (a App) handleMessage(log logger.Provider, message amqp.Delivery) {
+	err := a.handler(message)
 
-		log.Error("unable to handle message: %s", err)
-
-		if a.retryInterval > 0 && a.maxRetry > 0 {
-			if err = a.Retry(log, message); err == nil {
-				continue
-			}
-
-			log.Error("unable to retry message: %s", err)
-		}
-
+	if err == nil {
 		if err = message.Ack(false); err != nil {
-			log.Error("unable to ack message to trash it: %s", err)
+			log.Error("unable to ack message: %s", err)
 		}
+		return
+	}
+
+	log.Error("unable to handle message: %s", err)
+
+	if a.retryInterval > 0 && a.maxRetry > 0 {
+		if err = a.Retry(log, message); err == nil {
+			return
+		}
+
+		log.Error("unable to retry message: %s", err)
+	}
+
+	if err = message.Ack(false); err != nil {
+		log.Error("unable to ack message to trash it: %s", err)
 	}
 }
 

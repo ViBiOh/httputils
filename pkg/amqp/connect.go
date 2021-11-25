@@ -88,5 +88,10 @@ func (c *Client) createChannel() (channel *amqp.Channel, err error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
-	return createChannel(c.connection)
+	channel, err = createChannel(c.connection)
+	if err != nil {
+		err = fmt.Errorf("unable to create channel: %s", err)
+	}
+
+	return
 }

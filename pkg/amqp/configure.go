@@ -12,7 +12,7 @@ import (
 func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive bool, dlExchange string) error {
 	channel, err := c.createChannel()
 	if err != nil {
-		return fmt.Errorf("unable to create channel: %s", err)
+		return err
 	}
 
 	defer func() {
@@ -44,7 +44,7 @@ func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive 
 func (c *Client) DelayedExchange(queueName, exchangeName string, retryDelay time.Duration) (string, error) {
 	channel, err := c.createChannel()
 	if err != nil {
-		return "", fmt.Errorf("unable to create channel: %s", err)
+		return "", err
 	}
 
 	defer func() {
@@ -77,17 +77,14 @@ func (c *Client) DelayedExchange(queueName, exchangeName string, retryDelay time
 
 // Publisher configures client for publishing to given exchange
 func (c *Client) Publisher(exchangeName, exchangeType string, args amqp.Table) error {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
-
-	channel, err := c.connection.Channel()
+	channel, err := c.createChannel()
 	if err != nil {
-		return fmt.Errorf("unable to create channel: %s", err)
+		return err
 	}
 
 	defer func() {
 		if closeErr := channel.Close(); closeErr != nil {
-			err = model.WrapError(err, closeErr)
+			err = model.WrapError(err, fmt.Errorf("unable to close channel: %s", closeErr))
 		}
 	}()
 

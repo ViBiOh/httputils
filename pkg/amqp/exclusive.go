@@ -66,9 +66,9 @@ func (c *Client) shouldCreateExclusiveQueue(name string) (bool, int) {
 // Exclusive get an exclusive lock from given queue during duration
 func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (err error) {
 	var channel *amqp.Channel
-	channel, err = c.connection.Channel()
+	channel, err = c.createChannel()
 	if err != nil {
-		return fmt.Errorf("unable to create channel: %s", err)
+		return err
 	}
 
 	defer func() {
