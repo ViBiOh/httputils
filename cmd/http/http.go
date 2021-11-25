@@ -3,13 +3,17 @@ package main
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"syscall"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
+	"github.com/ViBiOh/httputils/v4/pkg/amqp"
+	"github.com/ViBiOh/httputils/v4/pkg/amqphandler"
 	"github.com/ViBiOh/httputils/v4/pkg/cors"
 	"github.com/ViBiOh/httputils/v4/pkg/cron"
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
@@ -21,6 +25,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
+	amqplib "github.com/streadway/amqp"
 )
 
 //go:embed templates static
@@ -39,6 +44,9 @@ func main() {
 	owaspConfig := owasp.Flags(fs, "", flags.NewOverride("Csp", "default-src 'self'; base-uri 'self'; script-src 'nonce'"))
 	corsConfig := cors.Flags(fs, "cors")
 
+	amqpConfig := amqp.Flags(fs, "amqp")
+	amqHandlerConfig := amqphandler.Flags(fs, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RetryInterval", "10s"))
+
 	rendererConfig := renderer.Flags(fs, "renderer")
 
 	logger.Fatal(fs.Parse(os.Args[1:]))
@@ -51,6 +59,14 @@ func main() {
 	promServer := server.New(promServerConfig)
 	prometheusApp := prometheus.New(prometheusConfig)
 	healthApp := health.New(healthConfig)
+
+	amqpClient, err := amqp.New(amqpConfig, prometheusApp.Registerer())
+	logger.Fatal(err)
+
+	amqpApp, err := amqphandler.New(amqHandlerConfig, amqpClient, amqpHandler)
+	logger.Fatal(err)
+
+	logger.Fatal(amqpClient.Publisher("httputils", "direct", nil))
 
 	rendererApp, err := renderer.New(rendererConfig, content, nil)
 	logger.Fatal(err)
@@ -68,9 +84,19 @@ func main() {
 		return "public", http.StatusOK, nil, nil
 	}
 
+	go amqpApp.Start(healthApp.Done())
 	go promServer.Start("prometheus", healthApp.End(), prometheusApp.Handler())
 	go appServer.Start("http", healthApp.End(), httputils.Handler(rendererApp.Handler(templateFunc), healthApp, recoverer.Middleware, prometheusApp.Middleware, owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware))
 
 	healthApp.WaitForTermination(appServer.Done())
-	server.GracefulWait(appServer.Done(), promServer.Done())
+	server.GracefulWait(appServer.Done(), promServer.Done(), amqpApp.Done())
+}
+
+func amqpHandler(message amqplib.Delivery) error {
+	var payload map[string]interface{}
+	if err := json.Unmarshal(message.Body, &payload); err != nil {
+		return fmt.Errorf("unable to parse payload: %s", err)
+	}
+
+	return nil
 }

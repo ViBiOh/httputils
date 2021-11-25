@@ -21,26 +21,12 @@ func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, 
 		return nil, nil, fmt.Errorf("unable to connect to amqp: %s", err)
 	}
 
-	channel, err := connection.Channel()
+	channel, err := createChannel(connection)
 	if err != nil {
-		err := fmt.Errorf("unable to open communication channel: %s", err)
+		err := fmt.Errorf("unable to create channel: %s", err)
 
 		if closeErr := connection.Close(); closeErr != nil {
-			err = model.WrapError(err, closeErr)
-		}
-
-		return nil, nil, err
-	}
-
-	if err := channel.Qos(1, 0, false); err != nil {
-		err := fmt.Errorf("unable to configure QoS on channel: %s", err)
-
-		if closeErr := channel.Close(); closeErr != nil {
-			err = model.WrapError(err, closeErr)
-		}
-
-		if closeErr := connection.Close(); closeErr != nil {
-			err = model.WrapError(err, closeErr)
+			err = model.WrapError(err, fmt.Errorf("unable to close connection: %s", closeErr))
 		}
 
 		return nil, nil, err
@@ -60,11 +46,34 @@ func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, 
 	return connection, channel, nil
 }
 
+func createChannel(connection Connection) (channel *amqp.Channel, err error) {
+	defer func() {
+		if channel == nil || err == nil {
+			return
+		}
+
+		if closeErr := channel.Close(); closeErr != nil {
+			err = model.WrapError(err, fmt.Errorf("unable to close channel: %s", closeErr))
+		}
+	}()
+
+	channel, err = connection.Channel()
+	if err != nil {
+		return nil, fmt.Errorf("unable to open channel: %s", err)
+	}
+
+	if err = channel.Qos(1, 0, false); err != nil {
+		return channel, fmt.Errorf("unable to configure QoS on channel: %s", err)
+	}
+
+	return channel, nil
+}
+
 func (c *Client) onDisconnect() {
 	for {
 		c.increaseConnection("reconnect")
 
-		if err := c.close(true); err != nil {
+		if err := c.reconnect(); err != nil {
 			logger.Error("unable to reconnect: %s", err)
 
 			logger.Info("Waiting one minute before attempting to reconnect again...")
@@ -73,4 +82,11 @@ func (c *Client) onDisconnect() {
 			return
 		}
 	}
+}
+
+func (c *Client) createChannel() (channel *amqp.Channel, err error) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return createChannel(c.connection)
 }

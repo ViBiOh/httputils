@@ -5,47 +5,63 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/streadway/amqp"
 )
 
+// QueueResolver return the name of the queue to listen
+type QueueResolver func() (string, error)
+
 // Listen listens to configured queue
-func (c *Client) Listen(queue string) (string, <-chan amqp.Delivery, error) {
-	name, reconnect, err := c.getListener()
+func (c *Client) Listen(queueResolver QueueResolver) (string, <-chan amqp.Delivery, error) {
+	queueName, err := queueResolver()
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to get listener name for queue `%s`: %s", queue, err)
+		return "", nil, fmt.Errorf("unable to get queue name: %s", err)
 	}
 
-	messages, err := c.listen(name, queue)
+	listener, err := c.getListener()
+	if err != nil {
+		return "", nil, fmt.Errorf("unable to get listener name for queue `%s`: %s", queueName, err)
+	}
+
+	messages, err := c.listen(listener, queueName)
 	if err != nil {
 		return "", nil, err
 	}
 
 	forward := make(chan amqp.Delivery)
+	go c.forward(listener, queueResolver, messages, forward)
 
-	go c.forward(name, queue, reconnect, messages, forward)
-
-	return name, forward, nil
+	return listener.name, forward, nil
 }
 
 // StopListener cancel consumer listening
-func (c *Client) StopListener(consumer string) error {
+func (c *Client) StopListener(consumer string) (err error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	var err error
-	if err = c.cancelConsumer(consumer); err != nil {
-		err = fmt.Errorf("unable to cancel consumer: %s", err)
+	listener := c.listeners[consumer]
+	if listener == nil {
+		return nil
+	}
+
+	if cancelErr := listener.cancel(); cancelErr != nil {
+		err = fmt.Errorf("unable to cancel listener: %s", err)
+	}
+
+	if closeErr := listener.close(); closeErr != nil {
+		err = model.WrapError(err, fmt.Errorf("unable to close listener: %s", closeErr))
 	}
 
 	c.removeListener(consumer)
 	return err
 }
 
-func (c *Client) listen(name, queue string) (<-chan amqp.Delivery, error) {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
+func (c *Client) listen(listener *listener, queue string) (<-chan amqp.Delivery, error) {
+	listener.RLock()
+	defer listener.RUnlock()
 
-	messages, err := c.channel.Consume(queue, name, false, false, false, false, nil)
+	messages, err := listener.channel.Consume(queue, listener.name, false, false, false, false, nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to consume queue: %s", err)
 	}
@@ -53,7 +69,8 @@ func (c *Client) listen(name, queue string) (<-chan amqp.Delivery, error) {
 	return messages, nil
 }
 
-func (c *Client) forward(name, queue string, reconnect <-chan bool, input <-chan amqp.Delivery, output chan<- amqp.Delivery) {
+func (c *Client) forward(listener *listener, queueResolver QueueResolver, input <-chan amqp.Delivery, output chan<- amqp.Delivery) {
+	defer close(listener.done)
 	defer close(output)
 
 forward:
@@ -62,20 +79,24 @@ forward:
 		output <- delivery
 	}
 
-	if _, ok := <-reconnect; !ok {
+	if _, ok := <-listener.reconnect; !ok {
 		return
 	}
 
 reconnect:
-	messages, err := c.listen(name, queue)
-	if err != nil {
-		logger.Error("unable to reopen listener: %s", err)
+	log := logger.WithField("name", listener.name)
 
-		logger.Info("Waiting 30 seconds before attempting to listen again...")
-		time.Sleep(time.Second * 30)
-		goto reconnect
+	if queueName, err := queueResolver(); err != nil {
+		log.Error("unable to get queue name on reopen: %s", err)
+	} else if messages, err := c.listen(listener, queueName); err != nil {
+		log.Error("unable to reopen listener: %s", err)
+	} else {
+		log.Info("Listen restarted.")
+		input = messages
+		goto forward
 	}
 
-	input = messages
-	goto forward
+	log.Info("Waiting 30 seconds before attempting to listen again...")
+	time.Sleep(time.Second * 30)
+	goto reconnect
 }
