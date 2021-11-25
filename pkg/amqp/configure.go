@@ -4,21 +4,19 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/streadway/amqp"
 )
 
 // Consumer configures client for consumming from given queue, bind to given exchange, and return delayed Exchange name to publish
-func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive bool, dlExchange string) error {
-	channel, err := c.createChannel()
+func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive bool, dlExchange string) (err error) {
+	var channel *amqp.Channel
+	channel, err = c.createChannel()
 	if err != nil {
 		return err
 	}
 
 	defer func() {
-		if closeErr := channel.Close(); closeErr != nil {
-			err = model.WrapError(err, fmt.Errorf("unable to close channel: %s", closeErr))
-		}
+		err = closeChannel(err, channel)
 	}()
 
 	var args map[string]interface{}
@@ -28,12 +26,13 @@ func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive 
 		}
 	}
 
-	queue, err := channel.QueueDeclare(queueName, true, false, exclusive, false, args)
+	var queue amqp.Queue
+	queue, err = channel.QueueDeclare(queueName, true, false, exclusive, false, args)
 	if err != nil {
 		return fmt.Errorf("unable to declare queue: %s", err)
 	}
 
-	if err := channel.QueueBind(queue.Name, routingKey, exchangeName, false, nil); err != nil {
+	if err = channel.QueueBind(queue.Name, routingKey, exchangeName, false, nil); err != nil {
 		return fmt.Errorf("unable to bind queue `%s` to `%s`: %s", queue.Name, exchangeName, err)
 	}
 
@@ -41,19 +40,18 @@ func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive 
 }
 
 // DelayedExchange configures dead-letter exchange with given ttl
-func (c *Client) DelayedExchange(queueName, exchangeName string, retryDelay time.Duration) (string, error) {
-	channel, err := c.createChannel()
+func (c *Client) DelayedExchange(queueName, exchangeName string, retryDelay time.Duration) (delayExchange string, err error) {
+	var channel *amqp.Channel
+	channel, err = c.createChannel()
 	if err != nil {
 		return "", err
 	}
 
 	defer func() {
-		if closeErr := channel.Close(); closeErr != nil {
-			err = model.WrapError(err, fmt.Errorf("unable to close channel: %s", closeErr))
-		}
+		err = closeChannel(err, channel)
 	}()
 
-	delayExchange := fmt.Sprintf("%s-%s", exchangeName, retryDelay)
+	delayExchange = fmt.Sprintf("%s-%s", exchangeName, retryDelay)
 
 	if err := declareExchange(channel, delayExchange, "direct", nil); err != nil {
 		return "", fmt.Errorf("unable to declare dead-letter exchange: %s", delayExchange)
@@ -76,16 +74,15 @@ func (c *Client) DelayedExchange(queueName, exchangeName string, retryDelay time
 }
 
 // Publisher configures client for publishing to given exchange
-func (c *Client) Publisher(exchangeName, exchangeType string, args amqp.Table) error {
-	channel, err := c.createChannel()
+func (c *Client) Publisher(exchangeName, exchangeType string, args amqp.Table) (err error) {
+	var channel *amqp.Channel
+	channel, err = c.createChannel()
 	if err != nil {
 		return err
 	}
 
 	defer func() {
-		if closeErr := channel.Close(); closeErr != nil {
-			err = model.WrapError(err, fmt.Errorf("unable to close channel: %s", closeErr))
-		}
+		err = closeChannel(err, channel)
 	}()
 
 	return declareExchange(channel, exchangeName, exchangeType, args)

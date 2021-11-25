@@ -52,9 +52,7 @@ func createChannel(connection Connection) (channel *amqp.Channel, err error) {
 			return
 		}
 
-		if closeErr := channel.Close(); closeErr != nil {
-			err = model.WrapError(err, fmt.Errorf("unable to close channel: %s", closeErr))
-		}
+		err = closeChannel(err, channel)
 	}()
 
 	channel, err = connection.Channel()
@@ -94,4 +92,12 @@ func (c *Client) createChannel() (channel *amqp.Channel, err error) {
 	}
 
 	return
+}
+
+func closeChannel(err error, channel *amqp.Channel) error {
+	if closeErr := channel.Close(); closeErr != nil {
+		return model.WrapError(err, fmt.Errorf("unable to close channel: %s", closeErr))
+	}
+
+	return err
 }
