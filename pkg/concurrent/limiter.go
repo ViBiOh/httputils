@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-// Limited describes a task group with a fail-fast approach
+// Limited describes a task group with limited parallelism
 type Limited struct {
 	limiter chan bool
 	wg      sync.WaitGroup
