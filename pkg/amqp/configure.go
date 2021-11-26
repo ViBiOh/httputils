@@ -51,13 +51,13 @@ func (c *Client) DelayedExchange(queueName, exchangeName string, retryDelay time
 		err = closeChannel(err, channel)
 	}()
 
-	delayExchange = fmt.Sprintf("%s-%s", exchangeName, retryDelay)
+	delayExchange = fmt.Sprintf("%s-delay", exchangeName)
 
 	if err := declareExchange(channel, delayExchange, "direct", nil); err != nil {
 		return "", fmt.Errorf("unable to declare dead-letter exchange: %s", delayExchange)
 	}
 
-	delayQueue := fmt.Sprintf("%s-%s", queueName, retryDelay)
+	delayQueue := fmt.Sprintf("%s-delay", queueName)
 
 	if _, err = channel.QueueDeclare(delayQueue, true, false, false, false, map[string]interface{}{
 		"x-dead-letter-exchange": exchangeName,
