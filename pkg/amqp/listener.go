@@ -22,17 +22,19 @@ func (c *Client) getListener() (*listener, error) {
 		return listener, fmt.Errorf("unable to create listener: %s", err)
 	}
 
-	listener.channel, err = c.createChannel()
-	if err != nil {
-		return listener, fmt.Errorf("unable to create channel: %s", err)
+	c.RLock()
+	defer c.RUnlock()
+
+	if err = listener.createChannel(c.connection); err != nil {
+		return listener, err
 	}
 
 	return listener, nil
 }
 
 func (c *Client) createListener() (*listener, error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	c.Lock()
+	defer c.Unlock()
 
 	var output listener
 
@@ -56,7 +58,21 @@ identity:
 	return &output, nil
 }
 
+func (l *listener) createChannel(connection Connection) (err error) {
+	l.Lock()
+	defer l.Unlock()
+
+	if l.channel, err = createChannel(connection); err != nil {
+		err = fmt.Errorf("unable to create channel: %s", err)
+	}
+
+	return
+}
+
 func (l *listener) cancel() error {
+	l.RLock()
+	defer l.RUnlock()
+
 	close(l.reconnect)
 	<-l.reconnect // drain eventually
 
@@ -64,6 +80,9 @@ func (l *listener) cancel() error {
 }
 
 func (l *listener) close() error {
+	l.RLock()
+	defer l.RUnlock()
+
 	<-l.done
 
 	return l.channel.Close()

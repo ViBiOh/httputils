@@ -10,8 +10,8 @@ import (
 
 // Close closes opened ressources
 func (c *Client) Close() {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	c.Lock()
+	defer c.Unlock()
 
 	if err := c.cancelListeners(); err != nil {
 		logger.Error("unable to cancel listeners: %s", err)
@@ -26,8 +26,8 @@ func (c *Client) Close() {
 }
 
 func (c *Client) reconnect() error {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	c.Lock()
+	defer c.Unlock()
 
 	newConnection, newChannel, err := connect(c.uri, c.onDisconnect)
 	if err != nil {
@@ -68,17 +68,14 @@ func (c *Client) closeListeners() (err error) {
 func (c *Client) reconnectListeners() {
 	for _, item := range c.listeners {
 		func(listener *listener) {
-			listener.Lock()
-			defer listener.Unlock()
+			c.Lock()
+			defer c.Unlock()
 
-			listener.channel = nil
-
-			if channel, err := c.createChannel(); err != nil {
+			if err := listener.createChannel(c.connection); err != nil {
 				logger.WithField("name", listener.name).Error("unable to recreate channel: %s", err)
-			} else {
-				listener.channel = channel
-				listener.reconnect <- true
 			}
+
+			listener.reconnect <- true
 		}(item)
 	}
 }

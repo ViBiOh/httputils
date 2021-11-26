@@ -43,6 +43,15 @@ func init() {
 	xmlHeaders.Add("Cache-Control", "no-cache")
 }
 
+// WriteTemplateRaw write template name from given template into writer for provided content
+func WriteTemplateRaw(tpl *template.Template, w io.Writer, content interface{}) error {
+	buffer := bufferPool.Get().(*bytes.Buffer)
+	defer bufferPool.Put(buffer)
+
+	buffer.Reset()
+	return tpl.Execute(buffer, content)
+}
+
 // WriteTemplate write template name from given template into writer for provided content with given minification
 func WriteTemplate(tpl *template.Template, w io.Writer, content interface{}, mediatype string) error {
 	buffer := bufferPool.Get().(*bytes.Buffer)

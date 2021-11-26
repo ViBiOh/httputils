@@ -4,8 +4,8 @@ import "errors"
 
 // Enabled checks if connection is setup
 func (c *Client) Enabled() bool {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
+	c.RLock()
+	defer c.RUnlock()
 
 	return c.connection != nil
 }
@@ -16,8 +16,8 @@ func (c *Client) Ping() error {
 		return nil
 	}
 
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
+	c.RLock()
+	defer c.RUnlock()
 
 	if c.connection.IsClosed() {
 		return errors.New("amqp client closed")

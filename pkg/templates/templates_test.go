@@ -211,6 +211,16 @@ func TestResponseXMLTemplate(t *testing.T) {
 	}
 }
 
+func BenchmarkWriteTemplateRaw(b *testing.B) {
+	tpl := template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html"))
+
+	for i := 0; i < b.N; i++ {
+		if err := WriteTemplateRaw(tpl, io.Discard, nil); err != nil {
+			b.Error(err)
+		}
+	}
+}
+
 func BenchmarkWriteTemplate(b *testing.B) {
 	tpl := template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html"))
 

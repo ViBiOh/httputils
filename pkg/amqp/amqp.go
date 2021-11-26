@@ -40,7 +40,7 @@ type Client struct {
 	messageMetrics    *prometheus.CounterVec
 	vhost             string
 	uri               string
-	mutex             sync.RWMutex
+	sync.RWMutex
 }
 
 // Config of package
@@ -93,8 +93,8 @@ func NewFromURI(uri string, prometheusRegister prometheus.Registerer) (*Client, 
 
 // Publish sends payload to the underlying exchange
 func (c *Client) Publish(payload amqp.Publishing, exchange, routingKey string) error {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
+	c.RLock()
+	defer c.RUnlock()
 
 	c.increase("published")
 
