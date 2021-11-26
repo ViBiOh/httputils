@@ -255,28 +255,28 @@ func TestGetTickerDuration(t *testing.T) {
 	cases := []struct {
 		intention string
 		cron      *Cron
-		clock     *clock.Clock
+		clock     clock.Clock
 		input     bool
 		want      time.Duration
 	}{
 		{
 			"retry",
 			New().Retry(time.Minute),
-			nil,
+			clock.New(time.Time{}),
 			true,
 			time.Minute,
 		},
 		{
 			"no retry",
 			New().Each(time.Hour).Retry(time.Minute),
-			nil,
+			clock.New(time.Time{}),
 			false,
 			time.Hour,
 		},
 		{
 			"each",
 			New().Each(time.Hour),
-			nil,
+			clock.New(time.Time{}),
 			false,
 			time.Hour,
 		},
@@ -377,7 +377,7 @@ func TestStart(t *testing.T) {
 	cases := []struct {
 		intention string
 		cron      *Cron
-		clock     *clock.Clock
+		clock     clock.Clock
 		action    func(*sync.WaitGroup, *Cron) func(context.Context) error
 		onError   func(*sync.WaitGroup, *Cron) func(error)
 	}{

@@ -57,10 +57,6 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 		return App{}, fmt.Errorf("unable to get static/ filesystem: %s", err)
 	}
 
-	if funcMap == nil {
-		funcMap = template.FuncMap{}
-	}
-
 	pathPrefix := strings.TrimSuffix(*config.pathPrefix, "/")
 	publicURL := strings.TrimSuffix(*config.publicURL, "/")
 
@@ -72,6 +68,10 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 			"Title":   *config.title,
 			"Version": os.Getenv("VERSION"),
 		},
+	}
+
+	if funcMap == nil {
+		funcMap = template.FuncMap{}
 	}
 
 	funcMap["url"] = instance.url

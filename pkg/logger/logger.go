@@ -29,7 +29,7 @@ type Config struct {
 
 // Logger defines a logger instance
 type Logger struct {
-	clock *clock.Clock
+	clock clock.Clock
 
 	timeKey    string
 	levelKey   string

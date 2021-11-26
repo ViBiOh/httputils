@@ -7,20 +7,20 @@ import (
 	"testing"
 )
 
-func TestGo(t *testing.T) {
+func TestFailFastGo(t *testing.T) {
 	type args struct {
 		funcs []func() error
 	}
 
 	cases := []struct {
 		intention string
-		instance  *Group
+		instance  *FailFast
 		args      args
 		wantErr   error
 	}{
 		{
 			"no error",
-			NewGroup(2),
+			NewFailFast(2),
 			args{
 				funcs: []func() error{
 					func() error { return nil },
@@ -31,7 +31,7 @@ func TestGo(t *testing.T) {
 		},
 		{
 			"simple",
-			NewGroup(2),
+			NewFailFast(2),
 			args{
 				funcs: []func() error{
 					func() error { return nil },
@@ -42,7 +42,7 @@ func TestGo(t *testing.T) {
 		},
 		{
 			"two errors",
-			NewGroup(1),
+			NewFailFast(1),
 			args{
 				funcs: []func() error{
 					func() error { return errors.New("failed one") },

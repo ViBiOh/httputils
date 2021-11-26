@@ -8,15 +8,15 @@ type Clock struct {
 }
 
 // New create a new clock
-func New(now time.Time) *Clock {
-	return &Clock{
+func New(now time.Time) Clock {
+	return Clock{
 		now: now,
 	}
 }
 
 // Now return current time
-func (c *Clock) Now() time.Time {
-	if c == nil {
+func (c Clock) Now() time.Time {
+	if c.now.IsZero() {
 		return time.Now()
 	}
 	return c.now

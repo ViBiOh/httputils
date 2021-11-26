@@ -26,7 +26,7 @@ var _ fmt.Stringer = New()
 
 // Cron definition
 type Cron struct {
-	clock        *clock.Clock
+	clock        clock.Clock
 	semaphoreApp Semaphore
 
 	signal  os.Signal
