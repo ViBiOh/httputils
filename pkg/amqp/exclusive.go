@@ -64,11 +64,11 @@ func (c *Client) shouldCreateExclusiveQueue(name string) (bool, int) {
 }
 
 // Exclusive get an exclusive lock from given queue during duration
-func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (err error) {
+func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
 	var channel *amqp.Channel
 	channel, err = c.createChannel()
 	if err != nil {
-		return err
+		return
 	}
 
 	defer func() {
@@ -78,11 +78,11 @@ func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Durati
 	}()
 
 	var message amqp.Delivery
-	var acquired bool
 	if message, acquired, err = channel.Get(name, false); err != nil {
-		return fmt.Errorf("unable to get semaphore: %s", err)
+		err = fmt.Errorf("unable to get semaphore: %s", err)
+		return
 	} else if !acquired {
-		return nil
+		return
 	}
 
 	defer func() {
@@ -94,5 +94,6 @@ func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Durati
 	actionCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	return action(actionCtx)
+	err = action(actionCtx)
+	return
 }

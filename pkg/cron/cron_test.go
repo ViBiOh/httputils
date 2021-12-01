@@ -509,7 +509,7 @@ func TestStart(t *testing.T) {
 
 			if tc.intention == "run in exclusive error" {
 				tc.cron.Exclusive(redisMock, "test", time.Minute)
-				redisMock.EXPECT().Exclusive(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("redis error"))
+				redisMock.EXPECT().Exclusive(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(true, errors.New("redis error"))
 			}
 
 			var wg sync.WaitGroup

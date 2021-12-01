@@ -117,27 +117,28 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 }
 
 // Exclusive get an exclusive lock for given name during duration
-func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) error {
+func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
 	a.increase("exclusive")
 
-	if acquired, err := a.redisClient.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
+	if acquired, err = a.redisClient.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
 		a.increase("error")
-		return fmt.Errorf("unable to check semaphore: %s", err)
+		err = fmt.Errorf("unable to check semaphore: %s", err)
+		return
 	} else if !acquired {
-		return nil
+		return
 	}
 
 	actionCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	err := action(actionCtx)
+	err = action(actionCtx)
 
 	if delErr := a.redisClient.Del(ctx, name).Err(); delErr != nil {
 		a.increase("error")
 		err = model.WrapError(err, delErr)
 	}
 
-	return err
+	return
 }
 
 func (a App) increase(name string) {

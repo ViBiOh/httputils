@@ -15,7 +15,7 @@ import (
 // Semaphore client
 //go:generate mockgen -destination ../mocks/redis.go -mock_names Semaphore=Semaphore -package mocks github.com/ViBiOh/httputils/v4/pkg/cron Semaphore
 type Semaphore interface {
-	Exclusive(context.Context, string, time.Duration, func(context.Context) error) error
+	Exclusive(context.Context, string, time.Duration, func(context.Context) error) (bool, error)
 }
 
 const (
@@ -300,7 +300,7 @@ func (c *Cron) Start(action func(context.Context) error, done <-chan struct{}) {
 			return
 		}
 
-		if err := c.semaphoreApp.Exclusive(context.Background(), c.name, c.timeout, func(ctx context.Context) error {
+		if _, err := c.semaphoreApp.Exclusive(context.Background(), c.name, c.timeout, func(ctx context.Context) error {
 			do(ctx)
 			return nil
 		}); err != nil {

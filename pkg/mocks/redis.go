@@ -36,11 +36,12 @@ func (m *Semaphore) EXPECT() *SemaphoreMockRecorder {
 }
 
 // Exclusive mocks base method.
-func (m *Semaphore) Exclusive(arg0 context.Context, arg1 string, arg2 time.Duration, arg3 func(context.Context) error) error {
+func (m *Semaphore) Exclusive(arg0 context.Context, arg1 string, arg2 time.Duration, arg3 func(context.Context) error) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Exclusive", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Exclusive indicates an expected call of Exclusive.
