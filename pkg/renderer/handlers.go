@@ -39,7 +39,7 @@ func (a App) Error(w http.ResponseWriter, r *http.Request, err error) {
 		content["Message"] = NewErrorMessage(message)
 	}
 
-	if err := templates.ResponseHTMLTemplate(a.tpl.Lookup("error"), w, content, status); err != nil {
+	if err = templates.ResponseHTMLTemplate(a.tpl.Lookup("error"), w, content, status); err != nil {
 		httperror.InternalServerError(w, err)
 	}
 }
@@ -78,7 +78,7 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 		responder = templates.ResponseHTMLTemplateRaw
 	}
 
-	if err := responder(a.tpl.Lookup(templateName), w, content, status); err != nil {
+	if err = responder(a.tpl.Lookup(templateName), w, content, status); err != nil {
 		httperror.InternalServerError(w, err)
 	}
 }

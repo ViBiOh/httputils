@@ -13,11 +13,13 @@ func (c *Client) Close() {
 	c.Lock()
 	defer c.Unlock()
 
-	if err := c.cancelListeners(); err != nil {
+	var err error
+
+	if err = c.cancelListeners(); err != nil {
 		logger.Error("unable to cancel listeners: %s", err)
 	}
 
-	if err := c.closeListeners(); err != nil {
+	if err = c.closeListeners(); err != nil {
 		logger.Error("unable to close listeners: %s", err)
 	}
 

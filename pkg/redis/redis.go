@@ -105,7 +105,7 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 	}
 
 	for _, result := range results {
-		if err := result.Err(); err != nil {
+		if err = result.Err(); err != nil {
 			a.increase("error")
 			return fmt.Errorf("unable to delete key: %s", err)
 		}
