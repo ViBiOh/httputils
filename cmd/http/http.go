@@ -45,7 +45,7 @@ func main() {
 	corsConfig := cors.Flags(fs, "cors")
 
 	amqpConfig := amqp.Flags(fs, "amqp")
-	amqHandlerConfig := amqphandler.Flags(fs, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RetryInterval", "0"))
+	amqHandlerConfig := amqphandler.Flags(fs, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RoutingKey", "local"), flags.NewOverride("RetryInterval", "10s"))
 
 	rendererConfig := renderer.Flags(fs, "renderer")
 

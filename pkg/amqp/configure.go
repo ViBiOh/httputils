@@ -22,7 +22,8 @@ func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive 
 	var args map[string]interface{}
 	if len(dlExchange) != 0 {
 		args = map[string]interface{}{
-			"x-dead-letter-exchange": dlExchange,
+			"x-dead-letter-exchange":    dlExchange,
+			"x-dead-letter-routing-key": routingKey,
 		}
 	}
 
@@ -40,7 +41,7 @@ func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive 
 }
 
 // DelayedExchange configures dead-letter exchange with given ttl
-func (c *Client) DelayedExchange(queueName, exchangeName string, retryDelay time.Duration) (delayExchange string, err error) {
+func (c *Client) DelayedExchange(queueName, exchangeName, routingKey string, retryDelay time.Duration) (delayExchange string, err error) {
 	var channel *amqp.Channel
 	channel, err = c.createChannel()
 	if err != nil {
@@ -60,13 +61,14 @@ func (c *Client) DelayedExchange(queueName, exchangeName string, retryDelay time
 	delayQueue := fmt.Sprintf("%s-delay", queueName)
 
 	if _, err = channel.QueueDeclare(delayQueue, true, false, false, false, map[string]interface{}{
-		"x-dead-letter-exchange": exchangeName,
-		"x-message-ttl":          retryDelay.Milliseconds(),
+		"x-dead-letter-exchange":    exchangeName,
+		"x-dead-letter-routing-key": routingKey,
+		"x-message-ttl":             retryDelay.Milliseconds(),
 	}); err != nil {
 		return "", fmt.Errorf("unable to declare dead-letter queue: %s", delayExchange)
 	}
 
-	if err = channel.QueueBind(delayQueue, "", delayExchange, false, nil); err != nil {
+	if err = channel.QueueBind(delayQueue, routingKey, delayExchange, false, nil); err != nil {
 		return "", fmt.Errorf("unable to bind dead-letter queue: %s", delayExchange)
 	}
 

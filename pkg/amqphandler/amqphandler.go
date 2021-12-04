@@ -83,7 +83,7 @@ func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) er
 			return app, errors.New("no exchange name for delaying retries")
 		}
 
-		if app.delayExchange, err = app.amqpClient.DelayedExchange(queue, exchange, app.retryInterval); err != nil {
+		if app.delayExchange, err = app.amqpClient.DelayedExchange(queue, exchange, routingKey, app.retryInterval); err != nil {
 			return app, fmt.Errorf("unable to configure dead-letter exchange: %s", err)
 		}
 	}
@@ -144,7 +144,7 @@ func (a App) handleMessage(log logger.Provider, message amqp.Delivery) {
 		return
 	}
 
-	log.Error("unable to handle message: %s", err)
+	log.Error("unable to handle message `%s`: %s", message.Body, err)
 
 	if a.retryInterval > 0 && a.maxRetry > 0 {
 		if err = a.Retry(log, message); err == nil {
