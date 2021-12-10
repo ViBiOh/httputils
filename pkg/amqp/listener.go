@@ -53,7 +53,10 @@ identity:
 	output.done = make(chan struct{})
 
 	c.listeners[output.name] = &output
-	c.increaseConnection("listener")
+
+	if c.listenerMetric != nil {
+		c.listenerMetric.Inc()
+	}
 
 	return &output, nil
 }
@@ -95,4 +98,8 @@ func (c *Client) removeListener(name string) {
 	}
 
 	delete(c.listeners, name)
+
+	if c.listenerMetric != nil {
+		c.listenerMetric.Dec()
+	}
 }

@@ -69,7 +69,9 @@ func createChannel(connection Connection) (channel *amqp.Channel, err error) {
 
 func (c *Client) onDisconnect() {
 	for {
-		c.increaseConnection("reconnect")
+		if c.reconnectMetric != nil {
+			c.reconnectMetric.Inc()
+		}
 
 		if err := c.reconnect(); err != nil {
 			logger.Error("unable to reconnect: %s", err)

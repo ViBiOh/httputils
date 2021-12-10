@@ -13,22 +13,23 @@ func Counters(prometheusRegisterer prometheus.Registerer, namespace, subsystem s
 	metrics := make(map[string]prometheus.Counter)
 
 	for _, name := range names {
-		metrics[name] = createCounter(prometheusRegisterer, namespace, subsystem, name)
+		metrics[name] = Counter(prometheusRegisterer, namespace, subsystem, name)
 	}
 
 	return metrics
 }
 
-func createCounter(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string) prometheus.Counter {
-	counter := prometheus.NewCounter(prometheus.CounterOpts{
+// Counter creates and registers a counter
+func Counter(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string) prometheus.Counter {
+	metric := prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      name,
 	})
 
-	prometheusRegisterer.MustRegister(counter)
+	prometheusRegisterer.MustRegister(metric)
 
-	return counter
+	return metric
 }
 
 // CounterVec creates and register a counter vector

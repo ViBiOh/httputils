@@ -33,13 +33,14 @@ type Connection interface {
 
 // Client wraps all object required for AMQP usage
 type Client struct {
-	channel           *amqp.Channel
-	connection        Connection
-	listeners         map[string]*listener
-	connectionMetrics map[string]prometheus.Counter
-	messageMetrics    *prometheus.CounterVec
-	vhost             string
-	uri               string
+	channel         *amqp.Channel
+	connection      Connection
+	listeners       map[string]*listener
+	reconnectMetric prometheus.Counter
+	listenerMetric  prometheus.Gauge
+	messageMetrics  *prometheus.CounterVec
+	vhost           string
+	uri             string
 	sync.RWMutex
 }
 
@@ -67,10 +68,11 @@ func NewFromURI(uri string, prometheusRegister prometheus.Registerer) (*Client, 
 	}
 
 	client := &Client{
-		uri:               uri,
-		listeners:         make(map[string]*listener),
-		connectionMetrics: prom.Counters(prometheusRegister, metricNamespace, "connection", "reconnect", "listener"),
-		messageMetrics:    prom.CounterVec(prometheusRegister, metricNamespace, "", "message", "state"),
+		uri:             uri,
+		listeners:       make(map[string]*listener),
+		reconnectMetric: prom.Counter(prometheusRegister, metricNamespace, "", "reconnection"),
+		listenerMetric:  prom.Gauge(prometheusRegister, metricNamespace, "", "listener"),
+		messageMetrics:  prom.CounterVec(prometheusRegister, metricNamespace, "", "message", "state"),
 	}
 
 	connection, channel, err := connect(uri, client.onDisconnect)
@@ -124,10 +126,4 @@ func (c *Client) increase(name string) {
 	}
 
 	c.messageMetrics.WithLabelValues(name).Inc()
-}
-
-func (c *Client) increaseConnection(name string) {
-	if gauge, ok := c.connectionMetrics[name]; ok {
-		gauge.Inc()
-	}
 }
