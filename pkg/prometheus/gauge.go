@@ -21,6 +21,10 @@ func Gauges(prometheusRegisterer prometheus.Registerer, namespace, subsystem str
 
 // Gauge creates and registers a gauge
 func Gauge(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string) prometheus.Gauge {
+	if isNil(prometheusRegisterer) {
+		return nil
+	}
+
 	metric := prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
