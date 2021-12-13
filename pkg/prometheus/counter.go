@@ -21,6 +21,10 @@ func Counters(prometheusRegisterer prometheus.Registerer, namespace, subsystem s
 
 // Counter creates and registers a counter
 func Counter(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string) prometheus.Counter {
+	if isNil(prometheusRegisterer) {
+		return nil
+	}
+
 	metric := prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
