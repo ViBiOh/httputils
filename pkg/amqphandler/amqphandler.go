@@ -111,7 +111,7 @@ func (a App) Start(done <-chan struct{}) {
 		queueName, err := a.configure(init)
 		init = false
 		return queueName, err
-	})
+	}, a.exchange, a.routingKey)
 	if err != nil {
 		log.Error("unable to listen: %s", err)
 		return

@@ -13,7 +13,7 @@ import (
 type QueueResolver func() (string, error)
 
 // Listen listens to configured queue
-func (c *Client) Listen(queueResolver QueueResolver) (string, <-chan amqp.Delivery, error) {
+func (c *Client) Listen(queueResolver QueueResolver, exchange, routingKey string) (string, <-chan amqp.Delivery, error) {
 	queueName, err := queueResolver()
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to get queue name: %s", err)
@@ -30,7 +30,7 @@ func (c *Client) Listen(queueResolver QueueResolver) (string, <-chan amqp.Delive
 	}
 
 	forward := make(chan amqp.Delivery)
-	go c.forward(listener, queueResolver, messages, forward)
+	go c.forward(listener, queueResolver, messages, forward, exchange, routingKey)
 
 	return listener.name, forward, nil
 }
@@ -78,13 +78,13 @@ func (c *Client) listen(listener *listener, queue string) (<-chan amqp.Delivery,
 	return messages, nil
 }
 
-func (c *Client) forward(listener *listener, queueResolver QueueResolver, input <-chan amqp.Delivery, output chan<- amqp.Delivery) {
+func (c *Client) forward(listener *listener, queueResolver QueueResolver, input <-chan amqp.Delivery, output chan<- amqp.Delivery, exchange, routingKey string) {
 	defer close(listener.done)
 	defer close(output)
 
 forward:
 	for delivery := range input {
-		c.increase("consumed")
+		c.increase("consumed", exchange, routingKey)
 		output <- delivery
 	}
 

@@ -72,7 +72,7 @@ func NewFromURI(uri string, prometheusRegister prometheus.Registerer) (*Client, 
 		listeners:       make(map[string]*listener),
 		reconnectMetric: prom.Counter(prometheusRegister, metricNamespace, "", "reconnection"),
 		listenerMetric:  prom.Gauge(prometheusRegister, metricNamespace, "", "listener"),
-		messageMetrics:  prom.CounterVec(prometheusRegister, metricNamespace, "", "message", "state"),
+		messageMetrics:  prom.CounterVec(prometheusRegister, metricNamespace, "", "message", "state", "exchange", "routingKey"),
 	}
 
 	connection, channel, err := connect(uri, client.onDisconnect)
@@ -98,7 +98,7 @@ func (c *Client) Publish(payload amqp.Publishing, exchange, routingKey string) e
 	c.RLock()
 	defer c.RUnlock()
 
-	c.increase("published")
+	c.increase("published", exchange, routingKey)
 
 	return c.channel.Publish(exchange, routingKey, false, false, payload)
 }
@@ -120,10 +120,10 @@ func (c *Client) PublishJSON(item interface{}, exchange, routingKey string) erro
 	return nil
 }
 
-func (c *Client) increase(name string) {
+func (c *Client) increase(name, exchange, routingKey string) {
 	if c.messageMetrics == nil {
 		return
 	}
 
-	c.messageMetrics.WithLabelValues(name).Inc()
+	c.messageMetrics.WithLabelValues(name, exchange, routingKey).Inc()
 }
