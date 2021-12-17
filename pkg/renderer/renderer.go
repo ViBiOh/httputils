@@ -29,6 +29,7 @@ type App struct {
 	content    map[string]interface{}
 	staticFS   fs.FS
 	pathPrefix string
+	publicURL  string
 	minify     bool
 }
 
@@ -63,6 +64,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 	instance := App{
 		staticFS:   staticFS,
 		pathPrefix: pathPrefix,
+		publicURL:  publicURL,
 		minify:     *config.minify,
 		content: map[string]interface{}{
 			"Title":   *config.title,
@@ -75,9 +77,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 	}
 
 	funcMap["url"] = instance.url
-	funcMap["publicURL"] = func(url string) string {
-		return publicURL + instance.url(url)
-	}
+	funcMap["publicURL"] = instance.PublicURL
 
 	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
 	if err != nil {
@@ -87,6 +87,11 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 	instance.tpl = tpl
 
 	return instance, nil
+}
+
+// PublicURL computes public URL of given path
+func (a App) PublicURL(url string) string {
+	return a.publicURL + a.url(url)
 }
 
 func (a App) url(url string) string {
