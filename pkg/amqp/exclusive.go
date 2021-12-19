@@ -22,9 +22,7 @@ func (c *Client) SetupExclusive(name string) (err error) {
 	}
 
 	defer func() {
-		if closeErr := channel.Close(); closeErr != nil {
-			err = model.WrapError(err, closeErr)
-		}
+		err = closeChannel(err, channel)
 	}()
 
 	if create {
@@ -50,9 +48,7 @@ func (c *Client) shouldCreateExclusiveQueue(name string) (bool, int) {
 	}
 
 	defer func() {
-		if closeErr := channel.Close(); closeErr != nil {
-			err = model.WrapError(err, closeErr)
-		}
+		err = closeChannel(err, channel)
 	}()
 
 	queue, err := channel.QueueInspect(name)
@@ -72,9 +68,7 @@ func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Durati
 	}
 
 	defer func() {
-		if closeErr := channel.Close(); closeErr != nil {
-			err = model.WrapError(err, fmt.Errorf("unable to close channel: %s", err))
-		}
+		err = closeChannel(err, channel)
 	}()
 
 	var message amqp.Delivery

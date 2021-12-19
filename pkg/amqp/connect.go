@@ -35,12 +35,13 @@ func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, 
 	go func() {
 		log := logger.WithField("addr", connection.LocalAddr().String())
 		log.Info("Start listening close connection notifications")
-		defer log.Info("End listening close connection notifications")
 
 		for range connection.NotifyClose(make(chan *amqp.Error)) {
 			log.Warn("Connection closed, trying to reconnect...")
 			onDisconnect()
 		}
+
+		log.Info("End listening close connection notifications")
 	}()
 
 	return connection, channel, nil

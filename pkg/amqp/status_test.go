@@ -88,3 +88,13 @@ func TestPing(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkPing(b *testing.B) {
+	instance := &Client{
+		connection: &amqp.Connection{},
+	}
+
+	for i := 0; i < b.N; i++ {
+		_ = instance.Ping()
+	}
+}
