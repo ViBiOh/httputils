@@ -12,6 +12,7 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
+	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
 const (
@@ -44,7 +45,7 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		publicURL:  flags.New(prefix, "", "PublicURL").Default("http://localhost", overrides).Label("Public URL").ToString(fs),
+		publicURL:  flags.New(prefix, "", "PublicURL").Default("http://localhost:1080", overrides).Label("Public URL").ToString(fs),
 		pathPrefix: flags.New(prefix, "", "PathPrefix").Default("", overrides).Label("Root Path Prefix").ToString(fs),
 		title:      flags.New(prefix, "", "Title").Default("App", overrides).Label("Application title").ToString(fs),
 		minify:     flags.New(prefix, "", "Minify").Default(true, overrides).Label("Minify HTML").ToBool(fs),
@@ -85,6 +86,10 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 	}
 
 	instance.tpl = tpl
+
+	if strings.HasPrefix(instance.publicURL, "http://localhost") {
+		logger.Warn("PublicURL has a development/debug value: `%s`. You may need to configure it.", instance.publicURL)
+	}
 
 	return instance, nil
 }
