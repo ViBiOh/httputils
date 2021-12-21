@@ -42,12 +42,12 @@ func TestString(t *testing.T) {
 		},
 		{
 			"basic auth",
-			New().Post("http://localhost").BasicAuth("admin", "password").ContentType("text/plain"),
+			Post("http://localhost").BasicAuth("admin", "password").ContentType("text/plain"),
 			"POST http://localhost, BasicAuth with user `%s`admin, Header Content-Type: `text/plain`",
 		},
 		{
 			"signature auth",
-			New().Post("http://localhost").WithSignatureAuthorization("secret", []byte("password")),
+			Post("http://localhost").WithSignatureAuthorization("secret", []byte("password")),
 			"POST http://localhost, SignatureAuthorization with key `secret`",
 		},
 	}
@@ -101,43 +101,43 @@ func TestPath(t *testing.T) {
 	}{
 		{
 			"empty",
-			New().Get("http://localhost"),
+			Get("http://localhost"),
 			args{
 				path: "",
 			},
-			New().Get("http://localhost"),
+			Get("http://localhost"),
 		},
 		{
 			"no prefix",
-			New().Get("http://localhost"),
+			Put("http://localhost"),
 			args{
 				path: "hello",
 			},
-			New().Get("http://localhost/hello"),
+			Put("http://localhost/hello"),
 		},
 		{
 			"trailing slash url",
-			New().Get("http://localhost/"),
+			Post("http://localhost/"),
 			args{
 				path: "hello",
 			},
-			New().Get("http://localhost/hello"),
+			Post("http://localhost/hello"),
 		},
 		{
 			"prefix path",
-			New().Get("http://localhost"),
+			Patch("http://localhost"),
 			args{
 				path: "/hello",
 			},
-			New().Get("http://localhost/hello"),
+			Patch("http://localhost/hello"),
 		},
 		{
 			"full slash",
-			New().Get("http://localhost/"),
+			Delete("http://localhost/"),
 			args{
 				path: "/hello",
 			},
-			New().Get("http://localhost/hello"),
+			Delete("http://localhost/hello"),
 		},
 	}
 

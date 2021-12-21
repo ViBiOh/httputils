@@ -48,6 +48,56 @@ func New() Request {
 	}
 }
 
+// Get create GET to given url
+func Get(url string) Request {
+	return Request{
+		method: http.MethodGet,
+		header: http.Header{},
+		client: defaultHTTPClient,
+		url:    url,
+	}
+}
+
+// Post create POST to given url
+func Post(url string) Request {
+	return Request{
+		method: http.MethodPost,
+		header: http.Header{},
+		client: defaultHTTPClient,
+		url:    url,
+	}
+}
+
+// Put create PUT to given url
+func Put(url string) Request {
+	return Request{
+		method: http.MethodPut,
+		header: http.Header{},
+		client: defaultHTTPClient,
+		url:    url,
+	}
+}
+
+// Patch create PATCH to given url
+func Patch(url string) Request {
+	return Request{
+		method: http.MethodPatch,
+		header: http.Header{},
+		client: defaultHTTPClient,
+		url:    url,
+	}
+}
+
+// Delete create DELETE to given url
+func Delete(url string) Request {
+	return Request{
+		method: http.MethodDelete,
+		header: http.Header{},
+		client: defaultHTTPClient,
+		url:    url,
+	}
+}
+
 // String representation of the request
 func (r Request) String() string {
 	var builder strings.Builder
