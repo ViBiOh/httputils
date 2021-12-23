@@ -39,63 +39,43 @@ type Request struct {
 	signatureSecret []byte
 }
 
+func new(method, url string) Request {
+	return Request{
+		client: defaultHTTPClient,
+		method: method,
+		url:    url,
+		header: http.Header{},
+	}
+}
+
 // New create a new Request
 func New() Request {
-	return Request{
-		method: http.MethodGet,
-		header: http.Header{},
-		client: defaultHTTPClient,
-	}
+	return new(http.MethodGet, "")
 }
 
 // Get create GET to given url
 func Get(url string) Request {
-	return Request{
-		method: http.MethodGet,
-		header: http.Header{},
-		client: defaultHTTPClient,
-		url:    url,
-	}
+	return new(http.MethodGet, url)
 }
 
 // Post create POST to given url
 func Post(url string) Request {
-	return Request{
-		method: http.MethodPost,
-		header: http.Header{},
-		client: defaultHTTPClient,
-		url:    url,
-	}
+	return new(http.MethodPost, url)
 }
 
 // Put create PUT to given url
 func Put(url string) Request {
-	return Request{
-		method: http.MethodPut,
-		header: http.Header{},
-		client: defaultHTTPClient,
-		url:    url,
-	}
+	return new(http.MethodPut, url)
 }
 
 // Patch create PATCH to given url
 func Patch(url string) Request {
-	return Request{
-		method: http.MethodPatch,
-		header: http.Header{},
-		client: defaultHTTPClient,
-		url:    url,
-	}
+	return new(http.MethodPatch, url)
 }
 
 // Delete create DELETE to given url
 func Delete(url string) Request {
-	return Request{
-		method: http.MethodDelete,
-		header: http.Header{},
-		client: defaultHTTPClient,
-		url:    url,
-	}
+	return new(http.MethodDelete, url)
 }
 
 // String representation of the request
