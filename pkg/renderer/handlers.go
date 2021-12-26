@@ -5,12 +5,15 @@ import (
 	"net/http"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
 )
+
+var svgCacheDuration string = fmt.Sprintf("public, max-age=%.0f", time.Duration(time.Minute*10).Seconds())
 
 // Redirect redirect user to a defined path with a message
 func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
@@ -91,7 +94,9 @@ func (a App) svg() http.Handler {
 			return
 		}
 
+		w.Header().Add("Cache-Control", svgCacheDuration)
 		w.Header().Add("Content-Type", "image/svg+xml")
+
 		if err := templates.WriteTemplate(tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {
 			httperror.InternalServerError(w, err)
 		}
