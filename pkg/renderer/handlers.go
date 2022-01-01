@@ -31,10 +31,10 @@ func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", a.url(parts[0]), joinChar, message, anchor), http.StatusFound)
 }
 
-func (a App) Error(w http.ResponseWriter, r *http.Request, err error) {
+func (a App) Error(w http.ResponseWriter, r *http.Request, content map[string]interface{}, err error) {
 	logger.Error("%s", err)
 
-	content := a.feedContent(nil)
+	content = a.feedContent(content)
 	content["nonce"] = owasp.NonceFromCtx(r.Context())
 
 	status, message := httperror.ErrorStatus(err)
@@ -54,13 +54,13 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 			runtime.Stack(output, false)
 			logger.Error("recovered from panic: %s\n%s", exception, output)
 
-			a.Error(w, r, fmt.Errorf("recovered from panic: %s", exception))
+			a.Error(w, r, nil, fmt.Errorf("recovered from panic: %s", exception))
 		}
 	}()
 
 	templateName, status, content, err := templateFunc(w, r)
 	if err != nil {
-		a.Error(w, r, err)
+		a.Error(w, r, content, err)
 		return
 	}
 
