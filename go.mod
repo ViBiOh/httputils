@@ -11,7 +11,7 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.32.1
 	github.com/streadway/amqp v1.0.0
-	github.com/tdewolff/minify/v2 v2.9.26
+	github.com/tdewolff/minify/v2 v2.9.27
 )
 
 require (
