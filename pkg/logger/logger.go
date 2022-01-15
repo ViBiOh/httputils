@@ -168,7 +168,7 @@ func (l Logger) Fatal(err error) {
 }
 
 // WithField add given name and value to a context
-func (l Logger) WithField(name string, value interface{}) FieldsContext {
+func (l Logger) WithField(name string, value interface{}) Provider {
 	return FieldsContext{
 		outputFn: l.output,
 		closeFn:  l.Close,

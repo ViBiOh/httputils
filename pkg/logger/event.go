@@ -24,7 +24,7 @@ type FieldsContext struct {
 }
 
 // WithField add a field to current context
-func (f FieldsContext) WithField(name string, value interface{}) FieldsContext {
+func (f FieldsContext) WithField(name string, value interface{}) Provider {
 	f.fields = append(f.fields, field{
 		name:  name,
 		value: value,

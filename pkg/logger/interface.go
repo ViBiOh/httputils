@@ -1,8 +1,8 @@
 package logger
 
-// Provider definition
+// Provider of logging definition
 type Provider interface {
-	WithField(name string, value interface{}) FieldsContext
+	WithField(name string, value interface{}) Provider
 	Trace(format string, a ...interface{})
 	Debug(format string, a ...interface{})
 	Info(format string, a ...interface{})

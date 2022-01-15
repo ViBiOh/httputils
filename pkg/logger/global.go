@@ -12,7 +12,7 @@ func Close() {
 }
 
 // WithField create context for logging
-func WithField(name string, value interface{}) FieldsContext {
+func WithField(name string, value interface{}) Provider {
 	return logger.WithField(name, value)
 }
 
