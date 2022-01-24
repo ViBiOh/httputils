@@ -17,6 +17,8 @@ type key int
 const (
 	ctxNonceKey key = iota
 
+	nonceKey = "httputils-nonce"
+
 	cspHeader = "Content-Security-Policy"
 )
 
@@ -65,7 +67,7 @@ func (a App) Middleware(next http.Handler) http.Handler {
 
 	nonce := false
 	if len(a.csp) != 0 {
-		if strings.Contains(a.csp, "nonce") {
+		if strings.Contains(a.csp, nonceKey) {
 			nonce = true
 		} else {
 			headers.Add(cspHeader, a.csp)
@@ -85,7 +87,7 @@ func (a App) Middleware(next http.Handler) http.Handler {
 
 		if nonce {
 			nonceValue := generateNonce()
-			w.Header().Add(cspHeader, strings.ReplaceAll(a.csp, "nonce", "nonce-"+nonceValue))
+			w.Header().Add(cspHeader, strings.ReplaceAll(a.csp, nonceKey, "nonce-"+nonceValue))
 			r = r.WithContext(nonceInCtx(r.Context(), nonceValue))
 		}
 

@@ -153,7 +153,7 @@ func TestMiddleware(t *testing.T) {
 		{
 			"nonce",
 			App{
-				csp:          "default-src 'self'; base-uri 'self'; script-src 'self' 'nonce'",
+				csp:          "default-src 'self'; base-uri 'self'; script-src 'self' 'httputils-nonce'",
 				hsts:         false,
 				frameOptions: "deny",
 			},
