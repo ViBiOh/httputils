@@ -210,7 +210,7 @@ func BenchmarkMiddleware(b *testing.B) {
 
 func BenchmarkMiddlewareNonce(b *testing.B) {
 	app := App{
-		csp:          "default-src 'self'; base-uri 'self'; script-src 'self' 'nonce'",
+		csp:          "default-src 'self'; base-uri 'self'; script-src 'self' 'httputils-nonce'",
 		hsts:         true,
 		frameOptions: "deny",
 	}
