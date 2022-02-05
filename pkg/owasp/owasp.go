@@ -103,12 +103,12 @@ func nonceInCtx(ctx context.Context, nonce string) context.Context {
 
 // NonceFromCtx retrieves nonce from context
 func NonceFromCtx(ctx context.Context) string {
-	rawUser := ctx.Value(ctxNonceKey)
-	if rawUser == nil {
+	rawNonce := ctx.Value(ctxNonceKey)
+	if rawNonce == nil {
 		return ""
 	}
 
-	if nonce, ok := rawUser.(string); ok {
+	if nonce, ok := rawNonce.(string); ok {
 		return nonce
 	}
 
