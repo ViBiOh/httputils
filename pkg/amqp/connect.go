@@ -62,7 +62,7 @@ func createChannel(connection Connection) (channel *amqp.Channel, err error) {
 	}
 
 	if err = channel.Qos(1, 0, false); err != nil {
-		return channel, fmt.Errorf("unable to configure QoS on channel: %s", err)
+		return nil, fmt.Errorf("unable to configure QoS on channel: %s", err)
 	}
 
 	return channel, nil
