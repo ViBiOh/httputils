@@ -98,9 +98,13 @@ func (c *Client) Publish(payload amqp.Publishing, exchange, routingKey string) e
 	c.RLock()
 	defer c.RUnlock()
 
-	c.increase("published", exchange, routingKey)
+	if err := c.channel.Publish(exchange, routingKey, false, false, payload); err != nil {
+		c.increase("error", exchange, routingKey)
+		return err
+	}
 
-	return c.channel.Publish(exchange, routingKey, false, false, payload)
+	c.increase("published", exchange, routingKey)
+	return nil
 }
 
 // PublishJSON sends JSON payload to the underlying exchange
