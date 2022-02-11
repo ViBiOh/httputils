@@ -1,7 +1,6 @@
 package owasp
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"flag"
@@ -65,6 +64,13 @@ func (a App) Middleware(next http.Handler) http.Handler {
 	headers.Add("X-Xss-Protection", "1; mode=block")
 	headers.Add("X-Permitted-Cross-Domain-Policies", "none")
 
+	if len(a.frameOptions) != 0 {
+		headers.Add("X-Frame-Options", a.frameOptions)
+	}
+	if a.hsts {
+		headers.Add("Strict-Transport-Security", "max-age=10886400")
+	}
+
 	nonce := false
 	if len(a.csp) != 0 {
 		if strings.Contains(a.csp, nonceKey) {
@@ -73,49 +79,35 @@ func (a App) Middleware(next http.Handler) http.Handler {
 			headers.Add(cspHeader, a.csp)
 		}
 	}
-	if len(a.frameOptions) != 0 {
-		headers.Add("X-Frame-Options", a.frameOptions)
-	}
-	if a.hsts {
-		headers.Add("Strict-Transport-Security", "max-age=10886400")
-	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for key, values := range headers {
 			w.Header()[key] = values
 		}
 
-		if nonce {
-			nonceValue := generateNonce()
-			w.Header().Add(cspHeader, strings.ReplaceAll(a.csp, nonceKey, "nonce-"+nonceValue))
-			r = r.WithContext(nonceInCtx(r.Context(), nonceValue))
-		}
-
 		if next != nil {
-			next.ServeHTTP(w, r)
+			writer := w
+			if nonce {
+				writer = &nonceResponseWritter{
+					ResponseWriter: w,
+					csp:            a.csp,
+				}
+			}
+
+			next.ServeHTTP(writer, r)
 		}
 	})
 }
 
-func nonceInCtx(ctx context.Context, nonce string) context.Context {
-	return context.WithValue(ctx, ctxNonceKey, nonce)
+// WriteNonce to the underlying response writer
+func WriteNonce(w http.ResponseWriter, nonce string) {
+	if nonceWriter, ok := w.(responseWriter); ok {
+		nonceWriter.WriteNonce(nonce)
+	}
 }
 
-// NonceFromCtx retrieves nonce from context
-func NonceFromCtx(ctx context.Context) string {
-	rawNonce := ctx.Value(ctxNonceKey)
-	if rawNonce == nil {
-		return ""
-	}
-
-	if nonce, ok := rawNonce.(string); ok {
-		return nonce
-	}
-
-	return ""
-}
-
-func generateNonce() string {
+// Nonce creates a unique nonce identifier
+func Nonce() string {
 	raw := make([]byte, 16)
 	_, err := rand.Read(raw)
 	if err != nil {

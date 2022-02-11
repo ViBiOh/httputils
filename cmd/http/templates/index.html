@@ -12,6 +12,9 @@
     <h1>
       <a href="{{ url "/" }}">Hello {{ .Version }}!</a>
     </h1>
+    <p>
+      nonce=`{{ .nonce }}`
+    </p>
   </body>
   <script type="text/javascript" nonce="{{ .nonce }}">
     window.addEventListener("DOMContentLoaded", (event) => {

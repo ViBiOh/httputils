@@ -199,7 +199,9 @@ func BenchmarkMiddleware(b *testing.B) {
 		frameOptions: "deny",
 	}
 
-	middleware := app.Middleware(nil)
+	middleware := app.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	writer := httptest.NewRecorder()
 
@@ -215,7 +217,9 @@ func BenchmarkMiddlewareNonce(b *testing.B) {
 		frameOptions: "deny",
 	}
 
-	middleware := app.Middleware(nil)
+	middleware := app.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	writer := httptest.NewRecorder()
 

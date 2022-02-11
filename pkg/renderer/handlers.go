@@ -10,6 +10,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
+	"github.com/ViBiOh/httputils/v4/pkg/sha"
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
 )
 
@@ -35,12 +36,15 @@ func (a App) Error(w http.ResponseWriter, r *http.Request, content map[string]in
 	logger.Error("%s", err)
 
 	content = a.feedContent(content)
-	content["nonce"] = owasp.NonceFromCtx(r.Context())
 
 	status, message := httperror.ErrorStatus(err)
 	if len(message) > 0 {
 		content["Message"] = NewErrorMessage(message)
 	}
+
+	nonce := owasp.Nonce()
+	owasp.WriteNonce(w, nonce)
+	content["nonce"] = nonce
 
 	if err = templates.ResponseHTMLTemplate(a.tpl.Lookup("error"), w, content, status); err != nil {
 		httperror.InternalServerError(w, err)
@@ -69,11 +73,15 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 	}
 
 	content = a.feedContent(content)
-	content["nonce"] = owasp.NonceFromCtx(r.Context())
 
 	message := ParseMessage(r)
 	if len(message.Content) > 0 {
 		content["Message"] = message
+	}
+
+	if matchEtag(w, r, content) {
+		w.WriteHeader(http.StatusNotModified)
+		return
 	}
 
 	responder := templates.ResponseHTMLTemplate
@@ -84,6 +92,37 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 	if err = responder(a.tpl.Lookup(templateName), w, content, status); err != nil {
 		httperror.InternalServerError(w, err)
 	}
+}
+
+func matchEtag(w http.ResponseWriter, r *http.Request, content map[string]interface{}) bool {
+	etag := sha.New(content)
+
+	noneMatch := r.Header.Get("If-None-Match")
+	if len(noneMatch) == 0 {
+		appendNonceAndEtag(w, content, etag)
+		return false
+	}
+
+	parts := strings.SplitN(noneMatch, "-", 2)
+	if len(parts) != 2 {
+		appendNonceAndEtag(w, content, etag)
+		return false
+	}
+
+	if strings.TrimPrefix(parts[0], `W/"`) == etag {
+		owasp.WriteNonce(w, strings.TrimSuffix(parts[1], `"`))
+		return true
+	}
+
+	appendNonceAndEtag(w, content, etag)
+	return false
+}
+
+func appendNonceAndEtag(w http.ResponseWriter, content map[string]interface{}, etag string) {
+	nonce := owasp.Nonce()
+	owasp.WriteNonce(w, nonce)
+	content["nonce"] = nonce
+	w.Header().Add("Etag", fmt.Sprintf(`W/"%s-%s"`, etag, nonce))
 }
 
 func (a App) svg() http.Handler {

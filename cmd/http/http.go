@@ -61,12 +61,12 @@ func main() {
 	healthApp := health.New(healthConfig)
 
 	amqpClient, err := amqp.New(amqpConfig, prometheusApp.Registerer())
-	logger.Fatal(err)
+	if err != nil {
+		logger.Error("unable to get amqp client: %s", err)
+	}
 
 	amqpApp, err := amqphandler.New(amqHandlerConfig, amqpClient, amqpHandler)
 	logger.Fatal(err)
-
-	logger.Fatal(amqpClient.Publisher("httputils", "direct", nil))
 
 	rendererApp, err := renderer.New(rendererConfig, content, nil)
 	logger.Fatal(err)
