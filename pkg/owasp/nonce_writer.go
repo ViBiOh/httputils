@@ -50,9 +50,10 @@ func (r *nonceResponseWritter) Write(b []byte) (int, error) {
 	return r.ResponseWriter.Write(b)
 }
 
-func newDelegator(w http.ResponseWriter) responseWriter {
+func newDelegator(w http.ResponseWriter, csp string) responseWriter {
 	d := &nonceResponseWritter{
 		ResponseWriter: w,
+		csp:            csp,
 	}
 
 	id := 0

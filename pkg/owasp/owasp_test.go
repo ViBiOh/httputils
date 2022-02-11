@@ -158,10 +158,10 @@ func TestMiddleware(t *testing.T) {
 				frameOptions: "deny",
 			},
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusNotFound)
+				w.WriteHeader(http.StatusTeapot)
 			}),
 			httptest.NewRequest(http.MethodGet, "/", nil),
-			http.StatusNotFound,
+			http.StatusTeapot,
 			http.Header{
 				"Content-Security-Policy":           []string{"default-src 'self'; base-uri 'self'; script-src 'self' 'nonce-"},
 				"Referrer-Policy":                   []string{"strict-origin-when-cross-origin"},

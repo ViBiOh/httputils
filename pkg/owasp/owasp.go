@@ -11,13 +11,8 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
-type key int
-
 const (
-	ctxNonceKey key = iota
-
-	nonceKey = "httputils-nonce"
-
+	nonceKey  = "httputils-nonce"
 	cspHeader = "Content-Security-Policy"
 )
 
@@ -88,10 +83,7 @@ func (a App) Middleware(next http.Handler) http.Handler {
 		if next != nil {
 			writer := w
 			if nonce {
-				writer = &nonceResponseWritter{
-					ResponseWriter: w,
-					csp:            a.csp,
-				}
+				writer = newDelegator(w, a.csp)
 			}
 
 			next.ServeHTTP(writer, r)
