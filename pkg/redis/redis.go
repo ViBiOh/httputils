@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/go-redis/redis/v8"
@@ -26,41 +27,62 @@ type App struct {
 
 // Config of package
 type Config struct {
-	redisAddress  *string
-	redisPassword *string
-	redisAlias    *string
-	redisDatabase *int
+	address  *string
+	username *string
+	password *string
+	alias    *string
+	database *int
 }
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		redisAddress:  flags.New(prefix, "redis", "Address").Default("localhost:6379", overrides).Label("Redis Address").ToString(fs),
-		redisPassword: flags.New(prefix, "redis", "Password").Default("", overrides).Label("Redis Password, if any").ToString(fs),
-		redisDatabase: flags.New(prefix, "redis", "Database").Default(0, overrides).Label("Redis Database").ToInt(fs),
-		redisAlias:    flags.New(prefix, "redis", "Alias").Default("", overrides).Label("Connection alias, for metric").ToString(fs),
+		address:  flags.New(prefix, "redis", "Address").Default("localhost:6379", overrides).Label("Redis Address (blank to disable)").ToString(fs),
+		username: flags.New(prefix, "redis", "Username").Default("", overrides).Label("Redis Username, if any").ToString(fs),
+		password: flags.New(prefix, "redis", "Password").Default("", overrides).Label("Redis Password, if any").ToString(fs),
+		database: flags.New(prefix, "redis", "Database").Default(0, overrides).Label("Redis Database").ToInt(fs),
+		alias:    flags.New(prefix, "redis", "Alias").Default("", overrides).Label("Connection alias, for metric").ToString(fs),
 	}
 }
 
 // New creates new App from Config
 func New(config Config, prometheusRegisterer prometheus.Registerer) App {
+	address := strings.TrimSpace(*config.address)
+	if len(address) == 0 {
+		logger.Info("no redis address")
+		return App{}
+	}
+
 	return App{
 		redisClient: redis.NewClient(&redis.Options{
-			Addr:     *config.redisAddress,
-			Password: *config.redisPassword,
-			DB:       *config.redisDatabase,
+			Addr:     address,
+			Username: *config.username,
+			Password: *config.password,
+			DB:       *config.database,
 		}),
-		metric: prom.CounterVec(prometheusRegisterer, metricsNamespace, strings.TrimSpace(*config.redisAlias), "item", "state"),
+		metric: prom.CounterVec(prometheusRegisterer, metricsNamespace, strings.TrimSpace(*config.alias), "item", "state"),
 	}
+}
+
+func (a App) enabled() bool {
+	return a.redisClient != nil
 }
 
 // Ping check redis availability
 func (a App) Ping() error {
+	if !a.enabled() {
+		return nil
+	}
+
 	return a.redisClient.Ping(context.Background()).Err()
 }
 
-// Store store give key/val with duration
+// Store give key/val with duration
 func (a App) Store(ctx context.Context, key string, value interface{}, duration time.Duration) error {
+	if !a.enabled() {
+		return nil
+	}
+
 	err := a.redisClient.SetEX(ctx, key, value, duration).Err()
 
 	if err == nil {
@@ -74,6 +96,10 @@ func (a App) Store(ctx context.Context, key string, value interface{}, duration 
 
 // Load given key
 func (a App) Load(ctx context.Context, key string) (string, error) {
+	if !a.enabled() {
+		return "", nil
+	}
+
 	content, err := a.redisClient.Get(ctx, key).Result()
 
 	if err == nil {
@@ -90,8 +116,12 @@ func (a App) Load(ctx context.Context, key string) (string, error) {
 	return "", nil
 }
 
-// Delete given key
+// Delete given keys
 func (a App) Delete(ctx context.Context, keys ...string) error {
+	if !a.enabled() {
+		return nil
+	}
+
 	pipeline := a.redisClient.Pipeline()
 
 	for _, key := range keys {
@@ -118,6 +148,10 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 
 // Exclusive get an exclusive lock for given name during duration
 func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
+	if !a.enabled() {
+		return false, fmt.Errorf("redis not enabled")
+	}
+
 	a.increase("exclusive")
 
 	if acquired, err = a.redisClient.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
