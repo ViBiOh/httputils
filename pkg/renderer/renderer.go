@@ -21,7 +21,7 @@ const (
 
 var (
 	staticFolders   = []string{"/images", "/scripts", "/styles"}
-	staticRootPaths = []string{"/robots.txt", "/sitemap.xml"}
+	staticRootPaths = []string{"/robots.txt", "/sitemap.xml", "/favicon.ico"}
 )
 
 // App of package
