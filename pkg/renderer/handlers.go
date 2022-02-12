@@ -10,7 +10,6 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
-	"github.com/ViBiOh/httputils/v4/pkg/sha"
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
 )
 
@@ -62,24 +61,24 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 		}
 	}()
 
-	templateName, status, content, err := templateFunc(w, r)
+	page, err := templateFunc(w, r)
 	if err != nil {
-		a.Error(w, r, content, err)
+		a.Error(w, r, page.Content, err)
 		return
 	}
 
-	if len(templateName) == 0 {
+	if len(page.Template) == 0 {
 		return
 	}
 
-	content = a.feedContent(content)
+	page.Content = a.feedContent(page.Content)
 
 	message := ParseMessage(r)
 	if len(message.Content) > 0 {
-		content["Message"] = message
+		page.Content["Message"] = message
 	}
 
-	if matchEtag(w, r, content) {
+	if matchEtag(w, r, page) {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
@@ -89,23 +88,23 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 		responder = templates.ResponseHTMLTemplateRaw
 	}
 
-	if err = responder(a.tpl.Lookup(templateName), w, content, status); err != nil {
+	if err = responder(a.tpl.Lookup(page.Template), w, page.Content, page.Status); err != nil {
 		httperror.InternalServerError(w, err)
 	}
 }
 
-func matchEtag(w http.ResponseWriter, r *http.Request, content map[string]interface{}) bool {
-	etag := sha.New(content)
+func matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
+	etag := page.etag()
 
 	noneMatch := r.Header.Get("If-None-Match")
 	if len(noneMatch) == 0 {
-		appendNonceAndEtag(w, content, etag)
+		appendNonceAndEtag(w, page.Content, etag)
 		return false
 	}
 
 	parts := strings.SplitN(noneMatch, "-", 2)
 	if len(parts) != 2 {
-		appendNonceAndEtag(w, content, etag)
+		appendNonceAndEtag(w, page.Content, etag)
 		return false
 	}
 
@@ -114,7 +113,7 @@ func matchEtag(w http.ResponseWriter, r *http.Request, content map[string]interf
 		return true
 	}
 
-	appendNonceAndEtag(w, content, etag)
+	appendNonceAndEtag(w, page.Content, etag)
 	return false
 }
 

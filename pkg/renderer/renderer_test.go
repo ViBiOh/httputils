@@ -245,8 +245,12 @@ func TestHandler(t *testing.T) {
 			"html",
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, "/", nil),
-			func(_ http.ResponseWriter, _ *http.Request) (string, int, map[string]interface{}, error) {
-				return "public", http.StatusCreated, nil, nil
+			func(_ http.ResponseWriter, _ *http.Request) (Page, error) {
+				return Page{
+					Template: "public",
+					Status:   http.StatusCreated,
+					Content:  nil,
+				}, nil
 			},
 			`<!doctype html><html lang=en><meta charset=utf-8><title>Golang Test</title><h1>Hello !</h1>`,
 			http.StatusCreated,
@@ -256,8 +260,12 @@ func TestHandler(t *testing.T) {
 			"message",
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, fmt.Sprintf("/?%s", NewSuccessMessage("Hello world")), nil),
-			func(_ http.ResponseWriter, _ *http.Request) (string, int, map[string]interface{}, error) {
-				return "error", http.StatusUnauthorized, nil, nil
+			func(_ http.ResponseWriter, _ *http.Request) (Page, error) {
+				return Page{
+					Template: "error",
+					Status:   http.StatusUnauthorized,
+					Content:  nil,
+				}, nil
 			},
 			`messageContent=Hello+world&messageLevel=success`,
 			http.StatusUnauthorized,
@@ -267,8 +275,12 @@ func TestHandler(t *testing.T) {
 			"error",
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, "/", nil),
-			func(_ http.ResponseWriter, _ *http.Request) (string, int, map[string]interface{}, error) {
-				return "", http.StatusBadRequest, nil, model.WrapInvalid(errors.New("error"))
+			func(_ http.ResponseWriter, _ *http.Request) (Page, error) {
+				return Page{
+					Template: "",
+					Status:   http.StatusBadRequest,
+					Content:  nil,
+				}, model.WrapInvalid(errors.New("error"))
 			},
 			`messageContent=error%3A+invalid&messageLevel=error`,
 			http.StatusBadRequest,

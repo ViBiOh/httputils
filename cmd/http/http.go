@@ -80,8 +80,8 @@ func main() {
 	}, healthApp.Done())
 	defer speakingClock.Shutdown()
 
-	templateFunc := func(w http.ResponseWriter, r *http.Request) (string, int, map[string]interface{}, error) {
-		return "public", http.StatusOK, nil, nil
+	templateFunc := func(w http.ResponseWriter, r *http.Request) (renderer.Page, error) {
+		return renderer.NewPage("public", http.StatusOK, nil), nil
 	}
 
 	go amqpApp.Start(healthApp.Done())

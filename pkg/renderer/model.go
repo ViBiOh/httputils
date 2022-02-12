@@ -4,10 +4,32 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+
+	"github.com/ViBiOh/httputils/v4/pkg/sha"
 )
 
 // TemplateFunc handle a request and returns which template to render with which status and datas
-type TemplateFunc = func(http.ResponseWriter, *http.Request) (string, int, map[string]interface{}, error)
+type TemplateFunc = func(http.ResponseWriter, *http.Request) (Page, error)
+
+// Page describes a page for the renderer
+type Page struct {
+	Template string
+	Status   int
+	Content  map[string]interface{}
+}
+
+// NewPage creates a new page
+func NewPage(template string, status int, content map[string]interface{}) Page {
+	return Page{
+		Template: template,
+		Status:   status,
+		Content:  content,
+	}
+}
+
+func (p Page) etag() string {
+	return sha.New(p)
+}
 
 // Message for render
 type Message struct {
