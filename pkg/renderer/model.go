@@ -13,9 +13,9 @@ type TemplateFunc = func(http.ResponseWriter, *http.Request) (Page, error)
 
 // Page describes a page for the renderer
 type Page struct {
+	Content  map[string]interface{}
 	Template string
 	Status   int
-	Content  map[string]interface{}
 }
 
 // NewPage creates a new page
