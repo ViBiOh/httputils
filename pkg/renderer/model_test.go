@@ -16,7 +16,7 @@ func TestEtag(t *testing.T) {
 		{
 			"simple",
 			NewPage("index", http.StatusOK, nil),
-			"84c75ceeffd5896940c392bd5e8cc00f08685879",
+			"1c22677052663f527668d58c2133d0779c6de2ee",
 		},
 	}
 

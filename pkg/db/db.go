@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type key int
@@ -46,7 +48,8 @@ type Database interface {
 
 // App of package
 type App struct {
-	db Database
+	tracer trace.Tracer
+	db     Database
 }
 
 // Config of package
@@ -76,7 +79,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 // New creates new App from Config
-func New(config Config) (App, error) {
+func New(config Config, tracerApp tracer.App) (App, error) {
 	host := strings.TrimSpace(*config.host)
 	if len(host) == 0 {
 		return App{}, ErrNoHost
@@ -93,7 +96,8 @@ func New(config Config) (App, error) {
 	}
 
 	instance := App{
-		db: db,
+		db:     db,
+		tracer: tracerApp.GetTracer("database"),
 	}
 
 	return instance, instance.Ping()
@@ -141,6 +145,12 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) e
 		return errors.New("no action provided")
 	}
 
+	if a.tracer != nil {
+		var span trace.Span
+		ctx, span = a.tracer.Start(ctx, "transaction")
+		defer span.End()
+	}
+
 	if readTx(ctx) != nil {
 		return action(ctx)
 	}
@@ -165,6 +175,12 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) e
 
 // List execute multiple rows query
 func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...interface{}) (err error) {
+	if a.tracer != nil {
+		var span trace.Span
+		ctx, span = a.tracer.Start(ctx, "list")
+		defer span.End()
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
@@ -191,6 +207,12 @@ func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query strin
 
 // Get execute single row query
 func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...interface{}) error {
+	if a.tracer != nil {
+		var span trace.Span
+		ctx, span = a.tracer.Start(ctx, "get")
+		defer span.End()
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
@@ -203,6 +225,12 @@ func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string,
 
 // Create execute query with a RETURNING id
 func (a App) Create(ctx context.Context, query string, args ...interface{}) (uint64, error) {
+	if a.tracer != nil {
+		var span trace.Span
+		ctx, span = a.tracer.Start(ctx, "create")
+		defer span.End()
+	}
+
 	tx := readTx(ctx)
 	if tx == nil {
 		return 0, ErrNoTransaction
@@ -236,6 +264,12 @@ func (a App) One(ctx context.Context, query string, args ...interface{}) error {
 }
 
 func (a App) exec(ctx context.Context, query string, args ...interface{}) (pgconn.CommandTag, error) {
+	if a.tracer != nil {
+		var span trace.Span
+		ctx, span = a.tracer.Start(ctx, "exec")
+		defer span.End()
+	}
+
 	tx := readTx(ctx)
 	if tx == nil {
 		return nil, ErrNoTransaction
@@ -268,6 +302,12 @@ func (bc *feeder) Err() error {
 
 // Bulk load data into schema and table by batch
 func (a App) Bulk(ctx context.Context, fetcher func() ([]interface{}, error), schema, table string, columns ...string) error {
+	if a.tracer != nil {
+		var span trace.Span
+		ctx, span = a.tracer.Start(ctx, "bulk")
+		defer span.End()
+	}
+
 	tx := readTx(ctx)
 	if tx == nil {
 		return ErrNoTransaction

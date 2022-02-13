@@ -9,10 +9,13 @@ import (
 
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
+	tr "go.opentelemetry.io/otel/trace"
 )
 
 // App of package
@@ -28,7 +31,7 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		url: flags.New(prefix, "tracing", "URL").Default("http://localhost:14268/api/traces", overrides).Label("Jaeger endpoint URL").ToString(fs),
+		url: flags.New(prefix, "tracing", "URL").Default("", overrides).Label("Jaeger endpoint URL (e.g. http://jaeger:14268/api/traces)").ToString(fs),
 	}
 }
 
@@ -87,6 +90,30 @@ func New(config Config) (App, error) {
 	}, nil
 }
 
+// GetProvider returns current provider
+func (a App) GetProvider() tr.TracerProvider {
+	return a.provider
+}
+
+// GetTracer return a new tracer
+func (a App) GetTracer(name string) tr.Tracer {
+	if a.provider == nil {
+		return nil
+	}
+
+	return a.provider.Tracer(name)
+}
+
+// AddTracerToClient add tracer to a given http client
+func AddTracerToClient(httpClient *http.Client, tracerProvider tr.TracerProvider) *http.Client {
+	if model.IsNil(tracerProvider) {
+		return httpClient
+	}
+
+	httpClient.Transport = otelhttp.NewTransport(httpClient.Transport, otelhttp.WithTracerProvider(tracerProvider), otelhttp.WithPropagators(propagation.Baggage{}))
+	return httpClient
+}
+
 // Middleware for net/http package allowing tracer with open telemetry
 func (a App) Middleware(next http.Handler) http.Handler {
 	if next == nil || a.provider == nil {
@@ -98,6 +125,10 @@ func (a App) Middleware(next http.Handler) http.Handler {
 
 // Close shutdowns tracer provider gracefully
 func (a App) Close() {
+	if a.provider == nil {
+		return
+	}
+
 	if err := a.provider.Shutdown(context.Background()); err != nil {
 		logger.Error("unable to shutdown trace provider: %s", err)
 	}

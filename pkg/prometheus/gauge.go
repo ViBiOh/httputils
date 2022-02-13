@@ -1,12 +1,13 @@
 package prometheus
 
 import (
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Gauges creates and registers gauges
 func Gauges(prometheusRegisterer prometheus.Registerer, namespace, subsystem string, names ...string) map[string]prometheus.Gauge {
-	if isNil(prometheusRegisterer) {
+	if model.IsNil(prometheusRegisterer) {
 		return nil
 	}
 
@@ -21,7 +22,7 @@ func Gauges(prometheusRegisterer prometheus.Registerer, namespace, subsystem str
 
 // Gauge creates and registers a gauge
 func Gauge(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string) prometheus.Gauge {
-	if isNil(prometheusRegisterer) {
+	if model.IsNil(prometheusRegisterer) {
 		return nil
 	}
 
@@ -38,7 +39,7 @@ func Gauge(prometheusRegisterer prometheus.Registerer, namespace, subsystem, nam
 
 // GaugeVec creates and register a gauge vector
 func GaugeVec(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string, labels ...string) *prometheus.GaugeVec {
-	if isNil(prometheusRegisterer) {
+	if model.IsNil(prometheusRegisterer) {
 		return nil
 	}
 

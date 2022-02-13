@@ -13,6 +13,8 @@ import (
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -26,6 +28,7 @@ var (
 
 // App of package
 type App struct {
+	tracer     trace.Tracer
 	tpl        *template.Template
 	content    map[string]interface{}
 	staticFS   fs.FS
@@ -53,7 +56,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 // New creates new App from Config
-func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error) {
+func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracerApp tracer.App) (App, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
 		return App{}, fmt.Errorf("unable to get static/ filesystem: %s", err)
@@ -63,6 +66,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap) (App, error)
 	publicURL := strings.TrimSuffix(*config.publicURL, "/")
 
 	instance := App{
+		tracer:     tracerApp.GetTracer("renderer"),
 		staticFS:   staticFS,
 		pathPrefix: pathPrefix,
 		publicURL:  publicURL,
@@ -145,6 +149,11 @@ func (a App) Handler(templateFunc TemplateFunc) http.Handler {
 	svgHandler := http.StripPrefix(svgPath, a.svg())
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if a.tracer != nil {
+			_, span := a.tracer.Start(r.Context(), "renderer")
+			defer span.End()
+		}
+
 		if isStaticPaths(r.URL.Path) {
 			if _, err := filesystem.Open(r.URL.Path); err == nil {
 				fileHandler.ServeHTTP(w, r)

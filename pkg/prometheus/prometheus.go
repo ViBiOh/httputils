@@ -3,7 +3,6 @@ package prometheus
 import (
 	"flag"
 	"net/http"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -156,8 +155,4 @@ func (a App) isIgnored(path string) bool {
 	}
 
 	return false
-}
-
-func isNil(i interface{}) bool {
-	return i == nil || reflect.ValueOf(i).IsNil()
 }

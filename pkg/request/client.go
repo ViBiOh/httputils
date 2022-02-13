@@ -4,6 +4,9 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // NoRedirection discard redirection
@@ -35,4 +38,9 @@ func CreateClient(timeout time.Duration, onRedirect func(*http.Request, []*http.
 
 		CheckRedirect: onRedirect,
 	}
+}
+
+// AddTracerToDefaultClient change default client
+func AddTracerToDefaultClient(tracerProvider trace.TracerProvider) {
+	defaultHTTPClient = tracer.AddTracerToClient(defaultHTTPClient, tracerProvider)
 }
