@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/ViBiOh/flags"
@@ -25,13 +26,15 @@ type App struct {
 
 // Config of package
 type Config struct {
-	url *string
+	url  *string
+	rate *string
 }
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		url: flags.New(prefix, "tracing", "URL").Default("", overrides).Label("Jaeger endpoint URL (e.g. http://jaeger:14268/api/traces)").ToString(fs),
+		url:  flags.New(prefix, "tracing", "URL").Default("", overrides).Label("Jaeger endpoint URL (e.g. http://jaeger:14268/api/traces)").ToString(fs),
+		rate: flags.New(prefix, "tracing", "Rate").Default("always", overrides).Label("Jaeger sample rate, 'always', 'never' or a float value").ToString(fs),
 	}
 }
 
@@ -79,10 +82,24 @@ func New(config Config) (App, error) {
 		return App{}, err
 	}
 
+	var sampler trace.Sampler
+	switch rate := strings.TrimSpace(*config.rate); rate {
+	case "always":
+		sampler = trace.AlwaysSample()
+	case "never":
+		sampler = trace.AlwaysSample()
+	default:
+		rateRatio, err := strconv.ParseFloat(rate, 64)
+		if err != nil {
+			return App{}, fmt.Errorf("unable to parse sample rate `%s`: %s", rate, err)
+		}
+		sampler = trace.TraceIDRatioBased(rateRatio)
+	}
+
 	provider := trace.NewTracerProvider(
 		trace.WithBatcher(exporter),
 		trace.WithResource(resource),
-		trace.WithSampler(trace.AlwaysSample()),
+		trace.WithSampler(sampler),
 	)
 
 	return App{
