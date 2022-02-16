@@ -13,11 +13,12 @@ type listener struct {
 	done      chan struct{}
 	channel   *amqp.Channel
 	name      string
+	prefetch  int
 	sync.RWMutex
 }
 
 func (c *Client) getListener() (*listener, error) {
-	listener, err := c.createListener()
+	listener, err := c.createListener(c.prefetch)
 	if err != nil {
 		return listener, fmt.Errorf("unable to create listener: %s", err)
 	}
@@ -32,7 +33,7 @@ func (c *Client) getListener() (*listener, error) {
 	return listener, nil
 }
 
-func (c *Client) createListener() (*listener, error) {
+func (c *Client) createListener(prefetch int) (*listener, error) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -51,6 +52,7 @@ identity:
 
 	output.reconnect = make(chan bool, 1)
 	output.done = make(chan struct{})
+	output.prefetch = prefetch
 
 	c.listeners[output.name] = &output
 
@@ -65,7 +67,7 @@ func (l *listener) createChannel(connection Connection) (err error) {
 	l.Lock()
 	defer l.Unlock()
 
-	if l.channel, err = createChannel(connection); err != nil {
+	if l.channel, err = createChannel(connection, l.prefetch); err != nil {
 		err = fmt.Errorf("unable to create channel: %s", err)
 	}
 

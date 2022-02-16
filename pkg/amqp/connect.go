@@ -9,7 +9,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, error) {
+func connect(uri string, prefetch int, onDisconnect func()) (*amqp.Connection, *amqp.Channel, error) {
 	logger.Info("Dialing AMQP with 10 seconds timeout...")
 
 	connection, err := amqp.DialConfig(uri, amqp.Config{
@@ -21,7 +21,7 @@ func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, 
 		return nil, nil, fmt.Errorf("unable to connect to amqp: %s", err)
 	}
 
-	channel, err := createChannel(connection)
+	channel, err := createChannel(connection, prefetch)
 	if err != nil {
 		err := fmt.Errorf("unable to create channel: %s", err)
 
@@ -47,7 +47,7 @@ func connect(uri string, onDisconnect func()) (*amqp.Connection, *amqp.Channel, 
 	return connection, channel, nil
 }
 
-func createChannel(connection Connection) (channel *amqp.Channel, err error) {
+func createChannel(connection Connection, prefetch int) (channel *amqp.Channel, err error) {
 	defer func() {
 		if channel == nil || err == nil {
 			return
@@ -61,7 +61,7 @@ func createChannel(connection Connection) (channel *amqp.Channel, err error) {
 		return nil, fmt.Errorf("unable to open channel: %s", err)
 	}
 
-	if err = channel.Qos(1, 0, false); err != nil {
+	if err = channel.Qos(prefetch, 0, false); err != nil {
 		return nil, fmt.Errorf("unable to configure QoS on channel: %s", err)
 	}
 
@@ -89,7 +89,7 @@ func (c *Client) createChannel() (channel *amqp.Channel, err error) {
 	c.RLock()
 	defer c.RUnlock()
 
-	channel, err = createChannel(c.connection)
+	channel, err = createChannel(c.connection, c.prefetch)
 	if err != nil {
 		err = fmt.Errorf("unable to create channel: %s", err)
 	}

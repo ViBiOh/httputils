@@ -41,41 +41,45 @@ type Client struct {
 	messageMetrics  *prometheus.CounterVec
 	vhost           string
 	uri             string
+	prefetch        int
 	sync.RWMutex
 }
 
 // Config of package
 type Config struct {
-	uri *string
+	uri      *string
+	prefetch *int
 }
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		uri: flags.New(prefix, "amqp", "URI").Default("", nil).Label("Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>").ToString(fs),
+		uri:      flags.New(prefix, "amqp", "URI").Default("", nil).Label("Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>").ToString(fs),
+		prefetch: flags.New(prefix, "amqp", "Prefetch").Default(1, nil).Label("Prefetch count for QoS").ToInt(fs),
 	}
 }
 
 // New inits AMQP connection from Config
 func New(config Config, prometheusRegister prometheus.Registerer) (*Client, error) {
-	return NewFromURI(strings.TrimSpace(*config.uri), prometheusRegister)
+	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, prometheusRegister)
 }
 
 // NewFromURI inits AMQP connection from given URI
-func NewFromURI(uri string, prometheusRegister prometheus.Registerer) (*Client, error) {
+func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Registerer) (*Client, error) {
 	if len(uri) == 0 {
 		return nil, ErrNoConfig
 	}
 
 	client := &Client{
 		uri:             uri,
+		prefetch:        prefetch,
 		listeners:       make(map[string]*listener),
 		reconnectMetric: prom.Counter(prometheusRegister, metricNamespace, "", "reconnection"),
 		listenerMetric:  prom.Gauge(prometheusRegister, metricNamespace, "", "listener"),
 		messageMetrics:  prom.CounterVec(prometheusRegister, metricNamespace, "", "message", "state", "exchange", "routingKey"),
 	}
 
-	connection, channel, err := connect(uri, client.onDisconnect)
+	connection, channel, err := connect(uri, client.prefetch, client.onDisconnect)
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to amqp: %s", err)
 	}

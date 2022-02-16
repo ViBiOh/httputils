@@ -31,7 +31,7 @@ func (c *Client) reconnect() error {
 	c.Lock()
 	defer c.Unlock()
 
-	newConnection, newChannel, err := connect(c.uri, c.onDisconnect)
+	newConnection, newChannel, err := connect(c.uri, c.prefetch, c.onDisconnect)
 	if err != nil {
 		return fmt.Errorf("unable to reconnect to amqp: %s", err)
 	}
