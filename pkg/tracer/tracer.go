@@ -113,12 +113,12 @@ func (a App) GetProvider() tr.TracerProvider {
 }
 
 // GetTracer return a new tracer
-func (a App) GetTracer(name string) tr.Tracer {
+func (a App) GetTracer(name string, opts ...tr.TracerOption) tr.Tracer {
 	if a.provider == nil {
 		return nil
 	}
 
-	return a.provider.Tracer(name)
+	return a.provider.Tracer(name, opts...)
 }
 
 // AddTracerToClient add tracer to a given http client
