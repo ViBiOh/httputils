@@ -113,12 +113,21 @@ func (a App) GetProvider() tr.TracerProvider {
 }
 
 // GetTracer return a new tracer
-func (a App) GetTracer(name string, opts ...tr.TracerOption) tr.Tracer {
+func (a App) GetTracer(name string) tr.Tracer {
 	if a.provider == nil {
 		return nil
 	}
 
-	return a.provider.Tracer(name, opts...)
+	return a.provider.Tracer(name)
+}
+
+// AddTraceToLogger add span ID to the given logger
+func AddTraceToLogger(span tr.Span, logger logger.Provider) logger.Provider {
+	if model.IsNil(span) {
+		return logger
+	}
+
+	return logger.WithField("traceID", span.SpanContext().SpanID())
 }
 
 // AddTracerToClient add tracer to a given http client
