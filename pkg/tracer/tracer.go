@@ -127,7 +127,17 @@ func AddTraceToLogger(span tr.Span, logger logger.Provider) logger.Provider {
 		return logger
 	}
 
-	return logger.WithField("traceID", span.SpanContext().SpanID())
+	spanCtx := span.SpanContext()
+
+	if spanCtx.HasTraceID() {
+		logger = logger.WithField("traceID", spanCtx.TraceID())
+	}
+
+	if spanCtx.HasSpanID() {
+		logger = logger.WithField("traceID", spanCtx.SpanID())
+	}
+
+	return logger
 }
 
 // AddTracerToClient add tracer to a given http client
