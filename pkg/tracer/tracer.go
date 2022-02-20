@@ -166,6 +166,6 @@ func AddTracerToClient(httpClient *http.Client, tracerProvider tr.TracerProvider
 		return httpClient
 	}
 
-	httpClient.Transport = otelhttp.NewTransport(httpClient.Transport, otelhttp.WithTracerProvider(tracerProvider), otelhttp.WithPropagators(propagation.Baggage{}))
+	httpClient.Transport = otelhttp.NewTransport(httpClient.Transport, otelhttp.WithTracerProvider(tracerProvider), otelhttp.WithPropagators(propagation.TraceContext{}))
 	return httpClient
 }
