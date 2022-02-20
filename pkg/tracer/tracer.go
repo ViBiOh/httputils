@@ -127,7 +127,7 @@ func (a App) Middleware(next http.Handler) http.Handler {
 		return next
 	}
 
-	return otelhttp.NewHandler(next, "http", otelhttp.WithTracerProvider(a.provider))
+	return otelhttp.NewHandler(next, "http", otelhttp.WithTracerProvider(a.provider), otelhttp.WithPropagators(propagation.TraceContext{}))
 }
 
 // Close shutdowns tracer provider gracefully
