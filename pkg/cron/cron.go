@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/clock"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Semaphore client
@@ -26,6 +27,7 @@ var _ fmt.Stringer = New()
 
 // Cron definition
 type Cron struct {
+	tracer       trace.Tracer
 	clock        clock.Clock
 	semaphoreApp Semaphore
 
@@ -266,6 +268,12 @@ func (c *Cron) hasError() bool {
 	return false
 }
 
+// WithTracer starts a span on each context
+func (c *Cron) WithTracer(tracer trace.Tracer) *Cron {
+	c.tracer = tracer
+	return c
+}
+
 // Now run cron now
 func (c *Cron) Now() *Cron {
 	c.now <- c.clock.Now()
@@ -295,12 +303,19 @@ func (c *Cron) Start(action func(context.Context) error, done <-chan struct{}) {
 	}
 
 	run := func() {
+		ctx := context.Background()
+		if c.tracer != nil {
+			var span trace.Span
+			ctx, span = c.tracer.Start(ctx, "cron")
+			defer span.End()
+		}
+
 		if c.semaphoreApp == nil {
-			do(context.Background())
+			do(ctx)
 			return
 		}
 
-		if _, err := c.semaphoreApp.Exclusive(context.Background(), c.name, c.timeout, func(ctx context.Context) error {
+		if _, err := c.semaphoreApp.Exclusive(ctx, c.name, c.timeout, func(ctx context.Context) error {
 			do(ctx)
 			return nil
 		}); err != nil {
