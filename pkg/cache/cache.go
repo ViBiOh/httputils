@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // RedisClient for caching response
@@ -21,10 +23,10 @@ type RedisClient interface {
 func Retrieve(ctx context.Context, redisClient RedisClient, key string, item interface{}, onMiss func() (interface{}, error), duration time.Duration) (interface{}, error) {
 	content, err := redisClient.Load(ctx, key)
 	if err != nil {
-		logger.Error("unable to read from cache: %s", err)
+		loggerWithTrace(ctx).Error("unable to read from cache: %s", err)
 	} else if len(content) != 0 {
 		if err = json.Unmarshal([]byte(content), item); err != nil {
-			logger.Error("unable to unmarshal from cache: %s", err)
+			loggerWithTrace(ctx).Error("unable to unmarshal from cache: %s", err)
 		} else {
 			return item, nil
 		}
@@ -38,9 +40,9 @@ func Retrieve(ctx context.Context, redisClient RedisClient, key string, item int
 			defer cancel()
 
 			if payload, err := json.Marshal(item); err != nil {
-				logger.Error("unable to marshal to cache: %s", err)
+				loggerWithTrace(ctx).Error("unable to marshal to cache: %s", err)
 			} else if err = redisClient.Store(storeCtx, key, payload, duration); err != nil {
-				logger.Error("unable to write to cache: %s", err)
+				loggerWithTrace(ctx).Error("unable to write to cache: %s", err)
 			}
 		}()
 	}
@@ -59,4 +61,8 @@ func OnModify(ctx context.Context, redisClient RedisClient, key string, err erro
 	}
 
 	return nil
+}
+
+func loggerWithTrace(ctx context.Context) logger.Provider {
+	return tracer.AddTraceToLogger(trace.SpanFromContext(ctx), logger.GetGlobal())
 }

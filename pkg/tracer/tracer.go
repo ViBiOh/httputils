@@ -121,9 +121,29 @@ func (a App) GetTracer(name string) tr.Tracer {
 	return a.provider.Tracer(name)
 }
 
+// Middleware for net/http package allowing tracer with open telemetry
+func (a App) Middleware(next http.Handler) http.Handler {
+	if next == nil || a.provider == nil {
+		return next
+	}
+
+	return otelhttp.NewHandler(next, "http", otelhttp.WithTracerProvider(a.provider))
+}
+
+// Close shutdowns tracer provider gracefully
+func (a App) Close() {
+	if a.provider == nil {
+		return
+	}
+
+	if err := a.provider.Shutdown(context.Background()); err != nil {
+		logger.Error("unable to shutdown trace provider: %s", err)
+	}
+}
+
 // AddTraceToLogger add span ID to the given logger
 func AddTraceToLogger(span tr.Span, logger logger.Provider) logger.Provider {
-	if model.IsNil(span) {
+	if model.IsNil(span) || !span.IsRecording() {
 		return logger
 	}
 
@@ -148,24 +168,4 @@ func AddTracerToClient(httpClient *http.Client, tracerProvider tr.TracerProvider
 
 	httpClient.Transport = otelhttp.NewTransport(httpClient.Transport, otelhttp.WithTracerProvider(tracerProvider), otelhttp.WithPropagators(propagation.Baggage{}))
 	return httpClient
-}
-
-// Middleware for net/http package allowing tracer with open telemetry
-func (a App) Middleware(next http.Handler) http.Handler {
-	if next == nil || a.provider == nil {
-		return next
-	}
-
-	return otelhttp.NewHandler(next, "http", otelhttp.WithTracerProvider(a.provider))
-}
-
-// Close shutdowns tracer provider gracefully
-func (a App) Close() {
-	if a.provider == nil {
-		return
-	}
-
-	if err := a.provider.Shutdown(context.Background()); err != nil {
-		logger.Error("unable to shutdown trace provider: %s", err)
-	}
 }

@@ -6,6 +6,11 @@ func Global(l Logger) {
 	logger = l
 }
 
+// GetGlobal returns global logger
+func GetGlobal() Logger {
+	return logger
+}
+
 // Close ends logger gracefully
 func Close() {
 	logger.Close()

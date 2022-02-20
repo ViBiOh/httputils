@@ -11,8 +11,10 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/go-redis/redis/v8"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -21,6 +23,7 @@ const (
 
 // App of package
 type App struct {
+	tracer      trace.Tracer
 	redisClient *redis.Client
 	metric      *prometheus.CounterVec
 }
@@ -46,7 +49,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 // New creates new App from Config
-func New(config Config, prometheusRegisterer prometheus.Registerer) App {
+func New(config Config, prometheusRegisterer prometheus.Registerer, tracerApp tracer.App) App {
 	address := strings.TrimSpace(*config.address)
 	if len(address) == 0 {
 		logger.Info("no redis address")
@@ -61,6 +64,7 @@ func New(config Config, prometheusRegisterer prometheus.Registerer) App {
 			DB:       *config.database,
 		}),
 		metric: prom.CounterVec(prometheusRegisterer, metricsNamespace, strings.TrimSpace(*config.alias), "item", "state"),
+		tracer: tracerApp.GetTracer("redis"),
 	}
 }
 
@@ -83,6 +87,12 @@ func (a App) Store(ctx context.Context, key string, value interface{}, duration 
 		return nil
 	}
 
+	if a.tracer != nil {
+		var span trace.Span
+		ctx, span = a.tracer.Start(ctx, "store")
+		defer span.End()
+	}
+
 	err := a.redisClient.SetEX(ctx, key, value, duration).Err()
 
 	if err == nil {
@@ -98,6 +108,12 @@ func (a App) Store(ctx context.Context, key string, value interface{}, duration 
 func (a App) Load(ctx context.Context, key string) (string, error) {
 	if !a.enabled() {
 		return "", nil
+	}
+
+	if a.tracer != nil {
+		var span trace.Span
+		ctx, span = a.tracer.Start(ctx, "load")
+		defer span.End()
 	}
 
 	content, err := a.redisClient.Get(ctx, key).Result()
@@ -120,6 +136,12 @@ func (a App) Load(ctx context.Context, key string) (string, error) {
 func (a App) Delete(ctx context.Context, keys ...string) error {
 	if !a.enabled() {
 		return nil
+	}
+
+	if a.tracer != nil {
+		var span trace.Span
+		ctx, span = a.tracer.Start(ctx, "delete")
+		defer span.End()
 	}
 
 	pipeline := a.redisClient.Pipeline()
@@ -150,6 +172,12 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
 	if !a.enabled() {
 		return false, fmt.Errorf("redis not enabled")
+	}
+
+	if a.tracer != nil {
+		var span trace.Span
+		ctx, span = a.tracer.Start(ctx, "exclusive")
+		defer span.End()
 	}
 
 	a.increase("exclusive")
