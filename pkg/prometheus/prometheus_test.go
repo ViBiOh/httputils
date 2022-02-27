@@ -194,3 +194,22 @@ func BenchmarkMiddleware(b *testing.B) {
 		middleware.ServeHTTP(recorder, request)
 	}
 }
+
+func BenchmarkHandler(b *testing.B) {
+	ignore := ""
+	gzip := false
+
+	app := New(Config{
+		ignore: &ignore,
+		gzip:   &gzip,
+	})
+
+	handler := app.Handler()
+
+	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	recorder := httptest.NewRecorder()
+
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(recorder, request)
+	}
+}
