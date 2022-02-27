@@ -18,12 +18,14 @@ func createTestServer() *httptest.Server {
 
 		if r.URL.Path == "/ok" {
 			w.WriteHeader(http.StatusOK)
+		} else if r.URL.Path == "/health" {
+			w.WriteHeader(http.StatusOK)
 		} else if r.URL.Path == "/ko" {
 			w.WriteHeader(http.StatusInternalServerError)
 		} else if r.URL.Path == "/reset" {
 			w.WriteHeader(http.StatusResetContent)
 		} else if r.URL.Path == "/user-agent" {
-			if r.Header.Get("User-Agent") != "Alcotest" {
+			if r.Header.Get("User-Agent") == defaultUserAgent {
 				w.WriteHeader(http.StatusInternalServerError)
 			} else {
 				w.WriteHeader(http.StatusServiceUnavailable)
@@ -105,7 +107,7 @@ func TestGetStatusCode(t *testing.T) {
 		{
 			"should set given User-Agent",
 			fmt.Sprintf("%s/user-agent", testServer.URL),
-			"Alcotest",
+			"Test",
 			http.StatusServiceUnavailable,
 			errors.New("HTTP/503"),
 		},
@@ -244,5 +246,25 @@ func TestDoAndExit(t *testing.T) {
 				t.Errorf("DoAndExit() = %d, want %d", result, tc.want)
 			}
 		})
+	}
+}
+
+func BenchmarkDoAndExit(b *testing.B) {
+	testServer := createTestServer()
+	defer testServer.Close()
+
+	defaultURL = testServer.URL + "/health"
+
+	config := Config{
+		url:       &defaultURL,
+		userAgent: &defaultUserAgent,
+	}
+
+	req, _ = http.NewRequest(http.MethodGet, defaultURL, nil)
+	defaultHeader.Set("User-Agent", defaultUserAgent)
+	exitFunc = func(_ int) {}
+
+	for i := 0; i < b.N; i++ {
+		DoAndExit(config)
 	}
 }

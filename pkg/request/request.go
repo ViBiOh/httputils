@@ -116,6 +116,14 @@ func (r Request) IsZero() bool {
 	return len(r.method) == 0 || len(r.url) == 0
 }
 
+// MethodURL set method and URL of Request
+func (r Request) MethodURL(method, url string) Request {
+	r.method = method
+	r.url = url
+
+	return r
+}
+
 // Method set method of Request
 func (r Request) Method(method string) Request {
 	r.method = method
@@ -159,27 +167,27 @@ func (r Request) Path(path string) Request {
 
 // Get set GET to given url
 func (r Request) Get(url string) Request {
-	return r.Method(http.MethodGet).URL(url)
+	return r.MethodURL(http.MethodGet, url)
 }
 
 // Post set POST to given url
 func (r Request) Post(url string) Request {
-	return r.Method(http.MethodPost).URL(url)
+	return r.MethodURL(http.MethodPost, url)
 }
 
 // Put set PUT to given url
 func (r Request) Put(url string) Request {
-	return r.Method(http.MethodPut).URL(url)
+	return r.MethodURL(http.MethodPut, url)
 }
 
 // Patch set PATCH to given url
 func (r Request) Patch(url string) Request {
-	return r.Method(http.MethodPatch).URL(url)
+	return r.MethodURL(http.MethodPatch, url)
 }
 
 // Delete set DELETE to given url
 func (r Request) Delete(url string) Request {
-	return r.Method(http.MethodDelete).URL(url)
+	return r.MethodURL(http.MethodDelete, url)
 }
 
 // BasicAuth add Basic Auth header

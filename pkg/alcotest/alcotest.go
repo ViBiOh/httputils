@@ -1,7 +1,6 @@
 package alcotest
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -13,9 +12,19 @@ import (
 )
 
 var (
-	httpClient = request.CreateClient(5*time.Second, request.NoRedirection)
-	exitFunc   = os.Exit
+	httpClient       = request.CreateClient(5*time.Second, request.NoRedirection)
+	defaultURL       = "http://localhost:1080/health"
+	defaultUserAgent = "Alcotest"
+	defaultHeader    = http.Header{}
+	exitFunc         = os.Exit
+
+	req *http.Request
 )
+
+func init() {
+	req, _ = http.NewRequest(http.MethodGet, defaultURL, nil)
+	defaultHeader.Set("User-Agent", defaultUserAgent)
+}
 
 // Config of package
 type Config struct {
@@ -27,18 +36,44 @@ type Config struct {
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		url:       flags.New(prefix, "alcotest", "Url").Default("", overrides).Label("URL to check").ToString(fs),
-		userAgent: flags.New(prefix, "alcotest", "UserAgent").Default("Alcotest", overrides).Label("User-Agent for check").ToString(fs),
+		userAgent: flags.New(prefix, "alcotest", "UserAgent").Default(defaultUserAgent, overrides).Label("User-Agent for check").ToString(fs),
 	}
 }
 
 // GetStatusCode return status code of a GET on given url
-func GetStatusCode(url, userAgent string) (int, error) {
-	resp, err := request.Get(url).Header("User-Agent", userAgent).WithClient(httpClient).Send(context.Background(), nil)
-	if resp == nil {
-		return 0, err
+func GetStatusCode(url, userAgent string) (status int, err error) {
+	statusReq := req
+
+	if url != defaultURL {
+		statusReq, err = http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			return 0, fmt.Errorf("unable to create request: %w", err)
+		}
+		statusReq.Header = defaultHeader
 	}
 
-	return resp.StatusCode, err
+	if userAgent != defaultUserAgent {
+		statusReq.Header.Set("User-Agent", userAgent)
+	}
+
+	var resp *http.Response
+	resp, err = httpClient.Do(statusReq)
+	if err != nil {
+		return 0, fmt.Errorf("unable to perform request: %w", err)
+	}
+
+	status = resp.StatusCode
+
+	if err = request.DiscardBody(resp.Body); err != nil {
+		return
+	}
+
+	if status <= http.StatusBadRequest {
+		return
+	}
+
+	err = fmt.Errorf("HTTP/%d", status)
+	return
 }
 
 // Do test status code of given URL
