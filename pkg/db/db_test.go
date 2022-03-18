@@ -696,7 +696,7 @@ func TestBulk(t *testing.T) {
 				tx.EXPECT().CopyFrom(gomock.Any(), pgx.Identifier{"test", "item"}, []string{"id"}, gomock.Any()).Return(int64(0), nil)
 			}
 
-			testFeeder := func() ([]interface{}, error) {
+			testFeeder := func() ([]any, error) {
 				return nil, nil
 			}
 			gotErr := instance.Bulk(ctx, testFeeder, "test", "item", "id")

@@ -12,17 +12,17 @@ type client struct {
 }
 
 func TestRun(t *testing.T) {
-	cards := []interface{}{
+	cards := []any{
 		"AMEX",
 		"MASTERCARD",
 		"VISA",
 		"WESTERN",
 	}
-	cardKeyer := func(o interface{}) string {
+	cardKeyer := func(o any) string {
 		return fmt.Sprintf("%-10s", o)
 	}
 
-	clients := []interface{}{
+	clients := []any{
 		client{"Bob", "MASTERCARD"},
 		client{"Chuck", "MASTERCARD"},
 		client{"Hulk", "MASTERCARD"},
@@ -35,7 +35,7 @@ func TestRun(t *testing.T) {
 		client{"Einstein", "VISA"},
 		client{"Vincent", "VISA"},
 	}
-	clientKeyer := func(o interface{}) string {
+	clientKeyer := func(o any) string {
 		c := o.(client)
 		return fmt.Sprintf("%-10s%s", c.card, c.name)
 	}
@@ -45,10 +45,10 @@ func TestRun(t *testing.T) {
 	})
 
 	errRead := errors.New("test error")
-	numberReader := func(start int, failure bool) func() (interface{}, error) {
+	numberReader := func(start int, failure bool) func() (any, error) {
 		i := start
 
-		return func() (interface{}, error) {
+		return func() (any, error) {
 			i++
 
 			if i < 0 {
@@ -121,7 +121,7 @@ func TestRun(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
 			var result int
-			err := tc.instance.Run(func(synchronization uint64, items []interface{}) error {
+			err := tc.instance.Run(func(synchronization uint64, items []any) error {
 				if synchronization != 0 {
 					return nil
 				}

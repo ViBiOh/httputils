@@ -17,32 +17,32 @@ func Close() {
 }
 
 // WithField create context for logging
-func WithField(name string, value interface{}) Provider {
+func WithField(name string, value any) Provider {
 	return logger.WithField(name, value)
 }
 
 // Trace logs tracing message
-func Trace(format string, a ...interface{}) {
+func Trace(format string, a ...any) {
 	logger.Trace(format, a...)
 }
 
 // Debug logs debug message
-func Debug(format string, a ...interface{}) {
+func Debug(format string, a ...any) {
 	logger.Debug(format, a...)
 }
 
 // Info logs info message
-func Info(format string, a ...interface{}) {
+func Info(format string, a ...any) {
 	logger.Info(format, a...)
 }
 
 // Warn logs warning message
-func Warn(format string, a ...interface{}) {
+func Warn(format string, a ...any) {
 	logger.Warn(format, a...)
 }
 
 // Error logs error message
-func Error(format string, a ...interface{}) {
+func Error(format string, a ...any) {
 	logger.Error(format, a...)
 }
 

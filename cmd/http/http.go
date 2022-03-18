@@ -111,7 +111,7 @@ func main() {
 }
 
 func amqpHandler(message amqplib.Delivery) error {
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal(message.Body, &payload); err != nil {
 		return fmt.Errorf("unable to parse payload: %s", err)
 	}

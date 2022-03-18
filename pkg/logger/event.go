@@ -5,7 +5,7 @@ import (
 )
 
 type field struct {
-	value interface{}
+	value any
 	name  string
 }
 
@@ -18,13 +18,13 @@ type event struct {
 
 // FieldsContext contains field context
 type FieldsContext struct {
-	outputFn func(level, []field, string, ...interface{})
+	outputFn func(level, []field, string, ...any)
 	closeFn  func()
 	fields   []field
 }
 
 // WithField add a field to current context
-func (f FieldsContext) WithField(name string, value interface{}) Provider {
+func (f FieldsContext) WithField(name string, value any) Provider {
 	f.fields = append(f.fields, field{
 		name:  name,
 		value: value,
@@ -34,27 +34,27 @@ func (f FieldsContext) WithField(name string, value interface{}) Provider {
 }
 
 // Trace logs tracing message
-func (f FieldsContext) Trace(format string, a ...interface{}) {
+func (f FieldsContext) Trace(format string, a ...any) {
 	f.outputFn(levelTrace, f.fields, format, a...)
 }
 
 // Debug logs debug message
-func (f FieldsContext) Debug(format string, a ...interface{}) {
+func (f FieldsContext) Debug(format string, a ...any) {
 	f.outputFn(levelDebug, f.fields, format, a...)
 }
 
 // Info logs info message
-func (f FieldsContext) Info(format string, a ...interface{}) {
+func (f FieldsContext) Info(format string, a ...any) {
 	f.outputFn(levelInfo, f.fields, format, a...)
 }
 
 // Warn logs warning message
-func (f FieldsContext) Warn(format string, a ...interface{}) {
+func (f FieldsContext) Warn(format string, a ...any) {
 	f.outputFn(levelWarning, f.fields, format, a...)
 }
 
 // Error logs error message
-func (f FieldsContext) Error(format string, a ...interface{}) {
+func (f FieldsContext) Error(format string, a ...any) {
 	f.outputFn(levelError, f.fields, format, a...)
 }
 

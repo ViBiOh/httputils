@@ -2,11 +2,11 @@ package logger
 
 // Provider of logging definition
 type Provider interface {
-	WithField(name string, value interface{}) Provider
-	Trace(format string, a ...interface{})
-	Debug(format string, a ...interface{})
-	Info(format string, a ...interface{})
-	Warn(format string, a ...interface{})
-	Error(format string, a ...interface{})
+	WithField(name string, value any) Provider
+	Trace(format string, a ...any)
+	Debug(format string, a ...any)
+	Info(format string, a ...any)
+	Warn(format string, a ...any)
+	Error(format string, a ...any)
 	Fatal(err error)
 }

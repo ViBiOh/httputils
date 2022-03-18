@@ -8,7 +8,7 @@ import (
 )
 
 // New get sha1 value of given interface
-func New(o interface{}) string {
+func New(o any) string {
 	hasher := sha1.New()
 
 	// no err check https://golang.org/pkg/hash/#Hash
@@ -30,7 +30,7 @@ func Stream() StreamHasher {
 }
 
 // Write writes content to the hasher
-func (s StreamHasher) Write(o interface{}) StreamHasher {
+func (s StreamHasher) Write(o any) StreamHasher {
 	// no err check https://golang.org/pkg/hash/#Hash
 	_, _ = fmt.Fprintf(s.hasher, "%#v", o)
 

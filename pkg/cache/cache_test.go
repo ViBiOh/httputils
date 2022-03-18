@@ -26,7 +26,7 @@ func TestRetrieve(t *testing.T) {
 	cases := []struct {
 		intention string
 		args      args
-		want      interface{}
+		want      any
 		wantErr   error
 	}{
 		{

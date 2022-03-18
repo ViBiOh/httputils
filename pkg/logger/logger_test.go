@@ -184,7 +184,7 @@ func TestOutput(t *testing.T) {
 	type args struct {
 		lev    level
 		format string
-		a      []interface{}
+		a      []any
 	}
 
 	cases := []struct {
@@ -213,7 +213,7 @@ func TestOutput(t *testing.T) {
 			args{
 				lev:    levelInfo,
 				format: "Hello %s",
-				a:      []interface{}{"World"},
+				a:      []any{"World"},
 			},
 			"2020-09-21T18:34:57Z INFO Hello World\n",
 		},
@@ -312,7 +312,7 @@ func TestJSON(t *testing.T) {
 	cases := []struct {
 		intention string
 		args      args
-		want      map[string]interface{}
+		want      map[string]any
 	}{
 		{
 			"simple",
@@ -323,7 +323,7 @@ func TestJSON(t *testing.T) {
 					message:   "Hello world",
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"ts":    "2020-09-30T14:59:38Z",
 				"level": "INFO",
 				"msg":   "Hello world",
@@ -350,7 +350,7 @@ func TestJSON(t *testing.T) {
 					},
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"count":   7,
 				"level":   "INFO",
 				"msg":     "Hello world",
@@ -370,7 +370,7 @@ func TestJSON(t *testing.T) {
 				messageKey:   "msg",
 			}
 
-			var values map[string]interface{}
+			var values map[string]any
 			if err := json.Unmarshal([]byte(logger.json(tc.args.e)), &values); err != nil {
 				t.Errorf("unable to unmarshal json payload: %s", err)
 			}

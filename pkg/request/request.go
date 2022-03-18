@@ -276,7 +276,7 @@ func (r Request) Form(ctx context.Context, data url.Values) (*http.Response, err
 }
 
 // JSON send request with given context and given interface as JSON payload
-func (r Request) JSON(ctx context.Context, body interface{}) (*http.Response, error) {
+func (r Request) JSON(ctx context.Context, body any) (*http.Response, error) {
 	reader, writer := io.Pipe()
 
 	go func() {

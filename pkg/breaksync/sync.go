@@ -35,13 +35,13 @@ func (s *Synchronization) AddRuptures(ruptures ...*Rupture) *Synchronization {
 }
 
 // Run start break/sync algorithm
-func (s *Synchronization) Run(business func(uint64, []interface{}) error) (err error) {
+func (s *Synchronization) Run(business func(uint64, []any) error) (err error) {
 	if err = s.read(); err != nil {
 		return
 	}
 	s.computeKey()
 
-	items := make([]interface{}, len(s.sources))
+	items := make([]any, len(s.sources))
 
 	for !s.end {
 		if err = s.read(); err != nil {
@@ -109,7 +109,7 @@ func (s *Synchronization) computeRuptures() {
 	}
 }
 
-func (s *Synchronization) computeItems(items []interface{}) uint64 {
+func (s *Synchronization) computeItems(items []any) uint64 {
 	var itemsFlags uint64
 
 	for i, source := range s.sources {

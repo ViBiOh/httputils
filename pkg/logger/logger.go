@@ -131,27 +131,27 @@ func (l Logger) Close() {
 }
 
 // Trace logs tracing message
-func (l Logger) Trace(format string, a ...interface{}) {
+func (l Logger) Trace(format string, a ...any) {
 	l.output(levelTrace, nil, format, a...)
 }
 
 // Debug logs debug message
-func (l Logger) Debug(format string, a ...interface{}) {
+func (l Logger) Debug(format string, a ...any) {
 	l.output(levelDebug, nil, format, a...)
 }
 
 // Info logs info message
-func (l Logger) Info(format string, a ...interface{}) {
+func (l Logger) Info(format string, a ...any) {
 	l.output(levelInfo, nil, format, a...)
 }
 
 // Warn logs warning message
-func (l Logger) Warn(format string, a ...interface{}) {
+func (l Logger) Warn(format string, a ...any) {
 	l.output(levelWarning, nil, format, a...)
 }
 
 // Error logs error message
-func (l Logger) Error(format string, a ...interface{}) {
+func (l Logger) Error(format string, a ...any) {
 	l.output(levelError, nil, format, a...)
 }
 
@@ -168,7 +168,7 @@ func (l Logger) Fatal(err error) {
 }
 
 // WithField add given name and value to a context
-func (l Logger) WithField(name string, value interface{}) Provider {
+func (l Logger) WithField(name string, value any) Provider {
 	return FieldsContext{
 		outputFn: l.output,
 		closeFn:  l.Close,
@@ -179,7 +179,7 @@ func (l Logger) WithField(name string, value interface{}) Provider {
 	}
 }
 
-func (l Logger) output(lev level, fields []field, format string, a ...interface{}) {
+func (l Logger) output(lev level, fields []field, format string, a ...any) {
 	if l.level < lev {
 		return
 	}
@@ -253,21 +253,21 @@ func (l Logger) text(e event) []byte {
 // Providing function wrapper for interface compatibility
 
 // Errorf logs error message
-func (l Logger) Errorf(format string, a ...interface{}) {
+func (l Logger) Errorf(format string, a ...any) {
 	l.Error(format, a...)
 }
 
 // Warningf logs warning message
-func (l Logger) Warningf(format string, a ...interface{}) {
+func (l Logger) Warningf(format string, a ...any) {
 	l.Warn(format, a...)
 }
 
 // Infof logs info message
-func (l Logger) Infof(format string, a ...interface{}) {
+func (l Logger) Infof(format string, a ...any) {
 	l.Info(format, a...)
 }
 
 // Debugf logs debug message
-func (l Logger) Debugf(format string, a ...interface{}) {
+func (l Logger) Debugf(format string, a ...any) {
 	l.Debug(format, a...)
 }

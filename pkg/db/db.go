@@ -42,8 +42,8 @@ type Database interface {
 	Ping(context.Context) error
 	Close()
 	Begin(context.Context) (pgx.Tx, error)
-	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
-	QueryRow(context.Context, string, ...interface{}) pgx.Row
+	Query(context.Context, string, ...any) (pgx.Rows, error)
+	QueryRow(context.Context, string, ...any) pgx.Row
 }
 
 // App of package
@@ -174,7 +174,7 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) e
 }
 
 // List execute multiple rows query
-func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...interface{}) (err error) {
+func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) (err error) {
 	if a.tracer != nil {
 		var span trace.Span
 		ctx, span = a.tracer.Start(ctx, "list")
@@ -206,7 +206,7 @@ func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query strin
 }
 
 // Get execute single row query
-func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...interface{}) error {
+func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) error {
 	if a.tracer != nil {
 		var span trace.Span
 		ctx, span = a.tracer.Start(ctx, "get")
@@ -224,7 +224,7 @@ func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string,
 }
 
 // Create execute query with a RETURNING id
-func (a App) Create(ctx context.Context, query string, args ...interface{}) (uint64, error) {
+func (a App) Create(ctx context.Context, query string, args ...any) (uint64, error) {
 	if a.tracer != nil {
 		var span trace.Span
 		ctx, span = a.tracer.Start(ctx, "create")
@@ -244,13 +244,13 @@ func (a App) Create(ctx context.Context, query string, args ...interface{}) (uin
 }
 
 // Exec execute query with specified timeout, disregarding result
-func (a App) Exec(ctx context.Context, query string, args ...interface{}) error {
+func (a App) Exec(ctx context.Context, query string, args ...any) error {
 	_, err := a.exec(ctx, query, args...)
 	return err
 }
 
 // One execute query with specified timeout, for exactly one row
-func (a App) One(ctx context.Context, query string, args ...interface{}) error {
+func (a App) One(ctx context.Context, query string, args ...any) error {
 	output, err := a.exec(ctx, query, args...)
 	if err != nil {
 		return err
@@ -263,7 +263,7 @@ func (a App) One(ctx context.Context, query string, args ...interface{}) error {
 	return nil
 }
 
-func (a App) exec(ctx context.Context, query string, args ...interface{}) (pgconn.CommandTag, error) {
+func (a App) exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error) {
 	if a.tracer != nil {
 		var span trace.Span
 		ctx, span = a.tracer.Start(ctx, "exec")
@@ -283,8 +283,8 @@ func (a App) exec(ctx context.Context, query string, args ...interface{}) (pgcon
 
 type feeder struct {
 	err     error
-	fetcher func() ([]interface{}, error)
-	values  []interface{}
+	fetcher func() ([]any, error)
+	values  []any
 }
 
 func (bc *feeder) Next() bool {
@@ -292,7 +292,7 @@ func (bc *feeder) Next() bool {
 	return bc.err == nil && len(bc.values) != 0
 }
 
-func (bc *feeder) Values() ([]interface{}, error) {
+func (bc *feeder) Values() ([]any, error) {
 	return bc.values, bc.err
 }
 
@@ -301,7 +301,7 @@ func (bc *feeder) Err() error {
 }
 
 // Bulk load data into schema and table by batch
-func (a App) Bulk(ctx context.Context, fetcher func() ([]interface{}, error), schema, table string, columns ...string) error {
+func (a App) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) error {
 	if a.tracer != nil {
 		var span trace.Span
 		ctx, span = a.tracer.Start(ctx, "bulk")

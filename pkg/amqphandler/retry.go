@@ -31,7 +31,7 @@ func GetDeathCount(message amqp.Delivery) (int64, error) {
 
 	rawDeath := table["x-death"]
 
-	death, ok := rawDeath.([]interface{})
+	death, ok := rawDeath.([]any)
 	if !ok {
 		return 0, fmt.Errorf("`x-death` header in not an array: %w", ErrNoDeathCount)
 	}

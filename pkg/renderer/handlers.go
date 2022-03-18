@@ -31,7 +31,7 @@ func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", a.url(parts[0]), joinChar, message, anchor), http.StatusFound)
 }
 
-func (a App) Error(w http.ResponseWriter, r *http.Request, content map[string]interface{}, err error) {
+func (a App) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error) {
 	logger.Error("%s", err)
 
 	content = a.feedContent(content)
@@ -117,7 +117,7 @@ func matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
 	return false
 }
 
-func appendNonceAndEtag(w http.ResponseWriter, content map[string]interface{}, etag string) {
+func appendNonceAndEtag(w http.ResponseWriter, content map[string]any, etag string) {
 	nonce := owasp.Nonce()
 	owasp.WriteNonce(w, nonce)
 	content["nonce"] = nonce

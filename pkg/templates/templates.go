@@ -22,7 +22,7 @@ var (
 	xmlHeaders  = http.Header{}
 
 	bufferPool = sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			return bytes.NewBuffer(make([]byte, 4*1024))
 		},
 	}
@@ -44,7 +44,7 @@ func init() {
 }
 
 // WriteTemplateRaw write template name from given template into writer for provided content
-func WriteTemplateRaw(tpl *template.Template, w io.Writer, content interface{}) error {
+func WriteTemplateRaw(tpl *template.Template, w io.Writer, content any) error {
 	buffer := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buffer)
 
@@ -53,7 +53,7 @@ func WriteTemplateRaw(tpl *template.Template, w io.Writer, content interface{}) 
 }
 
 // WriteTemplate write template name from given template into writer for provided content with given minification
-func WriteTemplate(tpl *template.Template, w io.Writer, content interface{}, mediatype string) error {
+func WriteTemplate(tpl *template.Template, w io.Writer, content any, mediatype string) error {
 	buffer := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buffer)
 
@@ -66,7 +66,7 @@ func WriteTemplate(tpl *template.Template, w io.Writer, content interface{}, med
 }
 
 // ResponseHTMLTemplate write template name from given template into writer for provided content with HTML minification
-func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
+func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content any, status int) error {
 	buffer := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buffer)
 
@@ -84,7 +84,7 @@ func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content
 }
 
 // ResponseHTMLTemplateRaw write template name from given template into writer for provided content
-func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
+func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, content any, status int) error {
 	for key, value := range htmlHeaders {
 		w.Header()[key] = value
 	}
@@ -94,7 +94,7 @@ func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, cont
 }
 
 // ResponseXMLTemplate write template name from given template into writer for provided content with XML minification
-func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content interface{}, status int) error {
+func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content any, status int) error {
 	buffer := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buffer)
 

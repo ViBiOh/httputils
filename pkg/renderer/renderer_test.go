@@ -97,14 +97,14 @@ func TestIsStaticRootPaths(t *testing.T) {
 
 func TestFeedContent(t *testing.T) {
 	type args struct {
-		content map[string]interface{}
+		content map[string]any
 	}
 
 	cases := []struct {
 		intention string
 		instance  App
 		args      args
-		want      map[string]interface{}
+		want      map[string]any
 	}{
 		{
 			"empty",
@@ -112,21 +112,21 @@ func TestFeedContent(t *testing.T) {
 			args{
 				content: nil,
 			},
-			make(map[string]interface{}),
+			make(map[string]any),
 		},
 		{
 			"merge",
 			App{
-				content: map[string]interface{}{
+				content: map[string]any{
 					"Version": "test",
 				},
 			},
 			args{
-				content: map[string]interface{}{
+				content: map[string]any{
 					"Name": "Hello World",
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"Version": "test",
 				"Name":    "Hello World",
 			},
@@ -134,16 +134,16 @@ func TestFeedContent(t *testing.T) {
 		{
 			"no overwrite",
 			App{
-				content: map[string]interface{}{
+				content: map[string]any{
 					"Title": "test",
 				},
 			},
 			args{
-				content: map[string]interface{}{
+				content: map[string]any{
 					"Title": "Hello World",
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"Title": "Hello World",
 			},
 		},

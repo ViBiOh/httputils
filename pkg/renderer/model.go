@@ -13,13 +13,13 @@ type TemplateFunc = func(http.ResponseWriter, *http.Request) (Page, error)
 
 // Page describes a page for the renderer
 type Page struct {
-	Content  map[string]interface{}
+	Content  map[string]any
 	Template string
 	Status   int
 }
 
 // NewPage creates a new page
-func NewPage(template string, status int, content map[string]interface{}) Page {
+func NewPage(template string, status int, content map[string]any) Page {
 	return Page{
 		Template: template,
 		Status:   status,
@@ -37,7 +37,7 @@ type Message struct {
 	Content string
 }
 
-func newMessage(level, format string, a ...interface{}) Message {
+func newMessage(level, format string, a ...any) Message {
 	return Message{
 		Level:   level,
 		Content: fmt.Sprintf(format, a...),
@@ -63,11 +63,11 @@ func ParseMessage(r *http.Request) Message {
 }
 
 // NewSuccessMessage create a success message
-func NewSuccessMessage(format string, a ...interface{}) Message {
+func NewSuccessMessage(format string, a ...any) Message {
 	return newMessage("success", format, a...)
 }
 
 // NewErrorMessage create a error message
-func NewErrorMessage(format string, a ...interface{}) Message {
+func NewErrorMessage(format string, a ...any) Message {
 	return newMessage("error", format, a...)
 }

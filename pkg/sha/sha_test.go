@@ -4,7 +4,7 @@ import "testing"
 
 func TestNew(t *testing.T) {
 	type args struct {
-		o interface{}
+		o any
 	}
 
 	value := "test"
@@ -34,7 +34,7 @@ func TestNew(t *testing.T) {
 
 func TestStream(t *testing.T) {
 	type args struct {
-		o []interface{}
+		o []any
 	}
 
 	value := "test"
@@ -54,14 +54,14 @@ func TestStream(t *testing.T) {
 		{
 			"simple",
 			args{
-				o: []interface{}{value},
+				o: []any{value},
 			},
 			"5006d6f8302000e8b87fef5c50c071d6d97b4e88",
 		},
 		{
 			"multiple",
 			args{
-				o: []interface{}{value, value},
+				o: []any{value, value},
 			},
 			"6d5182a16753e136eae9f72329c84e3dc9e0ae67",
 		},

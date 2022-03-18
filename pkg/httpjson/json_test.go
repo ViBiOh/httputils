@@ -22,7 +22,7 @@ type testStruct struct {
 func TestRawWrite(t *testing.T) {
 	type args struct {
 		writer *bytes.Buffer
-		obj    interface{}
+		obj    any
 	}
 
 	cases := []struct {
@@ -44,7 +44,7 @@ func TestRawWrite(t *testing.T) {
 			"simple",
 			args{
 				writer: bytes.NewBufferString(""),
-				obj: map[string]interface{}{
+				obj: map[string]any{
 					"key":   "value",
 					"valid": true,
 				},
@@ -80,7 +80,7 @@ func TestRawWrite(t *testing.T) {
 func TestWrite(t *testing.T) {
 	cases := []struct {
 		intention  string
-		obj        interface{}
+		obj        any
 		want       string
 		wantStatus int
 		wantHeader map[string]string
@@ -144,7 +144,7 @@ func BenchmarkRawWrite(b *testing.B) {
 
 func BenchmarkWrite(b *testing.B) {
 	tc := struct {
-		obj interface{}
+		obj any
 	}{
 		testStruct{id: "Test", Active: true, Amount: 12.34},
 	}
@@ -159,7 +159,7 @@ func BenchmarkWrite(b *testing.B) {
 func TestWriteArray(t *testing.T) {
 	cases := []struct {
 		intention  string
-		obj        interface{}
+		obj        any
 		want       string
 		wantHeader map[string]string
 	}{
@@ -201,7 +201,7 @@ func TestWritePagination(t *testing.T) {
 		pageSize   uint
 		total      uint
 		last       string
-		obj        interface{}
+		obj        any
 		want       string
 		wantHeader map[string]string
 	}{
@@ -255,22 +255,22 @@ func TestWritePagination(t *testing.T) {
 func TestParse(t *testing.T) {
 	type args struct {
 		req *http.Request
-		obj interface{}
+		obj any
 	}
 
 	cases := []struct {
 		intention string
 		args      args
-		want      interface{}
+		want      any
 		wantErr   error
 	}{
 		{
 			"valid",
 			args{
 				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(`{"key": "value","valid":true}`))),
-				obj: make(map[string]interface{}),
+				obj: make(map[string]any),
 			},
-			map[string]interface{}{
+			map[string]any{
 				"key":   "value",
 				"valid": true,
 			},
@@ -312,13 +312,13 @@ func (errCloser) Close() error {
 func TestRead(t *testing.T) {
 	type args struct {
 		resp *http.Response
-		obj  interface{}
+		obj  any
 	}
 
 	cases := []struct {
 		intention string
 		args      args
-		want      interface{}
+		want      any
 		wantErr   error
 	}{
 		{
@@ -337,9 +337,9 @@ func TestRead(t *testing.T) {
 				resp: &http.Response{
 					Body: errCloser{bytes.NewReader([]byte(`{"key": "value","valid":true}`))},
 				},
-				obj: make(map[string]interface{}),
+				obj: make(map[string]any),
 			},
-			map[string]interface{}{
+			map[string]any{
 				"key":   "value",
 				"valid": true,
 			},
@@ -361,9 +361,9 @@ func TestRead(t *testing.T) {
 				resp: &http.Response{
 					Body: io.NopCloser(bytes.NewReader([]byte(`{"key": "value","valid":true}`))),
 				},
-				obj: make(map[string]interface{}),
+				obj: make(map[string]any),
 			},
-			map[string]interface{}{
+			map[string]any{
 				"key":   "value",
 				"valid": true,
 			},
@@ -395,7 +395,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestStream(t *testing.T) {
-	newObj := func() interface{} {
+	newObj := func() any {
 		return new(string)
 	}
 
@@ -441,7 +441,7 @@ func TestStream(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			output := make(chan interface{}, 4)
+			output := make(chan any, 4)
 			done := make(chan struct{})
 			var got []string
 

@@ -55,13 +55,13 @@ func TestComputeSynchro(t *testing.T) {
 func TestSourceRead(t *testing.T) {
 	errRead := errors.New("read error")
 
-	copyErr := NewSource(func() (interface{}, error) {
+	copyErr := NewSource(func() (any, error) {
 		return nil, errRead
 	}, sourceBasicKeyer, nil)
 	copyErr.next = "Golang Test"
 	copyErr.nextKey = "Golang"
 
-	copyEnd := NewSource(func() (interface{}, error) {
+	copyEnd := NewSource(func() (any, error) {
 		return nil, nil
 	}, sourceBasicKeyer, nil)
 	copyEnd.next = "Golang Test"
@@ -71,9 +71,9 @@ func TestSourceRead(t *testing.T) {
 		intention      string
 		instance       *Source
 		want           error
-		wantCurrent    interface{}
+		wantCurrent    any
 		wantCurrentKey string
-		wantNext       interface{}
+		wantNext       any
 		wantNextKey    string
 	}{
 		{
@@ -87,7 +87,7 @@ func TestSourceRead(t *testing.T) {
 		},
 		{
 			"error",
-			NewSource(func() (interface{}, error) {
+			NewSource(func() (any, error) {
 				return nil, errRead
 			}, sourceBasicKeyer, nil),
 			errRead,
@@ -98,7 +98,7 @@ func TestSourceRead(t *testing.T) {
 		},
 		{
 			"success",
-			NewSource(func() (interface{}, error) {
+			NewSource(func() (any, error) {
 				return "Gopher", nil
 			}, sourceBasicKeyer, nil),
 			nil,

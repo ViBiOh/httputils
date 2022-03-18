@@ -19,9 +19,9 @@ func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive 
 		err = closeChannel(err, channel)
 	}()
 
-	var args map[string]interface{}
+	var args map[string]any
 	if len(dlExchange) != 0 {
-		args = map[string]interface{}{
+		args = map[string]any{
 			"x-dead-letter-exchange":    dlExchange,
 			"x-dead-letter-routing-key": routingKey,
 		}
@@ -60,7 +60,7 @@ func (c *Client) DelayedExchange(queueName, exchangeName, routingKey string, ret
 
 	delayQueue := fmt.Sprintf("%s-delay", queueName)
 
-	if _, err = channel.QueueDeclare(delayQueue, true, false, false, false, map[string]interface{}{
+	if _, err = channel.QueueDeclare(delayQueue, true, false, false, false, map[string]any{
 		"x-dead-letter-exchange":    exchangeName,
 		"x-dead-letter-routing-key": routingKey,
 		"x-message-ttl":             retryDelay.Milliseconds(),

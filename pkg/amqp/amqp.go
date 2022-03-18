@@ -112,7 +112,7 @@ func (c *Client) Publish(payload amqp.Publishing, exchange, routingKey string) e
 }
 
 // PublishJSON sends JSON payload to the underlying exchange
-func (c *Client) PublishJSON(item interface{}, exchange, routingKey string) error {
+func (c *Client) PublishJSON(item any, exchange, routingKey string) error {
 	payload, err := json.Marshal(item)
 	if err != nil {
 		return fmt.Errorf("unable to marshal: %s", err)

@@ -82,7 +82,7 @@ func (a App) Ping() error {
 }
 
 // Store give key/val with duration
-func (a App) Store(ctx context.Context, key string, value interface{}, duration time.Duration) error {
+func (a App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
 	if !a.enabled() {
 		return nil
 	}

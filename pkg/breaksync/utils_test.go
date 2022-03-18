@@ -6,6 +6,6 @@ func ruptureExtractSimple(a string) string {
 	return a
 }
 
-func sourceBasicKeyer(e interface{}) string {
+func sourceBasicKeyer(e any) string {
 	return fmt.Sprintf("%#v", e)
 }

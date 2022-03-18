@@ -25,19 +25,19 @@ func init() {
 }
 
 type items struct {
-	Items interface{} `json:"items"`
+	Items any `json:"items"`
 }
 
 type pagination struct {
-	Items     interface{} `json:"items"`
-	Last      string      `json:"last"`
-	PageSize  uint        `json:"pageSize"`
-	PageCount uint        `json:"pageCount"`
-	Total     uint        `json:"total"`
+	Items     any    `json:"items"`
+	Last      string `json:"last"`
+	PageSize  uint   `json:"pageSize"`
+	PageCount uint   `json:"pageCount"`
+	Total     uint   `json:"total"`
 }
 
 // RawWrite writes marshalled obj to io.Writer
-func RawWrite(w io.Writer, obj interface{}) error {
+func RawWrite(w io.Writer, obj any) error {
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
 		return fmt.Errorf("%s: %w", err, ErrCannotMarshal)
 	}
@@ -45,7 +45,7 @@ func RawWrite(w io.Writer, obj interface{}) error {
 }
 
 // Write writes marshalled obj to http.ResponseWriter with correct header
-func Write(w http.ResponseWriter, status int, obj interface{}) {
+func Write(w http.ResponseWriter, status int, obj any) {
 	for key, value := range headers {
 		w.Header()[key] = value
 	}
@@ -57,12 +57,12 @@ func Write(w http.ResponseWriter, status int, obj interface{}) {
 }
 
 // WriteArray write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func WriteArray(w http.ResponseWriter, status int, array interface{}) {
+func WriteArray(w http.ResponseWriter, status int, array any) {
 	Write(w, status, items{array})
 }
 
 // WritePagination write marshalled obj wrapped into an object to http.ResponseWriter with correct header
-func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, last string, array interface{}) {
+func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, last string, array any) {
 	pageCount := total / pageSize
 	if total%pageSize != 0 {
 		pageCount++
@@ -72,7 +72,7 @@ func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, la
 }
 
 // Parse read body resquest and unmarshal it into given interface
-func Parse(req *http.Request, obj interface{}) error {
+func Parse(req *http.Request, obj any) error {
 	if err := json.NewDecoder(req.Body).Decode(obj); err != nil {
 		return fmt.Errorf("unable to parse JSON: %s", err)
 	}
@@ -81,7 +81,7 @@ func Parse(req *http.Request, obj interface{}) error {
 }
 
 // Read read body response and unmarshal it into given interface
-func Read(resp *http.Response, obj interface{}) error {
+func Read(resp *http.Response, obj any) error {
 	var err error
 
 	if err = json.NewDecoder(resp.Body).Decode(obj); err != nil {
@@ -96,7 +96,7 @@ func Read(resp *http.Response, obj interface{}) error {
 }
 
 // Stream reads io.Reader and stream array or map content to given chan
-func Stream(stream io.Reader, newObj func() interface{}, output chan<- interface{}, key string) error {
+func Stream(stream io.Reader, newObj func() any, output chan<- any, key string) error {
 	defer close(output)
 	decoder := json.NewDecoder(stream)
 

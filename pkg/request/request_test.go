@@ -453,7 +453,7 @@ func TestJSON(t *testing.T) {
 		intention string
 		request   Request
 		ctx       context.Context
-		payload   interface{}
+		payload   any
 		want      string
 		wantErr   error
 	}{

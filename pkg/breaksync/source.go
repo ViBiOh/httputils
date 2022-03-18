@@ -2,11 +2,11 @@ package breaksync
 
 // Source of data in a break/sync algorithm
 type Source struct {
-	next    interface{}
-	current interface{}
+	next    any
+	current any
 
-	reader func() (interface{}, error)
-	keyer  func(interface{}) string
+	reader func() (any, error)
+	keyer  func(any) string
 
 	readRupture *Rupture
 
@@ -17,7 +17,7 @@ type Source struct {
 }
 
 // NewSource creates and initialize Source
-func NewSource(reader func() (interface{}, error), keyer func(interface{}) string, readRupture *Rupture) *Source {
+func NewSource(reader func() (any, error), keyer func(any) string, readRupture *Rupture) *Source {
 	return &Source{
 		synchronized: true,
 		reader:       reader,
@@ -51,10 +51,10 @@ func (s *Source) read() error {
 }
 
 // NewSliceSource is a source from a slice, read sequentially
-func NewSliceSource(arr []interface{}, keyer func(interface{}) string, readRupture *Rupture) *Source {
+func NewSliceSource(arr []any, keyer func(any) string, readRupture *Rupture) *Source {
 	index := -1
 
-	return NewSource(func() (interface{}, error) {
+	return NewSource(func() (any, error) {
 		index++
 		if index < len(arr) {
 			return arr[index], nil

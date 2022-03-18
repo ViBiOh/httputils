@@ -30,7 +30,7 @@ var (
 type App struct {
 	tracer     trace.Tracer
 	tpl        *template.Template
-	content    map[string]interface{}
+	content    map[string]any
 	staticFS   fs.FS
 	pathPrefix string
 	publicURL  string
@@ -71,7 +71,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracerApp tr
 		pathPrefix: pathPrefix,
 		publicURL:  publicURL,
 		minify:     *config.minify,
-		content: map[string]interface{}{
+		content: map[string]any{
 			"Title":   *config.title,
 			"Version": os.Getenv("VERSION"),
 		},
@@ -128,9 +128,9 @@ func isStaticPaths(requestPath string) bool {
 	return false
 }
 
-func (a App) feedContent(content map[string]interface{}) map[string]interface{} {
+func (a App) feedContent(content map[string]any) map[string]any {
 	if content == nil {
-		content = make(map[string]interface{})
+		content = make(map[string]any)
 	}
 
 	for key, value := range a.content {
