@@ -53,6 +53,26 @@ func TestMiddleware(t *testing.T) {
 	}
 }
 
+func TestLoggerRecoverer(t *testing.T) {
+	cases := []struct {
+		intention string
+	}{
+		{
+			"simple",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			func() {
+				defer LoggerRecover()
+
+				panic("catch me if you can")
+			}()
+		})
+	}
+}
+
 func BenchmarkMiddleware(b *testing.B) {
 	middleware := Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

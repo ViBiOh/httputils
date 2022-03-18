@@ -6,8 +6,14 @@ import (
 	"testing"
 )
 
+type identifiableString string
+
+func (is identifiableString) Key() string {
+	return string(is)
+}
+
 func TestComputeSynchro(t *testing.T) {
-	simple := NewSource(nil, nil, nil)
+	simple := NewSource(nil, nil)
 	simple.currentKey = "AAAAA00000"
 
 	cases := []struct {
@@ -55,16 +61,16 @@ func TestComputeSynchro(t *testing.T) {
 func TestSourceRead(t *testing.T) {
 	errRead := errors.New("read error")
 
-	copyErr := NewSource(func() (any, error) {
+	copyErr := NewSource(func() (Identifiable, error) {
 		return nil, errRead
-	}, sourceBasicKeyer, nil)
-	copyErr.next = "Golang Test"
+	}, nil)
+	copyErr.next = identifiableString("Golang Test")
 	copyErr.nextKey = "Golang"
 
-	copyEnd := NewSource(func() (any, error) {
+	copyEnd := NewSource(func() (Identifiable, error) {
 		return nil, nil
-	}, sourceBasicKeyer, nil)
-	copyEnd.next = "Golang Test"
+	}, nil)
+	copyEnd.next = identifiableString("Golang Test")
 	copyEnd.nextKey = "Golang"
 
 	cases := []struct {
@@ -80,16 +86,16 @@ func TestSourceRead(t *testing.T) {
 			"copy next in current",
 			copyErr,
 			errRead,
-			"Golang Test",
+			identifiableString("Golang Test"),
 			"Golang",
-			"Golang Test",
+			identifiableString("Golang Test"),
 			"Golang",
 		},
 		{
 			"error",
-			NewSource(func() (any, error) {
+			NewSource(func() (Identifiable, error) {
 				return nil, errRead
-			}, sourceBasicKeyer, nil),
+			}, nil),
 			errRead,
 			nil,
 			"",
@@ -98,20 +104,20 @@ func TestSourceRead(t *testing.T) {
 		},
 		{
 			"success",
-			NewSource(func() (any, error) {
-				return "Gopher", nil
-			}, sourceBasicKeyer, nil),
+			NewSource(func() (Identifiable, error) {
+				return identifiableString("Gopher"), nil
+			}, nil),
 			nil,
 			nil,
 			"",
+			identifiableString("Gopher"),
 			"Gopher",
-			"\"Gopher\"",
 		},
 		{
 			"end",
 			copyEnd,
 			nil,
-			"Golang Test",
+			identifiableString("Golang Test"),
 			"Golang",
 			nil,
 			finalValue,

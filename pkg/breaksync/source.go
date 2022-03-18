@@ -1,12 +1,16 @@
 package breaksync
 
+// Identifiable is an object can that provide identification
+type Identifiable interface {
+	Key() string
+}
+
 // Source of data in a break/sync algorithm
 type Source struct {
-	next    any
-	current any
+	next    Identifiable
+	current Identifiable
 
-	reader func() (any, error)
-	keyer  func(any) string
+	reader func() (Identifiable, error)
 
 	readRupture *Rupture
 
@@ -17,11 +21,10 @@ type Source struct {
 }
 
 // NewSource creates and initialize Source
-func NewSource(reader func() (any, error), keyer func(any) string, readRupture *Rupture) *Source {
+func NewSource(reader func() (Identifiable, error), readRupture *Rupture) *Source {
 	return &Source{
 		synchronized: true,
 		reader:       reader,
-		keyer:        keyer,
 		readRupture:  readRupture,
 	}
 }
@@ -42,7 +45,7 @@ func (s *Source) read() error {
 
 	s.next = next
 	if next != nil {
-		s.nextKey = s.keyer(next)
+		s.nextKey = s.next.Key()
 	} else {
 		s.nextKey = finalValue
 	}
@@ -51,14 +54,14 @@ func (s *Source) read() error {
 }
 
 // NewSliceSource is a source from a slice, read sequentially
-func NewSliceSource(arr []any, keyer func(any) string, readRupture *Rupture) *Source {
+func NewSliceSource[T Identifiable](arr []T, readRupture *Rupture) *Source {
 	index := -1
 
-	return NewSource(func() (any, error) {
+	return NewSource(func() (Identifiable, error) {
 		index++
 		if index < len(arr) {
 			return arr[index], nil
 		}
 		return nil, nil
-	}, keyer, readRupture)
+	}, readRupture)
 }

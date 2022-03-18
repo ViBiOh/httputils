@@ -3,41 +3,51 @@ package breaksync
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"testing"
 )
+
+type card string
+
+func (c card) Key() string {
+	return string(c)
+}
+
+type number int
+
+func (n number) Key() string {
+	return strconv.Itoa(int(n))
+}
 
 type client struct {
 	name string
 	card string
 }
 
+func (c client) Key() string {
+	return c.card
+}
+
 func TestRun(t *testing.T) {
-	cards := []any{
+	cards := []card{
 		"AMEX",
 		"MASTERCARD",
 		"VISA",
 		"WESTERN",
 	}
-	cardKeyer := func(o any) string {
-		return fmt.Sprintf("%-10s", o)
-	}
 
-	clients := []any{
-		client{"Bob", "MASTERCARD"},
-		client{"Chuck", "MASTERCARD"},
-		client{"Hulk", "MASTERCARD"},
-		client{"Hulk", "MASTERCARD"},
-		client{"Luke", "MASTERCARD"},
-		client{"Superman", "MASTERCARD"},
-		client{"Tony Stark", "MASTERCARD"},
-		client{"Vador", "MASTERCARD"},
-		client{"Yoda", "MASTERCARD"},
-		client{"Einstein", "VISA"},
-		client{"Vincent", "VISA"},
-	}
-	clientKeyer := func(o any) string {
-		c := o.(client)
-		return fmt.Sprintf("%-10s%s", c.card, c.name)
+	clients := []client{
+		{"Bob", "MASTERCARD"},
+		{"Chuck", "MASTERCARD"},
+		{"Hulk", "MASTERCARD"},
+		{"Hulk", "MASTERCARD"},
+		{"Luke", "MASTERCARD"},
+		{"Superman", "MASTERCARD"},
+		{"Tony Stark", "MASTERCARD"},
+		{"Vador", "MASTERCARD"},
+		{"Yoda", "MASTERCARD"},
+		{"Einstein", "VISA"},
+		{"Vincent", "VISA"},
 	}
 
 	cardRupture := NewRupture("card", func(i string) string {
@@ -45,22 +55,22 @@ func TestRun(t *testing.T) {
 	})
 
 	errRead := errors.New("test error")
-	numberReader := func(start int, failure bool) func() (any, error) {
+	numberReader := func(start int, failure bool) func() (Identifiable, error) {
 		i := start
 
-		return func() (any, error) {
+		return func() (Identifiable, error) {
 			i++
 
 			if i < 0 {
-				return 0, errRead
+				return number(0), errRead
 			}
 
 			if i <= 5 {
-				return i, nil
+				return number(i), nil
 			}
 
 			if failure {
-				return 0, errRead
+				return number(0), errRead
 			}
 
 			return nil, nil
@@ -76,42 +86,42 @@ func TestRun(t *testing.T) {
 	}{
 		{
 			"fully synchronized",
-			NewSynchronization().AddSources(NewSource(numberReader(0, false), sourceBasicKeyer, nil), NewSource(numberReader(0, false), sourceBasicKeyer, nil)),
+			NewSynchronization().AddSources(NewSource(numberReader(0, false), nil), NewSource(numberReader(0, false), nil)),
 			false,
 			5,
 			nil,
 		},
 		{
 			"desynchronized once",
-			NewSynchronization().AddSources(NewSource(numberReader(0, false), sourceBasicKeyer, nil), NewSource(numberReader(1, false), sourceBasicKeyer, nil)),
+			NewSynchronization().AddSources(NewSource(numberReader(0, false), nil), NewSource(numberReader(1, false), nil)),
 			false,
 			4,
 			nil,
 		},
 		{
 			"read first error",
-			NewSynchronization().AddSources(NewSource(numberReader(0, false), sourceBasicKeyer, nil), NewSource(numberReader(-2, false), sourceBasicKeyer, nil)),
+			NewSynchronization().AddSources(NewSource(numberReader(0, false), nil), NewSource(numberReader(-2, false), nil)),
 			false,
 			0,
 			errRead,
 		},
 		{
 			"read later error",
-			NewSynchronization().AddSources(NewSource(numberReader(0, false), sourceBasicKeyer, nil), NewSource(numberReader(0, true), sourceBasicKeyer, nil)),
+			NewSynchronization().AddSources(NewSource(numberReader(0, false), nil), NewSource(numberReader(0, true), nil)),
 			false,
 			4,
 			errRead,
 		},
 		{
 			"business error",
-			NewSynchronization().AddSources(NewSource(numberReader(0, false), sourceBasicKeyer, nil), NewSource(numberReader(0, false), sourceBasicKeyer, nil)),
+			NewSynchronization().AddSources(NewSource(numberReader(0, false), nil), NewSource(numberReader(0, false), nil)),
 			true,
 			4,
 			errRead,
 		},
 		{
 			"should work with basic rupture on read",
-			NewSynchronization().AddSources(NewSliceSource(clients, clientKeyer, nil), NewSliceSource(cards, cardKeyer, cardRupture)).AddRuptures(cardRupture),
+			NewSynchronization().AddSources(NewSliceSource(clients, nil), NewSliceSource(cards, cardRupture)).AddRuptures(cardRupture),
 			false,
 			11,
 			nil,

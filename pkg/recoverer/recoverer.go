@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
+	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
 // Middleware for request. Should be use with net/http
@@ -18,12 +19,22 @@ func Middleware(next http.Handler) http.Handler {
 		defer func() {
 			if r := recover(); r != nil {
 				output := make([]byte, 1024)
-				runtime.Stack(output, false)
+				written := runtime.Stack(output, false)
 
-				httperror.InternalServerError(w, fmt.Errorf("recovered from panic: %s\n%s", r, output))
+				httperror.InternalServerError(w, fmt.Errorf("recovered from panic: %s\n%s", r, output[:written]))
 			}
 		}()
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// LoggerRecover catch panic and output it in log
+func LoggerRecover() {
+	if r := recover(); r != nil {
+		output := make([]byte, 1024)
+		written := runtime.Stack(output, false)
+
+		logger.Error("recovered from panic: %s\n", output[:written])
+	}
 }
