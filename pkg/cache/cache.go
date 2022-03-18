@@ -20,12 +20,12 @@ type RedisClient interface {
 }
 
 // Retrieve loads an item from the cache for given key or retrieve it (and store it in cache after)
-func Retrieve(ctx context.Context, redisClient RedisClient, key string, item interface{}, onMiss func() (interface{}, error), duration time.Duration) (interface{}, error) {
+func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, onMiss func() (T, error), duration time.Duration) (item T, err error) {
 	content, err := redisClient.Load(ctx, key)
 	if err != nil {
 		loggerWithTrace(ctx).Error("unable to read from cache: %s", err)
 	} else if len(content) != 0 {
-		if err = json.Unmarshal([]byte(content), item); err != nil {
+		if err = json.Unmarshal([]byte(content), &item); err != nil {
 			loggerWithTrace(ctx).Error("unable to unmarshal from cache: %s", err)
 		} else {
 			return item, nil

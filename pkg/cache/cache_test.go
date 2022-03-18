@@ -19,8 +19,7 @@ type cacheableItem struct {
 func TestRetrieve(t *testing.T) {
 	type args struct {
 		key      string
-		item     interface{}
-		onMiss   func() (interface{}, error)
+		onMiss   func() (cacheableItem, error)
 		duration time.Duration
 	}
 
@@ -34,7 +33,7 @@ func TestRetrieve(t *testing.T) {
 			"cache error",
 			args{
 				key: "8000",
-				onMiss: func() (interface{}, error) {
+				onMiss: func() (cacheableItem, error) {
 					return cacheableItem{
 						ID: 8000,
 					}, nil
@@ -50,7 +49,7 @@ func TestRetrieve(t *testing.T) {
 			"cache unmarshal",
 			args{
 				key: "8000",
-				onMiss: func() (interface{}, error) {
+				onMiss: func() (cacheableItem, error) {
 					return cacheableItem{
 						ID: 8000,
 					}, nil
@@ -65,10 +64,9 @@ func TestRetrieve(t *testing.T) {
 		{
 			"cached",
 			args{
-				key:  "8000",
-				item: &cacheableItem{},
+				key: "8000",
 			},
-			&cacheableItem{
+			cacheableItem{
 				ID: 8000,
 			},
 			nil,
@@ -77,7 +75,7 @@ func TestRetrieve(t *testing.T) {
 			"store error",
 			args{
 				key: "8000",
-				onMiss: func() (interface{}, error) {
+				onMiss: func() (cacheableItem, error) {
 					return cacheableItem{
 						ID: 8000,
 					}, nil
@@ -112,7 +110,7 @@ func TestRetrieve(t *testing.T) {
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("store error"))
 			}
 
-			got, gotErr := Retrieve(context.TODO(), mockRedisClient, tc.args.key, tc.args.item, tc.args.onMiss, tc.args.duration)
+			got, gotErr := Retrieve(context.TODO(), mockRedisClient, tc.args.key, tc.args.onMiss, tc.args.duration)
 
 			failed := false
 
@@ -129,7 +127,7 @@ func TestRetrieve(t *testing.T) {
 			time.Sleep(time.Millisecond * 200)
 
 			if failed {
-				t.Errorf("Retrieve() = (%t, `%s`), want (%t, `%s`)", got, gotErr, tc.want, tc.wantErr)
+				t.Errorf("Retrieve() = (%+v, `%s`), want (%+v, `%s`)", got, gotErr, tc.want, tc.wantErr)
 			}
 		})
 	}

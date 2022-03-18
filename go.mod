@@ -1,6 +1,6 @@
 module github.com/ViBiOh/httputils/v4
 
-go 1.17
+go 1.18
 
 require (
 	github.com/ViBiOh/flags v0.0.1
@@ -40,8 +40,8 @@ require (
 	github.com/tdewolff/parse/v2 v2.5.27 // indirect
 	go.opentelemetry.io/otel/internal/metric v0.27.0 // indirect
 	go.opentelemetry.io/otel/metric v0.27.0 // indirect
-	golang.org/x/crypto v0.0.0-20220307211146-efcb8507fb70 // indirect
-	golang.org/x/sys v0.0.0-20220310020820-b874c991c1a5 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
+	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/text v0.3.6 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
 )

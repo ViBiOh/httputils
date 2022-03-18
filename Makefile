@@ -49,7 +49,7 @@ init:
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install mvdan.cc/gofumpt@latest
 	$(MAKE) mocks
-	go mod tidy -compat=1.17
+	go mod tidy
 
 ## format: Format code. e.g Prettier (js), format (golang)
 .PHONY: format
