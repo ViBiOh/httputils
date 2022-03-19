@@ -24,12 +24,11 @@ func NewSynchronization() *Synchronization {
 func (s *Synchronization) AddSources(sources ...*Source) *Synchronization {
 	s.sources = append(s.sources, sources...)
 
-	return s
-}
-
-// AddRuptures adds given rupture
-func (s *Synchronization) AddRuptures(ruptures ...*Rupture) *Synchronization {
-	s.ruptures = append(s.ruptures, ruptures...)
+	for _, source := range sources {
+		if source.readRupture != nil {
+			s.ruptures = append(s.ruptures, source.readRupture)
+		}
+	}
 
 	return s
 }

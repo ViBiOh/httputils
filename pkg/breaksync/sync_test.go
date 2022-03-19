@@ -121,7 +121,7 @@ func TestRun(t *testing.T) {
 		},
 		{
 			"should work with basic rupture on read",
-			NewSynchronization().AddSources(NewSliceSource(clients, nil), NewSliceSource(cards, cardRupture)).AddRuptures(cardRupture),
+			NewSynchronization().AddSources(NewSliceSource(clients, nil), NewSliceSource(cards, cardRupture)),
 			false,
 			11,
 			nil,

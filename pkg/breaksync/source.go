@@ -1,5 +1,10 @@
 package breaksync
 
+// IdentityRupture consider key as rupture value
+var IdentityRupture = func(a string) string {
+	return a
+}
+
 // Identifiable is an object can that provide identification
 type Identifiable interface {
 	Key() string

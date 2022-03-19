@@ -13,7 +13,7 @@ func TestCompute(t *testing.T) {
 	}{
 		{
 			"simple",
-			NewRupture("simple", ruptureExtractSimple),
+			NewRupture("simple", IdentityRupture),
 			"A0",
 			"A1",
 			false,
@@ -21,7 +21,7 @@ func TestCompute(t *testing.T) {
 		},
 		{
 			"equal",
-			NewRupture("simple", ruptureExtractSimple),
+			NewRupture("simple", IdentityRupture),
 			"A0",
 			"A0",
 			false,
@@ -29,7 +29,7 @@ func TestCompute(t *testing.T) {
 		},
 		{
 			"forced",
-			NewRupture("simple", ruptureExtractSimple),
+			NewRupture("simple", IdentityRupture),
 			"A0",
 			"A0",
 			true,
