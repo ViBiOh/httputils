@@ -43,14 +43,14 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		address:         flags.New(prefix, "server", "Address").Default("", overrides).Label("Listen address").ToString(fs),
-		port:            flags.New(prefix, "server", "Port").Default(1080, overrides).Label("Listen port (0 to disable)").ToUint(fs),
-		cert:            flags.New(prefix, "server", "Cert").Default("", overrides).Label("Certificate file").ToString(fs),
-		key:             flags.New(prefix, "server", "Key").Default("", overrides).Label("Key file").ToString(fs),
-		readTimeout:     flags.New(prefix, "server", "ReadTimeout").Default("5s", overrides).Label("Read Timeout").ToString(fs),
-		writeTimeout:    flags.New(prefix, "server", "WriteTimeout").Default("10s", overrides).Label("Write Timeout").ToString(fs),
-		idleTimeout:     flags.New(prefix, "server", "IdleTimeout").Default("2m", overrides).Label("Idle Timeout").ToString(fs),
-		shutdownTimeout: flags.New(prefix, "server", "ShutdownTimeout").Default("10s", overrides).Label("Shutdown Timeout").ToString(fs),
+		address:         flags.String(fs, prefix, "server", "Address", "Listen address", "", overrides),
+		port:            flags.Uint(fs, prefix, "server", "Port", "Listen port (0 to disable)", 1080, overrides),
+		cert:            flags.String(fs, prefix, "server", "Cert", "Certificate file", "", overrides),
+		key:             flags.String(fs, prefix, "server", "Key", "Key file", "", overrides),
+		readTimeout:     flags.String(fs, prefix, "server", "ReadTimeout", "Read Timeout", "5s", overrides),
+		writeTimeout:    flags.String(fs, prefix, "server", "WriteTimeout", "Write Timeout", "10s", overrides),
+		idleTimeout:     flags.String(fs, prefix, "server", "IdleTimeout", "Idle Timeout", "2m", overrides),
+		shutdownTimeout: flags.String(fs, prefix, "server", "ShutdownTimeout", "Shutdown Timeout", "10s", overrides),
 	}
 }
 

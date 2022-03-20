@@ -32,11 +32,11 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		origin:      flags.New(prefix, "cors", "Origin").Default("*", overrides).Label("Access-Control-Allow-Origin").ToString(fs),
-		headers:     flags.New(prefix, "cors", "Headers").Default("Content-Type", overrides).Label("Access-Control-Allow-Headers").ToString(fs),
-		methods:     flags.New(prefix, "cors", "Methods").Default(http.MethodGet, overrides).Label("Access-Control-Allow-Methods").ToString(fs),
-		exposes:     flags.New(prefix, "cors", "Expose").Default("", overrides).Label("Access-Control-Expose-Headers").ToString(fs),
-		credentials: flags.New(prefix, "cors", "Credentials").Default(false, overrides).Label("Access-Control-Allow-Credentials").ToBool(fs),
+		origin:      flags.String(fs, prefix, "cors", "Origin", "Access-Control-Allow-Origin", "*", overrides),
+		headers:     flags.String(fs, prefix, "cors", "Headers", "Access-Control-Allow-Headers", "Content-Type", overrides),
+		methods:     flags.String(fs, prefix, "cors", "Methods", "Access-Control-Allow-Methods", http.MethodGet, overrides),
+		exposes:     flags.String(fs, prefix, "cors", "Expose", "Access-Control-Expose-Headers", "", overrides),
+		credentials: flags.Bool(fs, prefix, "cors", "Credentials", "Access-Control-Allow-Credentials", false, overrides),
 	}
 }
 

@@ -35,8 +35,8 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		url:       flags.New(prefix, "alcotest", "Url").Default("", overrides).Label("URL to check").ToString(fs),
-		userAgent: flags.New(prefix, "alcotest", "UserAgent").Default(defaultUserAgent, overrides).Label("User-Agent for check").ToString(fs),
+		url:       flags.String(fs, prefix, "alcotest", "Url", "URL to check", "", overrides),
+		userAgent: flags.String(fs, prefix, "alcotest", "UserAgent", "User-Agent for check", defaultUserAgent, overrides),
 	}
 }
 

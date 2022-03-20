@@ -40,11 +40,11 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		address:  flags.New(prefix, "redis", "Address").Default("localhost:6379", overrides).Label("Redis Address (blank to disable)").ToString(fs),
-		username: flags.New(prefix, "redis", "Username").Default("", overrides).Label("Redis Username, if any").ToString(fs),
-		password: flags.New(prefix, "redis", "Password").Default("", overrides).Label("Redis Password, if any").ToString(fs),
-		database: flags.New(prefix, "redis", "Database").Default(0, overrides).Label("Redis Database").ToInt(fs),
-		alias:    flags.New(prefix, "redis", "Alias").Default("", overrides).Label("Connection alias, for metric").ToString(fs),
+		address:  flags.String(fs, prefix, "redis", "Address", "Redis Address (blank to disable)", "localhost:6379", overrides),
+		username: flags.String(fs, prefix, "redis", "Username", "Redis Username, if any", "", overrides),
+		password: flags.String(fs, prefix, "redis", "Password", "Redis Password, if any", "", overrides),
+		database: flags.Int(fs, prefix, "redis", "Database", "Redis Database", 0, overrides),
+		alias:    flags.String(fs, prefix, "redis", "Alias", "Connection alias, for metric", "", overrides),
 	}
 }
 

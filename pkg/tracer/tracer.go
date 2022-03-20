@@ -33,8 +33,8 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		url:  flags.New(prefix, "tracing", "URL").Default("", overrides).Label("Jaeger endpoint URL (e.g. http://jaeger:14268/api/traces)").ToString(fs),
-		rate: flags.New(prefix, "tracing", "Rate").Default("always", overrides).Label("Jaeger sample rate, 'always', 'never' or a float value").ToString(fs),
+		url:  flags.String(fs, prefix, "tracing", "URL", "Jaeger endpoint URL (e.g. http://jaeger:14268/api/traces)", "", overrides),
+		rate: flags.String(fs, prefix, "tracing", "Rate", "Jaeger sample rate, 'always', 'never' or a float value", "always", overrides),
 	}
 }
 

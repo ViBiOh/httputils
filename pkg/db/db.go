@@ -67,14 +67,14 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		host:    flags.New(prefix, "database", "Host").Default("", overrides).Label("Host").ToString(fs),
-		port:    flags.New(prefix, "database", "Port").Default(5432, overrides).Label("Port").ToUint(fs),
-		user:    flags.New(prefix, "database", "User").Default("", overrides).Label("User").ToString(fs),
-		pass:    flags.New(prefix, "database", "Pass").Default("", overrides).Label("Pass").ToString(fs),
-		name:    flags.New(prefix, "database", "Name").Default("", overrides).Label("Name").ToString(fs),
-		maxConn: flags.New(prefix, "database", "MaxConn").Default(5, overrides).Label("Max Open Connections").ToUint(fs),
-		sslmode: flags.New(prefix, "database", "Sslmode").Default("disable", overrides).Label("SSL Mode").ToString(fs),
-		timeout: flags.New(prefix, "database", "Timeout").Default(10, overrides).Label("Connect timeout").ToUint(fs),
+		host:    flags.String(fs, prefix, "database", "Host", "Host", "", overrides),
+		port:    flags.Uint(fs, prefix, "database", "Port", "Port", 5432, overrides),
+		user:    flags.String(fs, prefix, "database", "User", "User", "", overrides),
+		pass:    flags.String(fs, prefix, "database", "Pass", "Pass", "", overrides),
+		name:    flags.String(fs, prefix, "database", "Name", "Name", "", overrides),
+		maxConn: flags.Uint(fs, prefix, "database", "MaxConn", "Max Open Connections", 5, overrides),
+		sslmode: flags.String(fs, prefix, "database", "Sslmode", "SSL Mode", "disable", overrides),
+		timeout: flags.Uint(fs, prefix, "database", "Timeout", "Connect timeout", 10, overrides),
 	}
 }
 

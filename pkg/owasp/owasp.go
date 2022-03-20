@@ -35,9 +35,9 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		csp:          flags.New(prefix, "owasp", "Csp").Default("default-src 'self'; base-uri 'self'", overrides).Label(cspHeader).ToString(fs),
-		hsts:         flags.New(prefix, "owasp", "Hsts").Default(true, overrides).Label("Indicate Strict Transport Security").ToBool(fs),
-		frameOptions: flags.New(prefix, "owasp", "FrameOptions").Default("deny", overrides).Label("X-Frame-Options").ToString(fs),
+		csp:          flags.String(fs, prefix, "owasp", "Csp", cspHeader, "default-src 'self'; base-uri 'self'", overrides),
+		hsts:         flags.Bool(fs, prefix, "owasp", "Hsts", "Indicate Strict Transport Security", true, overrides),
+		frameOptions: flags.String(fs, prefix, "owasp", "FrameOptions", "X-Frame-Options", "deny", overrides),
 	}
 }
 

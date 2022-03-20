@@ -44,8 +44,8 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		ignore: flags.New(prefix, "prometheus", "Ignore").Default("", overrides).Label("Ignored path prefixes for metrics, comma separated").ToString(fs),
-		gzip:   flags.New(prefix, "prometheus", "Gzip").Default(true, overrides).Label("Enable gzip compression of metrics output").ToBool(fs),
+		ignore: flags.String(fs, prefix, "prometheus", "Ignore", "Ignored path prefixes for metrics, comma separated", "", overrides),
+		gzip:   flags.Bool(fs, prefix, "prometheus", "Gzip", "Enable gzip compression of metrics output", true, overrides),
 	}
 }
 

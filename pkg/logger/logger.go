@@ -51,11 +51,11 @@ type Logger struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		level:      flags.New(prefix, "logger", "Level").Default("INFO", overrides).Label("Logger level").ToString(fs),
-		json:       flags.New(prefix, "logger", "Json").Default(false, overrides).Label("Log format as JSON").ToBool(fs),
-		timeKey:    flags.New(prefix, "logger", "TimeKey").Default("time", overrides).Label("Key for timestamp in JSON").ToString(fs),
-		levelKey:   flags.New(prefix, "logger", "LevelKey").Default("level", overrides).Label("Key for level in JSON").ToString(fs),
-		messageKey: flags.New(prefix, "logger", "MessageKey").Default("message", overrides).Label("Key for message in JSON").ToString(fs),
+		level:      flags.String(fs, prefix, "logger", "Level", "Logger level", "INFO", overrides),
+		json:       flags.Bool(fs, prefix, "logger", "Json", "Log format as JSON", false, overrides),
+		timeKey:    flags.String(fs, prefix, "logger", "TimeKey", "Key for timestamp in JSON", "time", overrides),
+		levelKey:   flags.String(fs, prefix, "logger", "LevelKey", "Key for level in JSON", "level", overrides),
+		messageKey: flags.String(fs, prefix, "logger", "MessageKey", "Key for message in JSON", "message", overrides),
 	}
 }
 

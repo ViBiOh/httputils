@@ -54,8 +54,8 @@ type Config struct {
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
-		uri:      flags.New(prefix, "amqp", "URI").Default("", nil).Label("Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>").ToString(fs),
-		prefetch: flags.New(prefix, "amqp", "Prefetch").Default(1, nil).Label("Prefetch count for QoS").ToInt(fs),
+		uri:      flags.String(fs, prefix, "amqp", "URI", "Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>", "", nil),
+		prefetch: flags.Int(fs, prefix, "amqp", "Prefetch", "Prefetch count for QoS", 1, nil),
 	}
 }
 
