@@ -7,7 +7,7 @@ type Synchronization struct {
 	currentKey string
 	nextKey    string
 
-	sources  []*Source
+	sources  []SyncSource
 	ruptures []*Rupture
 
 	end bool
@@ -21,12 +21,12 @@ func NewSynchronization() *Synchronization {
 }
 
 // AddSources adds given source
-func (s *Synchronization) AddSources(sources ...*Source) *Synchronization {
+func (s *Synchronization) AddSources(sources ...SyncSource) *Synchronization {
 	s.sources = append(s.sources, sources...)
 
 	for _, source := range sources {
-		if source.readRupture != nil {
-			s.ruptures = append(s.ruptures, source.readRupture)
+		if readRupture := source.ReadRupture(); readRupture != nil {
+			s.ruptures = append(s.ruptures, readRupture)
 		}
 	}
 
@@ -61,15 +61,7 @@ func (s *Synchronization) Run(business func(uint64, []any) error) (err error) {
 
 func (s *Synchronization) read() error {
 	for _, source := range s.sources {
-		if !source.synchronized {
-			continue
-		}
-
-		if source.readRupture != nil && !source.readRupture.last {
-			continue
-		}
-
-		if err := source.read(); err != nil {
+		if err := source.Read(); err != nil {
 			return err
 		}
 	}
@@ -82,12 +74,12 @@ func (s *Synchronization) computeKey() {
 	s.nextKey = finalValue
 
 	for _, source := range s.sources {
-		if source.synchronized {
-			if source.nextKey < s.nextKey {
-				s.nextKey = source.nextKey
+		if source.IsSynchronized() {
+			if nextKey := source.NextKey(); nextKey < s.nextKey {
+				s.nextKey = nextKey
 			}
-		} else if source.currentKey < s.nextKey {
-			s.nextKey = source.currentKey
+		} else if currentKey := source.CurrentKey(); currentKey < s.nextKey {
+			s.nextKey = currentKey
 		}
 	}
 
@@ -96,7 +88,7 @@ func (s *Synchronization) computeKey() {
 
 func (s *Synchronization) computeSynchro() {
 	for _, source := range s.sources {
-		source.computeSynchro(s.nextKey)
+		source.ComputeSynchro(s.nextKey)
 	}
 }
 
@@ -112,10 +104,10 @@ func (s *Synchronization) computeItems(items []any) uint64 {
 	var itemsFlags uint64
 
 	for i, source := range s.sources {
-		if !source.synchronized {
+		if !source.IsSynchronized() {
 			itemsFlags += 1 << i
 		}
-		items[i] = source.current
+		items[i] = source.Current()
 	}
 
 	return itemsFlags

@@ -2,23 +2,18 @@ package breaksync
 
 import (
 	"errors"
+	"io"
 	"reflect"
 	"testing"
 )
 
-type identifiableString string
-
-func (is identifiableString) Key() string {
-	return string(is)
-}
-
 func TestComputeSynchro(t *testing.T) {
-	simple := NewSource(nil, nil)
+	simple := NewSource[string](nil, Identity, nil)
 	simple.currentKey = "AAAAA00000"
 
 	cases := []struct {
 		intention string
-		instance  *Source
+		instance  *Source[string]
 		input     string
 		want      bool
 	}{
@@ -50,7 +45,7 @@ func TestComputeSynchro(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			tc.instance.computeSynchro(tc.input)
+			tc.instance.ComputeSynchro(tc.input)
 			if tc.instance.synchronized != tc.want {
 				t.Errorf("computeSynchro() = %t, want %t", tc.instance.synchronized, tc.want)
 			}
@@ -61,21 +56,21 @@ func TestComputeSynchro(t *testing.T) {
 func TestSourceRead(t *testing.T) {
 	errRead := errors.New("read error")
 
-	copyErr := NewSource(func() (Identifiable, error) {
-		return nil, errRead
-	}, nil)
-	copyErr.next = identifiableString("Golang Test")
+	copyErr := NewSource(func() (string, error) {
+		return "", errRead
+	}, Identity, nil)
+	copyErr.next = "Golang Test"
 	copyErr.nextKey = "Golang"
 
-	copyEnd := NewSource(func() (Identifiable, error) {
-		return nil, nil
-	}, nil)
-	copyEnd.next = identifiableString("Golang Test")
+	copyEnd := NewSource(func() (string, error) {
+		return "", io.EOF
+	}, Identity, nil)
+	copyEnd.next = "Golang Test"
 	copyEnd.nextKey = "Golang"
 
 	cases := []struct {
 		intention      string
-		instance       *Source
+		instance       *Source[string]
 		want           error
 		wantCurrent    any
 		wantCurrentKey string
@@ -86,40 +81,40 @@ func TestSourceRead(t *testing.T) {
 			"copy next in current",
 			copyErr,
 			errRead,
-			identifiableString("Golang Test"),
+			"Golang Test",
 			"Golang",
-			identifiableString("Golang Test"),
+			"Golang Test",
 			"Golang",
 		},
 		{
 			"error",
-			NewSource(func() (Identifiable, error) {
-				return nil, errRead
-			}, nil),
+			NewSource(func() (string, error) {
+				return "", errRead
+			}, Identity, nil),
 			errRead,
-			nil,
 			"",
-			nil,
+			"",
+			"",
 			"",
 		},
 		{
 			"success",
-			NewSource(func() (Identifiable, error) {
-				return identifiableString("Gopher"), nil
-			}, nil),
-			nil,
+			NewSource(func() (string, error) {
+				return "Gopher", io.EOF
+			}, Identity, nil),
 			nil,
 			"",
-			identifiableString("Gopher"),
+			"",
 			"Gopher",
+			finalValue,
 		},
 		{
 			"end",
 			copyEnd,
 			nil,
-			identifiableString("Golang Test"),
+			"Golang Test",
 			"Golang",
-			nil,
+			"",
 			finalValue,
 		},
 	}
