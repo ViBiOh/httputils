@@ -19,7 +19,7 @@ type cacheableItem struct {
 func TestRetrieve(t *testing.T) {
 	type args struct {
 		key      string
-		onMiss   func() (cacheableItem, error)
+		onMiss   func(_ context.Context) (cacheableItem, error)
 		duration time.Duration
 	}
 
@@ -33,7 +33,7 @@ func TestRetrieve(t *testing.T) {
 			"cache error",
 			args{
 				key: "8000",
-				onMiss: func() (cacheableItem, error) {
+				onMiss: func(_ context.Context) (cacheableItem, error) {
 					return cacheableItem{
 						ID: 8000,
 					}, nil
@@ -49,7 +49,7 @@ func TestRetrieve(t *testing.T) {
 			"cache unmarshal",
 			args{
 				key: "8000",
-				onMiss: func() (cacheableItem, error) {
+				onMiss: func(_ context.Context) (cacheableItem, error) {
 					return cacheableItem{
 						ID: 8000,
 					}, nil
@@ -75,7 +75,7 @@ func TestRetrieve(t *testing.T) {
 			"store error",
 			args{
 				key: "8000",
-				onMiss: func() (cacheableItem, error) {
+				onMiss: func(_ context.Context) (cacheableItem, error) {
 					return cacheableItem{
 						ID: 8000,
 					}, nil
@@ -133,7 +133,7 @@ func TestRetrieve(t *testing.T) {
 	}
 }
 
-func TestOnModify(t *testing.T) {
+func TestEvictOnSuccess(t *testing.T) {
 	type args struct {
 		err error
 	}
@@ -180,7 +180,7 @@ func TestOnModify(t *testing.T) {
 				mockRedisClient.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(errors.New("redis failed"))
 			}
 
-			gotErr := OnModify(context.Background(), mockRedisClient, "key", tc.args.err)
+			gotErr := EvictOnSuccess(context.Background(), mockRedisClient, "key", tc.args.err)
 
 			failed := false
 
@@ -193,7 +193,7 @@ func TestOnModify(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("OnModify() = `%s`, want `%s`", gotErr, tc.wantErr)
+				t.Errorf("EvictOnSuccess() = `%s`, want `%s`", gotErr, tc.wantErr)
 			}
 		})
 	}

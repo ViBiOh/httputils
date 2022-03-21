@@ -20,7 +20,7 @@ type RedisClient interface {
 }
 
 // Retrieve loads an item from the cache for given key or retrieve it (and store it in cache after)
-func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, onMiss func() (T, error), duration time.Duration) (item T, err error) {
+func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, onMiss func(context.Context) (T, error), duration time.Duration) (item T, err error) {
 	content, err := redisClient.Load(ctx, key)
 	if err != nil {
 		loggerWithTrace(ctx).Error("unable to read from cache: %s", err)
@@ -32,7 +32,7 @@ func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, o
 		}
 	}
 
-	item, err = onMiss()
+	item, err = onMiss(ctx)
 
 	if err == nil {
 		go func() {
@@ -50,8 +50,8 @@ func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, o
 	return item, err
 }
 
-// OnModify handle an item update and evict the cache for given key
-func OnModify(ctx context.Context, redisClient RedisClient, key string, err error) error {
+// EvictOnSuccess evict the given key if there is no error
+func EvictOnSuccess(ctx context.Context, redisClient RedisClient, key string, err error) error {
 	if err != nil {
 		return err
 	}
