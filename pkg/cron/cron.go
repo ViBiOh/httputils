@@ -331,24 +331,19 @@ func (c *Cron) Start(action func(context.Context) error, done <-chan struct{}) {
 		defer signal.Stop(signals)
 	}
 
-	ticker := time.NewTicker(c.getTickerDuration(shouldRetry))
-	defer ticker.Stop()
-
 	for {
 		select {
 		case <-done:
 			return
 		case <-signals:
 			run()
-		case <-ticker.C:
+		case <-time.After(c.getTickerDuration(shouldRetry)):
 			run()
 		case _, ok := <-c.now:
 			if ok {
 				run()
 			}
 		}
-
-		ticker.Reset(c.getTickerDuration(shouldRetry))
 	}
 }
 
