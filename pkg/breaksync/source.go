@@ -118,3 +118,15 @@ func NewSliceSource[T any](arr []T, keyer func(T) string, readRupture *Rupture) 
 		return
 	}, keyer, readRupture)
 }
+
+// NewChanSource is a source from a chan, read sequentially
+func NewChanSource[T any](input <-chan T, keyer func(T) string, readRupture *Rupture) *Source[T] {
+	var ok bool
+
+	return NewSource(func() (output T, err error) {
+		if output, ok = <-input; !ok {
+			err = io.EOF
+		}
+		return
+	}, keyer, readRupture)
+}
