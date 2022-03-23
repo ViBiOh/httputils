@@ -37,7 +37,7 @@ type pagination struct {
 }
 
 // RawWrite writes marshalled obj to io.Writer
-func RawWrite(w io.Writer, obj any) error {
+func RawWrite[T any](w io.Writer, obj T) error {
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
 		return fmt.Errorf("%s: %w", err, ErrCannotMarshal)
 	}
@@ -45,7 +45,7 @@ func RawWrite(w io.Writer, obj any) error {
 }
 
 // Write writes marshalled obj to http.ResponseWriter with correct header
-func Write(w http.ResponseWriter, status int, obj any) {
+func Write[T any](w http.ResponseWriter, status int, obj T) {
 	for key, value := range headers {
 		w.Header()[key] = value
 	}
@@ -85,7 +85,7 @@ func Read(resp *http.Response, obj any) error {
 	var err error
 
 	if err = json.NewDecoder(resp.Body).Decode(obj); err != nil {
-		err = fmt.Errorf("unable to read JSON: %s", err)
+		err = fmt.Errorf("unable to read JSON: %w", err)
 	}
 
 	if closeErr := resp.Body.Close(); closeErr != nil {
@@ -96,7 +96,7 @@ func Read(resp *http.Response, obj any) error {
 }
 
 // Stream reads io.Reader and stream array or map content to given chan
-func Stream(stream io.Reader, newObj func() any, output chan<- any, key string) error {
+func Stream[T any](stream io.Reader, output chan<- T, key string) error {
 	defer close(output)
 	decoder := json.NewDecoder(stream)
 
@@ -114,8 +114,8 @@ func Stream(stream io.Reader, newObj func() any, output chan<- any, key string) 
 	}
 
 	for decoder.More() {
-		obj := newObj()
-		if err := decoder.Decode(obj); err != nil {
+		var obj T
+		if err := decoder.Decode(&obj); err != nil {
 			return fmt.Errorf("unable to decode item: %s", err)
 		}
 		output <- obj

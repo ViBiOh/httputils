@@ -395,10 +395,6 @@ func TestRead(t *testing.T) {
 }
 
 func TestStream(t *testing.T) {
-	newObj := func() any {
-		return new(string)
-	}
-
 	type args struct {
 		stream io.Reader
 		key    string
@@ -437,22 +433,31 @@ func TestStream(t *testing.T) {
 			[]string{"test", "next", "final"},
 			errors.New("unable to read closing token"),
 		},
+		{
+			"success",
+			args{
+				stream: strings.NewReader(`{"count": 10, "items": ["test", "next", "final"]}`),
+				key:    "items",
+			},
+			[]string{"test", "next", "final"},
+			nil,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.intention, func(t *testing.T) {
-			output := make(chan any, 4)
+			output := make(chan string, 4)
 			done := make(chan struct{})
 			var got []string
 
 			go func() {
 				defer close(done)
 				for item := range output {
-					got = append(got, *(item.(*string)))
+					got = append(got, item)
 				}
 			}()
 
-			gotErr := Stream(tc.args.stream, newObj, output, tc.args.key)
+			gotErr := Stream(tc.args.stream, output, tc.args.key)
 
 			<-done
 
