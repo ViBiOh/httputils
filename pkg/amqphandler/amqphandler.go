@@ -147,7 +147,7 @@ func (a App) handleMessage(log logger.Provider, message amqp.Delivery) {
 	log.Error("unable to handle message `%s`: %s", message.Body, err)
 
 	if a.retryInterval > 0 && a.maxRetry > 0 {
-		if err = a.Retry(log, message); err == nil {
+		if err = a.Retry(message); err == nil {
 			return
 		}
 

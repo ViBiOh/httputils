@@ -16,6 +16,11 @@ type cacheableItem struct {
 	ID int `json:"id"`
 }
 
+type jsonErrorItem struct {
+	ID    int           `json:"id"`
+	Value func() string `json:"value"`
+}
+
 func TestRetrieve(t *testing.T) {
 	type args struct {
 		key      string
@@ -26,7 +31,7 @@ func TestRetrieve(t *testing.T) {
 	cases := []struct {
 		intention string
 		args      args
-		want      any
+		want      cacheableItem
 		wantErr   error
 	}{
 		{
@@ -65,6 +70,9 @@ func TestRetrieve(t *testing.T) {
 			"cached",
 			args{
 				key: "8000",
+				onMiss: func(_ context.Context) (cacheableItem, error) {
+					return cacheableItem{}, nil
+				},
 			},
 			cacheableItem{
 				ID: 8000,
@@ -121,6 +129,78 @@ func TestRetrieve(t *testing.T) {
 			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
 				failed = true
 			} else if !reflect.DeepEqual(got, tc.want) {
+				failed = true
+			}
+
+			time.Sleep(time.Millisecond * 200)
+
+			if failed {
+				t.Errorf("Retrieve() = (%+v, `%s`), want (%+v, `%s`)", got, gotErr, tc.want, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestRetrieveError(t *testing.T) {
+	type args struct {
+		key      string
+		onMiss   func(_ context.Context) (jsonErrorItem, error)
+		duration time.Duration
+	}
+
+	funcValue := func() string {
+		return "fail"
+	}
+
+	cases := []struct {
+		intention string
+		args      args
+		want      jsonErrorItem
+		wantErr   error
+	}{
+		{
+			"marshal error",
+			args{
+				key: "8000",
+				onMiss: func(_ context.Context) (jsonErrorItem, error) {
+					return jsonErrorItem{
+						ID:    8000,
+						Value: funcValue,
+					}, nil
+				},
+				duration: time.Minute,
+			},
+			jsonErrorItem{
+				ID:    8000,
+				Value: funcValue,
+			},
+			nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.intention, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRedisClient := mocks.NewRedisClient(ctrl)
+
+			switch tc.intention {
+			case "marshal error":
+				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return("", nil)
+			}
+
+			got, gotErr := Retrieve(context.TODO(), mockRedisClient, tc.args.key, tc.args.onMiss, tc.args.duration)
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			} else if got.ID != tc.want.ID {
 				failed = true
 			}
 

@@ -39,7 +39,7 @@ type Request struct {
 	signatureSecret []byte
 }
 
-func new(method, url string) Request {
+func create(method, url string) Request {
 	return Request{
 		client: defaultHTTPClient,
 		method: method,
@@ -50,32 +50,32 @@ func new(method, url string) Request {
 
 // New create a new Request
 func New() Request {
-	return new(http.MethodGet, "")
+	return create(http.MethodGet, "")
 }
 
 // Get create GET to given url
 func Get(url string) Request {
-	return new(http.MethodGet, url)
+	return create(http.MethodGet, url)
 }
 
 // Post create POST to given url
 func Post(url string) Request {
-	return new(http.MethodPost, url)
+	return create(http.MethodPost, url)
 }
 
 // Put create PUT to given url
 func Put(url string) Request {
-	return new(http.MethodPut, url)
+	return create(http.MethodPut, url)
 }
 
 // Patch create PATCH to given url
 func Patch(url string) Request {
-	return new(http.MethodPatch, url)
+	return create(http.MethodPatch, url)
 }
 
 // Delete create DELETE to given url
 func Delete(url string) Request {
-	return new(http.MethodDelete, url)
+	return create(http.MethodDelete, url)
 }
 
 // String representation of the request

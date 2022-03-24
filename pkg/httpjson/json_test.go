@@ -276,6 +276,15 @@ func TestParse(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"invalid",
+			args{
+				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(`{"key": "value","valid":true`))),
+				obj: make(map[string]any),
+			},
+			make(map[string]any),
+			errors.New("unable to parse JSON"),
+		},
 	}
 
 	for _, tc := range cases {
@@ -459,6 +468,15 @@ func TestStream(t *testing.T) {
 			},
 			[]string{"test", "next", "final"},
 			nil,
+		},
+		{
+			"stream error",
+			args{
+				stream: strings.NewReader("\"test\"\n\"next\"\n\"final"),
+				key:    "",
+			},
+			[]string{"test", "next"},
+			errors.New("unable to decode stream"),
 		},
 	}
 

@@ -371,7 +371,7 @@ func TestJSON(t *testing.T) {
 			}
 
 			var values map[string]any
-			if err := json.Unmarshal([]byte(logger.json(tc.args.e)), &values); err != nil {
+			if err := json.Unmarshal(logger.json(tc.args.e), &values); err != nil {
 				t.Errorf("unable to unmarshal json payload: %s", err)
 			}
 

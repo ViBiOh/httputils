@@ -52,7 +52,7 @@ func ValidateSignature(r *http.Request, secret []byte) (bool, error) {
 }
 
 func signContent(secret, content []byte) []byte {
-	hash := hmac.New(sha512.New, []byte(secret))
+	hash := hmac.New(sha512.New, secret)
 	hash.Write(content)
 	return hash.Sum(nil)
 }

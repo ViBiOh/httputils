@@ -13,7 +13,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
 )
 
-var svgCacheDuration string = fmt.Sprintf("public, max-age=%.0f", time.Duration(time.Minute*10).Seconds())
+var svgCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Minute * 10).Seconds())
 
 // Redirect redirect user to a defined path with a message
 func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
@@ -31,7 +31,7 @@ func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", a.url(parts[0]), joinChar, message, anchor), http.StatusFound)
 }
 
-func (a App) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error) {
+func (a App) Error(w http.ResponseWriter, _ *http.Request, content map[string]any, err error) {
 	logger.Error("%s", err)
 
 	content = a.feedContent(content)

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/streadway/amqp"
 )
 
@@ -12,7 +11,7 @@ import (
 var ErrNoDeathCount = errors.New("no death count")
 
 // Retry a message if possible on error
-func (a App) Retry(log logger.Provider, message amqp.Delivery) error {
+func (a App) Retry(message amqp.Delivery) error {
 	count, err := GetDeathCount(message)
 	if err != nil && !errors.Is(err, ErrNoDeathCount) {
 		return fmt.Errorf("unable to get death count from message: %s", err)

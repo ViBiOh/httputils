@@ -15,7 +15,7 @@ func cardKeyer(c card) string {
 }
 
 func numberKeyer(n int) string {
-	return strconv.Itoa(int(n))
+	return strconv.Itoa(n)
 }
 
 type client struct {
@@ -34,6 +34,16 @@ func TestRun(t *testing.T) {
 		"VISA",
 		"WESTERN",
 	}
+
+	cardReader := make(chan card, 1)
+
+	go func() {
+		defer close(cardReader)
+
+		for _, card := range cards {
+			cardReader <- card
+		}
+	}()
 
 	clients := []client{
 		{"Bob", "MASTERCARD"},
@@ -120,7 +130,7 @@ func TestRun(t *testing.T) {
 		},
 		{
 			"should work with basic rupture on read",
-			NewSynchronization().AddSources(NewSliceSource(clients, clientKeyer, nil), NewSliceSource(cards, cardKeyer, cardRupture)),
+			NewSynchronization().AddSources(NewSliceSource(clients, clientKeyer, nil), NewChanSource(cardReader, cardKeyer, cardRupture)),
 			false,
 			11,
 			nil,

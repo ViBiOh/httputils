@@ -7,6 +7,70 @@ import (
 	"testing"
 )
 
+func TestWithContext(t *testing.T) {
+	type args struct {
+		contexts []context.Context
+	}
+
+	cases := map[string]struct {
+		instance *FailFast
+		args     args
+		wantErr  error
+	}{
+		"simple": {
+			NewFailFast(1),
+			args{
+				contexts: []context.Context{
+					context.Background(),
+				},
+			},
+			nil,
+		},
+		"double": {
+			NewFailFast(1),
+			args{
+				contexts: []context.Context{
+					context.Background(),
+					context.TODO(),
+				},
+			},
+			errors.New("panic"),
+		},
+	}
+
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			var gotErr error
+
+			func() {
+				defer func() {
+					if e := recover(); e != nil {
+						gotErr = errors.New("panic")
+					}
+				}()
+
+				for _, ctx := range tc.args.contexts {
+					tc.instance.WithContext(ctx)
+				}
+			}()
+
+			failed := false
+
+			if tc.wantErr == nil && gotErr != nil {
+				failed = true
+			} else if tc.wantErr != nil && gotErr == nil {
+				failed = true
+			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("WithContext() = %s, want %s", gotErr, tc.wantErr)
+			}
+		})
+	}
+}
+
 func TestFailFastGo(t *testing.T) {
 	type args struct {
 		funcs []func() error

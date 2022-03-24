@@ -8,7 +8,7 @@ import (
 )
 
 func TestComputeSynchro(t *testing.T) {
-	simple := NewSource[string](nil, Identity, nil)
+	simple := NewSource(nil, Identity, nil)
 	simple.currentKey = "AAAAA00000"
 
 	cases := []struct {
