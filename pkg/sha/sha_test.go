@@ -83,7 +83,13 @@ func TestStream(t *testing.T) {
 }
 
 func BenchmarkNew(b *testing.B) {
+	type testStruct struct {
+		ID int
+	}
+
+	item := testStruct{}
+
 	for i := 0; i < b.N; i++ {
-		New(New)
+		New(item)
 	}
 }

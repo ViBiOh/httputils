@@ -442,6 +442,24 @@ func TestStream(t *testing.T) {
 			[]string{"test", "next", "final"},
 			nil,
 		},
+		{
+			"nested",
+			args{
+				stream: strings.NewReader(`{"count": 10, "nested": {"items": ["test"]}, "items": ["test", "next", "final"]}`),
+				key:    "items",
+			},
+			[]string{"test", "next", "final"},
+			nil,
+		},
+		{
+			"streamed",
+			args{
+				stream: strings.NewReader("\"test\"\n\"next\"\n\"final\""),
+				key:    "",
+			},
+			[]string{"test", "next", "final"},
+			nil,
+		},
 	}
 
 	for _, tc := range cases {

@@ -8,7 +8,7 @@ import (
 )
 
 // New get sha1 value of given interface
-func New(o any) string {
+func New[T any](o T) string {
 	hasher := sha1.New()
 
 	// no err check https://golang.org/pkg/hash/#Hash

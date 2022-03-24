@@ -100,29 +100,45 @@ func Stream[T any](stream io.Reader, output chan<- T, key string) error {
 	defer close(output)
 	decoder := json.NewDecoder(stream)
 
-	var token json.Token
-	var err error
-	for !strings.EqualFold(fmt.Sprintf("%s", token), key) {
-		token, err = decoder.Token()
-		if err != nil {
-			return fmt.Errorf("unable to decode token: %s", err)
-		}
-	}
+	if len(key) > 0 {
+		var token json.Token
+		var nested uint64
+		var err error
 
-	if _, err := decoder.Token(); err != nil {
-		return fmt.Errorf("unable to read opening token: %s", err)
+		for {
+			token, err = decoder.Token()
+			if err != nil {
+				return fmt.Errorf("unable to decode token: %s", err)
+			}
+
+			if nested == 1 && strings.EqualFold(fmt.Sprintf("%s", token), key) {
+				break
+			}
+
+			if strToken := fmt.Sprintf("%s", token); strToken == "{" {
+				nested++
+			} else if strToken == "}" {
+				nested--
+			}
+		}
+
+		if _, err = decoder.Token(); err != nil {
+			return fmt.Errorf("unable to read opening token: %s", err)
+		}
 	}
 
 	for decoder.More() {
 		var obj T
 		if err := decoder.Decode(&obj); err != nil {
-			return fmt.Errorf("unable to decode item: %s", err)
+			return fmt.Errorf("unable to decode stream: %s", err)
 		}
 		output <- obj
 	}
 
-	if _, err := decoder.Token(); err != nil {
-		return fmt.Errorf("unable to read closing token: %s", err)
+	if len(key) > 0 {
+		if _, err := decoder.Token(); err != nil {
+			return fmt.Errorf("unable to read closing token: %s", err)
+		}
 	}
 
 	return nil
