@@ -95,9 +95,11 @@ func Read(resp *http.Response, obj any) error {
 	return err
 }
 
-// Stream reads io.Reader and stream array or map content to given chan
-func Stream[T any](stream io.Reader, output chan<- T, key string) error {
-	defer close(output)
+// Stream reads io.Reader and stream content to given chan
+func Stream[T any](stream io.Reader, output chan<- T, key string, closeChan bool) error {
+	if closeChan {
+		defer close(output)
+	}
 	decoder := json.NewDecoder(stream)
 
 	if len(key) > 0 {
@@ -127,8 +129,8 @@ func Stream[T any](stream io.Reader, output chan<- T, key string) error {
 		}
 	}
 
+	var obj T
 	for decoder.More() {
-		var obj T
 		if err := decoder.Decode(&obj); err != nil {
 			return fmt.Errorf("unable to decode stream: %s", err)
 		}

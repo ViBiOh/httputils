@@ -25,14 +25,12 @@ func TestRawWrite(t *testing.T) {
 		obj    any
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      string
-		wantErr   error
+	cases := map[string]struct {
+		args    args
+		want    string
+		wantErr error
 	}{
-		{
-			"invalid",
+		"invalid": {
 			args{
 				writer: bytes.NewBufferString(""),
 				obj:    func() {},
@@ -40,8 +38,7 @@ func TestRawWrite(t *testing.T) {
 			"",
 			ErrCannotMarshal,
 		},
-		{
-			"simple",
+		"simple": {
 			args{
 				writer: bytes.NewBufferString(""),
 				obj: map[string]any{
@@ -54,8 +51,8 @@ func TestRawWrite(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			gotErr := RawWrite(tc.args.writer, tc.args.obj)
 
 			failed := false
@@ -78,29 +75,25 @@ func TestRawWrite(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		obj        any
 		want       string
 		wantStatus int
 		wantHeader map[string]string
 	}{
-		{
-			"nil",
+		"nil": {
 			nil,
 			"null\n",
 			http.StatusOK,
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
-		{
-			"simple object",
+		"simple object": {
 			testStruct{id: "Test"},
 			"{\"Active\":false,\"Amount\":0}\n",
 			http.StatusOK,
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
-		{
-			"error",
+		"error": {
 			func() string {
 				return "test"
 			},
@@ -110,8 +103,8 @@ func TestWrite(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			Write(writer, http.StatusOK, tc.obj)
 
@@ -157,28 +150,25 @@ func BenchmarkWrite(b *testing.B) {
 }
 
 func TestWriteArray(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		obj        any
 		want       string
 		wantHeader map[string]string
 	}{
-		{
-			"nil",
+		"nil": {
 			nil,
 			"{\"items\":null}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
-		{
-			"simple",
+		"simple": {
 			[]testStruct{{id: "First", Active: true, Amount: 12.34}, {id: "Second", Active: true, Amount: 12.34}},
 			"{\"items\":[{\"Active\":true,\"Amount\":12.34},{\"Active\":true,\"Amount\":12.34}]}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			WriteArray(writer, http.StatusOK, tc.obj)
 
@@ -196,8 +186,7 @@ func TestWriteArray(t *testing.T) {
 }
 
 func TestWritePagination(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		pageSize   uint
 		total      uint
 		last       string
@@ -205,8 +194,7 @@ func TestWritePagination(t *testing.T) {
 		want       string
 		wantHeader map[string]string
 	}{
-		{
-			"simple",
+		"simple": {
 			2,
 			2,
 			"8000",
@@ -214,8 +202,7 @@ func TestWritePagination(t *testing.T) {
 			"{\"items\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"last\":\"8000\",\"pageSize\":2,\"pageCount\":1,\"total\":2}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
-		{
-			"compute page count rounded",
+		"compute page count rounded": {
 			10,
 			40,
 			"8000",
@@ -223,8 +210,7 @@ func TestWritePagination(t *testing.T) {
 			"{\"items\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"last\":\"8000\",\"pageSize\":10,\"pageCount\":4,\"total\":40}\n",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
-		{
-			"compute page count exceed",
+		"compute page count exceed": {
 			10,
 			45,
 			"8000",
@@ -234,8 +220,8 @@ func TestWritePagination(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			WritePagination(writer, http.StatusOK, tc.pageSize, tc.total, tc.last, tc.obj)
 
@@ -258,14 +244,12 @@ func TestParse(t *testing.T) {
 		obj any
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      any
-		wantErr   error
+	cases := map[string]struct {
+		args    args
+		want    any
+		wantErr error
 	}{
-		{
-			"valid",
+		"valid": {
 			args{
 				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(`{"key": "value","valid":true}`))),
 				obj: make(map[string]any),
@@ -276,8 +260,7 @@ func TestParse(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"invalid",
+		"invalid": {
 			args{
 				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(`{"key": "value","valid":true`))),
 				obj: make(map[string]any),
@@ -287,8 +270,8 @@ func TestParse(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			gotErr := Parse(tc.args.req, &tc.args.obj)
 
 			failed := false
@@ -324,14 +307,12 @@ func TestRead(t *testing.T) {
 		obj  any
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      any
-		wantErr   error
+	cases := map[string]struct {
+		args    args
+		want    any
+		wantErr error
 	}{
-		{
-			"parse error",
+		"parse error": {
 			args{
 				resp: &http.Response{
 					Body: io.NopCloser(bytes.NewReader([]byte("invalid json"))),
@@ -340,8 +321,7 @@ func TestRead(t *testing.T) {
 			nil,
 			errors.New("unable to read JSON"),
 		},
-		{
-			"close error",
+		"close error": {
 			args{
 				resp: &http.Response{
 					Body: errCloser{bytes.NewReader([]byte(`{"key": "value","valid":true}`))},
@@ -354,8 +334,7 @@ func TestRead(t *testing.T) {
 			},
 			errors.New("close error"),
 		},
-		{
-			"both error",
+		"both error": {
 			args{
 				resp: &http.Response{
 					Body: errCloser{bytes.NewReader([]byte(`invalid json`))},
@@ -364,8 +343,7 @@ func TestRead(t *testing.T) {
 			nil,
 			errors.New("unable to read JSON: invalid character 'i' looking for beginning of value: close error"),
 		},
-		{
-			"valid",
+		"valid": {
 			args{
 				resp: &http.Response{
 					Body: io.NopCloser(bytes.NewReader([]byte(`{"key": "value","valid":true}`))),
@@ -380,8 +358,8 @@ func TestRead(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			gotErr := Read(tc.args.resp, &tc.args.obj)
 
 			failed := false
@@ -404,19 +382,21 @@ func TestRead(t *testing.T) {
 }
 
 func TestStream(t *testing.T) {
+	type simpleStruct struct {
+		Value string `json:"value"`
+	}
+
 	type args struct {
 		stream io.Reader
 		key    string
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      []string
-		wantErr   error
+	cases := map[string]struct {
+		args    args
+		want    []string
+		wantErr error
 	}{
-		{
-			"invalid json",
+		"invalid json": {
 			args{
 				stream: strings.NewReader("invalid json"),
 				key:    "items",
@@ -424,8 +404,7 @@ func TestStream(t *testing.T) {
 			nil,
 			errors.New("unable to decode token"),
 		},
-		{
-			"no opening token",
+		"no opening token": {
 			args{
 				stream: strings.NewReader(`{"count": 10, "items"}`),
 				key:    "items",
@@ -433,46 +412,41 @@ func TestStream(t *testing.T) {
 			nil,
 			errors.New("unable to read opening token"),
 		},
-		{
-			"no closing token",
+		"no closing token": {
 			args{
-				stream: strings.NewReader(`{"count": 10, "items": ["test", "next", "final"}`),
+				stream: strings.NewReader(`{"count": 10, "items": [{"value":"test"},{"value":"next"},{"value":"final"}`),
 				key:    "items",
 			},
 			[]string{"test", "next", "final"},
 			errors.New("unable to read closing token"),
 		},
-		{
-			"success",
+		"success": {
 			args{
-				stream: strings.NewReader(`{"count": 10, "items": ["test", "next", "final"]}`),
+				stream: strings.NewReader(`{"count": 10, "items": [{"value":"test"},{"value":"next"},{"value":"final"}]}`),
 				key:    "items",
 			},
 			[]string{"test", "next", "final"},
 			nil,
 		},
-		{
-			"nested",
+		"nested": {
 			args{
-				stream: strings.NewReader(`{"count": 10, "nested": {"items": ["test"]}, "items": ["test", "next", "final"]}`),
+				stream: strings.NewReader(`{"count": 10, "nested": {"items": ["test"]}, "items": [{"value":"test"},{"value":"next"},{"value":"final"}]}`),
 				key:    "items",
 			},
 			[]string{"test", "next", "final"},
 			nil,
 		},
-		{
-			"streamed",
+		"streamed": {
 			args{
-				stream: strings.NewReader("\"test\"\n\"next\"\n\"final\""),
+				stream: strings.NewReader(`{"value":"test"}{"value":"next"}{"value":"final"}`),
 				key:    "",
 			},
 			[]string{"test", "next", "final"},
 			nil,
 		},
-		{
-			"stream error",
+		"stream error": {
 			args{
-				stream: strings.NewReader("\"test\"\n\"next\"\n\"final"),
+				stream: strings.NewReader(`{"value":"test"}{"value":"next"}{"value":"final}`),
 				key:    "",
 			},
 			[]string{"test", "next"},
@@ -480,20 +454,20 @@ func TestStream(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			output := make(chan string, 4)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			output := make(chan simpleStruct, 4)
 			done := make(chan struct{})
 			var got []string
 
 			go func() {
 				defer close(done)
 				for item := range output {
-					got = append(got, item)
+					got = append(got, item.Value)
 				}
 			}()
 
-			gotErr := Stream(tc.args.stream, output, tc.args.key)
+			gotErr := Stream(tc.args.stream, output, tc.args.key, true)
 
 			<-done
 
