@@ -9,13 +9,11 @@ func TestLimitedGo(t *testing.T) {
 		funcs []func()
 	}
 
-	cases := []struct {
-		intention string
-		instance  *Limited
-		args      args
+	cases := map[string]struct {
+		instance *Limited
+		args     args
 	}{
-		{
-			"simple",
+		"simple": {
 			NewLimited(2),
 			args{
 				funcs: []func(){
@@ -26,8 +24,8 @@ func TestLimitedGo(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			for _, f := range tc.args.funcs {
 				tc.instance.Go(f)
 			}

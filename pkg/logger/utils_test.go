@@ -10,20 +10,17 @@ func TestWriteEscapedJSON(t *testing.T) {
 		content string
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      string
+	cases := map[string]struct {
+		args args
+		want string
 	}{
-		{
-			"nothing",
+		"nothing": {
 			args{
 				content: "test",
 			},
 			"test",
 		},
-		{
-			"complex",
+		"complex": {
 			args{
 				content: "Text with \\ special character \"'\b\f\t\r\n.",
 			},
@@ -31,8 +28,8 @@ func TestWriteEscapedJSON(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			output := bytes.NewBuffer(nil)
 
 			WriteEscapedJSON(tc.args.content, output)

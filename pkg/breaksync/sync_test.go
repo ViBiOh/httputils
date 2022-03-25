@@ -86,50 +86,43 @@ func TestRun(t *testing.T) {
 		}
 	}
 
-	cases := []struct {
-		intention    string
+	cases := map[string]struct {
 		instance     *Synchronization
 		businessFail bool
 		want         int
 		wantErr      error
 	}{
-		{
-			"fully synchronized",
+		"fully synchronized": {
 			NewSynchronization().AddSources(NewSource(numberReader(0, false), numberKeyer, nil), NewSource(numberReader(0, false), numberKeyer, nil)),
 			false,
 			5,
 			nil,
 		},
-		{
-			"desynchronized once",
+		"desynchronized once": {
 			NewSynchronization().AddSources(NewSource(numberReader(0, false), numberKeyer, nil), NewSource(numberReader(1, false), numberKeyer, nil)),
 			false,
 			4,
 			nil,
 		},
-		{
-			"read first error",
+		"read first error": {
 			NewSynchronization().AddSources(NewSource(numberReader(0, false), numberKeyer, nil), NewSource(numberReader(-2, false), numberKeyer, nil)),
 			false,
 			0,
 			errRead,
 		},
-		{
-			"read later error",
+		"read later error": {
 			NewSynchronization().AddSources(NewSource(numberReader(0, false), numberKeyer, nil), NewSource(numberReader(0, true), numberKeyer, nil)),
 			false,
 			4,
 			errRead,
 		},
-		{
-			"business error",
+		"business error": {
 			NewSynchronization().AddSources(NewSource(numberReader(0, false), numberKeyer, nil), NewSource(numberReader(0, false), numberKeyer, nil)),
 			true,
 			4,
 			errRead,
 		},
-		{
-			"should work with basic rupture on read",
+		"should work with basic rupture on read": {
 			NewSynchronization().AddSources(NewSliceSource(clients, clientKeyer, nil), NewChanSource(cardReader, cardKeyer, cardRupture)),
 			false,
 			11,
@@ -137,8 +130,8 @@ func TestRun(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			var result int
 			err := tc.instance.Run(func(synchronization uint64, items []any) error {
 				if synchronization != 0 {

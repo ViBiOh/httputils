@@ -8,20 +8,18 @@ import (
 )
 
 func TestEtag(t *testing.T) {
-	cases := []struct {
-		intention string
-		instance  Page
-		want      string
+	cases := map[string]struct {
+		instance Page
+		want     string
 	}{
-		{
-			"simple",
+		"simple": {
 			NewPage("index", http.StatusOK, nil),
 			"1c22677052663f527668d58c2133d0779c6de2ee",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := tc.instance.etag(); got != tc.want {
 				t.Errorf("Etag() = `%s`, want `%s`", got, tc.want)
 			}
@@ -34,27 +32,23 @@ func TestParseMessage(t *testing.T) {
 		r *http.Request
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      Message
+	cases := map[string]struct {
+		args args
+		want Message
 	}{
-		{
-			"empty",
+		"empty": {
 			args{
 				r: httptest.NewRequest(http.MethodGet, fmt.Sprintf("/?%s", NewSuccessMessage("")), nil),
 			},
 			Message{},
 		},
-		{
-			"success",
+		"success": {
 			args{
 				r: httptest.NewRequest(http.MethodGet, fmt.Sprintf("/?%s", NewSuccessMessage("HelloWorld")), nil),
 			},
 			NewSuccessMessage("HelloWorld"),
 		},
-		{
-			"error",
+		"error": {
 			args{
 				r: httptest.NewRequest(http.MethodGet, fmt.Sprintf("/?%s", NewErrorMessage("HelloWorld")), nil),
 			},
@@ -62,8 +56,8 @@ func TestParseMessage(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := ParseMessage(tc.args.r); got != tc.want {
 				t.Errorf("ParseMessage() = %v, want %v", got, tc.want)
 			}

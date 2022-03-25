@@ -12,13 +12,11 @@ func TestSafeParseDuration(t *testing.T) {
 		defaultDuration time.Duration
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      time.Duration
+	cases := map[string]struct {
+		args args
+		want time.Duration
 	}{
-		{
-			"default",
+		"default": {
 			args{
 				name:            "test",
 				value:           "abcd",
@@ -26,8 +24,7 @@ func TestSafeParseDuration(t *testing.T) {
 			},
 			time.Minute,
 		},
-		{
-			"parsed",
+		"parsed": {
 			args{
 				name:            "test",
 				value:           "5m",
@@ -37,8 +34,8 @@ func TestSafeParseDuration(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := SafeParseDuration(tc.args.name, tc.args.value, tc.args.defaultDuration); got != tc.want {
 				t.Errorf("SafeParseDuration() = %s, want %s", got, tc.want)
 			}

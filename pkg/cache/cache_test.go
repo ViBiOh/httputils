@@ -28,14 +28,12 @@ func TestRetrieve(t *testing.T) {
 		duration time.Duration
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      cacheableItem
-		wantErr   error
+	cases := map[string]struct {
+		args    args
+		want    cacheableItem
+		wantErr error
 	}{
-		{
-			"cache error",
+		"cache error": {
 			args{
 				key: "8000",
 				onMiss: func(_ context.Context) (cacheableItem, error) {
@@ -50,8 +48,7 @@ func TestRetrieve(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"cache unmarshal",
+		"cache unmarshal": {
 			args{
 				key: "8000",
 				onMiss: func(_ context.Context) (cacheableItem, error) {
@@ -66,8 +63,7 @@ func TestRetrieve(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"cached",
+		"cached": {
 			args{
 				key: "8000",
 				onMiss: func(_ context.Context) (cacheableItem, error) {
@@ -79,8 +75,7 @@ func TestRetrieve(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"store error",
+		"store error": {
 			args{
 				key: "8000",
 				onMiss: func(_ context.Context) (cacheableItem, error) {
@@ -97,14 +92,14 @@ func TestRetrieve(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mockRedisClient := mocks.NewRedisClient(ctrl)
 
-			switch tc.intention {
+			switch intention {
 			case "cache error":
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return("", errors.New("cache failed"))
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
@@ -152,14 +147,12 @@ func TestRetrieveError(t *testing.T) {
 		return "fail"
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      jsonErrorItem
-		wantErr   error
+	cases := map[string]struct {
+		args    args
+		want    jsonErrorItem
+		wantErr error
 	}{
-		{
-			"marshal error",
+		"marshal error": {
 			args{
 				key: "8000",
 				onMiss: func(_ context.Context) (jsonErrorItem, error) {
@@ -178,14 +171,14 @@ func TestRetrieveError(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mockRedisClient := mocks.NewRedisClient(ctrl)
 
-			switch tc.intention {
+			switch intention {
 			case "marshal error":
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return("", nil)
 			}
@@ -218,27 +211,23 @@ func TestEvictOnSuccess(t *testing.T) {
 		err error
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		wantErr   error
+	cases := map[string]struct {
+		args    args
+		wantErr error
 	}{
-		{
-			"error",
+		"error": {
 			args{
 				err: errors.New("update failed"),
 			},
 			errors.New("update failed"),
 		},
-		{
-			"evict",
+		"evict": {
 			args{
 				err: nil,
 			},
 			nil,
 		},
-		{
-			"evict error",
+		"evict error": {
 			args{
 				err: nil,
 			},
@@ -246,14 +235,14 @@ func TestEvictOnSuccess(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mockRedisClient := mocks.NewRedisClient(ctrl)
 
-			switch tc.intention {
+			switch intention {
 			case "evict":
 				mockRedisClient.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil)
 			case "evict error":

@@ -17,86 +17,72 @@ import (
 )
 
 func TestString(t *testing.T) {
-	cases := []struct {
-		intention string
-		cron      *Cron
-		want      string
+	cases := map[string]struct {
+		cron *Cron
+		want string
 	}{
-		{
-			"empty",
+		"empty": {
 			New().In("UTC"),
 			"day: 0000000, at: 08:00, in: UTC, retry: 0 times every 0s",
 		},
-		{
-			"sunday",
+		"sunday": {
 			New().In("UTC").Sunday(),
 			"day: 0000001, at: 08:00, in: UTC, retry: 0 times every 0s",
 		},
-		{
-			"monday",
+		"monday": {
 			New().In("UTC").Monday(),
 			"day: 0000010, at: 08:00, in: UTC, retry: 0 times every 0s",
 		},
-		{
-			"tuesday",
+		"tuesday": {
 			New().In("UTC").Tuesday(),
 			"day: 0000100, at: 08:00, in: UTC, retry: 0 times every 0s",
 		},
-		{
-			"wednesday",
+		"wednesday": {
 			New().In("UTC").Wednesday(),
 			"day: 0001000, at: 08:00, in: UTC, retry: 0 times every 0s",
 		},
-		{
-			"thursday",
+		"thursday": {
 			New().In("UTC").Thursday(),
 			"day: 0010000, at: 08:00, in: UTC, retry: 0 times every 0s",
 		},
-		{
-			"friday",
+		"friday": {
 			New().In("UTC").Friday(),
 			"day: 0100000, at: 08:00, in: UTC, retry: 0 times every 0s",
 		},
-		{
-			"saturday",
+		"saturday": {
 			New().In("UTC").Saturday(),
 			"day: 1000000, at: 08:00, in: UTC, retry: 0 times every 0s",
 		},
-		{
-			"weekdays",
+		"weekdays": {
 			New().In("UTC").Weekdays(),
 			"day: 0111110, at: 08:00, in: UTC, retry: 0 times every 0s",
 		},
-		{
-			"timezone",
+		"timezone": {
 			New().In("UTC").Monday().At("09:00").In("Europe/Paris"),
 			"day: 0000010, at: 09:00, in: Europe/Paris, retry: 0 times every 0s",
 		},
-		{
-			"retry case",
+		"retry case": {
 			New().In("UTC").Each(time.Minute * 10).Retry(time.Minute).MaxRetry(5),
 			"each: 10m0s, retry: 5 times every 1m0s",
 		},
-		{
-			"full case",
+		"full case": {
 			New().In("UTC").Weekdays().At("09:45").In("Europe/Paris").Retry(time.Minute).MaxRetry(5),
 			"day: 0111110, at: 09:45, in: Europe/Paris, retry: 5 times every 1m0s, in exclusive mode as `test` with 1m0s timeout",
 		},
-		{
-			"error case",
+		"error case": {
 			New().In("UTC").Weekdays().At("25:45"),
 			"day: 0111110, at: 08:00, in: UTC, retry: 0 times every 0s, error=`parsing time \"25:45\": hour out of range`",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			redisMock := mocks.NewSemaphore(ctrl)
 
-			if tc.intention == "full case" {
+			if intention == "full case" {
 				tc.cron.Exclusive(redisMock, "test", time.Minute)
 			}
 
@@ -108,22 +94,19 @@ func TestString(t *testing.T) {
 }
 
 func TestAt(t *testing.T) {
-	cases := []struct {
-		intention string
-		cron      *Cron
-		input     string
-		want      time.Time
-		wantErr   error
+	cases := map[string]struct {
+		cron    *Cron
+		input   string
+		want    time.Time
+		wantErr error
 	}{
-		{
-			"simple",
+		"simple": {
 			New(),
 			"12:00",
 			time.Date(0, 1, 1, 12, 0, 0, 0, time.UTC),
 			nil,
 		},
-		{
-			"invalid pattern",
+		"invalid pattern": {
 			New(),
 			"98:76",
 			New().dayTime,
@@ -131,8 +114,8 @@ func TestAt(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			tc.cron.At(tc.input)
 
 			failed := false
@@ -165,15 +148,13 @@ func TestIn(t *testing.T) {
 		tz string
 	}
 
-	cases := []struct {
-		intention string
-		instance  *Cron
-		args      args
-		want      time.Time
-		wantErr   error
+	cases := map[string]struct {
+		instance *Cron
+		args     args
+		want     time.Time
+		wantErr  error
 	}{
-		{
-			"invalid location",
+		"invalid location": {
 			New().At("08:00"),
 			args{
 				tz: "test",
@@ -181,8 +162,7 @@ func TestIn(t *testing.T) {
 			time.Date(0, 1, 1, 8, 0, 0, 0, time.UTC),
 			errors.New("unknown time zone test"),
 		},
-		{
-			"converted time",
+		"converted time": {
 			New().At("08:00"),
 			args{
 				tz: "Europe/Paris",
@@ -192,8 +172,8 @@ func TestIn(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			tc.instance.In(tc.args.tz)
 
 			failed := false
@@ -216,34 +196,30 @@ func TestIn(t *testing.T) {
 }
 
 func TestFindMatchingDay(t *testing.T) {
-	cases := []struct {
-		intention string
-		cron      *Cron
-		input     time.Time
-		want      time.Time
+	cases := map[string]struct {
+		cron  *Cron
+		input time.Time
+		want  time.Time
 	}{
-		{
-			"already good",
+		"already good": {
 			New().Tuesday().At("12:00"),
 			time.Date(2019, 10, 22, 12, 0, 0, 0, time.UTC),
 			time.Date(2019, 10, 22, 12, 0, 0, 0, time.UTC),
 		},
-		{
-			"shift a week",
+		"shift a week": {
 			New().Saturday().At("12:00"),
 			time.Date(2019, 10, 20, 12, 0, 0, 0, time.UTC),
 			time.Date(2019, 10, 26, 12, 0, 0, 0, time.UTC),
 		},
-		{
-			"next week",
+		"next week": {
 			New().Weekdays().At("12:00"),
 			time.Date(2019, 10, 19, 12, 0, 0, 0, time.UTC),
 			time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC),
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if result := tc.cron.findMatchingDay(tc.input); result.String() != tc.want.String() {
 				t.Errorf("findMatchingDay() = `%s`, want `%s`", result, tc.want)
 			}
@@ -252,57 +228,49 @@ func TestFindMatchingDay(t *testing.T) {
 }
 
 func TestGetTickerDuration(t *testing.T) {
-	cases := []struct {
-		intention string
-		cron      *Cron
-		clock     clock.Clock
-		input     bool
-		want      time.Duration
+	cases := map[string]struct {
+		cron  *Cron
+		clock clock.Clock
+		input bool
+		want  time.Duration
 	}{
-		{
-			"retry",
+		"retry": {
 			New().Retry(time.Minute),
 			clock.New(time.Time{}),
 			true,
 			time.Minute,
 		},
-		{
-			"no retry",
+		"no retry": {
 			New().Each(time.Hour).Retry(time.Minute),
 			clock.New(time.Time{}),
 			false,
 			time.Hour,
 		},
-		{
-			"each",
+		"each": {
 			New().Each(time.Hour),
 			clock.New(time.Time{}),
 			false,
 			time.Hour,
 		},
-		{
-			"same day",
+		"same day": {
 			New().Days().At("13:00").In("UTC"),
 			clock.New(time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC)),
 			false,
 			time.Hour,
 		},
-		{
-			"one week",
+		"one week": {
 			New().Monday().At("11:00").In("UTC"),
 			clock.New(time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC)),
 			false,
 			time.Hour * 167,
 		},
-		{
-			"another timezone",
+		"another timezone": {
 			New().Wednesday().At("12:00").In("EST"),
 			clock.New(time.Date(2019, 10, 23, 12, 0, 0, 0, time.UTC)),
 			false,
 			time.Hour * 5,
 		},
-		{
-			"hour shift",
+		"hour shift": {
 			New().Sunday().At("12:00").In("Europe/Paris"),
 			clock.New(time.Date(2019, 10, 26, 22, 0, 0, 0, time.UTC)),
 			false,
@@ -310,8 +278,8 @@ func TestGetTickerDuration(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			tc.cron.clock = tc.clock
 			result := tc.cron.getTickerDuration(tc.input)
 			if !reflect.DeepEqual(result, tc.want) {
@@ -322,50 +290,42 @@ func TestGetTickerDuration(t *testing.T) {
 }
 
 func TestHasError(t *testing.T) {
-	cases := []struct {
-		intention string
-		cron      *Cron
-		want      bool
+	cases := map[string]struct {
+		cron *Cron
+		want bool
 	}{
-		{
-			"empty cron",
+		"empty cron": {
 			New(),
 			true,
 		},
-		{
-			"empty with invalid value",
+		"empty with invalid value": {
 			New().At("98:76"),
 			true,
 		},
-		{
-			"empty with invalid timezone",
+		"empty with invalid timezone": {
 			New().In("Rainbow"),
 			true,
 		},
-		{
-			"days and interval",
+		"days and interval": {
 			New().Monday().Each(time.Minute),
 			true,
 		},
-		{
-			"retry without interval",
+		"retry without interval": {
 			New().Weekdays().MaxRetry(5),
 			true,
 		},
-		{
-			"cron with day config",
+		"cron with day config": {
 			New().Friday(),
 			false,
 		},
-		{
-			"cron with day config",
+		"cron with interval config": {
 			New().Each(time.Minute),
 			false,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if result := tc.cron.hasError(); result != tc.want {
 				t.Errorf("hasError() = %t, want %t", result, tc.want)
 			}
@@ -374,15 +334,13 @@ func TestHasError(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	cases := []struct {
-		intention string
-		cron      *Cron
-		clock     clock.Clock
-		action    func(*sync.WaitGroup, *Cron) func(context.Context) error
-		onError   func(*sync.WaitGroup, *Cron) func(error)
+	cases := map[string]struct {
+		cron    *Cron
+		clock   clock.Clock
+		action  func(*sync.WaitGroup, *Cron) func(context.Context) error
+		onError func(*sync.WaitGroup, *Cron) func(error)
 	}{
-		{
-			"run once",
+		"run once": {
 			New().Days().At("12:00"),
 			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
@@ -398,8 +356,7 @@ func TestStart(t *testing.T) {
 				}
 			},
 		},
-		{
-			"retry",
+		"retry": {
 			New().Days().At("12:00").Retry(time.Millisecond).MaxRetry(5),
 			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
@@ -418,8 +375,7 @@ func TestStart(t *testing.T) {
 				return func(err error) {}
 			},
 		},
-		{
-			"run on demand",
+		"run on demand": {
 			New().Days().At("12:00"),
 			clock.New(time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
@@ -436,8 +392,7 @@ func TestStart(t *testing.T) {
 				}
 			},
 		},
-		{
-			"run on signal",
+		"run on signal": {
 			New().Days().At("12:00").OnSignal(syscall.SIGUSR1),
 			clock.New(time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
@@ -464,8 +419,7 @@ func TestStart(t *testing.T) {
 				}
 			},
 		},
-		{
-			"run in exclusive error",
+		"run in exclusive error": {
 			New().Days().At("12:00"),
 			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
@@ -480,8 +434,7 @@ func TestStart(t *testing.T) {
 				}
 			},
 		},
-		{
-			"fail if misconfigured",
+		"fail if misconfigured": {
 			New(),
 			clock.New(time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
@@ -500,14 +453,14 @@ func TestStart(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			redisMock := mocks.NewSemaphore(ctrl)
 
-			if tc.intention == "run in exclusive error" {
+			if intention == "run in exclusive error" {
 				tc.cron.Exclusive(redisMock, "test", time.Minute)
 				redisMock.EXPECT().Exclusive(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(true, errors.New("redis error"))
 			}

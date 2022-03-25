@@ -13,19 +13,17 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      string
+	cases := map[string]struct {
+		want string
 	}{
-		{
-			"simple",
+		"simple": {
 			"Usage of simple:\n  -graceDuration string\n    \t[http] Grace duration when SIGTERM received {SIMPLE_GRACE_DURATION} (default \"30s\")\n  -okStatus int\n    \t[http] Healthy HTTP Status code {SIMPLE_OK_STATUS} (default 204)\n",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder
@@ -47,15 +45,13 @@ func TestHandler(t *testing.T) {
 	closedChan := make(chan struct{})
 	close(closedChan)
 
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		instance   App
 		request    *http.Request
 		want       string
 		wantStatus int
 	}{
-		{
-			"wrong method",
+		"wrong method": {
 			New(Config{
 				okStatus:      &okStatus,
 				graceDuration: &graceDuration,
@@ -64,8 +60,7 @@ func TestHandler(t *testing.T) {
 			"",
 			http.StatusMethodNotAllowed,
 		},
-		{
-			"simple",
+		"simple": {
 			New(Config{
 				okStatus:      &okStatus,
 				graceDuration: &graceDuration,
@@ -74,8 +69,7 @@ func TestHandler(t *testing.T) {
 			"",
 			okStatus,
 		},
-		{
-			"shutdown",
+		"shutdown": {
 			App{
 				okStatus:      okStatus,
 				graceDuration: time.Second,
@@ -85,8 +79,7 @@ func TestHandler(t *testing.T) {
 			"",
 			http.StatusServiceUnavailable,
 		},
-		{
-			"failing pinger",
+		"failing pinger": {
 			New(Config{
 				okStatus:      &okStatus,
 				graceDuration: &graceDuration,
@@ -97,8 +90,7 @@ func TestHandler(t *testing.T) {
 			"",
 			http.StatusServiceUnavailable,
 		},
-		{
-			"failing pinger on health",
+		"failing pinger on health": {
 			New(Config{
 				okStatus:      &okStatus,
 				graceDuration: &graceDuration,
@@ -111,8 +103,8 @@ func TestHandler(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			tc.instance.Handler().ServeHTTP(writer, tc.request)
 

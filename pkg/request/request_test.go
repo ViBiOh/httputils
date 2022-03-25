@@ -30,30 +30,26 @@ func safeWrite(writer io.Writer, content []byte) {
 }
 
 func TestString(t *testing.T) {
-	cases := []struct {
-		intention string
-		instance  Request
-		want      string
+	cases := map[string]struct {
+		instance Request
+		want     string
 	}{
-		{
-			"simple",
+		"simple": {
 			New(),
 			"GET",
 		},
-		{
-			"basic auth",
+		"basic auth": {
 			Post("http://localhost").BasicAuth("admin", "password").ContentType("text/plain"),
 			"POST http://localhost, BasicAuth with user `%s`admin, Header Content-Type: `text/plain`",
 		},
-		{
-			"signature auth",
+		"signature auth": {
 			Post("http://localhost").WithSignatureAuthorization("secret", []byte("password")),
 			"POST http://localhost, SignatureAuthorization with key `secret`",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := tc.instance.String(); got != tc.want {
 				t.Errorf("String() = `%s`, want `%s`", got, tc.want)
 			}
@@ -62,25 +58,22 @@ func TestString(t *testing.T) {
 }
 
 func TestIsZero(t *testing.T) {
-	cases := []struct {
-		intention string
-		instance  Request
-		want      bool
+	cases := map[string]struct {
+		instance Request
+		want     bool
 	}{
-		{
-			"empty",
+		"empty": {
 			New(),
 			true,
 		},
-		{
-			"simple",
+		"simple": {
 			New().Get("/"),
 			false,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := tc.instance.IsZero(); got != tc.want {
 				t.Errorf("IsZero() = %t, want %t", got, tc.want)
 			}
@@ -93,46 +86,40 @@ func TestPath(t *testing.T) {
 		path string
 	}
 
-	cases := []struct {
-		intention string
-		instance  Request
-		args      args
-		want      Request
+	cases := map[string]struct {
+		instance Request
+		args     args
+		want     Request
 	}{
-		{
-			"empty",
+		"empty": {
 			Get("http://localhost"),
 			args{
 				path: "",
 			},
 			Get("http://localhost"),
 		},
-		{
-			"no prefix",
+		"no prefix": {
 			Put("http://localhost"),
 			args{
 				path: "hello",
 			},
 			Put("http://localhost/hello"),
 		},
-		{
-			"trailing slash url",
+		"trailing slash url": {
 			Post("http://localhost/"),
 			args{
 				path: "hello",
 			},
 			Post("http://localhost/hello"),
 		},
-		{
-			"prefix path",
+		"prefix path": {
 			Patch("http://localhost"),
 			args{
 				path: "/hello",
 			},
 			Patch("http://localhost/hello"),
 		},
-		{
-			"full slash",
+		"full slash": {
 			Delete("http://localhost/"),
 			args{
 				path: "/hello",
@@ -141,8 +128,8 @@ func TestPath(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := tc.instance.Path(tc.args.path); !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("Path() = %#v, want %#v", got, tc.want)
 			}
@@ -224,128 +211,112 @@ func TestSend(t *testing.T) {
 
 	defaultHTTPClient = CreateClient(time.Second, NoRedirection)
 
-	cases := []struct {
-		intention string
-		request   Request
-		ctx       context.Context
-		payload   io.ReadCloser
-		want      string
-		wantErr   error
+	cases := map[string]struct {
+		request Request
+		ctx     context.Context
+		payload io.ReadCloser
+		want    string
+		wantErr error
 	}{
-		{
-			"simple get",
+		"simple get": {
 			New().Get(testServer.URL + "/simple"),
 			context.Background(),
 			nil,
 			"it works!",
 			nil,
 		},
-		{
-			"simple post",
+		"simple post": {
 			New().Post(testServer.URL + "/simple"),
 			context.Background(),
 			io.NopCloser(strings.NewReader("posted")),
 			"it posts!",
 			nil,
 		},
-		{
-			"simple put",
+		"simple put": {
 			New().Put(testServer.URL + "/simple"),
 			context.Background(),
 			io.NopCloser(strings.NewReader("puted")),
 			"it puts!",
 			nil,
 		},
-		{
-			"simple patch",
+		"simple patch": {
 			New().Patch(testServer.URL + "/simple"),
 			context.Background(),
 			io.NopCloser(strings.NewReader("patched")),
 			"it patches!",
 			nil,
 		},
-		{
-			"simple delete",
+		"simple delete": {
 			New().Delete(testServer.URL + "/simple"),
 			context.Background(),
 			nil,
 			"it deletes!",
 			nil,
 		},
-		{
-			"with auth",
+		"with auth": {
 			New().Get(testServer.URL+"/protected").BasicAuth("admin", "secret"),
 			context.Background(),
 			nil,
 			"connected!",
 			nil,
 		},
-		{
-			"with header",
+		"with header": {
 			New().Get(testServer.URL+"/accept").Header("Accept", "text/plain"),
 			context.Background(),
 			nil,
 			"text me!",
 			nil,
 		},
-		{
-			"with client",
+		"with client": {
 			New().Get(testServer.URL + "/client").WithClient(&http.Client{}),
 			context.Background(),
 			nil,
 			"",
 			nil,
 		},
-		{
-			"invalid request",
+		"invalid request": {
 			New().Get(testServer.URL + "/invalid"),
 			nil,
 			nil,
 			"",
 			errors.New("net/http: nil Context"),
 		},
-		{
-			"invalid status code",
+		"invalid status code": {
 			New().Get(testServer.URL + "/invalid"),
 			context.Background(),
 			nil,
 			"",
 			errors.New("HTTP/500"),
 		},
-		{
-			"invalid status code with payload",
+		"invalid status code with payload": {
 			New().Get(testServer.URL + "/explain"),
 			context.Background(),
 			nil,
 			"",
 			errors.New("HTTP/400"),
 		},
-		{
-			"invalid status code with long payload",
+		"invalid status code with long payload": {
 			New().Get(testServer.URL + "/long_explain"),
 			context.Background(),
 			nil,
 			"",
 			errors.New("Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipisicing e"),
 		},
-		{
-			"don't redirect",
+		"don't redirect": {
 			New().Get(testServer.URL + "/redirect"),
 			context.Background(),
 			nil,
 			"",
 			nil,
 		},
-		{
-			"timeout",
+		"timeout": {
 			New().Get(testServer.URL + "/timeout"),
 			context.Background(),
 			nil,
 			"",
 			errors.New("context deadline exceeded (Client.Timeout exceeded while awaiting headers)"),
 		},
-		{
-			"signed",
+		"signed": {
 			New().Post(testServer.URL+"/signed").WithSignatureAuthorization("httputils", []byte(`secret`)),
 			context.Background(),
 			io.NopCloser(strings.NewReader(`It works!`)),
@@ -354,8 +325,8 @@ func TestSend(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			resp, err := tc.request.Send(tc.ctx, tc.payload)
 			result, _ := ReadBodyResponse(resp)
 
@@ -390,16 +361,14 @@ func TestForm(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	cases := []struct {
-		intention string
-		request   Request
-		ctx       context.Context
-		payload   url.Values
-		want      string
-		wantErr   error
+	cases := map[string]struct {
+		request Request
+		ctx     context.Context
+		payload url.Values
+		want    string
+		wantErr error
 	}{
-		{
-			"simple",
+		"simple": {
 			New().Post(testServer.URL + "/simple"),
 			context.Background(),
 			url.Values{
@@ -411,8 +380,8 @@ func TestForm(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			resp, err := tc.request.Form(tc.ctx, tc.payload)
 			result, _ := ReadBodyResponse(resp)
 
@@ -449,24 +418,21 @@ func TestJSON(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	cases := []struct {
-		intention string
-		request   Request
-		ctx       context.Context
-		payload   any
-		want      string
-		wantErr   error
+	cases := map[string]struct {
+		request Request
+		ctx     context.Context
+		payload any
+		want    string
+		wantErr error
 	}{
-		{
-			"simple",
+		"simple": {
 			New().Post(testServer.URL + "/simple"),
 			context.Background(),
 			testStruct{id: "Test", Active: true, Amount: 12.34},
 			"valid",
 			nil,
 		},
-		{
-			"invalid",
+		"invalid": {
 			New().Post(testServer.URL + "/simple"),
 			context.Background(),
 			func() {},
@@ -475,8 +441,8 @@ func TestJSON(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			resp, err := tc.request.JSON(tc.ctx, tc.payload)
 			result, _ := ReadBodyResponse(resp)
 
@@ -500,26 +466,22 @@ func TestJSON(t *testing.T) {
 }
 
 func TestDiscardBody(t *testing.T) {
-	cases := []struct {
-		intention string
-		wantErr   error
+	cases := map[string]struct {
+		wantErr error
 	}{
-		{
-			"read error",
+		"read error": {
 			errors.New("read error"),
 		},
-		{
-			"close error",
+		"close error": {
 			errors.New("close error"),
 		},
-		{
-			"valid",
+		"valid": {
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -527,7 +489,7 @@ func TestDiscardBody(t *testing.T) {
 
 			body := mockReadCloser
 
-			switch tc.intention {
+			switch intention {
 			case "read error":
 				mockReadCloser.EXPECT().Read(gomock.Any()).Return(0, errors.New("read error"))
 				mockReadCloser.EXPECT().Close().Return(nil)

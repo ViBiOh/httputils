@@ -9,13 +9,11 @@ func TestNew(t *testing.T) {
 
 	value := "test"
 
-	cases := []struct {
-		intention string
-		args      args
-		want      string
+	cases := map[string]struct {
+		args args
+		want string
 	}{
-		{
-			"simple",
+		"simple": {
 			args{
 				o: value,
 			},
@@ -23,8 +21,8 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := New(tc.args.o); got != tc.want {
 				t.Errorf("New() = `%s`, want `%s`", got, tc.want)
 			}
@@ -39,27 +37,23 @@ func TestStream(t *testing.T) {
 
 	value := "test"
 
-	cases := []struct {
-		intention string
-		args      args
-		want      string
+	cases := map[string]struct {
+		args args
+		want string
 	}{
-		{
-			"empty",
+		"empty": {
 			args{
 				o: nil,
 			},
 			"da39a3ee5e6b4b0d3255bfef95601890afd80709",
 		},
-		{
-			"simple",
+		"simple": {
 			args{
 				o: []any{value},
 			},
 			"5006d6f8302000e8b87fef5c50c071d6d97b4e88",
 		},
-		{
-			"multiple",
+		"multiple": {
 			args{
 				o: []any{value, value},
 			},
@@ -67,8 +61,8 @@ func TestStream(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			stream := Stream()
 
 			for _, item := range tc.args.o {

@@ -7,19 +7,17 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      string
+	cases := map[string]struct {
+		want string
 	}{
-		{
-			"simple",
+		"simple": {
 			"Usage of simple:\n  -address string\n    \t[redis] Redis Address (blank to disable) {SIMPLE_ADDRESS} (default \"localhost:6379\")\n  -alias string\n    \t[redis] Connection alias, for metric {SIMPLE_ALIAS}\n  -database int\n    \t[redis] Redis Database {SIMPLE_DATABASE}\n  -password string\n    \t[redis] Redis Password, if any {SIMPLE_PASSWORD}\n  -username string\n    \t[redis] Redis Username, if any {SIMPLE_USERNAME}\n",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder

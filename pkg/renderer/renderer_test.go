@@ -18,19 +18,17 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      string
+	cases := map[string]struct {
+		want string
 	}{
-		{
-			"simple",
+		"simple": {
 			"Usage of simple:\n  -minify\n    \tMinify HTML {SIMPLE_MINIFY} (default true)\n  -pathPrefix string\n    \tRoot Path Prefix {SIMPLE_PATH_PREFIX}\n  -publicURL string\n    \tPublic URL {SIMPLE_PUBLIC_URL} (default \"http://localhost:1080\")\n  -title string\n    \tApplication title {SIMPLE_TITLE} (default \"App\")\n",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder
@@ -51,34 +49,29 @@ func TestIsStaticRootPaths(t *testing.T) {
 		requestPath string
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      bool
+	cases := map[string]struct {
+		args args
+		want bool
 	}{
-		{
-			"empty",
+		"empty": {
 			args{
 				requestPath: "/",
 			},
 			false,
 		},
-		{
-			"robots",
+		"robots": {
 			args{
 				requestPath: "/robots.txt",
 			},
 			true,
 		},
-		{
-			"sitemap",
+		"sitemap": {
 			args{
 				requestPath: "/sitemap.xml",
 			},
 			true,
 		},
-		{
-			"subpath",
+		"subpath": {
 			args{
 				requestPath: "/test/sitemap.xml",
 			},
@@ -86,8 +79,8 @@ func TestIsStaticRootPaths(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := isStaticPaths(tc.args.requestPath); got != tc.want {
 				t.Errorf("isStaticPaths() = %t, want %t", got, tc.want)
 			}
@@ -100,22 +93,19 @@ func TestFeedContent(t *testing.T) {
 		content map[string]any
 	}
 
-	cases := []struct {
-		intention string
-		instance  App
-		args      args
-		want      map[string]any
+	cases := map[string]struct {
+		instance App
+		args     args
+		want     map[string]any
 	}{
-		{
-			"empty",
+		"empty": {
 			App{},
 			args{
 				content: nil,
 			},
 			make(map[string]any),
 		},
-		{
-			"merge",
+		"merge": {
 			App{
 				content: map[string]any{
 					"Version": "test",
@@ -131,8 +121,7 @@ func TestFeedContent(t *testing.T) {
 				"Name":    "Hello World",
 			},
 		},
-		{
-			"no overwrite",
+		"no overwrite": {
 			App{
 				content: map[string]any{
 					"Title": "test",
@@ -149,8 +138,8 @@ func TestFeedContent(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := tc.instance.feedContent(tc.args.content); !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("feedContent() = %v, want %v", tc.args.content, tc.want)
 			}
@@ -188,8 +177,7 @@ func TestHandler(t *testing.T) {
 		t.Error(err)
 	}
 
-	cases := []struct {
-		intention    string
+	cases := map[string]struct {
 		instance     App
 		request      *http.Request
 		templateFunc TemplateFunc
@@ -197,8 +185,7 @@ func TestHandler(t *testing.T) {
 		wantStatus   int
 		wantHeader   http.Header
 	}{
-		{
-			"empty app",
+		"empty app": {
 			App{},
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			nil,
@@ -206,8 +193,7 @@ func TestHandler(t *testing.T) {
 			http.StatusNotFound,
 			http.Header{},
 		},
-		{
-			"favicon",
+		"favicon": {
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, "/images/favicon/manifest.json", nil),
 			nil,
@@ -215,8 +201,7 @@ func TestHandler(t *testing.T) {
 			http.StatusOK,
 			http.Header{},
 		},
-		{
-			"svg",
+		"svg": {
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, "/svg/test?fill=black", nil),
 			nil,
@@ -224,8 +209,7 @@ func TestHandler(t *testing.T) {
 			http.StatusOK,
 			http.Header{},
 		},
-		{
-			"svg with prefix",
+		"svg with prefix": {
 			configuredPrefixApp,
 			httptest.NewRequest(http.MethodGet, "/app/svg/test?fill=black", nil),
 			nil,
@@ -233,8 +217,7 @@ func TestHandler(t *testing.T) {
 			http.StatusOK,
 			http.Header{},
 		},
-		{
-			"svg not found",
+		"svg not found": {
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, "/svg/unknown?fill=black", nil),
 			nil,
@@ -242,8 +225,7 @@ func TestHandler(t *testing.T) {
 			http.StatusNotFound,
 			http.Header{},
 		},
-		{
-			"html",
+		"html": {
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			func(_ http.ResponseWriter, _ *http.Request) (Page, error) {
@@ -257,8 +239,7 @@ func TestHandler(t *testing.T) {
 			http.StatusCreated,
 			http.Header{},
 		},
-		{
-			"message",
+		"message": {
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, fmt.Sprintf("/?%s", NewSuccessMessage("Hello world")), nil),
 			func(_ http.ResponseWriter, _ *http.Request) (Page, error) {
@@ -272,8 +253,7 @@ func TestHandler(t *testing.T) {
 			http.StatusUnauthorized,
 			http.Header{},
 		},
-		{
-			"error",
+		"error": {
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			func(_ http.ResponseWriter, _ *http.Request) (Page, error) {
@@ -289,8 +269,8 @@ func TestHandler(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			tc.instance.Handler(tc.templateFunc).ServeHTTP(writer, tc.request)
 

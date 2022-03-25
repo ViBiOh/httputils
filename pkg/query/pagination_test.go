@@ -15,14 +15,12 @@ func TestLinkNextHeader(t *testing.T) {
 		extraArgs url.Values
 	}
 
-	cases := []struct {
-		intention string
-		instance  Pagination
-		args      args
-		want      string
+	cases := map[string]struct {
+		instance Pagination
+		args     args
+		want     string
 	}{
-		{
-			"empty",
+		"empty": {
 			Pagination{
 				Last:     "8000",
 				PageSize: 20,
@@ -32,8 +30,7 @@ func TestLinkNextHeader(t *testing.T) {
 			},
 			`</list?last=8000&pageSize=20>; rel="next"`,
 		},
-		{
-			"extra empty",
+		"extra empty": {
 			Pagination{
 				Last:     "8000",
 				PageSize: 20,
@@ -46,8 +43,7 @@ func TestLinkNextHeader(t *testing.T) {
 			},
 			`</list?desc=true&last=8000&pageSize=20&sort=id>; rel="next"`,
 		},
-		{
-			"extra args",
+		"extra args": {
 			Pagination{
 				Last:     "8000",
 				PageSize: 20,
@@ -62,8 +58,8 @@ func TestLinkNextHeader(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := tc.instance.LinkNextHeader(tc.args.urlPath, tc.args.extraArgs); got != tc.want {
 				t.Errorf("LinkNextHeader() = `%s`, want `%s`", got, tc.want)
 			}
@@ -72,16 +68,14 @@ func TestLinkNextHeader(t *testing.T) {
 }
 
 func TestParsePagination(t *testing.T) {
-	cases := []struct {
-		intention       string
+	cases := map[string]struct {
 		request         *http.Request
 		defaultPageSize uint
 		maxPageSize     uint
 		want            Pagination
 		wantErr         error
 	}{
-		{
-			"simple",
+		"simple": {
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			20,
 			100,
@@ -90,8 +84,7 @@ func TestParsePagination(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"simple value",
+		"simple value": {
 			httptest.NewRequest(http.MethodGet, "/?pageSize=50&sort=name&desc", nil),
 			20,
 			100,
@@ -102,8 +95,7 @@ func TestParsePagination(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"invalid pageSize",
+		"invalid pageSize": {
 			httptest.NewRequest(http.MethodGet, "/?pageSize=invalid", nil),
 			20,
 			100,
@@ -112,8 +104,7 @@ func TestParsePagination(t *testing.T) {
 			},
 			ErrInvalidValue,
 		},
-		{
-			"too high pageSize",
+		"too high pageSize": {
 			httptest.NewRequest(http.MethodGet, "/?pageSize=150", nil),
 			20,
 			100,
@@ -122,8 +113,7 @@ func TestParsePagination(t *testing.T) {
 			},
 			ErrMaxPageSizeExceeded,
 		},
-		{
-			"invalid pageSize number",
+		"invalid pageSize number": {
 			httptest.NewRequest(http.MethodGet, "/?pageSize=0", nil),
 			20,
 			100,
@@ -132,8 +122,7 @@ func TestParsePagination(t *testing.T) {
 			},
 			ErrPageSizeInvalid,
 		},
-		{
-			"sort",
+		"sort": {
 			httptest.NewRequest(http.MethodGet, "/?sort=name", nil),
 			20,
 			100,
@@ -143,8 +132,7 @@ func TestParsePagination(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"order",
+		"order": {
 			httptest.NewRequest(http.MethodGet, "/?desc", nil),
 			20,
 			100,
@@ -154,8 +142,7 @@ func TestParsePagination(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"order with value",
+		"order with value": {
 			httptest.NewRequest(http.MethodGet, "/?desc=false", nil),
 			20,
 			100,
@@ -164,8 +151,7 @@ func TestParsePagination(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"last key",
+		"last key": {
 			httptest.NewRequest(http.MethodGet, "/?last=8000", nil),
 			20,
 			100,
@@ -175,8 +161,7 @@ func TestParsePagination(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"error",
+		"error": {
 			&http.Request{
 				URL: &url.URL{
 					RawQuery: "/%1",
@@ -189,8 +174,8 @@ func TestParsePagination(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			result, err := ParsePagination(tc.request, tc.defaultPageSize, tc.maxPageSize)
 
 			failed := false

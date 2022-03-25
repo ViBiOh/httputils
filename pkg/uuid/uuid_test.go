@@ -6,20 +6,18 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      string
-		wantErr   error
+	cases := map[string]struct {
+		want    string
+		wantErr error
 	}{
-		{
-			"simple",
+		"simple": {
 			"f6a89f66-bece-4c93-85e5-4da6831b28fb",
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			got, gotErr := New()
 
 			failed := false

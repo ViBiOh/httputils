@@ -10,8 +10,7 @@ import (
 )
 
 func TestRedirect(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		instance   App
 		request    *http.Request
 		path       string
@@ -20,8 +19,7 @@ func TestRedirect(t *testing.T) {
 		wantStatus int
 		wantHeader http.Header
 	}{
-		{
-			"simple",
+		"simple": {
 			App{},
 			httptest.NewRequest(http.MethodGet, "http://vibioh.fr/", nil),
 			"/",
@@ -32,8 +30,7 @@ func TestRedirect(t *testing.T) {
 				"Location": []string{fmt.Sprintf("/?%s", NewSuccessMessage("Created with success"))},
 			},
 		},
-		{
-			"relative URL",
+		"relative URL": {
 			App{},
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success?refresh=true",
@@ -44,8 +41,7 @@ func TestRedirect(t *testing.T) {
 				"Location": []string{fmt.Sprintf("/success?refresh=true&%s", NewSuccessMessage("Created with success"))},
 			},
 		},
-		{
-			"path prefix",
+		"path prefix": {
 			App{
 				pathPrefix: "/app",
 			},
@@ -58,8 +54,7 @@ func TestRedirect(t *testing.T) {
 				"Location": []string{fmt.Sprintf("/app/success?%s", NewSuccessMessage("Created with success"))},
 			},
 		},
-		{
-			"anchor",
+		"anchor": {
 			App{},
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success#id",
@@ -70,8 +65,7 @@ func TestRedirect(t *testing.T) {
 				"Location": []string{fmt.Sprintf("/success?%s#id", NewSuccessMessage("Created with success"))},
 			},
 		},
-		{
-			"anchor and query",
+		"anchor and query": {
 			App{},
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success?refresh=true#id",
@@ -84,8 +78,8 @@ func TestRedirect(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			tc.instance.Redirect(writer, tc.request, tc.path, tc.message)
 

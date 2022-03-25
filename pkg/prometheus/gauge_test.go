@@ -17,18 +17,15 @@ func TestGaugeVec(t *testing.T) {
 		labels    []string
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      string
+	cases := map[string]struct {
+		args args
+		want string
 	}{
-		{
-			"nil",
+		"nil": {
 			args{},
 			"",
 		},
-		{
-			"simple",
+		"simple": {
 			args{
 				registry:  prometheus.NewRegistry(),
 				namespace: "test",
@@ -40,8 +37,8 @@ func TestGaugeVec(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			counter := GaugeVec(tc.args.registry, tc.args.namespace, tc.args.subsystem, tc.args.name, tc.args.labels...)
 
 			var buffer strings.Builder

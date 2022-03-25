@@ -11,40 +11,35 @@ func TestComputeSynchro(t *testing.T) {
 	simple := NewSource(nil, Identity, nil)
 	simple.currentKey = "AAAAA00000"
 
-	cases := []struct {
-		intention string
-		instance  *Source[string]
-		input     string
-		want      bool
+	cases := map[string]struct {
+		instance *Source[string]
+		input    string
+		want     bool
 	}{
-		{
-			"simple",
+		"simple": {
 			simple,
 			"AAAAA00000",
 			true,
 		},
-		{
-			"substring",
+		"substring": {
 			simple,
 			"AAAAA",
 			true,
 		},
-		{
-			"extrastring",
+		"extrastring": {
 			simple,
 			"AAAAA00000zzzzz",
 			true,
 		},
-		{
-			"unmatch",
+		"unmatch": {
 			simple,
 			"AAAAA00001",
 			false,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			tc.instance.ComputeSynchro(tc.input)
 			if tc.instance.synchronized != tc.want {
 				t.Errorf("computeSynchro() = %t, want %t", tc.instance.synchronized, tc.want)
@@ -68,8 +63,7 @@ func TestSourceRead(t *testing.T) {
 	copyEnd.next = "Golang Test"
 	copyEnd.nextKey = "Golang"
 
-	cases := []struct {
-		intention      string
+	cases := map[string]struct {
 		instance       *Source[string]
 		want           error
 		wantCurrent    any
@@ -77,8 +71,7 @@ func TestSourceRead(t *testing.T) {
 		wantNext       any
 		wantNextKey    string
 	}{
-		{
-			"copy next in current",
+		"copy next in current": {
 			copyErr,
 			errRead,
 			"Golang Test",
@@ -86,8 +79,7 @@ func TestSourceRead(t *testing.T) {
 			"Golang Test",
 			"Golang",
 		},
-		{
-			"error",
+		"error": {
 			NewSource(func() (string, error) {
 				return "", errRead
 			}, Identity, nil),
@@ -97,8 +89,7 @@ func TestSourceRead(t *testing.T) {
 			"",
 			"",
 		},
-		{
-			"success",
+		"success": {
 			NewSource(func() (string, error) {
 				return "Gopher", io.EOF
 			}, Identity, nil),
@@ -108,8 +99,7 @@ func TestSourceRead(t *testing.T) {
 			"Gopher",
 			finalValue,
 		},
-		{
-			"end",
+		"end": {
 			copyEnd,
 			nil,
 			"Golang Test",
@@ -119,8 +109,8 @@ func TestSourceRead(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			err := tc.instance.read()
 
 			if tc.want != nil && !errors.Is(err, tc.want) {

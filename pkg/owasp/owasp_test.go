@@ -10,19 +10,17 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      string
+	cases := map[string]struct {
+		want string
 	}{
-		{
-			"simple",
+		"simple": {
 			"Usage of simple:\n  -csp string\n    \t[owasp] Content-Security-Policy {SIMPLE_CSP} (default \"default-src 'self'; base-uri 'self'\")\n  -frameOptions string\n    \t[owasp] X-Frame-Options {SIMPLE_FRAME_OPTIONS} (default \"deny\")\n  -hsts\n    \t[owasp] Indicate Strict Transport Security {SIMPLE_HSTS} (default true)\n",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder
@@ -39,12 +37,10 @@ func TestFlags(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      App
+	cases := map[string]struct {
+		want App
 	}{
-		{
-			"simple",
+		"simple": {
 			App{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         true,
@@ -53,9 +49,9 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 
 			if result := New(Flags(fs, "")); !reflect.DeepEqual(result, tc.want) {
 				t.Errorf("New() = %#v, want %#v", result, tc.want)
@@ -65,16 +61,14 @@ func TestNew(t *testing.T) {
 }
 
 func TestMiddleware(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		app        App
 		next       http.Handler
 		request    *http.Request
 		wantStatus int
 		wantHeader http.Header
 	}{
-		{
-			"simple",
+		"simple": {
 			App{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
@@ -92,8 +86,7 @@ func TestMiddleware(t *testing.T) {
 				"X-Permitted-Cross-Domain-Policies": []string{"none"},
 			},
 		},
-		{
-			"no value",
+		"no value": {
 			App{
 				csp:          "",
 				hsts:         false,
@@ -109,8 +102,7 @@ func TestMiddleware(t *testing.T) {
 				"X-Permitted-Cross-Domain-Policies": []string{"none"},
 			},
 		},
-		{
-			"hsts",
+		"hsts": {
 			App{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         true,
@@ -129,8 +121,7 @@ func TestMiddleware(t *testing.T) {
 				"Strict-Transport-Security":         []string{"max-age=10886400"},
 			},
 		},
-		{
-			"next",
+		"next": {
 			App{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
@@ -150,8 +141,7 @@ func TestMiddleware(t *testing.T) {
 				"X-Permitted-Cross-Domain-Policies": []string{"none"},
 			},
 		},
-		{
-			"nonce",
+		"nonce": {
 			App{
 				csp:          "default-src 'self'; base-uri 'self'; script-src 'self' 'httputils-nonce'",
 				hsts:         false,
@@ -173,8 +163,8 @@ func TestMiddleware(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			tc.app.Middleware(tc.next).ServeHTTP(writer, tc.request)
 

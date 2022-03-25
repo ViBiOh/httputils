@@ -11,18 +11,15 @@ import (
 )
 
 func TestEnabled(t *testing.T) {
-	cases := []struct {
-		intention string
-		instance  *Client
-		want      bool
+	cases := map[string]struct {
+		instance *Client
+		want     bool
 	}{
-		{
-			"empty",
+		"empty": {
 			&Client{},
 			false,
 		},
-		{
-			"connection",
+		"connection": {
 			&Client{
 				connection: &amqp.Connection{},
 			},
@@ -30,8 +27,8 @@ func TestEnabled(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := tc.instance.Enabled(); got != tc.want {
 				t.Errorf("Enabled() = %t, want %t", got, tc.want)
 			}
@@ -40,31 +37,28 @@ func TestEnabled(t *testing.T) {
 }
 
 func TestPing(t *testing.T) {
-	cases := []struct {
-		intention string
-		instance  *Client
-		want      error
+	cases := map[string]struct {
+		instance *Client
+		want     error
 	}{
-		{
-			"empty",
+		"empty": {
 			&Client{},
 			nil,
 		},
-		{
-			"not opened",
+		"not opened": {
 			&Client{},
 			errors.New("amqp client closed"),
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mockAMQPConnection := mocks.NewAMQPConnection(ctrl)
 
-			switch tc.intention {
+			switch intention {
 			case "not opened":
 				tc.instance.connection = mockAMQPConnection
 				mockAMQPConnection.EXPECT().IsClosed().Return(true)

@@ -10,19 +10,17 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      string
+	cases := map[string]struct {
+		want string
 	}{
-		{
-			"simple",
+		"simple": {
 			"Usage of simple:\n  -credentials\n    \t[cors] Access-Control-Allow-Credentials {SIMPLE_CREDENTIALS}\n  -expose string\n    \t[cors] Access-Control-Expose-Headers {SIMPLE_EXPOSE}\n  -headers string\n    \t[cors] Access-Control-Allow-Headers {SIMPLE_HEADERS} (default \"Content-Type\")\n  -methods string\n    \t[cors] Access-Control-Allow-Methods {SIMPLE_METHODS} (default \"GET\")\n  -origin string\n    \t[cors] Access-Control-Allow-Origin {SIMPLE_ORIGIN} (default \"*\")\n",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder
@@ -39,12 +37,10 @@ func TestFlags(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      App
+	cases := map[string]struct {
+		want App
 	}{
-		{
-			"simple",
+		"simple": {
 			App{
 				origin:      "*",
 				headers:     "Content-Type",
@@ -54,9 +50,9 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 
 			if result := New(Flags(fs, "")); !reflect.DeepEqual(result, tc.want) {
 				t.Errorf("New() = %#v, want %#v", result, tc.want)
@@ -66,16 +62,14 @@ func TestNew(t *testing.T) {
 }
 
 func TestMiddleware(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		app        App
 		next       http.Handler
 		request    *http.Request
 		want       int
 		wantHeader http.Header
 	}{
-		{
-			"default param",
+		"default param": {
 			App{
 				origin:      "*",
 				headers:     "Content-Type",
@@ -93,8 +87,7 @@ func TestMiddleware(t *testing.T) {
 				"Access-Control-Allow-Credentials": []string{"true"},
 			},
 		},
-		{
-			"default param",
+		"edited param": {
 			App{
 				origin:      "*",
 				headers:     "Content-Type,Authorization",
@@ -117,8 +110,8 @@ func TestMiddleware(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 
 			tc.app.Middleware(tc.next).ServeHTTP(writer, tc.request)

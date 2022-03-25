@@ -76,14 +76,12 @@ func TestFailFastGo(t *testing.T) {
 		funcs []func() error
 	}
 
-	cases := []struct {
-		intention string
-		instance  *FailFast
-		args      args
-		wantErr   error
+	cases := map[string]struct {
+		instance *FailFast
+		args     args
+		wantErr  error
 	}{
-		{
-			"no error",
+		"no error": {
 			NewFailFast(2),
 			args{
 				funcs: []func() error{
@@ -93,8 +91,7 @@ func TestFailFastGo(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"simple",
+		"simple": {
 			NewFailFast(2),
 			args{
 				funcs: []func() error{
@@ -104,8 +101,7 @@ func TestFailFastGo(t *testing.T) {
 			},
 			errors.New("failed one"),
 		},
-		{
-			"two errors",
+		"two errors": {
 			NewFailFast(1),
 			args{
 				funcs: []func() error{
@@ -117,9 +113,9 @@ func TestFailFastGo(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			if tc.intention != "no error" {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			if intention != "no error" {
 				tc.instance.WithContext(context.Background())
 			}
 

@@ -11,22 +11,20 @@ import (
 )
 
 func TestBadRequest(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		err        error
 		want       string
 		wantStatus int
 	}{
-		{
-			"should set body and status",
+		"should set body and status": {
 			errors.New("bad request"),
 			"bad request\n",
 			http.StatusBadRequest,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			BadRequest(writer, tc.err)
 
@@ -42,22 +40,20 @@ func TestBadRequest(t *testing.T) {
 }
 
 func TestUnauthorized(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		err        error
 		want       string
 		wantStatus int
 	}{
-		{
-			"should set body and status",
+		"should set body and status": {
 			errors.New("unauthorized"),
 			"unauthorized\n",
 			http.StatusUnauthorized,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			Unauthorized(writer, tc.err)
 
@@ -73,20 +69,18 @@ func TestUnauthorized(t *testing.T) {
 }
 
 func TestForbidden(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		want       string
 		wantStatus int
 	}{
-		{
-			"should set body and status",
+		"should set body and status": {
 			"⛔️\n",
 			http.StatusForbidden,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			Forbidden(writer)
 
@@ -102,20 +96,18 @@ func TestForbidden(t *testing.T) {
 }
 
 func TestNotFound(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		want       string
 		wantStatus int
 	}{
-		{
-			"should set body and status",
+		"should set body and status": {
 			"¯\\_(ツ)_/¯\n",
 			http.StatusNotFound,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			NotFound(writer)
 
@@ -131,22 +123,20 @@ func TestNotFound(t *testing.T) {
 }
 
 func TestInternalServerError(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		err        error
 		want       string
 		wantStatus int
 	}{
-		{
-			"should set body and status",
+		"should set body and status": {
 			errors.New("failed to do something"),
 			"Oops! Something went wrong. Server's logs contain more details.\n",
 			http.StatusInternalServerError,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			InternalServerError(writer, tc.err)
 
@@ -162,57 +152,49 @@ func TestInternalServerError(t *testing.T) {
 }
 
 func TestHandleError(t *testing.T) {
-	cases := []struct {
-		intention   string
+	cases := map[string]struct {
 		err         error
 		want        bool
 		wantStatus  int
 		wantMessage string
 	}{
-		{
-			"no error",
+		"no error": {
 			nil,
 			false,
 			http.StatusOK,
 			"",
 		},
-		{
-			"invalid",
+		"invalid valud": {
 			model.WrapInvalid(errors.New("invalid value")),
 			true,
 			http.StatusBadRequest,
 			"invalid value: invalid\n",
 		},
-		{
-			"invalid",
+		"invalid auth": {
 			model.WrapUnauthorized(errors.New("invalid auth")),
 			true,
 			http.StatusUnauthorized,
 			"invalid auth: unauthorized\n",
 		},
-		{
-			"invalid",
+		"invalid creds": {
 			model.WrapForbidden(errors.New("invalid credentials")),
 			true,
 			http.StatusForbidden,
 			"invalid credentials: forbidden\n",
 		},
-		{
-			"not found",
+		"not found": {
 			model.WrapNotFound(errors.New("unknown id")),
 			true,
 			http.StatusNotFound,
 			"¯\\_(ツ)_/¯\n",
 		},
-		{
-			"method not allowed",
+		"method not allowed": {
 			model.WrapMethodNotAllowed(errors.New("unknown method")),
 			true,
 			http.StatusMethodNotAllowed,
 			"unknown method: method not allowed\n",
 		},
-		{
-			"internal server error",
+		"internal server error": {
 			errors.New("bool"),
 			true,
 			http.StatusInternalServerError,
@@ -220,8 +202,8 @@ func TestHandleError(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 
 			if got := HandleError(writer, tc.err); got != tc.want {
@@ -244,70 +226,61 @@ func TestErrorStatus(t *testing.T) {
 		err error
 	}
 
-	cases := []struct {
-		intention   string
+	cases := map[string]struct {
 		args        args
 		want        int
 		wantMessage string
 	}{
-		{
-			"nil",
+		"nil": {
 			args{
 				err: nil,
 			},
 			http.StatusInternalServerError,
 			"",
 		},
-		{
-			"simple",
+		"simple": {
 			args{
 				err: errors.New("boom"),
 			},
 			http.StatusInternalServerError,
 			internalError,
 		},
-		{
-			"invalid",
+		"invalid": {
 			args{
 				err: model.WrapInvalid(errors.New("bad request")),
 			},
 			http.StatusBadRequest,
 			"bad request",
 		},
-		{
-			"unauthorized",
+		"unauthorized": {
 			args{
 				err: model.WrapUnauthorized(errors.New("jwt missing")),
 			},
 			http.StatusUnauthorized,
 			"unauthorized",
 		},
-		{
-			"forbidden",
+		"forbidden": {
 			args{
 				err: model.WrapForbidden(errors.New("jwt invalid")),
 			},
 			http.StatusForbidden,
 			"forbidden",
 		},
-		{
-			"not found",
+		"not found": {
 			args{
 				err: model.WrapNotFound(errors.New("unknown")),
 			},
 			http.StatusNotFound,
 			"unknown",
 		},
-		{
-			"method",
+		"method": {
 			args{
 				err: model.WrapMethodNotAllowed(errors.New("not allowed")),
 			},
 			http.StatusMethodNotAllowed,
 			"not allowed",
 		},
-		{
-			"internal",
+		"internal": {
 			args{
 				err: model.WrapInternal(errors.New("boom")),
 			},
@@ -316,8 +289,8 @@ func TestErrorStatus(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got, gotMessage := ErrorStatus(tc.args.err); got != tc.want && gotMessage != tc.wantMessage {
 				t.Errorf("ErrorStatus() = (%d, `%s`), want (%d, `%s`)", got, gotMessage, tc.want, tc.wantMessage)
 			}

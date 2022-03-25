@@ -21,28 +21,25 @@ var (
 )
 
 func TestMiddleware(t *testing.T) {
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		next       http.Handler
 		request    *http.Request
 		wantStatus int
 	}{
-		{
-			"success",
+		"success": {
 			handler,
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			http.StatusOK,
 		},
-		{
-			"fail",
+		"fail": {
 			failingHandler,
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			http.StatusInternalServerError,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			Middleware(tc.next).ServeHTTP(writer, tc.request)
 
@@ -54,16 +51,12 @@ func TestMiddleware(t *testing.T) {
 }
 
 func TestLoggerRecoverer(t *testing.T) {
-	cases := []struct {
-		intention string
-	}{
-		{
-			"simple",
-		},
+	cases := map[string]struct{}{
+		"simple": {},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention := range cases {
+		t.Run(intention, func(t *testing.T) {
 			func() {
 				defer LoggerRecover()
 

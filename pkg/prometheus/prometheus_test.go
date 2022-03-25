@@ -13,19 +13,17 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      string
+	cases := map[string]struct {
+		want string
 	}{
-		{
-			"simple",
+		"simple": {
 			"Usage of simple:\n  -gzip\n    \t[prometheus] Enable gzip compression of metrics output {SIMPLE_GZIP} (default true)\n  -ignore string\n    \t[prometheus] Ignored path prefixes for metrics, comma separated {SIMPLE_IGNORE}\n",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder
@@ -46,14 +44,12 @@ func TestMiddleware(t *testing.T) {
 	metricsIgnoreValue := "/api"
 	gzip := true
 
-	cases := []struct {
-		intention string
-		instance  App
-		requests  []*http.Request
-		want      string
+	cases := map[string]struct {
+		instance App
+		requests []*http.Request
+		want     string
 	}{
-		{
-			"golang metrics",
+		"golang metrics": {
 			New(Config{
 				ignore: &metricsIgnore,
 				gzip:   &gzip,
@@ -63,8 +59,7 @@ func TestMiddleware(t *testing.T) {
 			},
 			"go_gc_duration_seconds_count 0",
 		},
-		{
-			"http metrics",
+		"http metrics": {
 			New(Config{
 				ignore: &metricsIgnore,
 				gzip:   &gzip,
@@ -74,8 +69,7 @@ func TestMiddleware(t *testing.T) {
 			},
 			"http_requests_total{code=\"204\",method=\"GET\"} 1",
 		},
-		{
-			"http_requests_total",
+		"http_requests_total": {
 			New(Config{
 				ignore: &metricsIgnoreValue,
 				gzip:   &gzip,
@@ -89,8 +83,8 @@ func TestMiddleware(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			handler := tc.instance.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 			}))
@@ -112,13 +106,11 @@ func TestMiddleware(t *testing.T) {
 func TestRegisterer(t *testing.T) {
 	registry := prometheus.NewRegistry()
 
-	cases := []struct {
-		intention string
-		instance  App
-		want      prometheus.Registerer
+	cases := map[string]struct {
+		instance App
+		want     prometheus.Registerer
 	}{
-		{
-			"default",
+		"default": {
 			App{
 				registry: registry,
 			},
@@ -126,8 +118,8 @@ func TestRegisterer(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if result := tc.instance.Registerer(); !reflect.DeepEqual(result, tc.want) {
 				t.Errorf("Registerer() = %#v, want %#v", result, tc.want)
 			}
@@ -140,22 +132,19 @@ func TestIsIgnored(t *testing.T) {
 		path string
 	}
 
-	cases := []struct {
-		intention string
-		instance  App
-		args      args
-		want      bool
+	cases := map[string]struct {
+		instance App
+		args     args
+		want     bool
 	}{
-		{
-			"empty",
+		"empty": {
 			App{},
 			args{
 				path: metricsEndpoint,
 			},
 			false,
 		},
-		{
-			"multiple",
+		"multiple": {
 			App{
 				ignore: []string{
 					metricsEndpoint,
@@ -169,8 +158,8 @@ func TestIsIgnored(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := tc.instance.isIgnored(tc.args.path); got != tc.want {
 				t.Errorf("isIgnored() = %t, want %t", got, tc.want)
 			}

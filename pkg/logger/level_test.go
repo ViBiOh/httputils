@@ -11,22 +11,19 @@ func TestParseLevel(t *testing.T) {
 		line string
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      level
-		wantErr   error
+	cases := map[string]struct {
+		args    args
+		want    level
+		wantErr error
 	}{
-		{
-			"default value",
+		"default value": {
 			args{
 				line: "",
 			},
 			levelInfo,
 			errors.New("invalid value ``"),
 		},
-		{
-			"lower case value",
+		"lower case value": {
 			args{
 				line: "debug",
 			},
@@ -35,8 +32,8 @@ func TestParseLevel(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			got, gotErr := parseLevel(tc.args.line)
 
 			failed := false

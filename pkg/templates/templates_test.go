@@ -12,28 +12,25 @@ import (
 )
 
 func TestWriteTemplate(t *testing.T) {
-	cases := []struct {
-		intention string
-		tpl       *template.Template
-		want      string
-		wantErr   error
+	cases := map[string]struct {
+		tpl     *template.Template
+		want    string
+		wantErr error
 	}{
-		{
-			"simple",
+		"simple": {
 			template.Must(template.New("css_template.html").ParseFiles("../../templates/css_template.html")),
 			"html{height:100vh;width:100vw}",
 			nil,
 		},
-		{
-			"error",
+		"error": {
 			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.html")),
 			"",
 			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := bytes.NewBuffer(nil)
 			err := WriteTemplate(tc.tpl, writer, nil, "text/css")
 
@@ -55,28 +52,25 @@ func TestWriteTemplate(t *testing.T) {
 }
 
 func TestResponseHTMLTemplate(t *testing.T) {
-	cases := []struct {
-		intention string
-		tpl       *template.Template
-		want      string
-		wantErr   error
+	cases := map[string]struct {
+		tpl     *template.Template
+		want    string
+		wantErr error
 	}{
-		{
-			"simple",
+		"simple": {
 			template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html")),
 			`<!doctype html><html lang=fr><meta charset=utf-8><title>Golang Testing</title><meta name=description content="Golang Testing"><meta name=author content="ViBiOh"><script>function helloWorld(){console.info("Hello world!")}</script><style>html{height:100vh;width:100vw}</style><body onload=helloWorld()><h1>It works!</h1>`,
 			nil,
 		},
-		{
-			"error",
+		"error": {
 			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.html")),
 			"",
 			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			err := ResponseHTMLTemplate(tc.tpl, writer, nil, 200)
 
@@ -98,14 +92,12 @@ func TestResponseHTMLTemplate(t *testing.T) {
 }
 
 func TestResponseHTMLTemplateRaw(t *testing.T) {
-	cases := []struct {
-		intention string
-		tpl       *template.Template
-		want      string
-		wantErr   error
+	cases := map[string]struct {
+		tpl     *template.Template
+		want    string
+		wantErr error
 	}{
-		{
-			"simple",
+		"simple": {
 			template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html")),
 			`<!doctype html>
 
@@ -138,16 +130,15 @@ func TestResponseHTMLTemplateRaw(t *testing.T) {
 `,
 			nil,
 		},
-		{
-			"error",
+		"error": {
 			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.html")),
 			"",
 			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			err := ResponseHTMLTemplateRaw(tc.tpl, writer, nil, 200)
 
@@ -169,28 +160,25 @@ func TestResponseHTMLTemplateRaw(t *testing.T) {
 }
 
 func TestResponseXMLTemplate(t *testing.T) {
-	cases := []struct {
-		intention string
-		tpl       *template.Template
-		want      string
-		wantErr   error
+	cases := map[string]struct {
+		tpl     *template.Template
+		want    string
+		wantErr error
 	}{
-		{
-			"simple",
+		"simple": {
 			template.Must(template.New("sitemap.xml").ParseFiles("../../templates/sitemap.xml")),
 			`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"><url><loc>https://vibioh.fr</loc><changefreq>weekly</changefreq><priority>1.00</priority></url></urlset>`,
 			nil,
 		},
-		{
-			"error",
+		"error": {
 			template.Must(template.New("invalidName").ParseFiles("../../templates/sitemap.xml")),
 			"",
 			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			err := ResponseXMLTemplate(tc.tpl, writer, nil, 200)
 

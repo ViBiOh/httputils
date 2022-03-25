@@ -43,52 +43,45 @@ func (errReaderCloser) Close() error {
 }
 
 func TestReadContent(t *testing.T) {
-	cases := []struct {
-		intention string
-		reader    io.ReadCloser
-		want      []byte
-		wantErr   error
+	cases := map[string]struct {
+		reader  io.ReadCloser
+		want    []byte
+		wantErr error
 	}{
-		{
-			"nil input",
+		"nil input": {
 			nil,
 			nil,
 			nil,
 		},
-		{
-			"basic read",
+		"basic read": {
 			io.NopCloser(bytes.NewReader([]byte("Content"))),
 			[]byte("Content"),
 			nil,
 		},
-		{
-			"read with error",
+		"read with error": {
 			io.NopCloser(errReader(0)),
 			[]byte{},
 			errors.New("read error"),
 		},
-		{
-			"close with error",
+		"close with error": {
 			errCloser(0),
 			[]byte{},
 			errors.New("close error"),
 		},
-		{
-			"read and close error, close error",
+		"read and close error, close error": {
 			errReaderCloser(0),
 			[]byte{},
 			errors.New("close error"),
 		},
-		{
-			"read and close error, read error",
+		"read and close error, read error": {
 			errReaderCloser(0),
 			[]byte{},
 			errors.New("read error"),
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			result, err := readContent(tc.reader)
 
 			failed := false
@@ -107,28 +100,25 @@ func TestReadContent(t *testing.T) {
 }
 
 func TestReadBodyRequest(t *testing.T) {
-	cases := []struct {
-		intention string
-		input     *http.Request
-		want      []byte
-		wantErr   error
+	cases := map[string]struct {
+		input   *http.Request
+		want    []byte
+		wantErr error
 	}{
-		{
-			"nil",
+		"nil": {
 			nil,
 			nil,
 			nil,
 		},
-		{
-			"simple",
+		"simple": {
 			httptest.NewRequest(http.MethodGet, "/", bytes.NewReader([]byte("Content"))),
 			[]byte("Content"),
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			result, err := ReadBodyRequest(tc.input)
 
 			failed := false
@@ -147,28 +137,25 @@ func TestReadBodyRequest(t *testing.T) {
 }
 
 func TestReadBodyResponse(t *testing.T) {
-	cases := []struct {
-		intention string
-		input     []byte
-		want      []byte
-		wantErr   error
+	cases := map[string]struct {
+		input   []byte
+		want    []byte
+		wantErr error
 	}{
-		{
-			"nil",
+		"nil": {
 			nil,
 			[]byte{},
 			nil,
 		},
-		{
-			"simple",
+		"simple": {
 			[]byte("Content"),
 			[]byte("Content"),
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			if _, err := writer.Write(tc.input); err != nil {
 				t.Errorf("unable to write: %s", err)

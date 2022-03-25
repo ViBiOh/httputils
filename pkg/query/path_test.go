@@ -7,30 +7,26 @@ import (
 )
 
 func TestIsRoot(t *testing.T) {
-	cases := []struct {
-		intention string
-		input     *http.Request
-		want      bool
+	cases := map[string]struct {
+		input *http.Request
+		want  bool
 	}{
-		{
-			"empty",
+		"empty": {
 			httptest.NewRequest(http.MethodGet, "http://localhost", nil),
 			true,
 		},
-		{
-			"trailing",
+		"trailing": {
 			httptest.NewRequest(http.MethodGet, "http://localhost/", nil),
 			true,
 		},
-		{
-			"complex",
+		"complex": {
 			httptest.NewRequest(http.MethodGet, "http://localhost/id", nil),
 			false,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if result := IsRoot(tc.input); result != tc.want {
 				t.Errorf("IsRoot() = %t, want %t", result, tc.want)
 			}

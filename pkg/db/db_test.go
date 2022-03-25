@@ -14,19 +14,17 @@ import (
 )
 
 func TestFlags(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      string
+	cases := map[string]struct {
+		want string
 	}{
-		{
-			"simple",
+		"simple": {
 			"Usage of simple:\n  -host string\n    \t[database] Host {SIMPLE_HOST}\n  -maxConn uint\n    \t[database] Max Open Connections {SIMPLE_MAX_CONN} (default 5)\n  -name string\n    \t[database] Name {SIMPLE_NAME}\n  -pass string\n    \t[database] Pass {SIMPLE_PASS}\n  -port uint\n    \t[database] Port {SIMPLE_PORT} (default 5432)\n  -sslmode string\n    \t[database] SSL Mode {SIMPLE_SSLMODE} (default \"disable\")\n  -timeout uint\n    \t[database] Connect timeout {SIMPLE_TIMEOUT} (default 10)\n  -user string\n    \t[database] User {SIMPLE_USER}\n",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder
@@ -43,31 +41,28 @@ func TestFlags(t *testing.T) {
 }
 
 func TestEnabled(t *testing.T) {
-	cases := []struct {
-		intention string
-		instance  App
-		want      bool
+	cases := map[string]struct {
+		instance App
+		want     bool
 	}{
-		{
-			"empty",
+		"empty": {
 			App{},
 			false,
 		},
-		{
-			"provided",
+		"provided": {
 			App{},
 			true,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
-			switch tc.intention {
+			switch intention {
 			case "provided":
 				tc.instance.db = mockDatabase
 			}
@@ -80,22 +75,19 @@ func TestEnabled(t *testing.T) {
 }
 
 func TestPing(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      bool
+	cases := map[string]struct {
+		want bool
 	}{
-		{
-			"simple",
+		"simple": {
 			true,
 		},
-		{
-			"timeout",
+		"timeout": {
 			false,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -103,7 +95,7 @@ func TestPing(t *testing.T) {
 
 			instance := App{db: mockDatabase}
 
-			switch tc.intention {
+			switch intention {
 			case "simple":
 				mockDatabase.EXPECT().Ping(gomock.Any()).Return(nil)
 			case "timeout":
@@ -118,18 +110,16 @@ func TestPing(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	cases := []struct {
-		intention string
-		wantErr   error
+	cases := map[string]struct {
+		wantErr error
 	}{
-		{
-			"simple",
+		"simple": {
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -137,7 +127,7 @@ func TestClose(t *testing.T) {
 
 			instance := App{db: mockDatabase}
 
-			switch tc.intention {
+			switch intention {
 			case "simple":
 				mockDatabase.EXPECT().Close()
 			}
@@ -154,27 +144,23 @@ func TestReadTx(t *testing.T) {
 		ctx context.Context
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      pgx.Tx
+	cases := map[string]struct {
+		args args
+		want pgx.Tx
 	}{
-		{
-			"empty",
+		"empty": {
 			args{
 				ctx: context.Background(),
 			},
 			nil,
 		},
-		{
-			"with tx",
+		"with tx": {
 			args{
 				ctx: StoreTx(context.Background(), tx),
 			},
 			tx,
 		},
-		{
-			"not a tx",
+		"not a tx": {
 			args{
 				ctx: context.WithValue(context.Background(), ctxTxKey, args{}),
 			},
@@ -182,8 +168,8 @@ func TestReadTx(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			if got := readTx(tc.args.ctx); got != tc.want {
 				t.Errorf("readTx() = %v, want %v", got, tc.want)
 			}
@@ -197,18 +183,15 @@ func TestDoAtomic(t *testing.T) {
 		action func(context.Context) error
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		wantErr   error
+	cases := map[string]struct {
+		args    args
+		wantErr error
 	}{
-		{
-			"no action",
+		"no action": {
 			args{},
 			errors.New("no action provided"),
 		},
-		{
-			"already",
+		"already": {
 			args{
 				ctx: context.Background(),
 				action: func(ctx context.Context) error {
@@ -217,8 +200,7 @@ func TestDoAtomic(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"error",
+		"error": {
 			args{
 				ctx: context.Background(),
 				action: func(ctx context.Context) error {
@@ -227,8 +209,7 @@ func TestDoAtomic(t *testing.T) {
 			},
 			errors.New("no transaction available"),
 		},
-		{
-			"begin",
+		"begin": {
 			args{
 				ctx: context.Background(),
 				action: func(ctx context.Context) error {
@@ -237,8 +218,7 @@ func TestDoAtomic(t *testing.T) {
 			},
 			nil,
 		},
-		{
-			"rollback",
+		"rollback": {
 			args{
 				ctx: context.Background(),
 				action: func(ctx context.Context) error {
@@ -247,8 +227,7 @@ func TestDoAtomic(t *testing.T) {
 			},
 			errors.New("invalid"),
 		},
-		{
-			"rollback error",
+		"rollback error": {
 			args{
 				ctx: context.Background(),
 				action: func(ctx context.Context) error {
@@ -259,8 +238,8 @@ func TestDoAtomic(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -270,7 +249,7 @@ func TestDoAtomic(t *testing.T) {
 
 			ctx := tc.args.ctx
 
-			switch tc.intention {
+			switch intention {
 			case "error":
 				mockDatabase.EXPECT().Begin(gomock.Any()).Return(nil, errors.New("no transaction available"))
 			case "already":
@@ -310,26 +289,22 @@ func TestDoAtomic(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	cases := []struct {
-		intention string
-		wantErr   error
+	cases := map[string]struct {
+		wantErr error
 	}{
-		{
-			"simple",
+		"simple": {
 			nil,
 		},
-		{
-			"error",
+		"error": {
 			errors.New("timeout"),
 		},
-		{
-			"tx",
+		"tx": {
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -339,7 +314,7 @@ func TestList(t *testing.T) {
 
 			ctx := context.Background()
 
-			switch tc.intention {
+			switch intention {
 			case "simple":
 				rows := mocks.NewRows(ctrl)
 				rows.EXPECT().Next().Return(true)
@@ -386,26 +361,22 @@ func TestList(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	cases := []struct {
-		intention string
-		wantErr   error
+	cases := map[string]struct {
+		wantErr error
 	}{
-		{
-			"simple",
+		"simple": {
 			nil,
 		},
-		{
-			"error",
+		"error": {
 			errors.New("timeout"),
 		},
-		{
-			"tx",
+		"tx": {
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -415,7 +386,7 @@ func TestGet(t *testing.T) {
 
 			ctx := context.Background()
 
-			switch tc.intention {
+			switch intention {
 			case "simple":
 				row := mocks.NewRow(ctrl)
 				row.EXPECT().Scan().Return(nil)
@@ -460,26 +431,22 @@ func TestGet(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	cases := []struct {
-		intention string
-		wantErr   error
+	cases := map[string]struct {
+		wantErr error
 	}{
-		{
-			"no tx",
+		"no tx": {
 			ErrNoTransaction,
 		},
-		{
-			"error",
+		"error": {
 			errors.New("timeout"),
 		},
-		{
-			"valid",
+		"valid": {
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -489,7 +456,7 @@ func TestCreate(t *testing.T) {
 
 			ctx := context.Background()
 
-			switch tc.intention {
+			switch intention {
 			case "error":
 				tx := mocks.NewTx(ctrl)
 				ctx = StoreTx(ctx, tx)
@@ -528,26 +495,22 @@ func TestCreate(t *testing.T) {
 }
 
 func TestExec(t *testing.T) {
-	cases := []struct {
-		intention string
-		wantErr   error
+	cases := map[string]struct {
+		wantErr error
 	}{
-		{
-			"no tx",
+		"no tx": {
 			ErrNoTransaction,
 		},
-		{
-			"error",
+		"error": {
 			errors.New("timeout"),
 		},
-		{
-			"valid",
+		"valid": {
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -557,7 +520,7 @@ func TestExec(t *testing.T) {
 
 			ctx := context.Background()
 
-			switch tc.intention {
+			switch intention {
 			case "error":
 				tx := mocks.NewTx(ctrl)
 				ctx = StoreTx(ctx, tx)
@@ -589,26 +552,22 @@ func TestExec(t *testing.T) {
 }
 
 func TestOne(t *testing.T) {
-	cases := []struct {
-		intention string
-		wantErr   error
+	cases := map[string]struct {
+		wantErr error
 	}{
-		{
-			"error",
+		"error": {
 			errors.New("timeout"),
 		},
-		{
-			"zero",
+		"zero": {
 			errors.New("0 rows affected, wanted 1"),
 		},
-		{
-			"one",
+		"one": {
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -618,7 +577,7 @@ func TestOne(t *testing.T) {
 
 			ctx := context.Background()
 
-			switch tc.intention {
+			switch intention {
 			case "error":
 				tx := mocks.NewTx(ctrl)
 				ctx = StoreTx(ctx, tx)
@@ -655,26 +614,22 @@ func TestOne(t *testing.T) {
 }
 
 func TestBulk(t *testing.T) {
-	cases := []struct {
-		intention string
-		wantErr   error
+	cases := map[string]struct {
+		wantErr error
 	}{
-		{
-			"no tx",
+		"no tx": {
 			ErrNoTransaction,
 		},
-		{
-			"error",
+		"error": {
 			errors.New("timeout"),
 		},
-		{
-			"valid",
+		"valid": {
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -684,7 +639,7 @@ func TestBulk(t *testing.T) {
 
 			ctx := context.Background()
 
-			switch tc.intention {
+			switch intention {
 			case "error":
 				tx := mocks.NewTx(ctrl)
 				ctx = StoreTx(ctx, tx)

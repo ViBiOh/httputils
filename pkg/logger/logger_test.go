@@ -26,19 +26,17 @@ func (wc writeCloser) Close() error {
 }
 
 func TestFlags(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      string
+	cases := map[string]struct {
+		want string
 	}{
-		{
-			"simple",
+		"simple": {
 			"Usage of simple:\n  -json\n    \t[logger] Log format as JSON {SIMPLE_JSON}\n  -level string\n    \t[logger] Logger level {SIMPLE_LEVEL} (default \"INFO\")\n  -levelKey string\n    \t[logger] Key for level in JSON {SIMPLE_LEVEL_KEY} (default \"level\")\n  -messageKey string\n    \t[logger] Key for message in JSON {SIMPLE_MESSAGE_KEY} (default \"message\")\n  -timeKey string\n    \t[logger] Key for timestamp in JSON {SIMPLE_TIME_KEY} (default \"time\")\n",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder
@@ -59,14 +57,12 @@ func TestStart(t *testing.T) {
 		e event
 	}
 
-	cases := []struct {
-		intention string
-		instance  Logger
-		args      args
-		want      string
+	cases := map[string]struct {
+		instance Logger
+		args     args
+		want     string
 	}{
-		{
-			"json",
+		"json": {
 			Logger{
 				done:         make(chan struct{}),
 				events:       make(chan event, runtime.NumCPU()),
@@ -83,8 +79,7 @@ func TestStart(t *testing.T) {
 			`{"ts":"2020-09-30T14:59:38Z","level":"INFO","msg":"Hello world"}
 `,
 		},
-		{
-			"text",
+		"text": {
 			Logger{
 				done:         make(chan struct{}),
 				events:       make(chan event, runtime.NumCPU()),
@@ -96,8 +91,7 @@ func TestStart(t *testing.T) {
 			},
 			"2020-09-30T14:59:38Z INFO Hello world\n",
 		},
-		{
-			"error",
+		"error": {
 			Logger{
 				done:         make(chan struct{}),
 				events:       make(chan event, runtime.NumCPU()),
@@ -111,13 +105,13 @@ func TestStart(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
+	for intention, tc := range cases {
 		writer := bytes.NewBuffer(nil)
 		tc.instance.outWriter = writer
 		tc.instance.errWriter = writer
 		go tc.instance.Start()
 
-		t.Run(tc.intention, func(t *testing.T) {
+		t.Run(intention, func(t *testing.T) {
 			tc.instance.events <- tc.args.e
 			tc.instance.Close()
 
@@ -134,28 +128,24 @@ func TestClose(t *testing.T) {
 		err io.Writer
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      bool
+	cases := map[string]struct {
+		args args
+		want bool
 	}{
-		{
-			"simple",
+		"simple": {
 			args{
 				out: io.Discard,
 			},
 			true,
 		},
-		{
-			"closer",
+		"closer": {
 			args{
 				out: writeCloser{nil, bytes.NewBuffer(nil)},
 				err: writeCloser{nil, bytes.NewBuffer(nil)},
 			},
 			true,
 		},
-		{
-			"closer error",
+		"closer error": {
 			args{
 				out: writeCloser{errors.New("error"), bytes.NewBuffer(nil)},
 				err: writeCloser{errors.New("error"), bytes.NewBuffer(nil)},
@@ -164,8 +154,8 @@ func TestClose(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			logger := newLogger(tc.args.out, tc.args.err, levelInfo, false, "time", "level", "msg")
 
 			go logger.Start()
@@ -187,29 +177,25 @@ func TestOutput(t *testing.T) {
 		a      []any
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      string
+	cases := map[string]struct {
+		args args
+		want string
 	}{
-		{
-			"ignored",
+		"ignored": {
 			args{
 				lev:    levelDebug,
 				format: "Hello World",
 			},
 			"",
 		},
-		{
-			"info",
+		"info": {
 			args{
 				lev:    levelInfo,
 				format: "Hello World",
 			},
 			"2020-09-21T18:34:57Z INFO Hello World\n",
 		},
-		{
-			"format",
+		"format": {
 			args{
 				lev:    levelInfo,
 				format: "Hello %s",
@@ -219,8 +205,8 @@ func TestOutput(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := bytes.NewBuffer(nil)
 			logger := newLogger(writer, writer, levelInfo, false, "time", "level", "msg")
 			logger.clock = clock.New(time.Date(2020, 9, 21, 18, 34, 57, 0, time.UTC))
@@ -309,13 +295,11 @@ func TestJSON(t *testing.T) {
 		e event
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      map[string]any
+	cases := map[string]struct {
+		args args
+		want map[string]any
 	}{
-		{
-			"simple",
+		"simple": {
 			args{
 				e: event{
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
@@ -329,8 +313,7 @@ func TestJSON(t *testing.T) {
 				"msg":   "Hello world",
 			},
 		},
-		{
-			"with fields",
+		"with fields": {
 			args{
 				e: event{
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
@@ -361,8 +344,8 @@ func TestJSON(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			logger := Logger{
 				outputBuffer: bytes.NewBuffer(nil),
 				timeKey:      "ts",
@@ -429,13 +412,11 @@ func TestText(t *testing.T) {
 		e event
 	}
 
-	cases := []struct {
-		intention string
-		args      args
-		want      string
+	cases := map[string]struct {
+		args args
+		want string
 	}{
-		{
-			"simple",
+		"simple": {
 			args{
 				e: event{
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
@@ -445,8 +426,7 @@ func TestText(t *testing.T) {
 			},
 			"2020-09-30T14:59:38Z INFO Hello world\n",
 		},
-		{
-			"string field",
+		"string field": {
 			args{
 				e: event{
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
@@ -462,8 +442,7 @@ func TestText(t *testing.T) {
 			},
 			"2020-09-30T14:59:38Z INFO Hello world name=\"test\"\n",
 		},
-		{
-			"numeric field",
+		"numeric field": {
 			args{
 				e: event{
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
@@ -481,8 +460,8 @@ func TestText(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			logger := Logger{
 				outputBuffer: bytes.NewBuffer(nil),
 			}

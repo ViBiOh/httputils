@@ -37,19 +37,17 @@ func createTestServer() *httptest.Server {
 }
 
 func TestFlags(t *testing.T) {
-	cases := []struct {
-		intention string
-		want      string
+	cases := map[string]struct {
+		want string
 	}{
-		{
-			"simple",
+		"simple": {
 			"Usage of simple:\n  -url string\n    \t[alcotest] URL to check {SIMPLE_URL}\n  -userAgent string\n    \t[alcotest] User-Agent for check {SIMPLE_USER_AGENT} (default \"Alcotest\")\n",
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
-			fs := flag.NewFlagSet(tc.intention, flag.ContinueOnError)
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
 			var writer strings.Builder
@@ -69,43 +67,37 @@ func TestGetStatusCode(t *testing.T) {
 	testServer := createTestServer()
 	defer testServer.Close()
 
-	cases := []struct {
-		intention string
+	cases := map[string]struct {
 		url       string
 		userAgent string
 		want      int
 		wantErr   error
 	}{
-		{
-			"should handle invalid request",
+		"should handle invalid request": {
 			":",
 			"",
 			0,
 			errors.New(`parse ":": missing protocol scheme`),
 		},
-		{
-			"should handle malformed URL",
+		"should handle malformed URL": {
 			"",
 			"",
 			0,
 			errors.New(`Get "": unsupported protocol scheme ""`),
 		},
-		{
-			"should return valid status from server",
+		"should return valid status from server": {
 			testServer.URL + "/ok",
 			"",
 			http.StatusOK,
 			nil,
 		},
-		{
-			"should return wrong status from server",
+		"should return wrong status from server": {
 			testServer.URL + "/ko",
 			"",
 			http.StatusInternalServerError,
 			errors.New("HTTP/500"),
 		},
-		{
-			"should set given User-Agent",
+		"should set given User-Agent": {
 			fmt.Sprintf("%s/user-agent", testServer.URL),
 			"Test",
 			http.StatusServiceUnavailable,
@@ -113,8 +105,8 @@ func TestGetStatusCode(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			result, err := GetStatusCode(tc.url, tc.userAgent)
 
 			failed := false
@@ -140,40 +132,35 @@ func TestDo(t *testing.T) {
 	testServer := createTestServer()
 	defer testServer.Close()
 
-	cases := []struct {
-		intention string
+	cases := map[string]struct {
 		url       string
 		userAgent string
 		want      error
 	}{
-		{
-			"should handle error during call",
+		"should handle error during call": {
 			"http://",
 			"TestDo",
 			errors.New("http: no Host in request URL"),
 		},
-		{
-			"should handle bad status code",
+		"should handle bad status code": {
 			fmt.Sprintf("%s/ko", testServer.URL),
 			"TestDo",
 			errors.New("HTTP/500"),
 		},
-		{
-			"should handle bad status code",
+		"should handle valid status code": {
 			fmt.Sprintf("%s/reset", testServer.URL),
 			"TestDo",
 			errors.New("alcotest failed: HTTP/205"),
 		},
-		{
-			"should handle valid code",
+		"should handle valid code": {
 			fmt.Sprintf("%s/ok", testServer.URL),
 			"TestDo",
 			nil,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			failed := false
 
 			result := Do(tc.url, tc.userAgent)
@@ -202,29 +189,25 @@ func TestDoAndExit(t *testing.T) {
 	unhealthy := testServer.URL + "/ko"
 	userAgent := "TestDoAndExit"
 
-	cases := []struct {
-		intention string
-		input     Config
-		want      int
+	cases := map[string]struct {
+		input Config
+		want  int
 	}{
-		{
-			"nothing to do",
+		"nothing to do": {
 			Config{
 				url:       &emptyString,
 				userAgent: &userAgent,
 			},
 			-1,
 		},
-		{
-			"valid",
+		"valid": {
 			Config{
 				url:       &healthy,
 				userAgent: &userAgent,
 			},
 			0,
 		},
-		{
-			"invalid",
+		"invalid": {
 			Config{
 				url:       &unhealthy,
 				userAgent: &userAgent,
@@ -233,8 +216,8 @@ func TestDoAndExit(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			result := -1
 			exitFunc = func(code int) {
 				result = code

@@ -35,24 +35,21 @@ func TestChainMiddlewares(t *testing.T) {
 		})
 	}
 
-	cases := []struct {
-		intention   string
+	cases := map[string]struct {
 		request     *http.Request
 		middlewares []Middleware
 		want        string
 		wantStatus  int
 		wantHeader  http.Header
 	}{
-		{
-			"nil chain",
+		"nil chain": {
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			nil,
 			"handler",
 			http.StatusOK,
 			http.Header{},
 		},
-		{
-			"values",
+		"values": {
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			[]Middleware{middlewareNotFound},
 			"handler",
@@ -61,8 +58,8 @@ func TestChainMiddlewares(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			ChainMiddlewares(handler, tc.middlewares...).ServeHTTP(writer, tc.request)
 

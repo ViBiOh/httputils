@@ -22,40 +22,35 @@ func TestHandler(t *testing.T) {
 
 	os.Setenv("VERSION", "httputils/TestHandler")
 
-	cases := []struct {
-		intention  string
+	cases := map[string]struct {
 		request    *http.Request
 		want       string
 		wantStatus int
 	}{
-		{
-			"simple",
+		"simple": {
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			"It works!",
 			http.StatusOK,
 		},
-		{
-			"version",
+		"version": {
 			httptest.NewRequest(http.MethodGet, "/version", nil),
 			"httputils/TestHandler",
 			http.StatusOK,
 		},
-		{
-			"health",
+		"health": {
 			httptest.NewRequest(http.MethodGet, "/health", nil),
 			"",
 			http.StatusNoContent,
 		},
-		{
-			"ready",
+		"ready": {
 			httptest.NewRequest(http.MethodGet, "/ready", nil),
 			"",
 			http.StatusNoContent,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			Handler(handler, healthApp).ServeHTTP(writer, tc.request)
 
@@ -71,29 +66,25 @@ func TestHandler(t *testing.T) {
 }
 
 func TestVersionHandler(t *testing.T) {
-	cases := []struct {
-		intention   string
+	cases := map[string]struct {
 		request     *http.Request
 		environment string
 		want        string
 		wantStatus  int
 	}{
-		{
-			"invalid method",
+		"invalid method": {
 			httptest.NewRequest(http.MethodOptions, "/", nil),
 			"",
 			"",
 			http.StatusMethodNotAllowed,
 		},
-		{
-			"empty version",
+		"empty version": {
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			"",
 			"development",
 			http.StatusOK,
 		},
-		{
-			"defined version",
+		"defined version": {
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			"1234abcd",
 			"1234abcd",
@@ -101,8 +92,8 @@ func TestVersionHandler(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			os.Setenv("VERSION", tc.environment)
 			writer := httptest.NewRecorder()
 			versionHandler().ServeHTTP(writer, tc.request)

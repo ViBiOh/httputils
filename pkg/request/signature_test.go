@@ -18,14 +18,12 @@ func TestAddSignature(t *testing.T) {
 		payload []byte
 	}
 
-	cases := []struct {
-		intention         string
+	cases := map[string]struct {
 		args              args
 		wantDigest        string
 		wantAuthorization string
 	}{
-		{
-			"simple",
+		"simple": {
 			args{
 				keyID:   "test",
 				secret:  []byte(`password`),
@@ -36,8 +34,8 @@ func TestAddSignature(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 			AddSignature(req, tc.args.keyID, tc.args.secret, tc.args.payload)
@@ -84,14 +82,12 @@ func TestValidateSignature(t *testing.T) {
 	reqInvalidSecret.Header.Add("Authorization", `headers="(request-target) digest"`)
 	reqInvalidSecret.Header.Add("Authorization", `signature="5lf5ogggfJ1LXJciRS2BscNtMnYHWDOr2myJ9TJyZnu+37EXUpmchhl6LxyzU0bfpqAloLFEFw+1NEBSgNC+lQ=="`)
 
-	cases := []struct {
-		intention string
-		args      args
-		want      bool
-		wantErr   error
+	cases := map[string]struct {
+		args    args
+		want    bool
+		wantErr error
 	}{
-		{
-			"no header",
+		"no header": {
 			args{
 				req:    reqNoHeader,
 				secret: []byte(`password`),
@@ -99,8 +95,7 @@ func TestValidateSignature(t *testing.T) {
 			false,
 			model.ErrInvalid,
 		},
-		{
-			"invalid digest",
+		"invalid digest": {
 			args{
 				req:    reqWrongDigest,
 				secret: []byte(`password`),
@@ -108,8 +103,7 @@ func TestValidateSignature(t *testing.T) {
 			false,
 			model.ErrInvalid,
 		},
-		{
-			"no authorization",
+		"no authorization": {
 			args{
 				req:    reqNoAuth,
 				secret: []byte(`password`),
@@ -117,8 +111,7 @@ func TestValidateSignature(t *testing.T) {
 			false,
 			model.ErrInvalid,
 		},
-		{
-			"no headers",
+		"no headers": {
 			args{
 				req:    reqNoHeaders,
 				secret: []byte(`password`),
@@ -126,8 +119,7 @@ func TestValidateSignature(t *testing.T) {
 			false,
 			model.ErrInvalid,
 		},
-		{
-			"no signature",
+		"no signature": {
 			args{
 				req:    reqNoSignature,
 				secret: []byte(`password`),
@@ -135,8 +127,7 @@ func TestValidateSignature(t *testing.T) {
 			false,
 			model.ErrInvalid,
 		},
-		{
-			"invalid signature",
+		"invalid signature": {
 			args{
 				req:    reqInvalidSignature,
 				secret: []byte(`password`),
@@ -144,8 +135,7 @@ func TestValidateSignature(t *testing.T) {
 			false,
 			model.ErrInvalid,
 		},
-		{
-			"invalid secret",
+		"invalid secret": {
 			args{
 				req:    reqInvalidSecret,
 				secret: []byte(`passwor`),
@@ -153,8 +143,7 @@ func TestValidateSignature(t *testing.T) {
 			false,
 			nil,
 		},
-		{
-			"invalid secret",
+		"valid secret": {
 			args{
 				req:    reqInvalidSecret,
 				secret: []byte(`password`),
@@ -164,8 +153,8 @@ func TestValidateSignature(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.intention, func(t *testing.T) {
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
 			got, gotErr := ValidateSignature(tc.args.req, tc.args.secret)
 
 			failed := false
