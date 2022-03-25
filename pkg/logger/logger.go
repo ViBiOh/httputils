@@ -11,11 +11,17 @@ import (
 
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/clock"
+	"golang.org/x/term"
 )
 
 var (
 	logger   Logger
 	exitFunc = os.Exit
+
+	colorReset  = []byte("\033[0m")
+	colorRed    = []byte("\033[31m")
+	colorYellow = []byte("\033[33m")
+	colorBlue   = []byte("\033[34m")
 )
 
 // Config of package
@@ -103,11 +109,20 @@ func (l Logger) Start() {
 	var payload []byte
 	var err error
 
+	isTerminal := term.IsTerminal(int(os.Stdin.Fd()))
+
 	for e := range l.events {
 		if l.jsonFormat {
 			payload = l.json(e)
 		} else {
 			payload = l.text(e)
+		}
+
+		if isTerminal {
+			if color := getColor(e.level); color != nil {
+				payload = append(color, payload...)
+				payload = append(payload, colorReset...)
+			}
 		}
 
 		if e.level <= levelInfo {
@@ -122,6 +137,19 @@ func (l Logger) Start() {
 	}
 
 	close(l.done)
+}
+
+func getColor(level level) []byte {
+	switch level {
+	case levelInfo:
+		return colorBlue
+	case levelWarning:
+		return colorYellow
+	case levelError:
+		return colorRed
+	default:
+		return nil
+	}
 }
 
 // Close ends logger gracefully

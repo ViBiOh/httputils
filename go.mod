@@ -18,6 +18,7 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.6.0
 	go.opentelemetry.io/otel/sdk v1.6.0
 	go.opentelemetry.io/otel/trace v1.6.0
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 )
 
 require (
