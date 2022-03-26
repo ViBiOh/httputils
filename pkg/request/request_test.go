@@ -408,7 +408,7 @@ func TestJSON(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		payload, _ := ReadBodyRequest(r)
 
-		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == "{\"Active\":true,\"Amount\":12.34}\n" && r.Header.Get("Content-Type") == "application/json" {
+		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == `{"Active":true,"Amount":12.34}` && r.Header.Get("Content-Type") == "application/json" {
 			w.WriteHeader(http.StatusOK)
 			safeWrite(w, []byte("valid"))
 			return
@@ -444,6 +444,67 @@ func TestJSON(t *testing.T) {
 	for intention, tc := range cases {
 		t.Run(intention, func(t *testing.T) {
 			resp, err := tc.request.JSON(tc.ctx, tc.payload)
+			result, _ := ReadBodyResponse(resp)
+
+			failed := false
+
+			if err == nil && tc.wantErr != nil {
+				failed = true
+			} else if err != nil && tc.wantErr == nil {
+				failed = true
+			} else if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
+				failed = true
+			} else if string(result) != tc.want {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestStreamJSON(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		payload, _ := ReadBodyRequest(r)
+
+		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == `{"Active":true,"Amount":12.34}`+"\n" && r.Header.Get("Content-Type") == "application/json" {
+			w.WriteHeader(http.StatusOK)
+			safeWrite(w, []byte("valid"))
+			return
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer testServer.Close()
+
+	cases := map[string]struct {
+		request Request
+		ctx     context.Context
+		payload any
+		want    string
+		wantErr error
+	}{
+		"simple": {
+			New().Post(testServer.URL + "/simple"),
+			context.Background(),
+			testStruct{id: "Test", Active: true, Amount: 12.34},
+			"valid",
+			nil,
+		},
+		"invalid": {
+			New().Post(testServer.URL + "/simple"),
+			context.Background(),
+			func() {},
+			"",
+			errors.New("json: unsupported type: func()"),
+		},
+	}
+
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			resp, err := tc.request.StreamJSON(tc.ctx, tc.payload)
 			result, _ := ReadBodyResponse(resp)
 
 			failed := false

@@ -37,6 +37,8 @@ type Request struct {
 
 	signatureKeydID string
 	signatureSecret []byte
+
+	contentLength int64
 }
 
 func create(method, url string) Request {
@@ -206,6 +208,11 @@ func (r Request) Header(name, value string) Request {
 	return r
 }
 
+// Accept set Accept header
+func (r Request) Accept(accept string) Request {
+	return r.Header("Accept", accept)
+}
+
 // ContentType set Content-Type header
 func (r Request) ContentType(contentType string) Request {
 	return r.Header("Content-Type", contentType)
@@ -219,6 +226,11 @@ func (r Request) ContentForm() Request {
 // ContentJSON set Content-Type header to application/json
 func (r Request) ContentJSON() Request {
 	return r.ContentType("application/json")
+}
+
+// AcceptJSON set Accept header to application/json
+func (r Request) AcceptJSON() Request {
+	return r.Accept("application/json")
 }
 
 // WithClient defines net/http client to use, instead of default one (15sec timeout and no redirect)
@@ -252,9 +264,14 @@ func (r Request) Build(ctx context.Context, payload io.ReadCloser) (*http.Reques
 		}
 
 		AddSignature(req, r.signatureKeydID, r.signatureSecret, body)
+		req.ContentLength = int64(len(body))
 		req.Body = io.NopCloser(bytes.NewBuffer(body))
 	} else if len(r.username) != 0 || len(r.password) != 0 {
 		req.SetBasicAuth(r.username, r.password)
+	}
+
+	if req.ContentLength == 0 && r.contentLength != 0 {
+		req.ContentLength = r.contentLength
 	}
 
 	return req, nil
@@ -272,11 +289,27 @@ func (r Request) Send(ctx context.Context, payload io.ReadCloser) (*http.Respons
 
 // Form send request with given context and url.Values as payload
 func (r Request) Form(ctx context.Context, data url.Values) (*http.Response, error) {
-	return r.ContentForm().Send(ctx, io.NopCloser(strings.NewReader(data.Encode())))
+	payload := data.Encode()
+	r.contentLength = int64(len(payload))
+
+	return r.ContentForm().Send(ctx, io.NopCloser(strings.NewReader(payload)))
 }
 
 // JSON send request with given context and given interface as JSON payload
 func (r Request) JSON(ctx context.Context, body any) (*http.Response, error) {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal json: %w", err)
+	}
+	r.contentLength = int64(len(payload))
+
+	resp, err := r.ContentJSON().Send(ctx, io.NopCloser(bytes.NewReader(payload)))
+
+	return resp, err
+}
+
+// StreamJSON send request with given context and given interface as JSON stream
+func (r Request) StreamJSON(ctx context.Context, body any) (*http.Response, error) {
 	reader, writer := io.Pipe()
 
 	go func() {
