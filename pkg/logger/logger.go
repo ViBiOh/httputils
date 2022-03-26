@@ -145,7 +145,7 @@ func getColor(level level) []byte {
 		return colorBlue
 	case levelWarning:
 		return colorYellow
-	case levelError:
+	case levelError, levelFatal:
 		return colorRed
 	default:
 		return nil
