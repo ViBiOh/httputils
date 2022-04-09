@@ -2,11 +2,14 @@ package request
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/textproto"
 	"net/url"
 	"reflect"
 	"strings"
@@ -398,7 +401,109 @@ func TestForm(t *testing.T) {
 			}
 
 			if failed {
-				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
+				t.Errorf("Form() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestMultipart(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/data") {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if err := r.ParseMultipartForm(10 << 20); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		safeWrite(w, []byte(r.FormValue("hello")))
+		return
+	}))
+	defer testServer.Close()
+
+	cases := map[string]struct {
+		request Request
+		ctx     context.Context
+		feed    func(mw *multipart.Writer) error
+		want    string
+		wantErr error
+	}{
+		"simple": {
+			New().Post(testServer.URL),
+			context.Background(),
+			func(mw *multipart.Writer) error {
+				return mw.WriteField("hello", "world")
+			},
+			"world",
+			nil,
+		},
+		"with file": {
+			New().Post(testServer.URL),
+			context.Background(),
+			func(mw *multipart.Writer) error {
+				header := textproto.MIMEHeader{}
+				header.Set("Content-Disposition", `form-data; name="hello"`)
+				header.Set("Content-Type", "application/json")
+
+				writer, err := mw.CreatePart(header)
+				if err != nil {
+					return err
+				}
+
+				return json.NewEncoder(writer).Encode(map[string]string{"hello": "world"})
+			},
+			`{"hello":"world"}
+`,
+			nil,
+		},
+		"feed error": {
+			New().Post(testServer.URL),
+			context.Background(),
+			func(mw *multipart.Writer) error {
+				return errors.New("failed")
+			},
+			``,
+			errors.New("failed"),
+		},
+		"server error": {
+			New().Get(testServer.URL),
+			context.Background(),
+			func(mw *multipart.Writer) error {
+				return errors.New("failed")
+			},
+			``,
+			errors.New("HTTP/400"),
+		},
+	}
+
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			resp, err := tc.request.Multipart(tc.ctx, tc.feed)
+			result, _ := ReadBodyResponse(resp)
+
+			failed := false
+
+			if err == nil && tc.wantErr != nil {
+				failed = true
+			} else if err != nil && tc.wantErr == nil {
+				failed = true
+			} else if err != nil && !strings.HasPrefix(err.Error(), tc.wantErr.Error()) {
+				failed = true
+			} else if string(result) != tc.want {
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("Multipart() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
 			}
 		})
 	}

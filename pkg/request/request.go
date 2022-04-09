@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -293,6 +294,38 @@ func (r Request) Form(ctx context.Context, data url.Values) (*http.Response, err
 	r.contentLength = int64(len(payload))
 
 	return r.ContentForm().Send(ctx, io.NopCloser(strings.NewReader(payload)))
+}
+
+// Multipart send request with given context and given interface as multipart content
+func (r Request) Multipart(ctx context.Context, feed func(mw *multipart.Writer) error) (*http.Response, error) {
+	reader, writer := io.Pipe()
+	multipartWriter := multipart.NewWriter(writer)
+
+	var feedErr error
+	go func() {
+		defer func() {
+			if pipeCloseErr := writer.CloseWithError(multipartWriter.Close()); pipeCloseErr != nil {
+				feedErr = model.WrapError(feedErr, fmt.Errorf("unable to close multipart writer: %s", pipeCloseErr))
+			}
+		}()
+
+		feedErr = feed(multipartWriter)
+	}()
+
+	resp, err := r.ContentType(multipartWriter.FormDataContentType()).Send(ctx, io.NopCloser(reader))
+	if err != nil {
+		return resp, err
+	}
+
+	if feedErr != nil {
+		if discardErr := DiscardBody(resp.Body); discardErr != nil {
+			feedErr = model.WrapError(feedErr, fmt.Errorf("unable to discard body: %s", discardErr))
+		}
+
+		return resp, feedErr
+	}
+
+	return resp, nil
 }
 
 // JSON send request with given context and given interface as JSON payload
