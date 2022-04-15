@@ -11,7 +11,6 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/go-redis/redis/v8"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -49,7 +48,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 // New creates new App from Config
-func New(config Config, prometheusRegisterer prometheus.Registerer, tracerApp tracer.App) App {
+func New(config Config, prometheusRegisterer prometheus.Registerer, tracer trace.Tracer) App {
 	address := strings.TrimSpace(*config.address)
 	if len(address) == 0 {
 		logger.Info("no redis address")
@@ -64,7 +63,7 @@ func New(config Config, prometheusRegisterer prometheus.Registerer, tracerApp tr
 			DB:       *config.database,
 		}),
 		metric: prom.CounterVec(prometheusRegisterer, metricsNamespace, strings.TrimSpace(*config.alias), "item", "state"),
-		tracer: tracerApp.GetTracer("redis"),
+		tracer: tracer,
 	}
 }
 

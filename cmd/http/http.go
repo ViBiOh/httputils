@@ -77,7 +77,7 @@ func main() {
 	amqpApp, err := amqphandler.New(amqHandlerConfig, amqpClient, amqpHandler)
 	logger.Fatal(err)
 
-	rendererApp, err := renderer.New(rendererConfig, content, nil, tracerApp)
+	rendererApp, err := renderer.New(rendererConfig, content, nil, tracerApp.GetTracer("renderer"))
 	logger.Fatal(err)
 
 	speakingClock := cron.New().Each(5 * time.Minute).OnSignal(syscall.SIGUSR1).OnError(func(err error) {

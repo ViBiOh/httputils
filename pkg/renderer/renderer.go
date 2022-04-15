@@ -13,7 +13,6 @@ import (
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -56,7 +55,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 // New creates new App from Config
-func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracerApp tracer.App) (App, error) {
+func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace.Tracer) (App, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
 		return App{}, fmt.Errorf("unable to get static/ filesystem: %s", err)
@@ -66,7 +65,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracerApp tr
 	publicURL := strings.TrimSuffix(*config.publicURL, "/")
 
 	instance := App{
-		tracer:     tracerApp.GetTracer("renderer"),
+		tracer:     tracer,
 		staticFS:   staticFS,
 		pathPrefix: pathPrefix,
 		publicURL:  publicURL,

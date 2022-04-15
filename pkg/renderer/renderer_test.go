@@ -14,7 +14,6 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 )
 
 func TestFlags(t *testing.T) {
@@ -162,7 +161,7 @@ func TestHandler(t *testing.T) {
 		pathPrefix: &emptyString,
 		title:      &title,
 		minify:     &minify,
-	}, content, template.FuncMap{}, tracer.App{})
+	}, content, template.FuncMap{}, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -172,7 +171,7 @@ func TestHandler(t *testing.T) {
 		pathPrefix: &pathPrefix,
 		title:      &title,
 		minify:     &minify,
-	}, content, template.FuncMap{}, tracer.App{})
+	}, content, template.FuncMap{}, nil)
 	if err != nil {
 		t.Error(err)
 	}

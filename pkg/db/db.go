@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -79,7 +78,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 // New creates new App from Config
-func New(config Config, tracerApp tracer.App) (App, error) {
+func New(config Config, tracer trace.Tracer) (App, error) {
 	host := strings.TrimSpace(*config.host)
 	if len(host) == 0 {
 		return App{}, ErrNoHost
@@ -97,7 +96,7 @@ func New(config Config, tracerApp tracer.App) (App, error) {
 
 	instance := App{
 		db:     db,
-		tracer: tracerApp.GetTracer("database"),
+		tracer: tracer,
 	}
 
 	return instance, instance.Ping()
