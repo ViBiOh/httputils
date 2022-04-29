@@ -15,11 +15,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type key int
+type key struct{}
 
-const (
-	ctxTxKey key = iota
-)
+var ctxTxKey key
 
 var (
 	// ErrNoHost occurs when host is not provided in configuration

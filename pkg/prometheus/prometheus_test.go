@@ -57,7 +57,7 @@ func TestMiddleware(t *testing.T) {
 			[]*http.Request{
 				httptest.NewRequest(http.MethodGet, "/", nil),
 			},
-			"go_gc_duration_seconds_count 0",
+			"go_gc_duration_seconds_count",
 		},
 		"http metrics": {
 			New(Config{
