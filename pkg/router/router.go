@@ -88,7 +88,53 @@ func (r Router) DefaultHandler(handler http.Handler) Router {
 	return r
 }
 
-// AddRoute for given method and pattern. Pattern must starts with a slash, should not contains trailing slash and path variable must be prefixed with ':'
+// Get configure route for GET method
+func (r Router) Get(pattern string, handler http.Handler) Router {
+	return r.AddRoute(http.MethodGet, pattern, handler)
+}
+
+// Head configure route for HEAD method
+func (r Router) Head(pattern string, handler http.Handler) Router {
+	return r.AddRoute(http.MethodHead, pattern, handler)
+}
+
+// Post configure route for POST method
+func (r Router) Post(pattern string, handler http.Handler) Router {
+	return r.AddRoute(http.MethodPost, pattern, handler)
+}
+
+// Put configure route for PUT method
+func (r Router) Put(pattern string, handler http.Handler) Router {
+	return r.AddRoute(http.MethodPut, pattern, handler)
+}
+
+// Patch configure route for PATCH method
+func (r Router) Patch(pattern string, handler http.Handler) Router {
+	return r.AddRoute(http.MethodPatch, pattern, handler)
+}
+
+// Delete configure route for DELETE method
+func (r Router) Delete(pattern string, handler http.Handler) Router {
+	return r.AddRoute(http.MethodDelete, pattern, handler)
+}
+
+// Connect configure route for CONNECT method
+func (r Router) Connect(pattern string, handler http.Handler) Router {
+	return r.AddRoute(http.MethodConnect, pattern, handler)
+}
+
+// Options configure route for OPTIONS method
+func (r Router) Options(pattern string, handler http.Handler) Router {
+	return r.AddRoute(http.MethodOptions, pattern, handler)
+}
+
+// Trace configure route for TRACE method
+func (r Router) Trace(pattern string, handler http.Handler) Router {
+	return r.AddRoute(http.MethodTrace, pattern, handler)
+}
+
+// AddRoute for given method and pattern. Pattern must starts with a slash, should not contains trailing slash.
+// Path variable must be prefixed with ':', next to the slash separator
 func (r Router) AddRoute(method, pattern string, handler http.Handler) Router {
 	if len(method) == 0 {
 		panic("method is required")

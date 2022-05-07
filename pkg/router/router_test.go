@@ -15,42 +15,42 @@ func TestHandler(t *testing.T) {
 		want    int
 	}{
 		"not allowed": {
-			NewRouter().AddRoute(http.MethodPost, "/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			NewRouter().Post("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 			})),
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			http.StatusMethodNotAllowed,
 		},
 		"root": {
-			NewRouter().AddRoute(http.MethodGet, "/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			NewRouter().Get("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 			})),
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			http.StatusNoContent,
 		},
 		"simple": {
-			NewRouter().AddRoute(http.MethodGet, "/hello", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			NewRouter().Get("/hello", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 			})),
 			httptest.NewRequest(http.MethodGet, "/hello", nil),
 			http.StatusNoContent,
 		},
 		"api pattern": {
-			NewRouter().AddRoute(http.MethodGet, "/api/users/:userId/items/:itemId", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			NewRouter().Get("/api/users/:userId/items/:itemId", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 			})),
 			httptest.NewRequest(http.MethodGet, "/api/users/1/items/2", nil),
 			http.StatusNoContent,
 		},
 		"trailing slash pattern": {
-			NewRouter().AddRoute(http.MethodGet, "/api/users/:userId/items/:itemId", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			NewRouter().Get("/api/users/:userId/items/:itemId", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 			})),
 			httptest.NewRequest(http.MethodGet, "/api/users/1/items/2/", nil),
 			http.StatusNoContent,
 		},
 		"no match": {
-			NewRouter().AddRoute(http.MethodGet, "/api/users/:userId/items/:itemId", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			NewRouter().Get("/api/users/:userId/items/:itemId", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 			})),
 			httptest.NewRequest(http.MethodGet, "/api/users/1/items/", nil),
@@ -117,12 +117,12 @@ func BenchmarkHandlerNoVariable(b *testing.B) {
 	w := httptest.NewRecorder()
 
 	router := NewRouter().
-		AddRoute(http.MethodGet, "/api/users", handler).
-		AddRoute(http.MethodGet, "/api/users/:userId/items", handler).
-		AddRoute(http.MethodPost, "/api/users/:userId/items", handler).
-		AddRoute(http.MethodGet, "/api/users/:userId/items/:itemId", handler).
-		AddRoute(http.MethodPut, "/api/users/:userId/items/:itemId", handler).
-		AddRoute(http.MethodDelete, "/api/users/:userId/items/:itemId", handler).
+		Get("/api/users", handler).
+		Get("/api/users/:userId/items", handler).
+		Post("/api/users/:userId/items", handler).
+		Get("/api/users/:userId/items/:itemId", handler).
+		Put("/api/users/:userId/items/:itemId", handler).
+		Delete("/api/users/:userId/items/:itemId", handler).
 		Handler()
 
 	for i := 0; i < b.N; i++ {
@@ -139,11 +139,11 @@ func BenchmarkHandler(b *testing.B) {
 	w := httptest.NewRecorder()
 
 	router := NewRouter().
-		AddRoute(http.MethodDelete, "/api/users/:userId/items/:itemId", handler).
-		AddRoute(http.MethodGet, "/api/users/:userId/items", handler).
-		AddRoute(http.MethodGet, "/api/users/:userId/items/:itemId", handler).
-		AddRoute(http.MethodPost, "/api/users/:userId/items", handler).
-		AddRoute(http.MethodPut, "/api/users/:userId/items/:itemId", handler).
+		Delete("/api/users/:userId/items/:itemId", handler).
+		Get("/api/users/:userId/items", handler).
+		Get("/api/users/:userId/items/:itemId", handler).
+		Post("/api/users/:userId/items", handler).
+		Put("/api/users/:userId/items/:itemId", handler).
 		Handler()
 
 	for i := 0; i < b.N; i++ {
