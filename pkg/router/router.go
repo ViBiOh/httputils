@@ -68,14 +68,24 @@ func (r route) check(url string) bool {
 
 // Router with path management
 type Router struct {
-	routes map[string][][]route // one entry for each method, and one array for each size of slash, and finally an array for possibilities
+	routes         map[string][][]route // one entry for each method, and one array for each size of slash, and finally an array for possibilities
+	defaultHandler http.Handler
 }
 
 // NewRouter creates a new empty Router
 func NewRouter() Router {
 	return Router{
 		routes: make(map[string][][]route, 0),
+		defaultHandler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}),
 	}
+}
+
+// DefaultHandler sets default handler when no route is not found
+func (r Router) DefaultHandler(handler http.Handler) Router {
+	r.defaultHandler = handler
+	return r
 }
 
 // AddRoute for given method and pattern. Pattern must starts with a slash, should not contains trailing slash and path variable must be prefixed with ':'
@@ -149,10 +159,10 @@ func (r Router) Handler() http.Handler {
 		}
 
 		url := sanitizeURL(req)
-
 		size := strings.Count(url, pathSeparator)
+
 		if len(routes) < size {
-			w.WriteHeader(http.StatusNotFound)
+			r.defaultHandler.ServeHTTP(w, req)
 			return
 		}
 
@@ -171,7 +181,7 @@ func (r Router) Handler() http.Handler {
 			return
 		}
 
-		w.WriteHeader(http.StatusNotFound)
+		r.defaultHandler.ServeHTTP(w, req)
 	})
 }
 
