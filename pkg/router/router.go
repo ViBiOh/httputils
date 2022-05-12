@@ -21,23 +21,22 @@ type route struct {
 	hasVariable bool
 }
 
-func getURLPart(index int, url string) (int, string, string) {
+func getURLPart(url string) (string, string) {
 	urlPart := url
-	if index = strings.Index(url, pathSeparator); index > 0 {
+	if index := strings.Index(url, pathSeparator); index > 0 {
 		urlPart = url[:index]
 		url = url[index+1:]
 	}
 
-	return index, url, urlPart
+	return url, urlPart
 }
 
 func (r route) parse(url string) map[string]string {
 	output := make(map[string]string)
 	var urlPart string
-	var index int
 
 	for _, part := range r.parts {
-		index, url, urlPart = getURLPart(index, url)
+		url, urlPart = getURLPart(url)
 
 		if len(part) > 0 && part[0] == variablePrefix {
 			output[part[1:]] = urlPart
@@ -49,10 +48,9 @@ func (r route) parse(url string) map[string]string {
 
 func (r route) check(url string) bool {
 	var urlPart string
-	var index int
 
 	for _, part := range r.parts {
-		index, url, urlPart = getURLPart(index, url)
+		url, urlPart = getURLPart(url)
 
 		if len(part) > 0 && part[0] == variablePrefix {
 			continue

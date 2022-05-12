@@ -426,7 +426,6 @@ func TestMultipart(t *testing.T) {
 
 		w.WriteHeader(http.StatusOK)
 		safeWrite(w, []byte(r.FormValue("hello")))
-		return
 	}))
 	defer testServer.Close()
 
