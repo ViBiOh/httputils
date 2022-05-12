@@ -6,7 +6,7 @@ require (
 	github.com/ViBiOh/flags v1.0.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
-	github.com/jackc/pgconn v1.12.0
+	github.com/jackc/pgconn v1.12.1
 	github.com/jackc/pgproto3/v2 v2.3.0
 	github.com/jackc/pgx/v4 v4.16.0
 	github.com/prometheus/client_golang v1.12.1
