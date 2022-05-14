@@ -56,6 +56,13 @@ func TestHandler(t *testing.T) {
 			httptest.NewRequest(http.MethodGet, "/api/users/1/items/", nil),
 			http.StatusNotFound,
 		},
+		"no match extra lenth": {
+			NewRouter().Any("/hello/:name", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNoContent)
+			})),
+			httptest.NewRequest(http.MethodGet, "/hello/world/of", nil),
+			http.StatusNotFound,
+		},
 	}
 
 	for intention, tc := range cases {

@@ -131,7 +131,21 @@ func (r Router) Trace(pattern string, handler http.Handler) Router {
 	return r.AddRoute(http.MethodTrace, pattern, handler)
 }
 
-// AddRoute for given method and pattern. Pattern must starts with a slash, should not contains trailing slash.
+// Any configure route for any method in the specs
+func (r Router) Any(pattern string, handler http.Handler) Router {
+	return r.
+		Get(pattern, handler).
+		Head(pattern, handler).
+		Post(pattern, handler).
+		Put(pattern, handler).
+		Patch(pattern, handler).
+		Delete(pattern, handler).
+		Connect(pattern, handler).
+		Options(pattern, handler).
+		Trace(pattern, handler)
+}
+
+// AddRoute for given method and pattern. Pattern must startss with a slash, should not contains trailing slash.
 // Path variable must be prefixed with ':', next to the slash separator
 func (r Router) AddRoute(method, pattern string, handler http.Handler) Router {
 	if len(method) == 0 {
@@ -205,7 +219,7 @@ func (r Router) Handler() http.Handler {
 		url := sanitizeURL(req)
 		size := strings.Count(url, pathSeparator)
 
-		if len(routes) < size {
+		if len(routes) <= size {
 			r.defaultHandler.ServeHTTP(w, req)
 			return
 		}
