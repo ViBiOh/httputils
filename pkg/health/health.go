@@ -102,7 +102,6 @@ func (a App) WaitForTermination(done <-chan struct{}) {
 
 	select {
 	case <-done:
-		return
 	default:
 		if a.graceDuration != 0 {
 			logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
