@@ -13,6 +13,7 @@ import (
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -148,10 +149,8 @@ func (a App) Handler(templateFunc TemplateFunc) http.Handler {
 	svgHandler := http.StripPrefix(svgPath, a.svg())
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if a.tracer != nil {
-			_, span := a.tracer.Start(r.Context(), "renderer")
-			defer span.End()
-		}
+		_, end := tracer.StartSpan(r.Context(), a.tracer, "renderer")
+		defer end()
 
 		if isStaticPaths(r.URL.Path) {
 			if _, err := filesystem.Open(r.URL.Path); err == nil {

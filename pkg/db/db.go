@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -142,11 +143,8 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) e
 		return errors.New("no action provided")
 	}
 
-	if a.tracer != nil {
-		var span trace.Span
-		ctx, span = a.tracer.Start(ctx, "transaction")
-		defer span.End()
-	}
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "transaction")
+	defer end()
 
 	if readTx(ctx) != nil {
 		return action(ctx)
@@ -172,11 +170,8 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) e
 
 // List execute multiple rows query
 func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) (err error) {
-	if a.tracer != nil {
-		var span trace.Span
-		ctx, span = a.tracer.Start(ctx, "list")
-		defer span.End()
-	}
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "list")
+	defer end()
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
@@ -204,11 +199,8 @@ func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query strin
 
 // Get execute single row query
 func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) error {
-	if a.tracer != nil {
-		var span trace.Span
-		ctx, span = a.tracer.Start(ctx, "get")
-		defer span.End()
-	}
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "get")
+	defer end()
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
@@ -222,11 +214,8 @@ func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string,
 
 // Create execute query with a RETURNING id
 func (a App) Create(ctx context.Context, query string, args ...any) (uint64, error) {
-	if a.tracer != nil {
-		var span trace.Span
-		ctx, span = a.tracer.Start(ctx, "create")
-		defer span.End()
-	}
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "create")
+	defer end()
 
 	tx := readTx(ctx)
 	if tx == nil {
@@ -261,11 +250,8 @@ func (a App) One(ctx context.Context, query string, args ...any) error {
 }
 
 func (a App) exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error) {
-	if a.tracer != nil {
-		var span trace.Span
-		ctx, span = a.tracer.Start(ctx, "exec")
-		defer span.End()
-	}
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "exec")
+	defer end()
 
 	tx := readTx(ctx)
 	if tx == nil {
@@ -299,11 +285,8 @@ func (bc *feeder) Err() error {
 
 // Bulk load data into schema and table by batch
 func (a App) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) error {
-	if a.tracer != nil {
-		var span trace.Span
-		ctx, span = a.tracer.Start(ctx, "bulk")
-		defer span.End()
-	}
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "bulk")
+	defer end()
 
 	tx := readTx(ctx)
 	if tx == nil {

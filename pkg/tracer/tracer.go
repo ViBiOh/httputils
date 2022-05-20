@@ -19,6 +19,8 @@ import (
 	tr "go.opentelemetry.io/otel/trace"
 )
 
+var noopFunc = func(...tr.SpanEndOption) {}
+
 // App of package
 type App struct {
 	provider *trace.TracerProvider
@@ -139,6 +141,17 @@ func (a App) Close() {
 	if err := a.provider.Shutdown(context.Background()); err != nil {
 		logger.Error("unable to shutdown trace provider: %s", err)
 	}
+}
+
+// StartSpan starts a span from given context and tracer, if not nil
+func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.SpanStartOption) (context.Context, func(options ...tr.SpanEndOption)) {
+	if tracer == nil {
+		return ctx, noopFunc
+	}
+
+	var span tr.Span
+	ctx, span = tracer.Start(ctx, name, opts...)
+	return ctx, span.End
 }
 
 // AddTraceToLogger add span ID to the given logger

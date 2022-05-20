@@ -11,6 +11,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/go-redis/redis/v8"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -86,11 +87,8 @@ func (a App) Store(ctx context.Context, key string, value any, duration time.Dur
 		return nil
 	}
 
-	if a.tracer != nil {
-		var span trace.Span
-		ctx, span = a.tracer.Start(ctx, "store")
-		defer span.End()
-	}
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "store")
+	defer end()
 
 	err := a.redisClient.SetEX(ctx, key, value, duration).Err()
 
@@ -109,11 +107,8 @@ func (a App) Load(ctx context.Context, key string) (string, error) {
 		return "", nil
 	}
 
-	if a.tracer != nil {
-		var span trace.Span
-		ctx, span = a.tracer.Start(ctx, "load")
-		defer span.End()
-	}
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "load")
+	defer end()
 
 	content, err := a.redisClient.Get(ctx, key).Result()
 
@@ -137,11 +132,8 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 		return nil
 	}
 
-	if a.tracer != nil {
-		var span trace.Span
-		ctx, span = a.tracer.Start(ctx, "delete")
-		defer span.End()
-	}
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete")
+	defer end()
 
 	pipeline := a.redisClient.Pipeline()
 
@@ -173,11 +165,8 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 		return false, fmt.Errorf("redis not enabled")
 	}
 
-	if a.tracer != nil {
-		var span trace.Span
-		ctx, span = a.tracer.Start(ctx, "exclusive")
-		defer span.End()
-	}
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "exclusive")
+	defer end()
 
 	a.increase("exclusive")
 
