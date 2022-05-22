@@ -149,8 +149,10 @@ func (a App) Handler(templateFunc TemplateFunc) http.Handler {
 	svgHandler := http.StripPrefix(svgPath, a.svg())
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, end := tracer.StartSpan(r.Context(), a.tracer, "renderer")
+		ctx, end := tracer.StartSpan(r.Context(), a.tracer, "renderer")
 		defer end()
+
+		r = r.WithContext(ctx)
 
 		if isStaticPaths(r.URL.Path) {
 			if _, err := filesystem.Open(r.URL.Path); err == nil {
