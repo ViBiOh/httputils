@@ -1,10 +1,8 @@
 package router
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 )
 
@@ -19,7 +17,7 @@ func TestHandler(t *testing.T) {
 				w.WriteHeader(http.StatusNoContent)
 			})),
 			httptest.NewRequest(http.MethodGet, "/", nil),
-			http.StatusMethodNotAllowed,
+			http.StatusNotFound,
 		},
 		"root": {
 			NewRouter().Get("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -56,12 +54,19 @@ func TestHandler(t *testing.T) {
 			httptest.NewRequest(http.MethodGet, "/api/users/1/items/", nil),
 			http.StatusNotFound,
 		},
-		"no match extra lenth": {
+		"no match extra length": {
 			NewRouter().Any("/hello/:name", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 			})),
 			httptest.NewRequest(http.MethodGet, "/hello/world/of", nil),
 			http.StatusNotFound,
+		},
+		"match wildcard": {
+			NewRouter().Any("/hello/:name/*yolo", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNoContent)
+			})),
+			httptest.NewRequest(http.MethodGet, "/hello/world/of/api", nil),
+			http.StatusNoContent,
 		},
 	}
 
@@ -72,44 +77,6 @@ func TestHandler(t *testing.T) {
 
 			if got := writer.Code; got != tc.want {
 				t.Errorf("Handler = HTTP/%d, want HTTP/%d", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestGetParams(t *testing.T) {
-	type args struct {
-		req *http.Request
-	}
-
-	cases := map[string]struct {
-		args args
-		want map[string]string
-	}{
-		"no ctx": {
-			args{
-				req: httptest.NewRequest(http.MethodGet, "/api/users/1/items/2", nil),
-			},
-			nil,
-		},
-		"valid ctx": {
-			args{
-				req: httptest.NewRequest(http.MethodGet, "/api/users/1/items/2", nil).WithContext(context.WithValue(context.Background(), contextKey, route{
-					hasVariable: false,
-					parts:       []string{"api", "users", ":userID", "items", ":itemID"},
-				})),
-			},
-			map[string]string{
-				"itemID": "2",
-				"userID": "1",
-			},
-		},
-	}
-
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			if got := GetParams(tc.args.req); !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("GetParams() = %+v, want %+v", got, tc.want)
 			}
 		})
 	}

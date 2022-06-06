@@ -11,15 +11,10 @@ type ctxKey struct{}
 const (
 	pathSeparator  = "/"
 	variablePrefix = ':'
+	wildcardPrefix = '*'
 )
 
 var contextKey ctxKey
-
-type route struct {
-	handler     http.Handler
-	parts       []string
-	hasVariable bool
-}
 
 func getURLPart(url string) (string, string) {
 	urlPart := url
@@ -31,52 +26,21 @@ func getURLPart(url string) (string, string) {
 	return url, urlPart
 }
 
-func (r route) parse(url string) map[string]string {
-	output := make(map[string]string)
-	var urlPart string
-
-	for _, part := range r.parts {
-		url, urlPart = getURLPart(url)
-
-		if len(part) > 0 && part[0] == variablePrefix {
-			output[part[1:]] = urlPart
-		}
-	}
-
-	return output
-}
-
-func (r route) check(url string) bool {
-	var urlPart string
-
-	for _, part := range r.parts {
-		url, urlPart = getURLPart(url)
-
-		if len(part) > 0 && part[0] == variablePrefix {
-			continue
-		}
-
-		if part != urlPart {
-			return false
-		}
-	}
-
-	return true
-}
-
 // Router with path management
 type Router struct {
-	routes         map[string][][]route // one entry for each method, and one array for each size of slash, and finally an array for possibilities
 	defaultHandler http.Handler
+	root           node
 }
 
 // NewRouter creates a new empty Router
 func NewRouter() Router {
 	return Router{
-		routes: make(map[string][][]route, 0),
 		defaultHandler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 		}),
+		root: node{
+			value: make(map[string]http.Handler),
+		},
 	}
 }
 
@@ -147,6 +111,7 @@ func (r Router) Any(pattern string, handler http.Handler) Router {
 
 // AddRoute for given method and pattern. Pattern must startss with a slash, should not contains trailing slash.
 // Path variable must be prefixed with ':', next to the slash separator
+// Glob variable must be prefixed with '*', next to the slash separator, at the end of the pattern
 func (r Router) AddRoute(method, pattern string, handler http.Handler) Router {
 	if len(method) == 0 {
 		panic("method is required")
@@ -164,32 +129,12 @@ func (r Router) AddRoute(method, pattern string, handler http.Handler) Router {
 		panic("pattern can't end with a slash")
 	}
 
-	if r.routes == nil {
-		r.routes = make(map[string][][]route)
+	var err error
+	r.root, err = r.root.insert(method, strings.Split(pattern[1:], pathSeparator), handler)
+
+	if err != nil {
+		panic(err)
 	}
-
-	parts := strings.Split(pattern[1:], pathSeparator)
-	index := len(parts) - 1
-
-	if len(r.routes[method]) < len(parts) {
-		newRoutes := make([][]route, len(parts))
-		copy(newRoutes, r.routes[method])
-		r.routes[method] = newRoutes
-	}
-
-	var hasVariable bool
-	for _, part := range parts {
-		if len(part) > 0 && part[0] == variablePrefix {
-			hasVariable = true
-			break
-		}
-	}
-
-	r.routes[method][index] = append(r.routes[method][index], route{
-		parts:       parts,
-		handler:     handler,
-		hasVariable: hasVariable,
-	})
 
 	return r
 }
@@ -210,45 +155,25 @@ func sanitizeURL(req *http.Request) string {
 // Handler for request. Should be use with net/http
 func (r Router) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		routes, ok := r.routes[req.Method]
-		if !ok {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		url := sanitizeURL(req)
-		size := strings.Count(url, pathSeparator)
-
-		if len(routes) <= size {
+		handler, hasVariable := r.root.find(req.Method, sanitizeURL(req), false)
+		if handler == nil {
 			r.defaultHandler.ServeHTTP(w, req)
 			return
 		}
 
-		for _, route := range routes[size] {
-			if !route.check(url) {
-				continue
-			}
-
-			if route.hasVariable {
-				req = req.WithContext(context.WithValue(req.Context(), contextKey, route))
-				route.handler.ServeHTTP(w, req)
-			} else {
-				route.handler.ServeHTTP(w, req)
-			}
-
-			return
+		if hasVariable {
+			req = req.WithContext(context.WithValue(req.Context(), contextKey, r.root))
 		}
-
-		r.defaultHandler.ServeHTTP(w, req)
+		handler.ServeHTTP(w, req)
 	})
 }
 
 // GetParams of a request
 func GetParams(r *http.Request) map[string]string {
-	switch value := r.Context().Value(contextKey).(type) {
-	case route:
-		return value.parse(sanitizeURL(r))
-	default:
-		return nil
-	}
+	// switch value := r.Context().Value(contextKey).(type) {
+	// case route:
+	// 	return value.parse(sanitizeURL(r))
+	// default:
+	return nil
+	// }
 }
