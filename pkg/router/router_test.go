@@ -1,8 +1,10 @@
 package router
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
@@ -77,6 +79,58 @@ func TestHandler(t *testing.T) {
 
 			if got := writer.Code; got != tc.want {
 				t.Errorf("Handler = HTTP/%d, want HTTP/%d", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestGetParams(t *testing.T) {
+	type args struct {
+		req *http.Request
+	}
+
+	cases := map[string]struct {
+		args args
+		want map[string]string
+	}{
+		"no ctx": {
+			args{
+				req: httptest.NewRequest(http.MethodGet, "/api/users/1/items/2", nil),
+			},
+			nil,
+		},
+		"valid ctx": {
+			args{
+				req: httptest.NewRequest(http.MethodGet, "/api/users/1/items/2", nil).
+					WithContext(context.WithValue(context.Background(), contextKey, NewRouter().
+						Get("/api/users/:userID/items/:itemID", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})).
+						root)),
+			},
+			map[string]string{
+				"itemID": "2",
+				"userID": "1",
+			},
+		},
+		"wildcard ctx": {
+			args{
+				req: httptest.NewRequest(http.MethodGet, "/api/users/1/items/2/extra/params/to/provide", nil).
+					WithContext(context.WithValue(context.Background(), contextKey, NewRouter().
+						Get("/api/users/:userID/items/:itemID", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})).
+						Get("/api/users/:userID/items/:itemID/extra/*value", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})).
+						root)),
+			},
+			map[string]string{
+				"itemID": "2",
+				"userID": "1",
+				"value":  "params/to/provide",
+			},
+		},
+	}
+
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			if got := GetParams(tc.args.req); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("GetParams() = %+v, want %+v", got, tc.want)
 			}
 		})
 	}

@@ -130,7 +130,7 @@ func (r Router) AddRoute(method, pattern string, handler http.Handler) Router {
 	}
 
 	var err error
-	r.root, err = r.root.insert(method, strings.Split(pattern[1:], pathSeparator), handler)
+	r.root, err = r.root.insert(method, pattern[1:], false, handler)
 
 	if err != nil {
 		panic(err)
@@ -155,14 +155,14 @@ func sanitizeURL(req *http.Request) string {
 // Handler for request. Should be use with net/http
 func (r Router) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		handler, hasVariable := r.root.find(req.Method, sanitizeURL(req), false)
+		handler, hasVariable := r.root.find(req.Method, sanitizeURL(req))
 		if handler == nil {
 			r.defaultHandler.ServeHTTP(w, req)
 			return
 		}
 
 		if hasVariable {
-			req = req.WithContext(context.WithValue(req.Context(), contextKey, r.root))
+			req = req.WithContext(context.WithValue(req.Context(), contextKey, &r.root))
 		}
 		handler.ServeHTTP(w, req)
 	})
@@ -170,10 +170,12 @@ func (r Router) Handler() http.Handler {
 
 // GetParams of a request
 func GetParams(r *http.Request) map[string]string {
-	// switch value := r.Context().Value(contextKey).(type) {
-	// case route:
-	// 	return value.parse(sanitizeURL(r))
-	// default:
-	return nil
-	// }
+	switch value := r.Context().Value(contextKey).(type) {
+	case node:
+		params := make(map[string]string)
+		value.extractVariable(r.Method, sanitizeURL(r), params)
+		return params
+	default:
+		return nil
+	}
 }
