@@ -12,15 +12,17 @@ import (
 // Handler creates the handler for default httputils behavior
 func Handler(handler http.Handler, healthApp health.App, middlewares ...model.Middleware) http.Handler {
 	versionHandler := versionHandler()
-	healthHandler := healthApp.Handler()
+	HealthHandler := healthApp.HealthHandler()
+	readyHandler := healthApp.ReadyHandler()
 	apphandler := model.ChainMiddlewares(handler, middlewares...)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case health.HealthPath:
-			fallthrough
+			HealthHandler.ServeHTTP(w, r)
+
 		case health.ReadyPath:
-			healthHandler.ServeHTTP(w, r)
+			readyHandler.ServeHTTP(w, r)
 
 		case "/version":
 			versionHandler.ServeHTTP(w, r)

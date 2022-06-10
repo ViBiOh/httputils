@@ -68,19 +68,16 @@ func (a App) End() <-chan struct{} {
 	return a.end
 }
 
-// Handler for request. Should be use with net/http
-func (a App) Handler() http.Handler {
+// HealthHandler for request. Should be use with net/http
+func (a App) HealthHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
+		w.WriteHeader(a.okStatus)
+	})
+}
 
-		if r.URL.Path == HealthPath {
-			w.WriteHeader(a.okStatus)
-			return
-		}
-
+// ReadyHandler for request. Should be use with net/http
+func (a App) ReadyHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		select {
 		case <-a.done:
 			w.WriteHeader(http.StatusServiceUnavailable)

@@ -39,7 +39,7 @@ func TestFlags(t *testing.T) {
 	}
 }
 
-func TestHandler(t *testing.T) {
+func TestHealthHandler(t *testing.T) {
 	okStatus := http.StatusNoContent
 	graceDuration := "1s"
 	closedChan := make(chan struct{})
@@ -51,15 +51,45 @@ func TestHandler(t *testing.T) {
 		want       string
 		wantStatus int
 	}{
-		"wrong method": {
+		"simple": {
 			New(Config{
 				okStatus:      &okStatus,
 				graceDuration: &graceDuration,
 			}),
-			httptest.NewRequest(http.MethodHead, "/", nil),
+			httptest.NewRequest(http.MethodGet, "/", nil),
 			"",
-			http.StatusMethodNotAllowed,
+			okStatus,
 		},
+	}
+
+	for intention, tc := range cases {
+		t.Run(intention, func(t *testing.T) {
+			writer := httptest.NewRecorder()
+			tc.instance.HealthHandler().ServeHTTP(writer, tc.request)
+
+			if got := writer.Code; got != tc.wantStatus {
+				t.Errorf("Handler = %d, want %d", got, tc.wantStatus)
+			}
+
+			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.want {
+				t.Errorf("Handler = `%s`, want `%s`", string(got), tc.want)
+			}
+		})
+	}
+}
+
+func TestReadyHandler(t *testing.T) {
+	okStatus := http.StatusNoContent
+	graceDuration := "1s"
+	closedChan := make(chan struct{})
+	close(closedChan)
+
+	cases := map[string]struct {
+		instance   App
+		request    *http.Request
+		want       string
+		wantStatus int
+	}{
 		"simple": {
 			New(Config{
 				okStatus:      &okStatus,
@@ -90,23 +120,12 @@ func TestHandler(t *testing.T) {
 			"",
 			http.StatusServiceUnavailable,
 		},
-		"failing pinger on health": {
-			New(Config{
-				okStatus:      &okStatus,
-				graceDuration: &graceDuration,
-			}, func() error {
-				return errors.New("boom")
-			}),
-			httptest.NewRequest(http.MethodGet, "/health", nil),
-			"",
-			http.StatusNoContent,
-		},
 	}
 
 	for intention, tc := range cases {
 		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			tc.instance.Handler().ServeHTTP(writer, tc.request)
+			tc.instance.ReadyHandler().ServeHTTP(writer, tc.request)
 
 			if got := writer.Code; got != tc.wantStatus {
 				t.Errorf("Handler = %d, want %d", got, tc.wantStatus)

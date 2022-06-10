@@ -112,9 +112,10 @@ func TestVersionHandler(t *testing.T) {
 func BenchmarkMux(b *testing.B) {
 	fs := flag.NewFlagSet("BenchmarkMux", flag.ContinueOnError)
 
-	healthConfig := health.Flags(fs, "BenchmarkMux")
+	healthApp := health.New(health.Flags(fs, "BenchmarkMux"))
 
-	healthHandler := health.New(healthConfig).Handler()
+	healthHandler := healthApp.HealthHandler()
+	readyHandler := healthApp.ReadyHandler()
 	versionHandler := versionHandler()
 	var appHandler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
@@ -122,7 +123,7 @@ func BenchmarkMux(b *testing.B) {
 
 	mux := http.NewServeMux()
 	mux.Handle(health.HealthPath, healthHandler)
-	mux.Handle(health.ReadyPath, healthHandler)
+	mux.Handle(health.ReadyPath, readyHandler)
 	mux.Handle("/version", versionHandler)
 	mux.Handle("/", appHandler)
 

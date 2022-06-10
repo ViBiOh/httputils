@@ -89,6 +89,12 @@ func TestGetParams(t *testing.T) {
 		req *http.Request
 	}
 
+	simple := NewRouter().
+		Get("/api/users/:userID/items/:itemID", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	wildcard := NewRouter().
+		Get("/api/users/:userID/items/:itemID", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})).
+		Get("/api/users/:userID/items/:itemID/extra/*value", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
 	cases := map[string]struct {
 		args args
 		want map[string]string
@@ -102,9 +108,7 @@ func TestGetParams(t *testing.T) {
 		"valid ctx": {
 			args{
 				req: httptest.NewRequest(http.MethodGet, "/api/users/1/items/2", nil).
-					WithContext(context.WithValue(context.Background(), contextKey, NewRouter().
-						Get("/api/users/:userID/items/:itemID", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})).
-						root)),
+					WithContext(context.WithValue(context.Background(), contextKey, &simple.root)),
 			},
 			map[string]string{
 				"itemID": "2",
@@ -114,10 +118,7 @@ func TestGetParams(t *testing.T) {
 		"wildcard ctx": {
 			args{
 				req: httptest.NewRequest(http.MethodGet, "/api/users/1/items/2/extra/params/to/provide", nil).
-					WithContext(context.WithValue(context.Background(), contextKey, NewRouter().
-						Get("/api/users/:userID/items/:itemID", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})).
-						Get("/api/users/:userID/items/:itemID/extra/*value", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})).
-						root)),
+					WithContext(context.WithValue(context.Background(), contextKey, &wildcard.root)),
 			},
 			map[string]string{
 				"itemID": "2",

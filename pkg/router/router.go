@@ -171,7 +171,7 @@ func (r Router) Handler() http.Handler {
 // GetParams of a request
 func GetParams(r *http.Request) map[string]string {
 	switch value := r.Context().Value(contextKey).(type) {
-	case node:
+	case *node:
 		params := make(map[string]string)
 		value.extractVariable(r.Method, sanitizeURL(r), params)
 		return params
