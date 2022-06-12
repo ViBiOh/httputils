@@ -12,7 +12,7 @@ import (
 // SetupExclusive configure the exclusive queue
 func (c *Client) SetupExclusive(name string) (err error) {
 	create, count := c.shouldCreateExclusiveQueue(name)
-	if !create || count > 0 {
+	if !create && count > 0 {
 		return nil
 	}
 
