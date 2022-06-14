@@ -26,7 +26,7 @@ func ReadBodyRequest(r *http.Request) ([]byte, error) {
 	if r == nil {
 		return nil, nil
 	}
-	return readContent(r.Body)
+	return io.ReadAll(r.Body)
 }
 
 // ReadBodyResponse return content of a body response (defined as a ReadCloser)
