@@ -17,7 +17,7 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -graceDuration string\n    \t[http] Grace duration when SIGTERM received {SIMPLE_GRACE_DURATION} (default \"30s\")\n  -okStatus int\n    \t[http] Healthy HTTP Status code {SIMPLE_OK_STATUS} (default 204)\n",
+			"Usage of simple:\n  -graceDuration duration\n    \t[http] Grace duration when SIGTERM received {SIMPLE_GRACE_DURATION} (default 30s)\n  -okStatus int\n    \t[http] Healthy HTTP Status code {SIMPLE_OK_STATUS} (default 204)\n",
 		},
 	}
 
@@ -41,7 +41,7 @@ func TestFlags(t *testing.T) {
 
 func TestHealthHandler(t *testing.T) {
 	okStatus := http.StatusNoContent
-	graceDuration := "1s"
+	graceDuration := time.Second
 	closedChan := make(chan struct{})
 	close(closedChan)
 
@@ -80,7 +80,7 @@ func TestHealthHandler(t *testing.T) {
 
 func TestReadyHandler(t *testing.T) {
 	okStatus := http.StatusNoContent
-	graceDuration := "1s"
+	graceDuration := time.Second
 	closedChan := make(chan struct{})
 	close(closedChan)
 

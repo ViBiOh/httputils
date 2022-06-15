@@ -10,7 +10,6 @@ import (
 
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 // App of package
@@ -34,10 +33,10 @@ type Config struct {
 	cert    *string
 	key     *string
 
-	readTimeout     *string
-	writeTimeout    *string
-	idleTimeout     *string
-	shutdownTimeout *string
+	readTimeout     *time.Duration
+	writeTimeout    *time.Duration
+	idleTimeout     *time.Duration
+	shutdownTimeout *time.Duration
 }
 
 // Flags adds flags for configuring package
@@ -47,10 +46,10 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 		port:            flags.Uint(fs, prefix, "server", "Port", "Listen port (0 to disable)", 1080, overrides),
 		cert:            flags.String(fs, prefix, "server", "Cert", "Certificate file", "", overrides),
 		key:             flags.String(fs, prefix, "server", "Key", "Key file", "", overrides),
-		readTimeout:     flags.String(fs, prefix, "server", "ReadTimeout", "Read Timeout", "5s", overrides),
-		writeTimeout:    flags.String(fs, prefix, "server", "WriteTimeout", "Write Timeout", "10s", overrides),
-		idleTimeout:     flags.String(fs, prefix, "server", "IdleTimeout", "Idle Timeout", "2m", overrides),
-		shutdownTimeout: flags.String(fs, prefix, "server", "ShutdownTimeout", "Shutdown Timeout", "10s", overrides),
+		readTimeout:     flags.Duration(fs, prefix, "server", "ReadTimeout", "Read Timeout", 5*time.Second, overrides),
+		writeTimeout:    flags.Duration(fs, prefix, "server", "WriteTimeout", "Write Timeout", 10*time.Second, overrides),
+		idleTimeout:     flags.Duration(fs, prefix, "server", "IdleTimeout", "Idle Timeout", 2*time.Minute, overrides),
+		shutdownTimeout: flags.Duration(fs, prefix, "server", "ShutdownTimeout", "Shutdown Timeout", 10*time.Second, overrides),
 	}
 }
 
@@ -70,10 +69,10 @@ func New(config Config) App {
 		cert:          *config.cert,
 		key:           *config.key,
 
-		readTimeout:     model.SafeParseDuration("ReadTimeout", *config.readTimeout, 5*time.Second),
-		writeTimeout:    model.SafeParseDuration("WriteTimeout", *config.writeTimeout, 10*time.Second),
-		idleTimeout:     model.SafeParseDuration("IdleTimeout", *config.idleTimeout, 2*time.Minute),
-		shutdownTimeout: model.SafeParseDuration("ShutdownTimeout", *config.shutdownTimeout, 10*time.Second),
+		readTimeout:     *config.readTimeout,
+		writeTimeout:    *config.writeTimeout,
+		idleTimeout:     *config.idleTimeout,
+		shutdownTimeout: *config.shutdownTimeout,
 
 		done: done,
 	}

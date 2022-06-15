@@ -76,6 +76,22 @@ Be careful when using the CLI values, if someone list the processes on the syste
 Usage of http:
   -address string
         [server] Listen address {HTTP_ADDRESS}
+  -amqpExchange string
+        [amqp] Exchange name {HTTP_AMQP_EXCHANGE} (default "httputils")
+  -amqpExclusive
+        [amqp] Queue exclusive mode (for fanout exchange) {HTTP_AMQP_EXCLUSIVE}
+  -amqpMaxRetry uint
+        [amqp] Max send retries {HTTP_AMQP_MAX_RETRY} (default 3)
+  -amqpPrefetch int
+        [amqp] Prefetch count for QoS {HTTP_AMQP_PREFETCH} (default 1)
+  -amqpQueue string
+        [amqp] Queue name {HTTP_AMQP_QUEUE} (default "httputils")
+  -amqpRetryInterval duration
+        [amqp] Interval duration when send fails {HTTP_AMQP_RETRY_INTERVAL} (default 10s)
+  -amqpRoutingKey string
+        [amqp] RoutingKey name {HTTP_AMQP_ROUTING_KEY} (default "local")
+  -amqpURI string
+        [amqp] Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost> {HTTP_AMQP_URI}
   -cert string
         [server] Certificate file {HTTP_CERT}
   -corsCredentials
@@ -89,15 +105,15 @@ Usage of http:
   -corsOrigin string
         [cors] Access-Control-Allow-Origin {HTTP_CORS_ORIGIN} (default "*")
   -csp string
-        [owasp] Content-Security-Policy {HTTP_CSP} (default "default-src 'self'; base-uri 'self'")
+        [owasp] Content-Security-Policy {HTTP_CSP} (default "default-src 'self'; base-uri 'self'; script-src 'httputils-nonce'")
   -frameOptions string
         [owasp] X-Frame-Options {HTTP_FRAME_OPTIONS} (default "deny")
-  -graceDuration string
-        [http] Grace duration when SIGTERM received {HTTP_GRACE_DURATION} (default "30s")
+  -graceDuration duration
+        [http] Grace duration when SIGTERM received {HTTP_GRACE_DURATION} (default 30s)
   -hsts
         [owasp] Indicate Strict Transport Security {HTTP_HSTS} (default true)
-  -idleTimeout string
-        [server] Idle Timeout {HTTP_IDLE_TIMEOUT} (default "2m")
+  -idleTimeout duration
+        [server] Idle Timeout {HTTP_IDLE_TIMEOUT} (default 2m0s)
   -key string
         [server] Key file {HTTP_KEY}
   -loggerJson
@@ -120,36 +136,40 @@ Usage of http:
         [prometheus] Certificate file {HTTP_PROMETHEUS_CERT}
   -prometheusGzip
         [prometheus] Enable gzip compression of metrics output {HTTP_PROMETHEUS_GZIP} (default true)
-  -prometheusIdleTimeout string
-        [prometheus] Idle Timeout {HTTP_PROMETHEUS_IDLE_TIMEOUT} (default "10s")
+  -prometheusIdleTimeout duration
+        [prometheus] Idle Timeout {HTTP_PROMETHEUS_IDLE_TIMEOUT} (default 10s)
   -prometheusIgnore string
         [prometheus] Ignored path prefixes for metrics, comma separated {HTTP_PROMETHEUS_IGNORE}
   -prometheusKey string
         [prometheus] Key file {HTTP_PROMETHEUS_KEY}
   -prometheusPort uint
         [prometheus] Listen port (0 to disable) {HTTP_PROMETHEUS_PORT} (default 9090)
-  -prometheusReadTimeout string
-        [prometheus] Read Timeout {HTTP_PROMETHEUS_READ_TIMEOUT} (default "5s")
-  -prometheusShutdownTimeout string
-        [prometheus] Shutdown Timeout {HTTP_PROMETHEUS_SHUTDOWN_TIMEOUT} (default "5s")
-  -prometheusWriteTimeout string
-        [prometheus] Write Timeout {HTTP_PROMETHEUS_WRITE_TIMEOUT} (default "10s")
-  -readTimeout string
-        [server] Read Timeout {HTTP_READ_TIMEOUT} (default "5s")
+  -prometheusReadTimeout duration
+        [prometheus] Read Timeout {HTTP_PROMETHEUS_READ_TIMEOUT} (default 5s)
+  -prometheusShutdownTimeout duration
+        [prometheus] Shutdown Timeout {HTTP_PROMETHEUS_SHUTDOWN_TIMEOUT} (default 5s)
+  -prometheusWriteTimeout duration
+        [prometheus] Write Timeout {HTTP_PROMETHEUS_WRITE_TIMEOUT} (default 10s)
+  -readTimeout duration
+        [server] Read Timeout {HTTP_READ_TIMEOUT} (default 5s)
   -rendererMinify
         [renderer] Minify HTML {HTTP_RENDERER_MINIFY} (default true)
   -rendererPathPrefix string
         [renderer] Root Path Prefix {HTTP_RENDERER_PATH_PREFIX}
   -rendererPublicURL string
-        [renderer] Public URL {HTTP_RENDERER_PUBLIC_URL} (default "http://localhost")
+        [renderer] Public URL {HTTP_RENDERER_PUBLIC_URL} (default "http://localhost:1080")
   -rendererTitle string
         [renderer] Application title {HTTP_RENDERER_TITLE} (default "App")
-  -shutdownTimeout string
-        [server] Shutdown Timeout {HTTP_SHUTDOWN_TIMEOUT} (default "10s")
+  -shutdownTimeout duration
+        [server] Shutdown Timeout {HTTP_SHUTDOWN_TIMEOUT} (default 10s)
+  -tracerRate string
+        [tracer] Jaeger sample rate, 'always', 'never' or a float value {HTTP_TRACER_RATE} (default "always")
+  -tracerURL string
+        [tracer] Jaeger endpoint URL (e.g. http://jaeger:14268/api/traces) {HTTP_TRACER_URL}
   -url string
         [alcotest] URL to check {HTTP_URL}
   -userAgent string
         [alcotest] User-Agent for check {HTTP_USER_AGENT} (default "Alcotest")
-  -writeTimeout string
-        [server] Write Timeout {HTTP_WRITE_TIMEOUT} (default "10s")
+  -writeTimeout duration
+        [server] Write Timeout {HTTP_WRITE_TIMEOUT} (default 10s)
 ```

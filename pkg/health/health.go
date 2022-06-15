@@ -35,14 +35,14 @@ type App struct {
 // Config of package
 type Config struct {
 	okStatus      *int
-	graceDuration *string
+	graceDuration *time.Duration
 }
 
 // Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		okStatus:      flags.Int(fs, prefix, "http", "OkStatus", "Healthy HTTP Status code", http.StatusNoContent, overrides),
-		graceDuration: flags.String(fs, prefix, "http", "GraceDuration", "Grace duration when SIGTERM received", "30s", overrides),
+		graceDuration: flags.Duration(fs, prefix, "http", "GraceDuration", "Grace duration when SIGTERM received", 30*time.Second, overrides),
 	}
 }
 
@@ -50,7 +50,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 func New(config Config, pingers ...model.Pinger) App {
 	return App{
 		okStatus:      *config.okStatus,
-		graceDuration: model.SafeParseDuration("GraceDuration", *config.graceDuration, 30*time.Second),
+		graceDuration: *config.graceDuration,
 		pingers:       pingers,
 
 		done: make(chan struct{}),

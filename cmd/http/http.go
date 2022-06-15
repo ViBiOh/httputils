@@ -37,7 +37,7 @@ func main() {
 	fs := flag.NewFlagSet("http", flag.ExitOnError)
 
 	appServerConfig := server.Flags(fs, "")
-	promServerConfig := server.Flags(fs, "prometheus", flags.NewOverride("Port", uint(9090)), flags.NewOverride("IdleTimeout", "10s"), flags.NewOverride("ShutdownTimeout", "5s"))
+	promServerConfig := server.Flags(fs, "prometheus", flags.NewOverride("Port", uint(9090)), flags.NewOverride("IdleTimeout", 10*time.Second), flags.NewOverride("ShutdownTimeout", 5*time.Second))
 
 	healthConfig := health.Flags(fs, "")
 	alcotestConfig := alcotest.Flags(fs, "")
@@ -48,7 +48,7 @@ func main() {
 	corsConfig := cors.Flags(fs, "cors")
 
 	amqpConfig := amqp.Flags(fs, "amqp")
-	amqHandlerConfig := amqphandler.Flags(fs, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RoutingKey", "local"), flags.NewOverride("RetryInterval", "10s"))
+	amqHandlerConfig := amqphandler.Flags(fs, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RoutingKey", "local"), flags.NewOverride("RetryInterval", 10*time.Second))
 
 	rendererConfig := renderer.Flags(fs, "renderer")
 

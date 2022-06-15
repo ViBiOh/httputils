@@ -3,7 +3,7 @@ module github.com/ViBiOh/httputils/v4
 go 1.18
 
 require (
-	github.com/ViBiOh/flags v1.0.0
+	github.com/ViBiOh/flags v1.1.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
 	github.com/jackc/pgconn v1.12.1

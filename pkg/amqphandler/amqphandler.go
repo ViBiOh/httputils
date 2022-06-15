@@ -33,7 +33,7 @@ type Config struct {
 	exchange      *string
 	queue         *string
 	routingKey    *string
-	retryInterval *string
+	retryInterval *time.Duration
 	maxRetry      *uint
 	exclusive     *bool
 }
@@ -45,37 +45,32 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 		queue:         flags.String(fs, prefix, "amqp", "Queue", "Queue name", "", overrides),
 		exclusive:     flags.Bool(fs, prefix, "amqp", "Exclusive", "Queue exclusive mode (for fanout exchange)", false, overrides),
 		routingKey:    flags.String(fs, prefix, "amqp", "RoutingKey", "RoutingKey name", "", overrides),
-		retryInterval: flags.String(fs, prefix, "amqp", "RetryInterval", "Interval duration when send fails", "1h", overrides),
+		retryInterval: flags.Duration(fs, prefix, "amqp", "RetryInterval", "Interval duration when send fails", time.Hour, overrides),
 		maxRetry:      flags.Uint(fs, prefix, "amqp", "MaxRetry", "Max send retries", 3, overrides),
 	}
 }
 
 // New creates new App from Config
 func New(config Config, amqpClient *amqpclient.Client, handler func(amqp.Delivery) error) (App, error) {
-	return NewFromString(amqpClient, handler, strings.TrimSpace(*config.exchange), strings.TrimSpace(*config.queue), strings.TrimSpace(*config.routingKey), strings.TrimSpace(*config.retryInterval), *config.exclusive, *config.maxRetry)
+	return NewFromString(amqpClient, handler, strings.TrimSpace(*config.exchange), strings.TrimSpace(*config.queue), strings.TrimSpace(*config.routingKey), *config.retryInterval, *config.exclusive, *config.maxRetry)
 }
 
 // NewFromString creates new App from string configuration
-func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) error, exchange, queue, routingKey, retryInterval string, exclusive bool, maxRetry uint) (App, error) {
+func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) error, exchange, queue, routingKey string, retryInterval time.Duration, exclusive bool, maxRetry uint) (App, error) {
 	app := App{
-		amqpClient: amqpClient,
-		exchange:   exchange,
-		queue:      queue,
-		exclusive:  exclusive,
-		routingKey: routingKey,
-		done:       make(chan struct{}),
-		handler:    handler,
-		maxRetry:   int64(maxRetry),
+		amqpClient:    amqpClient,
+		exchange:      exchange,
+		queue:         queue,
+		exclusive:     exclusive,
+		routingKey:    routingKey,
+		retryInterval: retryInterval,
+		done:          make(chan struct{}),
+		handler:       handler,
+		maxRetry:      int64(maxRetry),
 	}
 
 	if app.amqpClient == nil {
 		return app, nil
-	}
-
-	var err error
-	app.retryInterval, err = time.ParseDuration(retryInterval)
-	if err != nil {
-		return app, fmt.Errorf("unable to parse retry duration: %s", err)
 	}
 
 	if app.retryInterval > 0 && app.maxRetry > 0 {
@@ -83,6 +78,7 @@ func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) er
 			return app, errors.New("no exchange name for delaying retries")
 		}
 
+		var err error
 		if app.delayExchange, err = app.amqpClient.DelayedExchange(queue, exchange, routingKey, app.retryInterval); err != nil {
 			return app, fmt.Errorf("unable to configure dead-letter exchange: %s", err)
 		}
