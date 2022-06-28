@@ -57,13 +57,12 @@ func TestRawWrite(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if tc.args.writer.String() != tc.want {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
+				tc.args.writer.String() != tc.want:
 				failed = true
 			}
 
@@ -276,13 +275,12 @@ func TestParse(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if !reflect.DeepEqual(tc.args.obj, tc.want) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
+				!reflect.DeepEqual(tc.args.obj, tc.want):
 				failed = true
 			}
 
@@ -364,13 +362,12 @@ func TestRead(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if !reflect.DeepEqual(tc.args.obj, tc.want) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
+				!reflect.DeepEqual(tc.args.obj, tc.want):
 				failed = true
 			}
 
@@ -473,13 +470,12 @@ func TestStream(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if !reflect.DeepEqual(got, tc.want) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
+				!reflect.DeepEqual(got, tc.want):
 				failed = true
 			}
 

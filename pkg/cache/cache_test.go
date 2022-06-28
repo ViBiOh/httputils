@@ -117,13 +117,12 @@ func TestRetrieve(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if !reflect.DeepEqual(got, tc.want) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
+				!reflect.DeepEqual(got, tc.want):
 				failed = true
 			}
 
@@ -187,13 +186,12 @@ func TestRetrieveError(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if got.ID != tc.want.ID {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
+				got.ID != tc.want.ID:
 				failed = true
 			}
 
@@ -253,11 +251,11 @@ func TestEvictOnSuccess(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
 				failed = true
 			}
 

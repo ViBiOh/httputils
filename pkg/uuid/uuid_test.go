@@ -22,13 +22,12 @@ func TestNew(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if len(got) != len(tc.want) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
+				len(got) != len(tc.want):
 				failed = true
 			}
 

@@ -159,13 +159,12 @@ func TestValidateSignature(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if got != tc.want {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
+				got != tc.want:
 				failed = true
 			}
 

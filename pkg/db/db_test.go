@@ -273,11 +273,11 @@ func TestDoAtomic(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
 				failed = true
 			}
 
@@ -345,11 +345,11 @@ func TestList(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
 				failed = true
 			}
 
@@ -415,11 +415,11 @@ func TestGet(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
 				failed = true
 			}
 
@@ -479,11 +479,11 @@ func TestCreate(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
 				failed = true
 			}
 
@@ -536,11 +536,11 @@ func TestExec(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
 				failed = true
 			}
 
@@ -598,11 +598,11 @@ func TestOne(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
 				failed = true
 			}
 
@@ -658,11 +658,11 @@ func TestBulk(t *testing.T) {
 
 			failed := false
 
-			if tc.wantErr == nil && gotErr != nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr == nil {
-				failed = true
-			} else if tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
+			switch {
+			case
+				tc.wantErr == nil && gotErr != nil,
+				tc.wantErr != nil && gotErr == nil,
+				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
 				failed = true
 			}
 
