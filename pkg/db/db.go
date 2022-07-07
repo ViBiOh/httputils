@@ -59,7 +59,6 @@ type Config struct {
 	name    *string
 	sslmode *string
 	maxConn *uint
-	timeout *uint
 }
 
 // Flags adds flags for configuring package
