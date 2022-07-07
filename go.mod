@@ -41,7 +41,7 @@ require (
 	github.com/tdewolff/parse/v2 v2.6.1 // indirect
 	go.opentelemetry.io/otel/metric v0.30.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
-	golang.org/x/sys v0.0.0-20220622161953-175b2fd9d664 // indirect
+	golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
 )
