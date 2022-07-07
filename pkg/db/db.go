@@ -72,7 +72,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 		name:    flags.String(fs, prefix, "database", "Name", "Name", "", overrides),
 		maxConn: flags.Uint(fs, prefix, "database", "MaxConn", "Max Open Connections", 5, overrides),
 		sslmode: flags.String(fs, prefix, "database", "Sslmode", "SSL Mode", "disable", overrides),
-		timeout: flags.Uint(fs, prefix, "database", "Timeout", "Connect timeout", 10, overrides),
 	}
 }
 
@@ -88,7 +87,7 @@ func New(config Config, tracer trace.Tracer) (App, error) {
 	name := strings.TrimSpace(*config.name)
 	sslmode := *config.sslmode
 
-	db, err := pgxpool.Connect(context.Background(), fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s connect_timeout=%d pool_max_conns=%d", host, *config.port, user, pass, name, sslmode, *config.timeout, *config.maxConn))
+	db, err := pgxpool.Connect(context.Background(), fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_max_conns=%d", host, *config.port, user, pass, name, sslmode, *config.maxConn))
 	if err != nil {
 		return App{}, fmt.Errorf("unable to connect to postgres: %s", err)
 	}

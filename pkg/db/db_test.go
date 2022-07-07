@@ -18,7 +18,7 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -host string\n    \t[database] Host {SIMPLE_HOST}\n  -maxConn uint\n    \t[database] Max Open Connections {SIMPLE_MAX_CONN} (default 5)\n  -name string\n    \t[database] Name {SIMPLE_NAME}\n  -pass string\n    \t[database] Pass {SIMPLE_PASS}\n  -port uint\n    \t[database] Port {SIMPLE_PORT} (default 5432)\n  -sslmode string\n    \t[database] SSL Mode {SIMPLE_SSLMODE} (default \"disable\")\n  -timeout uint\n    \t[database] Connect timeout {SIMPLE_TIMEOUT} (default 10)\n  -user string\n    \t[database] User {SIMPLE_USER}\n",
+			"Usage of simple:\n  -host string\n    \t[database] Host {SIMPLE_HOST}\n  -maxConn uint\n    \t[database] Max Open Connections {SIMPLE_MAX_CONN} (default 5)\n  -name string\n    \t[database] Name {SIMPLE_NAME}\n  -pass string\n    \t[database] Pass {SIMPLE_PASS}\n  -port uint\n    \t[database] Port {SIMPLE_PORT} (default 5432)\n  -sslmode string\n    \t[database] SSL Mode {SIMPLE_SSLMODE} (default \"disable\")\n  -user string\n    \t[database] User {SIMPLE_USER}\n",
 		},
 	}
 
