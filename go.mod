@@ -12,7 +12,7 @@ require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/prometheus/common v0.36.0
 	github.com/streadway/amqp v1.0.0
-	github.com/tdewolff/minify/v2 v2.11.12
+	github.com/tdewolff/minify/v2 v2.12.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.33.0
 	go.opentelemetry.io/otel v1.8.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.8.0
