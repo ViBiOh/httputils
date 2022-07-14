@@ -10,7 +10,7 @@ require (
 	github.com/jackc/pgproto3/v2 v2.3.0
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/prometheus/client_golang v1.12.2
-	github.com/prometheus/common v0.35.0
+	github.com/prometheus/common v0.36.0
 	github.com/streadway/amqp v1.0.0
 	github.com/tdewolff/minify/v2 v2.11.12
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.33.0
