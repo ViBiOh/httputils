@@ -10,7 +10,7 @@ require (
 	github.com/jackc/pgproto3/v2 v2.3.0
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/prometheus/client_golang v1.12.2
-	github.com/prometheus/common v0.36.0
+	github.com/prometheus/common v0.37.0
 	github.com/streadway/amqp v1.0.0
 	github.com/tdewolff/minify/v2 v2.12.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.33.0
@@ -41,7 +41,7 @@ require (
 	github.com/tdewolff/parse/v2 v2.6.1 // indirect
 	go.opentelemetry.io/otel/metric v0.31.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
-	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d // indirect
+	golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
 )
