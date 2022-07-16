@@ -34,6 +34,10 @@ import (
 //go:embed templates static
 var content embed.FS
 
+type hello struct {
+	Name string `json:"name"`
+}
+
 func main() {
 	fs := flag.NewFlagSet("http", flag.ExitOnError)
 
@@ -74,14 +78,14 @@ func main() {
 
 	redisClient := redis.New(redisConfig, prometheusApp.Registerer(), tracerApp.GetTracer("redis"))
 
-	messages, cancelSubscription := redisClient.Subscribe(context.Background(), "httputils")
+	messages, cancelSubscription := redis.SubscribeFor[hello](context.Background(), redisClient, "httputils")
 	go func() {
 		for message := range messages {
-			logger.Info("%s", message.Payload)
+			logger.Info("%+v", message)
 		}
 	}()
 
-	logger.Fatal(redisClient.Publish(context.Background(), "httputils", "hello world"))
+	logger.Fatal(redisClient.Publish(context.Background(), "httputils", `{"name": "world"}`))
 
 	amqpClient, err := amqp.New(amqpConfig, prometheusApp.Registerer())
 	if err != nil {

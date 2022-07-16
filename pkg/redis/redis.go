@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -199,6 +200,28 @@ func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Messa
 	return pubsub.Channel(), func(ctx context.Context) error {
 		return pubsub.Unsubscribe(ctx, channel)
 	}
+}
+
+// SubscribeFor pubsub with unmarshal of given type
+func SubscribeFor[T any](ctx context.Context, app App, channel string) (<-chan T, func(context.Context) error) {
+	subscription, unsubscribe := app.Subscribe(ctx, channel)
+
+	output := make(chan T, len(subscription))
+
+	go func() {
+		defer close(output)
+
+		for item := range subscription {
+			var instance T
+			if err := json.Unmarshal([]byte(item.Payload), &instance); err != nil {
+				logger.Error("unable to unmarshal `%s`: %s", item.Payload, err)
+			} else {
+				output <- instance
+			}
+		}
+	}()
+
+	return output, unsubscribe
 }
 
 // Exclusive get an exclusive lock for given name during duration
