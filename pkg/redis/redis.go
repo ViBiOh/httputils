@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"strings"
@@ -20,6 +21,9 @@ import (
 const (
 	metricsNamespace = "redis"
 )
+
+// ErrNoSubscriber occurs when a published message is not received by any subscriber
+var ErrNoSubscriber = errors.New("no subscriber for channel")
 
 // App of package
 type App struct {
@@ -157,6 +161,44 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 	}
 
 	return nil
+}
+
+// Publish a message to a given channel
+func (a App) Publish(ctx context.Context, channel string, value any) error {
+	if !a.enabled() {
+		return nil
+	}
+
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "publish")
+	defer end()
+
+	count, err := a.redisClient.Publish(ctx, channel, value).Result()
+	if err != nil {
+		a.increase("error")
+		return fmt.Errorf("unable to publish: %s", err)
+	}
+
+	if count == 0 {
+		return ErrNoSubscriber
+	}
+
+	return nil
+}
+
+// Subscribe to a given channel
+func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error) {
+	if !a.enabled() {
+		return nil, func(_ context.Context) error { return nil }
+	}
+
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "subscribe")
+	defer end()
+
+	pubsub := a.redisClient.Subscribe(ctx, channel)
+
+	return pubsub.Channel(), func(ctx context.Context) error {
+		return pubsub.Unsubscribe(ctx, channel)
+	}
 }
 
 // Exclusive get an exclusive lock for given name during duration
