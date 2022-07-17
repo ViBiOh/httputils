@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
@@ -57,7 +56,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 func New(config Config, prometheusRegisterer prometheus.Registerer, tracer trace.Tracer) App {
 	address := strings.TrimSpace(*config.address)
 	if len(address) == 0 {
-		logger.Info("no redis address")
 		return App{}
 	}
 
@@ -203,7 +201,7 @@ func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Messa
 }
 
 // SubscribeFor pubsub with unmarshal of given type
-func SubscribeFor[T any](ctx context.Context, app App, channel string) (<-chan T, func(context.Context) error) {
+func SubscribeFor[T any](ctx context.Context, app App, channel string, handler func(T, error)) func(context.Context) error {
 	subscription, unsubscribe := app.Subscribe(ctx, channel)
 
 	output := make(chan T, len(subscription))
@@ -213,15 +211,66 @@ func SubscribeFor[T any](ctx context.Context, app App, channel string) (<-chan T
 
 		for item := range subscription {
 			var instance T
-			if err := json.Unmarshal([]byte(item.Payload), &instance); err != nil {
-				logger.Error("unable to unmarshal `%s`: %s", item.Payload, err)
-			} else {
-				output <- instance
-			}
+			handler(instance, json.Unmarshal([]byte(item.Payload), &instance))
 		}
 	}()
 
-	return output, unsubscribe
+	return unsubscribe
+}
+
+// Push a task to a list
+func (a App) Push(ctx context.Context, key string, value any) error {
+	if !a.enabled() {
+		return nil
+	}
+
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "push")
+	defer end()
+
+	if err := a.redisClient.LPush(ctx, key, value); err != nil {
+		a.increase("error")
+		return fmt.Errorf("unable to push: %s", err)
+	}
+
+	return nil
+}
+
+// Pull a task from a list
+func (a App) Pull(ctx context.Context, key string) (string, error) {
+	if !a.enabled() {
+		return "", nil
+	}
+
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "pull")
+	defer end()
+
+	content, err := a.redisClient.BRPop(ctx, 0, key).Result()
+	if err != nil {
+		a.increase("error")
+		return "", fmt.Errorf("unable to pull: %s", err)
+	}
+
+	if len(content) < 2 {
+		return "", nil
+	}
+
+	return content[1], err
+}
+
+// PullFor pull with unmarshal of given type
+func PullFor[T any](ctx context.Context, app App, key string) (output T, err error) {
+	var content string
+
+	content, err = app.Pull(ctx, key)
+	if err != nil {
+		return
+	}
+
+	if unmarshalErr := json.Unmarshal([]byte(content), &output); unmarshalErr != nil {
+		err = fmt.Errorf("unable to unmarshal: %s", unmarshalErr)
+	}
+
+	return
 }
 
 // Exclusive get an exclusive lock for given name during duration

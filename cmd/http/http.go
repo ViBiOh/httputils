@@ -23,7 +23,6 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
-	"github.com/ViBiOh/httputils/v4/pkg/redis"
 	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
@@ -33,10 +32,6 @@ import (
 
 //go:embed templates static
 var content embed.FS
-
-type hello struct {
-	Name string `json:"name"`
-}
 
 func main() {
 	fs := flag.NewFlagSet("http", flag.ExitOnError)
@@ -54,8 +49,6 @@ func main() {
 
 	amqpConfig := amqp.Flags(fs, "amqp")
 	amqHandlerConfig := amqphandler.Flags(fs, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RoutingKey", "local"), flags.NewOverride("RetryInterval", 10*time.Second))
-
-	redisConfig := redis.Flags(fs, "redis")
 
 	rendererConfig := renderer.Flags(fs, "renderer")
 
@@ -75,17 +68,6 @@ func main() {
 	promServer := server.New(promServerConfig)
 	prometheusApp := prometheus.New(prometheusConfig)
 	healthApp := health.New(healthConfig)
-
-	redisClient := redis.New(redisConfig, prometheusApp.Registerer(), tracerApp.GetTracer("redis"))
-
-	messages, cancelSubscription := redis.SubscribeFor[hello](context.Background(), redisClient, "httputils")
-	go func() {
-		for message := range messages {
-			logger.Info("%+v", message)
-		}
-	}()
-
-	logger.Fatal(redisClient.Publish(context.Background(), "httputils", `{"name": "world"}`))
 
 	amqpClient, err := amqp.New(amqpConfig, prometheusApp.Registerer())
 	if err != nil {
@@ -125,9 +107,6 @@ func main() {
 	go appServer.Start("http", healthApp.End(), httputils.Handler(rendererApp.Handler(templateFunc), healthApp, recoverer.Middleware, prometheusApp.Middleware, tracerApp.Middleware, owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware))
 
 	healthApp.WaitForTermination(appServer.Done())
-	if err := cancelSubscription(context.Background()); err != nil {
-		logger.Error("unable to close redis subscription: %s", err)
-	}
 	server.GracefulWait(appServer.Done(), promServer.Done(), amqpApp.Done())
 }
 
