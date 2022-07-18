@@ -23,6 +23,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
+	"github.com/ViBiOh/httputils/v4/pkg/redis"
 	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
@@ -50,6 +51,8 @@ func main() {
 	amqpConfig := amqp.Flags(fs, "amqp")
 	amqHandlerConfig := amqphandler.Flags(fs, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RoutingKey", "local"), flags.NewOverride("RetryInterval", 10*time.Second))
 
+	redisConfig := redis.Flags(fs, "redis")
+
 	rendererConfig := renderer.Flags(fs, "renderer")
 
 	logger.Fatal(fs.Parse(os.Args[1:]))
@@ -68,6 +71,15 @@ func main() {
 	promServer := server.New(promServerConfig)
 	prometheusApp := prometheus.New(prometheusConfig)
 	healthApp := health.New(healthConfig)
+
+	redisApp := redis.New(redisConfig, prometheusApp.Registerer(), tracerApp.GetTracer("redis"))
+	go redisApp.Pull(context.Background(), "httputils:tasks", healthApp.Done(), func(content string, err error) {
+		if err != nil {
+			logger.Fatal(err)
+		}
+
+		logger.Info("content=`%s`", content)
+	})
 
 	amqpClient, err := amqp.New(amqpConfig, prometheusApp.Registerer())
 	if err != nil {

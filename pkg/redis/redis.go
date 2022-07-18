@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -160,117 +159,6 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 	}
 
 	return nil
-}
-
-// Publish a message to a given channel
-func (a App) Publish(ctx context.Context, channel string, value any) error {
-	if !a.enabled() {
-		return nil
-	}
-
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "publish")
-	defer end()
-
-	count, err := a.redisClient.Publish(ctx, channel, value).Result()
-	if err != nil {
-		a.increase("error")
-		return fmt.Errorf("unable to publish: %s", err)
-	}
-
-	if count == 0 {
-		return ErrNoSubscriber
-	}
-
-	return nil
-}
-
-// Subscribe to a given channel
-func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error) {
-	if !a.enabled() {
-		return nil, func(_ context.Context) error { return nil }
-	}
-
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "subscribe")
-	defer end()
-
-	pubsub := a.redisClient.Subscribe(ctx, channel)
-
-	return pubsub.Channel(), func(ctx context.Context) error {
-		return pubsub.Unsubscribe(ctx, channel)
-	}
-}
-
-// SubscribeFor pubsub with unmarshal of given type
-func SubscribeFor[T any](ctx context.Context, app App, channel string, handler func(T, error)) func(context.Context) error {
-	subscription, unsubscribe := app.Subscribe(ctx, channel)
-
-	output := make(chan T, len(subscription))
-
-	go func() {
-		defer close(output)
-
-		for item := range subscription {
-			var instance T
-			handler(instance, json.Unmarshal([]byte(item.Payload), &instance))
-		}
-	}()
-
-	return unsubscribe
-}
-
-// Push a task to a list
-func (a App) Push(ctx context.Context, key string, value any) error {
-	if !a.enabled() {
-		return nil
-	}
-
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "push")
-	defer end()
-
-	if err := a.redisClient.LPush(ctx, key, value); err != nil {
-		a.increase("error")
-		return fmt.Errorf("unable to push: %s", err)
-	}
-
-	return nil
-}
-
-// Pull a task from a list
-func (a App) Pull(ctx context.Context, key string) (string, error) {
-	if !a.enabled() {
-		return "", nil
-	}
-
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "pull")
-	defer end()
-
-	content, err := a.redisClient.BRPop(ctx, 0, key).Result()
-	if err != nil {
-		a.increase("error")
-		return "", fmt.Errorf("unable to pull: %s", err)
-	}
-
-	if len(content) < 2 {
-		return "", nil
-	}
-
-	return content[1], err
-}
-
-// PullFor pull with unmarshal of given type
-func PullFor[T any](ctx context.Context, app App, key string) (output T, err error) {
-	var content string
-
-	content, err = app.Pull(ctx, key)
-	if err != nil {
-		return
-	}
-
-	if unmarshalErr := json.Unmarshal([]byte(content), &output); unmarshalErr != nil {
-		err = fmt.Errorf("unable to unmarshal: %s", unmarshalErr)
-	}
-
-	return
 }
 
 // Exclusive get an exclusive lock for given name during duration
