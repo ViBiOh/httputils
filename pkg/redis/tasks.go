@@ -40,7 +40,10 @@ func (a App) Pull(ctx context.Context, key string, done <-chan struct{}, handler
 	defer cancel()
 
 	go func() {
-		<-done
+		select {
+		case <-ctx.Done():
+		case <-done:
+		}
 		cancel()
 	}()
 
