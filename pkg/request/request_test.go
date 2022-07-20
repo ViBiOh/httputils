@@ -335,13 +335,12 @@ func TestSend(t *testing.T) {
 
 			failed := false
 
-			if err == nil && tc.wantErr != nil {
-				failed = true
-			} else if err != nil && tc.wantErr == nil {
-				failed = true
-			} else if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if string(result) != tc.want {
+			switch {
+			case
+				tc.wantErr == nil && err != nil,
+				tc.wantErr != nil && err == nil,
+				tc.wantErr != nil && err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()),
+				string(result) != tc.want:
 				failed = true
 			}
 
@@ -491,13 +490,12 @@ func TestMultipart(t *testing.T) {
 
 			failed := false
 
-			if err == nil && tc.wantErr != nil {
-				failed = true
-			} else if err != nil && tc.wantErr == nil {
-				failed = true
-			} else if err != nil && !strings.HasPrefix(err.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if string(result) != tc.want {
+			switch {
+			case
+				tc.wantErr == nil && err != nil,
+				tc.wantErr != nil && err == nil,
+				tc.wantErr != nil && err != nil && !strings.HasPrefix(err.Error(), tc.wantErr.Error()),
+				string(result) != tc.want:
 				failed = true
 			}
 
@@ -552,13 +550,12 @@ func TestJSON(t *testing.T) {
 
 			failed := false
 
-			if err == nil && tc.wantErr != nil {
-				failed = true
-			} else if err != nil && tc.wantErr == nil {
-				failed = true
-			} else if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if string(result) != tc.want {
+			switch {
+			case
+				tc.wantErr == nil && err != nil,
+				tc.wantErr != nil && err == nil,
+				tc.wantErr != nil && err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()),
+				string(result) != tc.want:
 				failed = true
 			}
 
@@ -613,13 +610,12 @@ func TestStreamJSON(t *testing.T) {
 
 			failed := false
 
-			if err == nil && tc.wantErr != nil {
-				failed = true
-			} else if err != nil && tc.wantErr == nil {
-				failed = true
-			} else if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
-				failed = true
-			} else if string(result) != tc.want {
+			switch {
+			case
+				tc.wantErr == nil && err != nil,
+				tc.wantErr != nil && err == nil,
+				tc.wantErr != nil && err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()),
+				string(result) != tc.want:
 				failed = true
 			}
 
