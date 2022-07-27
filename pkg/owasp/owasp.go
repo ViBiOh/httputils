@@ -63,7 +63,7 @@ func (a App) Middleware(next http.Handler) http.Handler {
 		headers.Add("X-Frame-Options", a.frameOptions)
 	}
 	if a.hsts {
-		headers.Add("Strict-Transport-Security", "max-age=10886400")
+		headers.Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
 	}
 
 	nonce := false

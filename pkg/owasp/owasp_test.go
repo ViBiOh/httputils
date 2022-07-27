@@ -118,7 +118,7 @@ func TestMiddleware(t *testing.T) {
 				"X-Content-Type-Options":            []string{"nosniff"},
 				"X-Xss-Protection":                  []string{"1; mode=block"},
 				"X-Permitted-Cross-Domain-Policies": []string{"none"},
-				"Strict-Transport-Security":         []string{"max-age=10886400"},
+				"Strict-Transport-Security":         []string{"max-age=63072000; includeSubDomains; preload"},
 			},
 		},
 		"next": {
