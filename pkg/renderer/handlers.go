@@ -13,7 +13,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
 )
 
-var svgCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Minute * 10).Seconds())
+var svgCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Hour * 4).Seconds())
 
 // Redirect redirect user to a defined path with a message
 func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {

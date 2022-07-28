@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
@@ -22,19 +23,21 @@ const (
 )
 
 var (
-	staticFolders   = []string{"/images", "/scripts", "/styles"}
-	staticRootPaths = []string{"/robots.txt", "/sitemap.xml", "/favicon.ico"}
+	staticFolders       = []string{"/images", "/scripts", "/styles"}
+	staticRootPaths     = []string{"/robots.txt", "/sitemap.xml", "/favicon.ico"}
+	staticCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Hour * 24).Seconds())
 )
 
 // App of package
 type App struct {
-	tracer     trace.Tracer
-	tpl        *template.Template
-	content    map[string]any
-	staticFS   fs.FS
-	pathPrefix string
-	publicURL  string
-	minify     bool
+	tracer           trace.Tracer
+	tpl              *template.Template
+	content          map[string]any
+	staticFileSystem http.FileSystem
+	staticHandler    http.Handler
+	pathPrefix       string
+	publicURL        string
+	minify           bool
 }
 
 // Config of package
@@ -65,12 +68,16 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace
 	pathPrefix := strings.TrimSuffix(*config.pathPrefix, "/")
 	publicURL := strings.TrimSuffix(*config.publicURL, "/")
 
+	staticFileSystem := http.FS(staticFS)
+	staticHandler := http.FileServer(staticFileSystem)
+
 	instance := App{
-		tracer:     tracer,
-		staticFS:   staticFS,
-		pathPrefix: pathPrefix,
-		publicURL:  publicURL,
-		minify:     *config.minify,
+		tracer:           tracer,
+		staticFileSystem: staticFileSystem,
+		staticHandler:    staticHandler,
+		pathPrefix:       pathPrefix,
+		publicURL:        publicURL,
+		minify:           *config.minify,
 		content: map[string]any{
 			"Title":   *config.title,
 			"Version": os.Getenv("VERSION"),
@@ -144,8 +151,6 @@ func (a App) feedContent(content map[string]any) map[string]any {
 
 // Handler for request. Should be use with net/http
 func (a App) Handler(templateFunc TemplateFunc) http.Handler {
-	filesystem := http.FS(a.staticFS)
-	fileHandler := http.FileServer(filesystem)
 	svgHandler := http.StripPrefix(svgPath, a.svg())
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -154,11 +159,8 @@ func (a App) Handler(templateFunc TemplateFunc) http.Handler {
 
 		r = r.WithContext(ctx)
 
-		if isStaticPaths(r.URL.Path) {
-			if _, err := filesystem.Open(r.URL.Path); err == nil {
-				fileHandler.ServeHTTP(w, r)
-				return
-			}
+		if a.handleStatic(w, r) {
+			return
 		}
 
 		if a.tpl == nil {
@@ -179,4 +181,25 @@ func (a App) Handler(templateFunc TemplateFunc) http.Handler {
 	}
 
 	return http.StripPrefix(a.pathPrefix, handler)
+}
+
+func (a App) handleStatic(w http.ResponseWriter, r *http.Request) bool {
+	if !isStaticPaths(r.URL.Path) {
+		return false
+	}
+
+	file, err := a.staticFileSystem.Open(r.URL.Path)
+	if err != nil {
+		return false
+	}
+
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			logger.Warn("unable to close static file: %s", err)
+		}
+	}()
+
+	w.Header().Add("Cache-Control", staticCacheDuration)
+	a.staticHandler.ServeHTTP(w, r)
+	return true
 }
