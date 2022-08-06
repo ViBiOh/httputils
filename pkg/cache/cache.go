@@ -12,6 +12,7 @@ import (
 )
 
 // RedisClient for caching response
+//
 //go:generate mockgen -destination ../mocks/redis_client.go -mock_names RedisClient=RedisClient -package mocks github.com/ViBiOh/httputils/v4/pkg/cache RedisClient
 type RedisClient interface {
 	Load(ctx context.Context, key string) (string, error)
@@ -23,10 +24,10 @@ type RedisClient interface {
 func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, onMiss func(context.Context) (T, error), duration time.Duration) (item T, err error) {
 	content, err := redisClient.Load(ctx, key)
 	if err != nil {
-		loggerWithTrace(ctx).Error("unable to read from cache: %s", err)
+		loggerWithTrace(ctx).Error("read from cache: %s", err)
 	} else if len(content) != 0 {
 		if err = json.Unmarshal([]byte(content), &item); err != nil {
-			loggerWithTrace(ctx).Error("unable to unmarshal from cache: %s", err)
+			loggerWithTrace(ctx).Error("unmarshal from cache: %s", err)
 		} else {
 			return item, nil
 		}
@@ -40,9 +41,9 @@ func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, o
 			defer cancel()
 
 			if payload, err := json.Marshal(item); err != nil {
-				loggerWithTrace(ctx).Error("unable to marshal to cache: %s", err)
+				loggerWithTrace(ctx).Error("marshal to cache: %s", err)
 			} else if err = redisClient.Store(storeCtx, key, payload, duration); err != nil {
-				loggerWithTrace(ctx).Error("unable to write to cache: %s", err)
+				loggerWithTrace(ctx).Error("write to cache: %s", err)
 			}
 		}()
 	}
@@ -57,7 +58,7 @@ func EvictOnSuccess(ctx context.Context, redisClient RedisClient, key string, er
 	}
 
 	if err = redisClient.Delete(ctx, key); err != nil {
-		return fmt.Errorf("unable to evict key `%s` from cache: %s", key, err)
+		return fmt.Errorf("evict key `%s` from cache: %s", key, err)
 	}
 
 	return nil

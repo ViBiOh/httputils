@@ -35,6 +35,7 @@ var (
 )
 
 // Database interface needed for working
+//
 //go:generate mockgen -destination ../mocks/database.go -mock_names Database=Database -package mocks github.com/ViBiOh/httputils/v4/pkg/db Database
 type Database interface {
 	Ping(context.Context) error

@@ -24,6 +24,7 @@ const (
 var ErrNoConfig = errors.New("URI is required")
 
 // Connection for AMQP
+//
 //go:generate mockgen -destination ../mocks/amqp.go -mock_names Connection=AMQPConnection -package mocks github.com/ViBiOh/httputils/v4/pkg/amqp Connection
 type Connection interface {
 	io.Closer

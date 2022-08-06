@@ -229,7 +229,7 @@ func TestEvictOnSuccess(t *testing.T) {
 			args{
 				err: nil,
 			},
-			errors.New("unable to evict key `key` from cache"),
+			errors.New("evict key `key` from cache"),
 		},
 	}
 
