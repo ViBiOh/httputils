@@ -127,7 +127,7 @@ func (a App) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 func (a App) isReady() bool {
 	for _, pinger := range a.pingers {
 		if err := pinger(); err != nil {
-			logger.Error("unable to ping: %s", err)
+			logger.Error("ping: %s", err)
 			return false
 		}
 	}

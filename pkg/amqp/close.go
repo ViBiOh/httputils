@@ -16,11 +16,11 @@ func (c *Client) Close() {
 	var err error
 
 	if err = c.cancelListeners(); err != nil {
-		logger.Error("unable to cancel listeners: %s", err)
+		logger.Error("cancel listeners: %s", err)
 	}
 
 	if err = c.closeListeners(); err != nil {
-		logger.Error("unable to close listeners: %s", err)
+		logger.Error("close listeners: %s", err)
 	}
 
 	c.closeChannel()
@@ -33,7 +33,7 @@ func (c *Client) reconnect() error {
 
 	newConnection, newChannel, err := connect(c.uri, c.prefetch, c.onDisconnect)
 	if err != nil {
-		return fmt.Errorf("unable to reconnect to amqp: %s", err)
+		return fmt.Errorf("reconnect to amqp: %s", err)
 	}
 
 	c.connection = newConnection
@@ -50,7 +50,7 @@ func (c *Client) reconnect() error {
 func (c *Client) cancelListeners() (err error) {
 	for _, listener := range c.listeners {
 		if cancelErr := listener.cancel(); cancelErr != nil {
-			err = model.WrapError(err, fmt.Errorf("unable to cancel listener `%s`: %s", listener.name, cancelErr))
+			err = model.WrapError(err, fmt.Errorf("cancel listener `%s`: %s", listener.name, cancelErr))
 		}
 	}
 
@@ -60,7 +60,7 @@ func (c *Client) cancelListeners() (err error) {
 func (c *Client) closeListeners() (err error) {
 	for _, listener := range c.listeners {
 		if cancelErr := listener.close(); cancelErr != nil {
-			err = model.WrapError(err, fmt.Errorf("unable to close listener `%s`: %s", listener.name, cancelErr))
+			err = model.WrapError(err, fmt.Errorf("close listener `%s`: %s", listener.name, cancelErr))
 		}
 	}
 
@@ -74,7 +74,7 @@ func (c *Client) reconnectListeners() {
 			defer c.Unlock()
 
 			if err := listener.createChannel(c.connection); err != nil {
-				logger.WithField("name", listener.name).Error("unable to recreate channel: %s", err)
+				logger.WithField("name", listener.name).Error("recreate channel: %s", err)
 			}
 
 			listener.reconnect <- true

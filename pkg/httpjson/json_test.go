@@ -265,7 +265,7 @@ func TestParse(t *testing.T) {
 				obj: make(map[string]any),
 			},
 			make(map[string]any),
-			errors.New("unable to parse JSON"),
+			errors.New("parse JSON"),
 		},
 	}
 
@@ -317,7 +317,7 @@ func TestRead(t *testing.T) {
 				},
 			},
 			nil,
-			errors.New("unable to read JSON"),
+			errors.New("read JSON"),
 		},
 		"close error": {
 			args{
@@ -339,7 +339,7 @@ func TestRead(t *testing.T) {
 				},
 			},
 			nil,
-			errors.New("unable to read JSON: invalid character 'i' looking for beginning of value: close error"),
+			errors.New("read JSON: invalid character 'i' looking for beginning of value: close error"),
 		},
 		"valid": {
 			args{
@@ -399,7 +399,7 @@ func TestStream(t *testing.T) {
 				key:    "items",
 			},
 			nil,
-			errors.New("unable to decode token"),
+			errors.New("decode token"),
 		},
 		"no opening token": {
 			args{
@@ -407,7 +407,7 @@ func TestStream(t *testing.T) {
 				key:    "items",
 			},
 			nil,
-			errors.New("unable to read opening token"),
+			errors.New("read opening token"),
 		},
 		"no closing token": {
 			args{
@@ -415,7 +415,7 @@ func TestStream(t *testing.T) {
 				key:    "items",
 			},
 			[]string{"test", "next", "final"},
-			errors.New("unable to read closing token"),
+			errors.New("read closing token"),
 		},
 		"success": {
 			args{
@@ -447,7 +447,7 @@ func TestStream(t *testing.T) {
 				key:    "",
 			},
 			[]string{"test", "next"},
-			errors.New("unable to decode stream"),
+			errors.New("decode stream"),
 		},
 	}
 

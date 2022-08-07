@@ -18,7 +18,7 @@ func (c *Client) SetupExclusive(name string) (err error) {
 
 	channel, err := c.connection.Channel()
 	if err != nil {
-		return fmt.Errorf("unable to open channel: %s", err)
+		return fmt.Errorf("open channel: %s", err)
 	}
 
 	defer func() {
@@ -27,7 +27,7 @@ func (c *Client) SetupExclusive(name string) (err error) {
 
 	if create {
 		if _, err = channel.QueueDeclare(name, true, false, false, false, nil); err != nil {
-			return fmt.Errorf("unable to declare queue: %s", err)
+			return fmt.Errorf("declare queue: %s", err)
 		}
 	}
 
@@ -35,7 +35,7 @@ func (c *Client) SetupExclusive(name string) (err error) {
 		ContentType: "text/plain",
 		Body:        []byte("semaphore"),
 	}); err != nil {
-		return fmt.Errorf("unable to publish semaphore: %s", err)
+		return fmt.Errorf("publish semaphore: %s", err)
 	}
 
 	return nil
@@ -73,7 +73,7 @@ func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Durati
 
 	var message amqp.Delivery
 	if message, acquired, err = channel.Get(name, false); err != nil {
-		err = fmt.Errorf("unable to get semaphore: %s", err)
+		err = fmt.Errorf("get semaphore: %s", err)
 		return
 	} else if !acquired {
 		return
@@ -81,7 +81,7 @@ func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Durati
 
 	defer func() {
 		if nackErr := message.Nack(false, true); nackErr != nil {
-			err = model.WrapError(err, fmt.Errorf("unable to nack message: %s", err))
+			err = model.WrapError(err, fmt.Errorf("nack message: %s", err))
 		}
 	}()
 

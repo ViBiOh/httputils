@@ -47,7 +47,7 @@ func GetStatusCode(url, userAgent string) (status int, err error) {
 	if url != defaultURL {
 		statusReq, err = http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
-			return 0, fmt.Errorf("unable to create request: %w", err)
+			return 0, fmt.Errorf("create request: %w", err)
 		}
 		statusReq.Header = defaultHeader
 	}
@@ -59,7 +59,7 @@ func GetStatusCode(url, userAgent string) (status int, err error) {
 	var resp *http.Response
 	resp, err = httpClient.Do(statusReq)
 	if err != nil {
-		return 0, fmt.Errorf("unable to perform request: %w", err)
+		return 0, fmt.Errorf("perform request: %w", err)
 	}
 
 	status = resp.StatusCode

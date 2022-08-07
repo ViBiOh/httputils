@@ -80,7 +80,7 @@ func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) er
 
 		var err error
 		if app.delayExchange, err = app.amqpClient.DelayedExchange(queue, exchange, routingKey, app.retryInterval); err != nil {
-			return app, fmt.Errorf("unable to configure dead-letter exchange: %s", err)
+			return app, fmt.Errorf("configure dead-letter exchange: %s", err)
 		}
 	}
 
@@ -109,7 +109,7 @@ func (a App) Start(done <-chan struct{}) {
 		return queueName, err
 	}, a.exchange, a.routingKey)
 	if err != nil {
-		log.Error("unable to listen: %s", err)
+		log.Error("listen: %s", err)
 		return
 	}
 
@@ -135,23 +135,23 @@ func (a App) handleMessage(log logger.Provider, message amqp.Delivery) {
 
 	if err == nil {
 		if err = message.Ack(false); err != nil {
-			log.Error("unable to ack message: %s", err)
+			log.Error("ack message: %s", err)
 		}
 		return
 	}
 
-	log.Error("unable to handle message `%s`: %s", message.Body, err)
+	log.Error("handle message `%s`: %s", message.Body, err)
 
 	if a.retryInterval > 0 && a.maxRetry > 0 {
 		if err = a.Retry(message); err == nil {
 			return
 		}
 
-		log.Error("unable to retry message: %s", err)
+		log.Error("retry message: %s", err)
 	}
 
 	if err = message.Ack(false); err != nil {
-		log.Error("unable to ack message to trash it: %s", err)
+		log.Error("ack message to trash it: %s", err)
 	}
 }
 
@@ -166,7 +166,7 @@ func (a App) configure(init bool) (string, error) {
 	}
 
 	if err := a.amqpClient.Consumer(queue, a.routingKey, a.exchange, a.exclusive, a.delayExchange); err != nil {
-		return "", fmt.Errorf("unable to configure amqp consumer for routingKey `%s` and exchange `%s`: %s", a.routingKey, a.exchange, err)
+		return "", fmt.Errorf("configure amqp consumer for routingKey `%s` and exchange `%s`: %s", a.routingKey, a.exchange, err)
 	}
 
 	return queue, nil
@@ -175,7 +175,7 @@ func (a App) configure(init bool) (string, error) {
 func generateIdentityName() string {
 	raw := make([]byte, 4)
 	if _, err := rand.Read(raw); err != nil {
-		logger.Error("unable to generate identity name: %s", err)
+		logger.Error("generate identity name: %s", err)
 		return "error"
 	}
 

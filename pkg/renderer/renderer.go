@@ -62,7 +62,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace.Tracer) (App, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
-		return App{}, fmt.Errorf("unable to get static/ filesystem: %s", err)
+		return App{}, fmt.Errorf("get static/ filesystem: %s", err)
 	}
 
 	pathPrefix := strings.TrimSuffix(*config.pathPrefix, "/")
@@ -93,7 +93,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace
 
 	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
 	if err != nil {
-		return App{}, fmt.Errorf("unable to parse templates/*.html templates: %s", err)
+		return App{}, fmt.Errorf("parse templates/*.html templates: %s", err)
 	}
 
 	instance.tpl = tpl
@@ -195,7 +195,7 @@ func (a App) handleStatic(w http.ResponseWriter, r *http.Request) bool {
 
 	defer func() {
 		if closeErr := file.Close(); closeErr != nil {
-			logger.Warn("unable to close static file: %s", err)
+			logger.Warn("close static file: %s", err)
 		}
 	}()
 

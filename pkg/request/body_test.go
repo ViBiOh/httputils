@@ -158,7 +158,7 @@ func TestReadBodyResponse(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			writer := httptest.NewRecorder()
 			if _, err := writer.Write(tc.input); err != nil {
-				t.Errorf("unable to write: %s", err)
+				t.Errorf("write: %s", err)
 			}
 			result, err := ReadBodyResponse(writer.Result())
 

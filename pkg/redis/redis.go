@@ -121,7 +121,7 @@ func (a App) Load(ctx context.Context, key string) (string, error) {
 
 	if err != redis.Nil {
 		a.increase("error")
-		return "", fmt.Errorf("unable to load: %s", err)
+		return "", fmt.Errorf("load: %s", err)
 	}
 
 	a.increase("miss")
@@ -146,13 +146,13 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 	results, err := pipeline.Exec(ctx)
 	if err != nil {
 		a.increase("error")
-		return fmt.Errorf("unable to exec delete pipeline: %s", err)
+		return fmt.Errorf("exec delete pipeline: %s", err)
 	}
 
 	for _, result := range results {
 		if err = result.Err(); err != nil {
 			a.increase("error")
-			return fmt.Errorf("unable to delete key: %s", err)
+			return fmt.Errorf("delete key: %s", err)
 		}
 
 		a.increase("delete")
@@ -174,7 +174,7 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 
 	if acquired, err = a.redisClient.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
 		a.increase("error")
-		err = fmt.Errorf("unable to check semaphore: %s", err)
+		err = fmt.Errorf("check semaphore: %s", err)
 		return
 	} else if !acquired {
 		return

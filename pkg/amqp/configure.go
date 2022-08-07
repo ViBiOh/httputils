@@ -30,11 +30,11 @@ func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive 
 	var queue amqp.Queue
 	queue, err = channel.QueueDeclare(queueName, true, false, exclusive, false, args)
 	if err != nil {
-		return fmt.Errorf("unable to declare queue: %s", err)
+		return fmt.Errorf("declare queue: %s", err)
 	}
 
 	if err = channel.QueueBind(queue.Name, routingKey, exchangeName, false, nil); err != nil {
-		return fmt.Errorf("unable to bind queue `%s` to `%s`: %s", queue.Name, exchangeName, err)
+		return fmt.Errorf("bind queue `%s` to `%s`: %s", queue.Name, exchangeName, err)
 	}
 
 	return nil
@@ -55,7 +55,7 @@ func (c *Client) DelayedExchange(queueName, exchangeName, routingKey string, ret
 	delayExchange = fmt.Sprintf("%s-delay", exchangeName)
 
 	if err = declareExchange(channel, delayExchange, "direct", nil); err != nil {
-		return "", fmt.Errorf("unable to declare dead-letter exchange: %s", delayExchange)
+		return "", fmt.Errorf("declare dead-letter exchange: %s", delayExchange)
 	}
 
 	delayQueue := fmt.Sprintf("%s-delay", queueName)
@@ -65,11 +65,11 @@ func (c *Client) DelayedExchange(queueName, exchangeName, routingKey string, ret
 		"x-dead-letter-routing-key": routingKey,
 		"x-message-ttl":             retryDelay.Milliseconds(),
 	}); err != nil {
-		return "", fmt.Errorf("unable to declare dead-letter queue: %s", delayExchange)
+		return "", fmt.Errorf("declare dead-letter queue: %s", delayExchange)
 	}
 
 	if err = channel.QueueBind(delayQueue, routingKey, delayExchange, false, nil); err != nil {
-		return "", fmt.Errorf("unable to bind dead-letter queue: %s", delayExchange)
+		return "", fmt.Errorf("bind dead-letter queue: %s", delayExchange)
 	}
 
 	return delayExchange, nil
@@ -92,7 +92,7 @@ func (c *Client) Publisher(exchangeName, exchangeType string, args amqp.Table) (
 
 func declareExchange(channel *amqp.Channel, exchangeName, exchangeType string, args amqp.Table) error {
 	if err := channel.ExchangeDeclare(exchangeName, exchangeType, true, false, false, false, args); err != nil {
-		return fmt.Errorf("unable to declare exchange `%s`: %s", exchangeName, err)
+		return fmt.Errorf("declare exchange `%s`: %s", exchangeName, err)
 	}
 
 	return nil

@@ -43,7 +43,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 func newExporter(url string) (trace.SpanExporter, error) {
 	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
 	if err != nil {
-		return nil, fmt.Errorf("unable to create jaeger exporter: %s", err)
+		return nil, fmt.Errorf("create jaeger exporter: %s", err)
 	}
 
 	return exporter, nil
@@ -52,7 +52,7 @@ func newExporter(url string) (trace.SpanExporter, error) {
 func newResource() (*resource.Resource, error) {
 	newResource, err := resource.New(context.Background(), resource.WithFromEnv())
 	if err != nil {
-		return nil, fmt.Errorf("unable to create resource: %s", err)
+		return nil, fmt.Errorf("create resource: %s", err)
 	}
 
 	r, err := resource.Merge(
@@ -60,7 +60,7 @@ func newResource() (*resource.Resource, error) {
 		newResource,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("unable to merge resource with default: %s", err)
+		return nil, fmt.Errorf("merge resource with default: %s", err)
 	}
 
 	return r, nil
@@ -93,7 +93,7 @@ func New(config Config) (App, error) {
 	default:
 		rateRatio, err := strconv.ParseFloat(rate, 64)
 		if err != nil {
-			return App{}, fmt.Errorf("unable to parse sample rate `%s`: %s", rate, err)
+			return App{}, fmt.Errorf("parse sample rate `%s`: %s", rate, err)
 		}
 		sampler = trace.TraceIDRatioBased(rateRatio)
 	}
@@ -139,7 +139,7 @@ func (a App) Close() {
 	}
 
 	if err := a.provider.Shutdown(context.Background()); err != nil {
-		logger.Error("unable to shutdown trace provider: %s", err)
+		logger.Error("shutdown trace provider: %s", err)
 	}
 }
 

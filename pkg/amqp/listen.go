@@ -16,12 +16,12 @@ type QueueResolver func() (string, error)
 func (c *Client) Listen(queueResolver QueueResolver, exchange, routingKey string) (string, <-chan amqp.Delivery, error) {
 	queueName, err := queueResolver()
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to get queue name: %s", err)
+		return "", nil, fmt.Errorf("get queue name: %s", err)
 	}
 
 	listener, err := c.getListener()
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to get listener name for queue `%s`: %s", queueName, err)
+		return "", nil, fmt.Errorf("get listener name for queue `%s`: %s", queueName, err)
 	}
 
 	messages, err := c.listen(listener, queueName)
@@ -46,11 +46,11 @@ func (c *Client) StopListener(consumer string) (err error) {
 	}
 
 	if cancelErr := listener.cancel(); cancelErr != nil {
-		err = fmt.Errorf("unable to cancel listener: %s", err)
+		err = fmt.Errorf("cancel listener: %s", err)
 	}
 
 	if closeErr := listener.close(); closeErr != nil {
-		err = model.WrapError(err, fmt.Errorf("unable to close listener: %s", closeErr))
+		err = model.WrapError(err, fmt.Errorf("close listener: %s", closeErr))
 	}
 
 	c.removeListener(consumer)
@@ -72,7 +72,7 @@ func (c *Client) listen(listener *listener, queue string) (<-chan amqp.Delivery,
 
 	messages, err := listener.channel.Consume(queue, listener.name, false, false, false, false, nil)
 	if err != nil {
-		return nil, fmt.Errorf("unable to consume queue: %s", err)
+		return nil, fmt.Errorf("consume queue: %s", err)
 	}
 
 	return messages, nil
@@ -96,9 +96,9 @@ reconnect:
 	log := logger.WithField("name", listener.name)
 
 	if queueName, err := queueResolver(); err != nil {
-		log.Error("unable to get queue name on reopen: %s", err)
+		log.Error("get queue name on reopen: %s", err)
 	} else if messages, err := c.listen(listener, queueName); err != nil {
-		log.Error("unable to reopen listener: %s", err)
+		log.Error("reopen listener: %s", err)
 	} else {
 		log.Info("Listen restarted.")
 		input = messages

@@ -74,7 +74,7 @@ func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, la
 // Parse read body resquest and unmarshal it into given interface
 func Parse(req *http.Request, obj any) error {
 	if err := json.NewDecoder(req.Body).Decode(obj); err != nil {
-		return fmt.Errorf("unable to parse JSON: %s", err)
+		return fmt.Errorf("parse JSON: %s", err)
 	}
 
 	return nil
@@ -85,7 +85,7 @@ func Read(resp *http.Response, obj any) error {
 	var err error
 
 	if err = json.NewDecoder(resp.Body).Decode(obj); err != nil {
-		err = fmt.Errorf("unable to read JSON: %w", err)
+		err = fmt.Errorf("read JSON: %w", err)
 	}
 
 	if closeErr := resp.Body.Close(); closeErr != nil {
@@ -110,7 +110,7 @@ func Stream[T any](stream io.Reader, output chan<- T, key string, closeChan bool
 		for {
 			token, err = decoder.Token()
 			if err != nil {
-				return fmt.Errorf("unable to decode token: %s", err)
+				return fmt.Errorf("decode token: %s", err)
 			}
 
 			if nested == 1 && strings.EqualFold(fmt.Sprintf("%s", token), key) {
@@ -125,21 +125,21 @@ func Stream[T any](stream io.Reader, output chan<- T, key string, closeChan bool
 		}
 
 		if _, err = decoder.Token(); err != nil {
-			return fmt.Errorf("unable to read opening token: %s", err)
+			return fmt.Errorf("read opening token: %s", err)
 		}
 	}
 
 	var obj T
 	for decoder.More() {
 		if err := decoder.Decode(&obj); err != nil {
-			return fmt.Errorf("unable to decode stream: %s", err)
+			return fmt.Errorf("decode stream: %s", err)
 		}
 		output <- obj
 	}
 
 	if len(key) > 0 {
 		if _, err := decoder.Token(); err != nil {
-			return fmt.Errorf("unable to read closing token: %s", err)
+			return fmt.Errorf("read closing token: %s", err)
 		}
 	}
 

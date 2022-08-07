@@ -48,7 +48,7 @@ func TestCounterVec(t *testing.T) {
 
 				metrics, err := tc.args.registry.Gather()
 				if err != nil {
-					t.Errorf("unable to gather metric: %s", err)
+					t.Errorf("gather metric: %s", err)
 				}
 
 				if len(metrics) == 0 {
@@ -56,7 +56,7 @@ func TestCounterVec(t *testing.T) {
 				}
 
 				if _, err = expfmt.MetricFamilyToText(&buffer, metrics[0]); err != nil {
-					t.Errorf("unable to format metric: %s", err)
+					t.Errorf("format metric: %s", err)
 				}
 			}
 

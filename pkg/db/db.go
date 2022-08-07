@@ -89,7 +89,7 @@ func New(config Config, tracer trace.Tracer) (App, error) {
 
 	db, err := pgxpool.Connect(context.Background(), fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_max_conns=%d", host, *config.port, user, pass, name, sslmode, *config.maxConn))
 	if err != nil {
-		return App{}, fmt.Errorf("unable to connect to postgres: %s", err)
+		return App{}, fmt.Errorf("connect to postgres: %s", err)
 	}
 
 	instance := App{
@@ -296,7 +296,7 @@ func (a App) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, ta
 	defer cancel()
 
 	if _, err := tx.CopyFrom(ctx, pgx.Identifier{schema, table}, columns, &feeder{fetcher: fetcher}); err != nil {
-		return fmt.Errorf("unable to copy from: %s", err)
+		return fmt.Errorf("copy from: %s", err)
 	}
 
 	return nil

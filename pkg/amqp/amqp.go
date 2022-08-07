@@ -82,7 +82,7 @@ func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Register
 
 	connection, channel, err := connect(uri, client.prefetch, client.onDisconnect)
 	if err != nil {
-		return nil, fmt.Errorf("unable to connect to amqp: %s", err)
+		return nil, fmt.Errorf("connect to amqp: %s", err)
 	}
 
 	client.connection = connection
@@ -92,7 +92,7 @@ func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Register
 	logger.WithField("vhost", client.vhost).Info("Connected to AMQP!")
 
 	if err = client.Ping(); err != nil {
-		return client, fmt.Errorf("unable to ping amqp: %s", err)
+		return client, fmt.Errorf("ping amqp: %s", err)
 	}
 
 	return client, nil
@@ -116,14 +116,14 @@ func (c *Client) Publish(payload amqp.Publishing, exchange, routingKey string) e
 func (c *Client) PublishJSON(item any, exchange, routingKey string) error {
 	payload, err := json.Marshal(item)
 	if err != nil {
-		return fmt.Errorf("unable to marshal: %s", err)
+		return fmt.Errorf("marshal: %s", err)
 	}
 
 	if err = c.Publish(amqp.Publishing{
 		ContentType: "application/json",
 		Body:        payload,
 	}, exchange, routingKey); err != nil {
-		return fmt.Errorf("unable to publish: %s", err)
+		return fmt.Errorf("publish: %s", err)
 	}
 
 	return nil

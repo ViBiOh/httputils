@@ -83,7 +83,7 @@ func main() {
 
 	amqpClient, err := amqp.New(amqpConfig, prometheusApp.Registerer())
 	if err != nil {
-		logger.Error("unable to get amqp client: %s", err)
+		logger.Error("get amqp client: %s", err)
 	}
 
 	amqpApp, err := amqphandler.New(amqHandlerConfig, amqpClient, amqpHandler)
@@ -125,7 +125,7 @@ func main() {
 func amqpHandler(message amqplib.Delivery) error {
 	var payload map[string]any
 	if err := json.Unmarshal(message.Body, &payload); err != nil {
-		return fmt.Errorf("unable to parse payload: %s", err)
+		return fmt.Errorf("parse payload: %s", err)
 	}
 
 	return nil

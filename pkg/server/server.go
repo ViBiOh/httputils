@@ -130,6 +130,6 @@ func (a App) Start(name string, done <-chan struct{}, handler http.Handler) {
 
 	serverLogger.Info("Server is shutting down")
 	if err := httpServer.Shutdown(ctx); err != nil {
-		serverLogger.Error("unable to shutdown server: %s", err)
+		serverLogger.Error("shutdown server: %s", err)
 	}
 }
