@@ -1,15 +1,15 @@
 package sha
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"hash"
 )
 
-// New get sha1 value of given interface
+// New get sha256 value of given interface
 func New[T any](o T) string {
-	hasher := sha1.New()
+	hasher := sha256.New()
 
 	// no err check https://golang.org/pkg/hash/#Hash
 	_, _ = fmt.Fprintf(hasher, "%#v", o)
@@ -25,7 +25,7 @@ type StreamHasher struct {
 // Stream create a new stream hasher
 func Stream() StreamHasher {
 	return StreamHasher{
-		hasher: sha1.New(),
+		hasher: sha256.New(),
 	}
 }
 
