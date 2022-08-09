@@ -70,9 +70,9 @@ style:
 .PHONY: mocks
 mocks:
 	find . -name "mocks" -type d -exec rm -r "{}" \+
-	go generate $(PACKAGES)
-	mockgen -destination pkg/mocks/io.go -mock_names ReadCloser=ReadCloser -package mocks io ReadCloser
-	mockgen -destination pkg/mocks/pgx.go -mock_names Tx=Tx,Row=Row,Rows=Rows -package mocks github.com/jackc/pgx/v4 Tx,Row,Rows
+	go generate -run mockgen $(PACKAGES)
+	mockgen -destination pkg/mocks/io.go -package mocks -mock_names ReadCloser=ReadCloser io ReadCloser
+	mockgen -destination pkg/mocks/pgx.go -package mocks -mock_names Tx=Tx,Row=Row,Rows=Rows github.com/jackc/pgx/v4 Tx,Row,Rows
 
 ## test: Shortcut to launch all the test tasks (unit, functional and integration).
 .PHONY: test

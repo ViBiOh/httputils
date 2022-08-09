@@ -11,9 +11,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+//go:generate mockgen -source cache.go -destination ../mocks/cache.go -package mocks -mock_names RedisClient=RedisClient
+
 // RedisClient for caching response
-//
-//go:generate mockgen -destination ../mocks/redis_client.go -mock_names RedisClient=RedisClient -package mocks github.com/ViBiOh/httputils/v4/pkg/cache RedisClient
 type RedisClient interface {
 	Load(ctx context.Context, key string) (string, error)
 	Store(ctx context.Context, key string, value any, duration time.Duration) error
