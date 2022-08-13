@@ -37,7 +37,7 @@ type pagination struct {
 }
 
 // RawWrite writes marshalled obj to io.Writer
-func RawWrite[T any](w io.Writer, obj T) error {
+func RawWrite(w io.Writer, obj any) error {
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
 		return fmt.Errorf("%s: %w", err, ErrCannotMarshal)
 	}
@@ -45,7 +45,7 @@ func RawWrite[T any](w io.Writer, obj T) error {
 }
 
 // Write writes marshalled obj to http.ResponseWriter with correct header
-func Write[T any](w http.ResponseWriter, status int, obj T) {
+func Write(w http.ResponseWriter, status int, obj any) {
 	for key, value := range headers {
 		w.Header()[key] = value
 	}
