@@ -2,7 +2,7 @@ package amqp
 
 import "errors"
 
-// Enabled checks if connection is setup
+// Enabled checks if connection is set up
 func (c *Client) Enabled() bool {
 	c.RLock()
 	enabled := c.connection != nil

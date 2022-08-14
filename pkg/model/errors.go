@@ -35,32 +35,32 @@ func WrapError(err, wrapper error) error {
 	return fmt.Errorf("%s: %w", err, wrapper)
 }
 
-// WrapInvalid wraps given error with invalid err
+// WrapInvalid wraps given error with invalid error
 func WrapInvalid(err error) error {
 	return WrapError(err, ErrInvalid)
 }
 
-// WrapUnauthorized wraps given error with unauthorized err
+// WrapUnauthorized wraps given error with unauthorized error
 func WrapUnauthorized(err error) error {
 	return WrapError(err, ErrUnauthorized)
 }
 
-// WrapForbidden wraps given error with forbidden err
+// WrapForbidden wraps given error with forbidden error
 func WrapForbidden(err error) error {
 	return WrapError(err, ErrForbidden)
 }
 
-// WrapNotFound wraps given error with not found err
+// WrapNotFound wraps given error with not found error
 func WrapNotFound(err error) error {
 	return WrapError(err, ErrNotFound)
 }
 
-// WrapMethodNotAllowed wraps given error with not method not allowed err
+// WrapMethodNotAllowed wraps given error with method not allowed error
 func WrapMethodNotAllowed(err error) error {
 	return WrapError(err, ErrMethodNotAllowed)
 }
 
-// WrapInternal wraps given error with internal err
+// WrapInternal wraps given error with internal error
 func WrapInternal(err error) error {
 	return WrapError(err, ErrInternalError)
 }

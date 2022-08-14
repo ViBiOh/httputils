@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	// HealthPath is the path for checking that HTTP service is live
-	HealthPath = "/health"
+	// LivePath is the path for checking that HTTP service is live
+	LivePath = "/health"
 
 	// ReadyPath is the path for checking that HTTP service is ready (checking dependencies)
 	ReadyPath = "/ready"

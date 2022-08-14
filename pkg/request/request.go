@@ -376,18 +376,18 @@ func DoWithClient(client *http.Client, req *http.Request) (*http.Response, error
 func convertResponseError(resp *http.Response) string {
 	builder := strings.Builder{}
 
-	fmt.Fprintf(&builder, "HTTP/%d", resp.StatusCode)
+	_, _ = fmt.Fprintf(&builder, "HTTP/%d", resp.StatusCode)
 
 	for key, value := range resp.Header {
-		fmt.Fprintf(&builder, "\n%s: %s", key, strings.Join(value, ","))
+		_, _ = fmt.Fprintf(&builder, "\n%s: %s", key, strings.Join(value, ","))
 	}
 
 	if errBody, bodyErr := io.ReadAll(io.LimitReader(resp.Body, maxErrorBody)); bodyErr == nil && len(errBody) > 0 {
-		fmt.Fprintf(&builder, "\n\n%s", errBody)
+		_, _ = fmt.Fprintf(&builder, "\n\n%s", errBody)
 	}
 
 	if err := DiscardBody(resp.Body); err != nil {
-		fmt.Fprintf(&builder, "\ndiscard body response: %s", err)
+		_, _ = fmt.Fprintf(&builder, "\ndiscard body response: %s", err)
 	}
 
 	return builder.String()

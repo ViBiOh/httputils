@@ -80,7 +80,7 @@ func Parse(req *http.Request, obj any) error {
 	return nil
 }
 
-// Read read body response and unmarshal it into given interface
+// Read body response and unmarshal it into given interface
 func Read(resp *http.Response, obj any) error {
 	var err error
 

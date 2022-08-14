@@ -61,10 +61,10 @@ Enforce security best practices for serving web content.
 
 ### Endpoints
 
-- `GET /health`: healthcheck of server, always respond [`okStatus (default 204)`](#usage)
-- `GET /ready`: checks external dependencies availability and then respond [`okStatus (default 204)`](#usage) or `503` during [`graceDuration`](#usage) when `SIGTERM` is received
+- `GET /health`: healthcheck of server, always respond [`okStatus (default 204)`](#Usage)
+- `GET /ready`: checks external dependencies availability and then respond [`okStatus (default 204)`](#Usage) or `503` during [`graceDuration`](#usage) when `SIGTERM` is received
 - `GET /version`: value of `VERSION` environment variable
-- `GET /metrics`: Prometheus metrics, on a dedicated port [`prometheusPort (default 9090)`](#usage)
+- `GET /metrics`: Prometheus metrics, on a dedicated port [`prometheusPort (default 9090)`](#Usage)
 
 ### Usage
 

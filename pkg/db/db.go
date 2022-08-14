@@ -29,9 +29,6 @@ var (
 	// ErrNoTransaction occurs when no transaction is provided but needed
 	ErrNoTransaction = errors.New("no transaction in context, please wrap with DoAtomic()")
 
-	// ErrBulkEnded occurs when bulk creation is over
-	ErrBulkEnded = errors.New("no more data to copy")
-
 	// SQLTimeout when running queries
 	SQLTimeout = time.Second * 5
 )

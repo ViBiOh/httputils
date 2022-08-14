@@ -122,16 +122,16 @@ func BenchmarkMux(b *testing.B) {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle(health.HealthPath, healthHandler)
+	mux.Handle(health.LivePath, healthHandler)
 	mux.Handle(health.ReadyPath, readyHandler)
 	mux.Handle("/version", versionHandler)
 	mux.Handle("/", appHandler)
 
-	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	testRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 	recorder := httptest.NewRecorder()
 
 	for i := 0; i < b.N; i++ {
-		mux.ServeHTTP(recorder, request)
+		mux.ServeHTTP(recorder, testRequest)
 	}
 }
 
@@ -146,10 +146,10 @@ func BenchmarkHandler(b *testing.B) {
 
 	handler := Handler(appHandler, health.New(healthConfig))
 
-	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	testRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 	recorder := httptest.NewRecorder()
 
 	for i := 0; i < b.N; i++ {
-		handler.ServeHTTP(recorder, request)
+		handler.ServeHTTP(recorder, testRequest)
 	}
 }

@@ -18,7 +18,7 @@ func Handler(handler http.Handler, healthApp health.App, middlewares ...model.Mi
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case health.HealthPath:
+		case health.LivePath:
 			HealthHandler.ServeHTTP(w, r)
 
 		case health.ReadyPath:

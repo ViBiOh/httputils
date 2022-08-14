@@ -271,7 +271,7 @@ func (l Logger) text(e event) []byte {
 		l.outputBuffer.WriteString(" ")
 		l.outputBuffer.WriteString(field.name)
 		l.outputBuffer.WriteString("=")
-		fmt.Fprintf(l.outputBuffer, "%#v", field.value)
+		_, _ = fmt.Fprintf(l.outputBuffer, "%#v", field.value)
 	}
 	l.outputBuffer.WriteString("\n")
 

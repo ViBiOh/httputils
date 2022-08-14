@@ -109,7 +109,7 @@ func (r Router) Any(pattern string, handler http.Handler) Router {
 		Trace(pattern, handler)
 }
 
-// AddRoute for given method and pattern. Pattern must startss with a slash, should not contains trailing slash.
+// AddRoute for given method and pattern. Pattern must startss with a slash, should not contain trailing slash.
 // Path variable must be prefixed with ':', next to the slash separator
 // Glob variable must be prefixed with '*', next to the slash separator, at the end of the pattern
 func (r Router) AddRoute(method, pattern string, handler http.Handler) Router {

@@ -74,12 +74,12 @@ func New(config Config) (App, error) {
 		return App{}, nil
 	}
 
-	exporter, err := newExporter(url)
+	tracerExporter, err := newExporter(url)
 	if err != nil {
 		return App{}, err
 	}
 
-	resource, err := newResource()
+	tracerResource, err := newResource()
 	if err != nil {
 		return App{}, err
 	}
@@ -99,8 +99,8 @@ func New(config Config) (App, error) {
 	}
 
 	provider := trace.NewTracerProvider(
-		trace.WithBatcher(exporter),
-		trace.WithResource(resource),
+		trace.WithBatcher(tracerExporter),
+		trace.WithResource(tracerResource),
 		trace.WithSampler(sampler),
 	)
 
