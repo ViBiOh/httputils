@@ -8,6 +8,8 @@ import (
 )
 
 func TestWithContext(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		contexts []context.Context
 	}
@@ -77,6 +79,8 @@ func TestWithContext(t *testing.T) {
 }
 
 func TestFailFastGo(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		funcs []func() error
 	}

@@ -168,12 +168,14 @@ func (c *Cron) In(tz string) *Cron {
 	timezone, err := time.LoadLocation(tz)
 	if err != nil {
 		c.errors = append(c.errors, err)
+
 		return c
 	}
 
 	hourTime, err := time.ParseInLocation(hourFormat, fmt.Sprintf("%02d:%02d", c.dayTime.Hour(), c.dayTime.Minute()), timezone)
 	if err != nil {
 		c.errors = append(c.errors, err)
+
 		return c
 	}
 
@@ -254,16 +256,19 @@ func (c *Cron) hasError() bool {
 		for _, err := range c.errors {
 			c.onError(err)
 		}
+
 		return true
 	}
 
 	if c.day == 0 && c.interval == 0 {
 		c.onError(errors.New("no schedule configuration"))
+
 		return true
 	}
 
 	if c.maxRetry != 0 && c.retryInterval == 0 {
 		c.onError(errors.New("no retry interval for max retry"))
+
 		return true
 	}
 
@@ -273,6 +278,7 @@ func (c *Cron) hasError() bool {
 // WithTracer starts a span on each context
 func (c *Cron) WithTracer(tracer trace.Tracer) *Cron {
 	c.tracer = tracer
+
 	return c
 }
 
@@ -310,11 +316,13 @@ func (c *Cron) Start(action func(context.Context) error, done <-chan struct{}) {
 
 		if c.semaphoreApp == nil {
 			do(ctx)
+
 			return
 		}
 
 		if _, err := c.semaphoreApp.Exclusive(ctx, c.name, c.timeout, func(ctx context.Context) error {
 			do(ctx)
+
 			return nil
 		}); err != nil {
 			c.onError(err)
@@ -326,6 +334,7 @@ func (c *Cron) Start(action func(context.Context) error, done <-chan struct{}) {
 
 	if c.signal != nil {
 		signal.Notify(signals, c.signal)
+
 		defer signal.Stop(signals)
 	}
 

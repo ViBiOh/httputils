@@ -6,6 +6,8 @@ import (
 )
 
 func TestNew(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		want    string
 		wantErr error

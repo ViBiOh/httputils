@@ -30,6 +30,7 @@ func (g *FailFast) WithContext(ctx context.Context) context.Context {
 	}
 
 	ctx, g.cancel = context.WithCancel(ctx)
+
 	return ctx
 }
 

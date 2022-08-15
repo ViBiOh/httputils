@@ -97,6 +97,7 @@ func main() {
 	}).Now()
 	go speakingClock.Start(func(_ context.Context) error {
 		logger.Info("Clock is ticking")
+
 		return nil
 	}, healthApp.Done())
 	defer speakingClock.Shutdown()

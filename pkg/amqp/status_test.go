@@ -11,6 +11,8 @@ import (
 )
 
 func TestEnabled(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		instance *Client
 		want     bool
@@ -42,6 +44,8 @@ func TestEnabled(t *testing.T) {
 }
 
 func TestPing(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		instance *Client
 		want     error

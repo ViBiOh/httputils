@@ -64,6 +64,7 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 	page, err := templateFunc(w, r)
 	if err != nil {
 		a.Error(w, r, page.Content, err)
+
 		return
 	}
 
@@ -80,6 +81,7 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 
 	if matchEtag(w, r, page) {
 		w.WriteHeader(http.StatusNotModified)
+
 		return
 	}
 
@@ -99,21 +101,25 @@ func matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
 	noneMatch := r.Header.Get("If-None-Match")
 	if len(noneMatch) == 0 {
 		appendNonceAndEtag(w, page.Content, etag)
+
 		return false
 	}
 
 	parts := strings.SplitN(noneMatch, "-", 2)
 	if len(parts) != 2 {
 		appendNonceAndEtag(w, page.Content, etag)
+
 		return false
 	}
 
 	if strings.TrimPrefix(parts[0], `W/"`) == etag {
 		owasp.WriteNonce(w, strings.TrimSuffix(parts[1], `"`))
+
 		return true
 	}
 
 	appendNonceAndEtag(w, page.Content, etag)
+
 	return false
 }
 
@@ -129,6 +135,7 @@ func (a App) svg() http.Handler {
 		tpl := a.tpl.Lookup("svg-" + strings.Trim(r.URL.Path, "/"))
 		if tpl == nil {
 			httperror.NotFound(w)
+
 			return
 		}
 

@@ -10,6 +10,8 @@ import (
 )
 
 func TestRedirect(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		instance   App
 		request    *http.Request

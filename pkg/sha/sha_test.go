@@ -3,6 +3,8 @@ package sha
 import "testing"
 
 func TestNew(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		o any
 	}
@@ -36,6 +38,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestStream(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		o []any
 	}

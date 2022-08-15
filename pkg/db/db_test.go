@@ -14,6 +14,8 @@ import (
 )
 
 func TestFlags(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		want string
 	}{
@@ -46,6 +48,8 @@ func TestFlags(t *testing.T) {
 }
 
 func TestEnabled(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		instance App
 		want     bool
@@ -85,6 +89,8 @@ func TestEnabled(t *testing.T) {
 }
 
 func TestPing(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		want bool
 	}{
@@ -125,6 +131,8 @@ func TestPing(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		wantErr error
 	}{
@@ -134,7 +142,11 @@ func TestClose(t *testing.T) {
 	}
 
 	for intention := range cases {
+		intention := intention
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -153,6 +165,8 @@ func TestClose(t *testing.T) {
 }
 
 func TestReadTx(t *testing.T) {
+	t.Parallel()
+
 	var tx pgx.Tx = &pgxpool.Tx{}
 
 	type args struct {
@@ -198,6 +212,8 @@ func TestReadTx(t *testing.T) {
 }
 
 func TestDoAtomic(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		ctx    context.Context
 		action func(context.Context) error
@@ -314,6 +330,8 @@ func TestDoAtomic(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		wantErr error
 	}{
@@ -391,6 +409,8 @@ func TestList(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		wantErr error
 	}{
@@ -466,6 +486,8 @@ func TestGet(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		wantErr error
 	}{
@@ -535,6 +557,8 @@ func TestCreate(t *testing.T) {
 }
 
 func TestExec(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		wantErr error
 	}{
@@ -597,6 +621,8 @@ func TestExec(t *testing.T) {
 }
 
 func TestOne(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		wantErr error
 	}{
@@ -664,6 +690,8 @@ func TestOne(t *testing.T) {
 }
 
 func TestBulk(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		wantErr error
 	}{

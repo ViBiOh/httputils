@@ -8,6 +8,8 @@ import (
 )
 
 func TestComputeSynchro(t *testing.T) {
+	t.Parallel()
+
 	simple := NewSource(nil, Identity, nil)
 	simple.currentKey = "AAAAA00000"
 
@@ -63,6 +65,8 @@ func TestComputeSynchro(t *testing.T) {
 }
 
 func TestSourceRead(t *testing.T) {
+	t.Parallel()
+
 	errRead := errors.New("read error")
 
 	copyErr := NewSource(func() (string, error) {

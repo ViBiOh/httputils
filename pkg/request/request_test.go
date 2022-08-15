@@ -33,6 +33,8 @@ func safeWrite(writer io.Writer, content []byte) {
 }
 
 func TestString(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		instance Request
 		want     string
@@ -66,6 +68,8 @@ func TestString(t *testing.T) {
 }
 
 func TestIsZero(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		instance Request
 		want     bool
@@ -95,6 +99,8 @@ func TestIsZero(t *testing.T) {
 }
 
 func TestPath(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		path string
 	}
@@ -198,17 +204,21 @@ func TestSend(t *testing.T) {
 		} else if r.URL.Path == "/long_explain" {
 			w.WriteHeader(http.StatusBadRequest)
 			safeWrite(w, []byte(`Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`))
+
 			return
 		} else if r.URL.Path == "/redirect" {
 			w.Header().Add("Location", "/simple")
 			w.WriteHeader(http.StatusPermanentRedirect)
+
 			return
 		} else if r.URL.Path == "/client" {
 			w.WriteHeader(http.StatusNoContent)
+
 			return
 		} else if r.URL.Path == "/timeout" {
 			time.Sleep(time.Second * 2)
 			w.WriteHeader(http.StatusNoContent)
+
 			return
 		} else if r.URL.Path == "/signed" {
 			if ok, err := ValidateSignature(r, []byte(`secret`)); err != nil {
@@ -220,6 +230,7 @@ func TestSend(t *testing.T) {
 				w.WriteHeader(http.StatusForbidden)
 				safeWrite(w, []byte("signature doesn't match"))
 			}
+
 			return
 		}
 
@@ -370,10 +381,13 @@ func TestSend(t *testing.T) {
 }
 
 func TestForm(t *testing.T) {
+	t.Parallel()
+
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/simple" && r.Method == http.MethodPost && r.FormValue("first") == "test" && r.FormValue("second") == "param" && r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
 			w.WriteHeader(http.StatusOK)
 			safeWrite(w, []byte("valid"))
+
 			return
 		}
 
@@ -428,19 +442,24 @@ func TestForm(t *testing.T) {
 }
 
 func TestMultipart(t *testing.T) {
+	t.Parallel()
+
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusBadRequest)
+
 			return
 		}
 
 		if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/data") {
 			w.WriteHeader(http.StatusBadRequest)
+
 			return
 		}
 
 		if err := r.ParseMultipartForm(10 << 20); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+
 			return
 		}
 
@@ -531,12 +550,15 @@ func TestMultipart(t *testing.T) {
 }
 
 func TestJSON(t *testing.T) {
+	t.Parallel()
+
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		payload, _ := ReadBodyRequest(r)
 
 		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == `{"Active":true,"Amount":12.34}` && r.Header.Get("Content-Type") == "application/json" {
 			w.WriteHeader(http.StatusOK)
 			safeWrite(w, []byte("valid"))
+
 			return
 		}
 
@@ -594,12 +616,15 @@ func TestJSON(t *testing.T) {
 }
 
 func TestStreamJSON(t *testing.T) {
+	t.Parallel()
+
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		payload, _ := ReadBodyRequest(r)
 
 		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == `{"Active":true,"Amount":12.34}`+"\n" && r.Header.Get("Content-Type") == "application/json" {
 			w.WriteHeader(http.StatusOK)
 			safeWrite(w, []byte("valid"))
+
 			return
 		}
 
@@ -657,6 +682,8 @@ func TestStreamJSON(t *testing.T) {
 }
 
 func TestDiscardBody(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		wantErr error
 	}{

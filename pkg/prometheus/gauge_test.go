@@ -9,6 +9,8 @@ import (
 )
 
 func TestGaugeVec(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		registry  *prometheus.Registry
 		namespace string

@@ -47,6 +47,7 @@ func NewRouter() Router {
 // DefaultHandler sets default handler when no route is not found
 func (r Router) DefaultHandler(handler http.Handler) Router {
 	r.defaultHandler = handler
+
 	return r
 }
 
@@ -158,6 +159,7 @@ func (r Router) Handler() http.Handler {
 		handler, hasVariable := r.root.find(req.Method, sanitizeURL(req))
 		if handler == nil {
 			r.defaultHandler.ServeHTTP(w, req)
+
 			return
 		}
 
@@ -174,6 +176,7 @@ func GetParams(r *http.Request) map[string]string {
 	case *node:
 		params := make(map[string]string)
 		value.extractVariable(r.Method, sanitizeURL(r), params)
+
 		return params
 	default:
 		return nil

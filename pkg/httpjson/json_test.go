@@ -20,6 +20,8 @@ type testStruct struct {
 }
 
 func TestRawWrite(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		writer *bytes.Buffer
 		obj    any
@@ -79,6 +81,8 @@ func TestRawWrite(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		obj        any
 		want       string
@@ -159,6 +163,8 @@ func BenchmarkWrite(b *testing.B) {
 }
 
 func TestWriteArray(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		obj        any
 		want       string
@@ -200,6 +206,8 @@ func TestWriteArray(t *testing.T) {
 }
 
 func TestWritePagination(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		pageSize   uint
 		total      uint
@@ -258,6 +266,8 @@ func TestWritePagination(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		req *http.Request
 		obj any
@@ -325,6 +335,8 @@ func (errCloser) Close() error {
 }
 
 func TestRead(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		resp *http.Response
 		obj  any
@@ -409,6 +421,8 @@ func TestRead(t *testing.T) {
 }
 
 func TestStream(t *testing.T) {
+	t.Parallel()
+
 	type simpleStruct struct {
 		Value string `json:"value"`
 	}

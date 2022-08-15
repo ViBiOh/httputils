@@ -54,6 +54,7 @@ func (c *Client) StopListener(consumer string) (err error) {
 	}
 
 	c.removeListener(consumer)
+
 	return err
 }
 
@@ -102,10 +103,12 @@ reconnect:
 	} else {
 		log.Info("Listen restarted.")
 		input = messages
+
 		goto forward
 	}
 
 	log.Info("Waiting 30 seconds before attempting to listen again...")
 	time.Sleep(time.Second * 30)
+
 	goto reconnect
 }

@@ -161,11 +161,13 @@ func (a App) Handler(templateFunc TemplateFunc) http.Handler {
 
 		if a.tpl == nil {
 			httperror.NotFound(w)
+
 			return
 		}
 
 		if strings.HasPrefix(r.URL.Path, svgPath) {
 			svgHandler.ServeHTTP(w, r)
+
 			return
 		}
 
@@ -197,5 +199,6 @@ func (a App) handleStatic(w http.ResponseWriter, r *http.Request) bool {
 
 	w.Header().Add("Cache-Control", staticCacheDuration)
 	a.staticHandler.ServeHTTP(w, r)
+
 	return true
 }

@@ -22,6 +22,8 @@ func readContent(body io.ReadCloser) ([]byte, error) {
 }
 
 func TestChainMiddlewares(t *testing.T) {
+	t.Parallel()
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := w.Write([]byte("handler")); err != nil {
 			t.Errorf("write: %s", err)

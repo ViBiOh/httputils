@@ -12,6 +12,8 @@ import (
 )
 
 func TestWriteTemplate(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		tpl     *template.Template
 		want    string
@@ -57,6 +59,8 @@ func TestWriteTemplate(t *testing.T) {
 }
 
 func TestResponseHTMLTemplate(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		tpl     *template.Template
 		want    string
@@ -102,6 +106,8 @@ func TestResponseHTMLTemplate(t *testing.T) {
 }
 
 func TestResponseHTMLTemplateRaw(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		tpl     *template.Template
 		want    string
@@ -175,6 +181,8 @@ func TestResponseHTMLTemplateRaw(t *testing.T) {
 }
 
 func TestResponseXMLTemplate(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		tpl     *template.Template
 		want    string

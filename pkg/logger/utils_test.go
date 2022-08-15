@@ -6,6 +6,8 @@ import (
 )
 
 func TestWriteEscapedJSON(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		content string
 	}

@@ -5,6 +5,8 @@ import (
 )
 
 func TestLimitedGo(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		funcs []func()
 	}

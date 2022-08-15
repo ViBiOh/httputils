@@ -10,6 +10,8 @@ import (
 )
 
 func TestLinkNextHeader(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		urlPath   string
 		extraArgs url.Values
@@ -73,6 +75,8 @@ func TestLinkNextHeader(t *testing.T) {
 }
 
 func TestParsePagination(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		request         *http.Request
 		defaultPageSize uint

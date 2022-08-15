@@ -26,6 +26,7 @@ func ReadBodyRequest(r *http.Request) ([]byte, error) {
 	if r == nil {
 		return nil, nil
 	}
+
 	return io.ReadAll(r.Body)
 }
 
@@ -34,5 +35,6 @@ func ReadBodyResponse(r *http.Response) ([]byte, error) {
 	if r == nil {
 		return nil, nil
 	}
+
 	return readContent(r.Body)
 }

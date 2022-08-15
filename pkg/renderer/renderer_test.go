@@ -17,6 +17,8 @@ import (
 )
 
 func TestFlags(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		want string
 	}{
@@ -49,6 +51,8 @@ func TestFlags(t *testing.T) {
 }
 
 func TestIsStaticRootPaths(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		requestPath string
 	}
@@ -98,6 +102,8 @@ func TestIsStaticRootPaths(t *testing.T) {
 }
 
 func TestFeedContent(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		content map[string]any
 	}
@@ -165,6 +171,8 @@ func TestFeedContent(t *testing.T) {
 var content embed.FS
 
 func TestHandler(t *testing.T) {
+	t.Parallel()
+
 	emptyString := ""
 	publicURL := "http://localhost"
 	pathPrefix := "/app"

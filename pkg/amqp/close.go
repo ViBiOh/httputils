@@ -100,6 +100,7 @@ func (c *Client) closeConnection() {
 
 	if c.connection.IsClosed() {
 		c.connection = nil
+
 		return
 	}
 

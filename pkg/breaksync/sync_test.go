@@ -28,6 +28,8 @@ func clientKeyer(c client) string {
 }
 
 func TestRun(t *testing.T) {
+	t.Parallel()
+
 	cards := []card{
 		"AMEX",
 		"MASTERCARD",
@@ -148,6 +150,7 @@ func TestRun(t *testing.T) {
 				}
 
 				result++
+
 				return nil
 			})
 

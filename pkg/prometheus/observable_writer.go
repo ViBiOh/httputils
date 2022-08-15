@@ -49,6 +49,7 @@ func (r *observableResponseWriter) WriteHeader(code int) {
 func (r *observableResponseWriter) Write(b []byte) (int, error) {
 	n, err := r.ResponseWriter.Write(b)
 	r.written += int64(n)
+
 	return n, err
 }
 
@@ -91,6 +92,7 @@ type readerFromDelegator struct{ *observableResponseWriter }
 func (d readerFromDelegator) ReadFrom(r io.Reader) (int64, error) {
 	n, err := d.ResponseWriter.(io.ReaderFrom).ReadFrom(r)
 	d.written += n
+
 	return n, err
 }
 

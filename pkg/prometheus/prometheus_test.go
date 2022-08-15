@@ -13,6 +13,8 @@ import (
 )
 
 func TestFlags(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		want string
 	}{
@@ -45,6 +47,8 @@ func TestFlags(t *testing.T) {
 }
 
 func TestMiddleware(t *testing.T) {
+	t.Parallel()
+
 	metricsIgnore := ""
 	metricsIgnoreValue := "/api"
 	gzip := true
@@ -114,6 +118,8 @@ func TestMiddleware(t *testing.T) {
 }
 
 func TestRegisterer(t *testing.T) {
+	t.Parallel()
+
 	registry := prometheus.NewRegistry()
 
 	cases := map[string]struct {
@@ -143,6 +149,8 @@ func TestRegisterer(t *testing.T) {
 }
 
 func TestIsIgnored(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		path string
 	}

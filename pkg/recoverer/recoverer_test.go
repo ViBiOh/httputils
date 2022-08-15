@@ -21,6 +21,8 @@ var (
 )
 
 func TestMiddleware(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		next       http.Handler
 		request    *http.Request
@@ -56,6 +58,8 @@ func TestMiddleware(t *testing.T) {
 }
 
 func TestLoggerRecoverer(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct{}{
 		"simple": {},
 	}

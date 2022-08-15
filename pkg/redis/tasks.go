@@ -24,6 +24,7 @@ func (a App) Push(ctx context.Context, key string, value any) error {
 		return fmt.Errorf("marshal: %s", err)
 	} else if err := a.redisClient.LPush(ctx, key, content).Err(); err != nil {
 		a.increase("error")
+
 		return fmt.Errorf("push: %s", err)
 	}
 

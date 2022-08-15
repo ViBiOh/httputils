@@ -7,6 +7,8 @@ import (
 )
 
 func TestParseLevel(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		line string
 	}

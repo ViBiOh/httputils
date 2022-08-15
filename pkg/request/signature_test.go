@@ -12,6 +12,8 @@ import (
 )
 
 func TestAddSignature(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		keyID   string
 		secret  []byte
@@ -56,6 +58,8 @@ func TestAddSignature(t *testing.T) {
 }
 
 func TestValidateSignature(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		req    *http.Request
 		secret []byte

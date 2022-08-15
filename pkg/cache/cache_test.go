@@ -22,6 +22,8 @@ type jsonErrorItem struct {
 }
 
 func TestRetrieve(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		key      string
 		onMiss   func(_ context.Context) (cacheableItem, error)
@@ -141,6 +143,8 @@ func TestRetrieve(t *testing.T) {
 }
 
 func TestRetrieveError(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		key      string
 		onMiss   func(_ context.Context) (jsonErrorItem, error)
@@ -215,6 +219,8 @@ func TestRetrieveError(t *testing.T) {
 }
 
 func TestEvictOnSuccess(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		err error
 	}

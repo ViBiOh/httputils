@@ -13,6 +13,8 @@ import (
 )
 
 func TestFlags(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		want string
 	}{
@@ -45,6 +47,8 @@ func TestFlags(t *testing.T) {
 }
 
 func TestHealthHandler(t *testing.T) {
+	t.Parallel()
+
 	okStatus := http.StatusNoContent
 	graceDuration := time.Second
 	closedChan := make(chan struct{})
@@ -89,6 +93,8 @@ func TestHealthHandler(t *testing.T) {
 }
 
 func TestReadyHandler(t *testing.T) {
+	t.Parallel()
+
 	okStatus := http.StatusNoContent
 	graceDuration := time.Second
 	closedChan := make(chan struct{})

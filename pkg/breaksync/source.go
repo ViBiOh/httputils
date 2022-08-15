@@ -115,6 +115,7 @@ func NewSliceSource[T any](arr []T, keyer func(T) string, readRupture *Rupture) 
 		} else {
 			err = io.EOF
 		}
+
 		return
 	}, keyer, readRupture)
 }
@@ -127,6 +128,7 @@ func NewChanSource[T any](input <-chan T, keyer func(T) string, readRupture *Rup
 		if output, ok = <-input; !ok {
 			err = io.EOF
 		}
+
 		return
 	}, keyer, readRupture)
 }

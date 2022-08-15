@@ -218,12 +218,14 @@ func (a App) Create(ctx context.Context, query string, args ...any) (uint64, err
 	defer cancel()
 
 	var newID uint64
+
 	return newID, tx.QueryRow(ctx, query, args...).Scan(&newID)
 }
 
 // Exec execute query with specified timeout, disregarding result
 func (a App) Exec(ctx context.Context, query string, args ...any) error {
 	_, err := a.exec(ctx, query, args...)
+
 	return err
 }
 
@@ -264,6 +266,7 @@ type feeder struct {
 
 func (bc *feeder) Next() bool {
 	bc.values, bc.err = bc.fetcher()
+
 	return bc.err == nil && len(bc.values) != 0
 }
 

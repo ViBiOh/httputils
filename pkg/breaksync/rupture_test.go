@@ -3,6 +3,8 @@ package breaksync
 import "testing"
 
 func TestCompute(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		instance *Rupture
 		current  string

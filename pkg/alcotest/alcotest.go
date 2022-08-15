@@ -71,6 +71,7 @@ func GetStatusCode(url, userAgent string) (status int, err error) {
 	}
 
 	err = fmt.Errorf("HTTP/%d", status)
+
 	return
 }
 
@@ -98,6 +99,7 @@ func DoAndExit(config Config) {
 	if err := Do(url, *config.userAgent); err != nil {
 		fmt.Println(err)
 		exitFunc(1)
+
 		return
 	}
 

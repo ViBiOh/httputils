@@ -19,5 +19,6 @@ func (c Clock) Now() time.Time {
 	if c.now.IsZero() {
 		return time.Now()
 	}
+
 	return c.now
 }

@@ -17,6 +17,8 @@ import (
 )
 
 func TestString(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		cron *Cron
 		want string
@@ -99,6 +101,8 @@ func TestString(t *testing.T) {
 }
 
 func TestAt(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		cron    *Cron
 		input   string
@@ -148,9 +152,12 @@ func TestAt(t *testing.T) {
 }
 
 func TestIn(t *testing.T) {
+	t.Parallel()
+
 	timezone, err := time.LoadLocation("Europe/Paris")
 	if err != nil {
 		t.Error(err)
+
 		return
 	}
 
@@ -211,6 +218,8 @@ func TestIn(t *testing.T) {
 }
 
 func TestFindMatchingDay(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		cron  *Cron
 		input time.Time
@@ -248,6 +257,8 @@ func TestFindMatchingDay(t *testing.T) {
 }
 
 func TestGetTickerDuration(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		cron  *Cron
 		clock clock.Clock
@@ -315,6 +326,8 @@ func TestGetTickerDuration(t *testing.T) {
 }
 
 func TestHasError(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		cron *Cron
 		want bool
@@ -364,6 +377,8 @@ func TestHasError(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		cron    *Cron
 		clock   clock.Clock
@@ -391,6 +406,7 @@ func TestStart(t *testing.T) {
 			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				count := 0
+
 				return func(_ context.Context) error {
 					count++
 					if count < 4 {
@@ -398,6 +414,7 @@ func TestStart(t *testing.T) {
 					}
 
 					wg.Done()
+
 					return nil
 				}
 			},
@@ -413,6 +430,7 @@ func TestStart(t *testing.T) {
 
 				return func(_ context.Context) error {
 					wg.Done()
+
 					return nil
 				}
 			},
@@ -440,6 +458,7 @@ func TestStart(t *testing.T) {
 
 				return func(_ context.Context) error {
 					wg.Done()
+
 					return nil
 				}
 			},
@@ -455,6 +474,7 @@ func TestStart(t *testing.T) {
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				return func(_ context.Context) error {
 					t.Error(errors.New("should not be there"))
+
 					return nil
 				}
 			},
@@ -472,6 +492,7 @@ func TestStart(t *testing.T) {
 
 				return func(_ context.Context) error {
 					wg.Done()
+
 					return nil
 				}
 			},

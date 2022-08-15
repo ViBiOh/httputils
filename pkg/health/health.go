@@ -124,6 +124,7 @@ func (a App) isReady() bool {
 	for _, pinger := range a.pingers {
 		if err := pinger(); err != nil {
 			logger.Error("ping: %s", err)
+
 			return false
 		}
 	}

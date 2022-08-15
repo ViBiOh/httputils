@@ -9,6 +9,8 @@ import (
 )
 
 func TestHandler(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		router  Router
 		request *http.Request
@@ -90,6 +92,8 @@ func TestHandler(t *testing.T) {
 }
 
 func TestGetParams(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		req *http.Request
 	}

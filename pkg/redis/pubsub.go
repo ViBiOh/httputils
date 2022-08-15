@@ -21,6 +21,7 @@ func (a App) Publish(ctx context.Context, channel string, value any) error {
 	count, err := a.redisClient.Publish(ctx, channel, value).Result()
 	if err != nil {
 		a.increase("error")
+
 		return fmt.Errorf("publish: %s", err)
 	}
 

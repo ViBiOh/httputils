@@ -54,6 +54,7 @@ func ValidateSignature(r *http.Request, secret []byte) (bool, error) {
 func signContent(secret, content []byte) []byte {
 	hash := hmac.New(sha512.New, secret)
 	hash.Write(content)
+
 	return hash.Sum(nil)
 }
 
@@ -82,6 +83,7 @@ func parseAuthorizationHeader(r *http.Request) ([]byte, []byte, error) {
 	}
 
 	signatureString := buildSignatureString(r, strings.Split(strings.Trim(strings.TrimPrefix(rawHeaders, "headers="), `"`), " "))
+
 	return signatureString, signature, nil
 }
 

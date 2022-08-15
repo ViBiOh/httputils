@@ -103,10 +103,12 @@ func (c *Client) Publish(payload amqp.Publishing, exchange, routingKey string) e
 
 	if err := c.channel.Publish(exchange, routingKey, false, false, payload); err != nil {
 		c.increase("error", exchange, routingKey)
+
 		return err
 	}
 
 	c.increase("published", exchange, routingKey)
+
 	return nil
 }
 

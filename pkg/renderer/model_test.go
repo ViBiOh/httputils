@@ -8,6 +8,8 @@ import (
 )
 
 func TestEtag(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		instance Page
 		want     string
@@ -33,6 +35,8 @@ func TestEtag(t *testing.T) {
 }
 
 func TestParseMessage(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		r *http.Request
 	}

@@ -37,6 +37,7 @@ func (n node) insert(method, url string, variable bool, value http.Handler) (nod
 	for i := range n.children {
 		if n.children[i].prefix == prefix {
 			index = i
+
 			break
 		}
 	}

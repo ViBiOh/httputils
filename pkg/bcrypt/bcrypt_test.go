@@ -9,6 +9,8 @@ import (
 )
 
 func TestFindBestCost(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		maxDuration time.Duration
 	}

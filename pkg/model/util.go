@@ -12,5 +12,6 @@ func IsNil(i any) bool {
 	case reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice:
 		return reflect.ValueOf(i).IsNil()
 	}
+
 	return false
 }

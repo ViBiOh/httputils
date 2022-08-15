@@ -86,6 +86,7 @@ func (a App) Start(name string, done <-chan struct{}, handler http.Handler) {
 
 	if len(a.listenAddress) == 0 {
 		serverLogger.Warn("No listen address")
+
 		return
 	}
 

@@ -7,6 +7,8 @@ import (
 )
 
 func TestIsRoot(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		input *http.Request
 		want  bool

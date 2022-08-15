@@ -9,6 +9,8 @@ import (
 )
 
 func TestCounterVec(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		registry  *prometheus.Registry
 		namespace string

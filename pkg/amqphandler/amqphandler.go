@@ -102,10 +102,12 @@ func (a App) Start(done <-chan struct{}) {
 	consumerName, messages, err := a.amqpClient.Listen(func() (string, error) {
 		queueName, err := a.configure(init)
 		init = false
+
 		return queueName, err
 	}, a.exchange, a.routingKey)
 	if err != nil {
 		log.Error("listen: %s", err)
+
 		return
 	}
 
@@ -133,6 +135,7 @@ func (a App) handleMessage(log logger.Provider, message amqp.Delivery) {
 		if err = message.Ack(false); err != nil {
 			log.Error("ack message: %s", err)
 		}
+
 		return
 	}
 
@@ -172,6 +175,7 @@ func generateIdentityName() string {
 	raw := make([]byte, 4)
 	if _, err := rand.Read(raw); err != nil {
 		logger.Error("generate identity name: %s", err)
+
 		return "error"
 	}
 

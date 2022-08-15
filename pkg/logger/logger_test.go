@@ -26,6 +26,8 @@ func (wc writeCloser) Close() error {
 }
 
 func TestFlags(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		want string
 	}{
@@ -58,6 +60,8 @@ func TestFlags(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		e event
 	}
@@ -133,6 +137,8 @@ func TestStart(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		out io.Writer
 		err io.Writer
@@ -186,6 +192,8 @@ func TestClose(t *testing.T) {
 }
 
 func TestOutput(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		lev    level
 		format string
@@ -311,6 +319,8 @@ func BenchmarkFormattedOutputFields(b *testing.B) {
 }
 
 func TestJSON(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		e event
 	}
@@ -433,6 +443,8 @@ func BenchmarkJSONWithFields(b *testing.B) {
 }
 
 func TestText(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		e event
 	}

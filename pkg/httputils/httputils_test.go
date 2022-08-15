@@ -4,7 +4,6 @@ import (
 	"flag"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/ViBiOh/httputils/v4/pkg/health"
@@ -20,7 +19,7 @@ func TestHandler(t *testing.T) {
 		}
 	})
 
-	os.Setenv("VERSION", "httputils/TestHandler")
+	t.Setenv("VERSION", "httputils/TestHandler")
 
 	cases := map[string]struct {
 		request    *http.Request
@@ -102,9 +101,7 @@ func TestVersionHandler(t *testing.T) {
 		testCase := testCase
 
 		t.Run(intention, func(t *testing.T) {
-			t.Parallel()
-
-			os.Setenv("VERSION", testCase.environment)
+			t.Setenv("VERSION", testCase.environment)
 			writer := httptest.NewRecorder()
 			versionHandler().ServeHTTP(writer, testCase.request)
 

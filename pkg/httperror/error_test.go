@@ -11,6 +11,8 @@ import (
 )
 
 func TestBadRequest(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		err        error
 		want       string
@@ -45,6 +47,8 @@ func TestBadRequest(t *testing.T) {
 }
 
 func TestUnauthorized(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		err        error
 		want       string
@@ -79,6 +83,8 @@ func TestUnauthorized(t *testing.T) {
 }
 
 func TestForbidden(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		want       string
 		wantStatus int
@@ -111,6 +117,8 @@ func TestForbidden(t *testing.T) {
 }
 
 func TestNotFound(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		want       string
 		wantStatus int
@@ -143,6 +151,8 @@ func TestNotFound(t *testing.T) {
 }
 
 func TestInternalServerError(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		err        error
 		want       string
@@ -177,6 +187,8 @@ func TestInternalServerError(t *testing.T) {
 }
 
 func TestHandleError(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		err         error
 		want        bool
@@ -252,6 +264,8 @@ func TestHandleError(t *testing.T) {
 }
 
 func TestErrorStatus(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		err error
 	}

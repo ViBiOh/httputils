@@ -147,6 +147,7 @@ func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.Sp
 
 	var span tr.Span
 	ctx, span = tracer.Start(ctx, name, opts...)
+
 	return ctx, span.End
 }
 
@@ -176,5 +177,6 @@ func AddTracerToClient(httpClient *http.Client, tracerProvider tr.TracerProvider
 	}
 
 	httpClient.Transport = otelhttp.NewTransport(httpClient.Transport, otelhttp.WithTracerProvider(tracerProvider), otelhttp.WithPropagators(propagation.TraceContext{}))
+
 	return httpClient
 }

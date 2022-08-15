@@ -10,6 +10,8 @@ import (
 )
 
 func TestFlags(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		want string
 	}{
@@ -42,6 +44,8 @@ func TestFlags(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		want App
 	}{
@@ -72,6 +76,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestMiddleware(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		app        App
 		next       http.Handler

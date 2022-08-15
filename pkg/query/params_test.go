@@ -8,6 +8,8 @@ import (
 )
 
 func TestGetBool(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		request *http.Request
 		name    string

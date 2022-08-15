@@ -43,6 +43,8 @@ func (errReaderCloser) Close() error {
 }
 
 func TestReadContent(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		reader  io.ReadCloser
 		want    []byte
@@ -105,6 +107,8 @@ func TestReadContent(t *testing.T) {
 }
 
 func TestReadBodyRequest(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		input   *http.Request
 		want    []byte
@@ -147,6 +151,8 @@ func TestReadBodyRequest(t *testing.T) {
 }
 
 func TestReadBodyResponse(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		input   []byte
 		want    []byte
