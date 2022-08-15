@@ -24,13 +24,18 @@ func TestLimitedGo(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			for _, f := range tc.args.funcs {
-				tc.instance.Go(f)
+			t.Parallel()
+
+			for _, f := range testCase.args.funcs {
+				testCase.instance.Go(f)
 			}
 
-			tc.instance.Wait()
+			testCase.instance.Wait()
 		})
 	}
 }

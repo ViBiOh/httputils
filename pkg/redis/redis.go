@@ -24,14 +24,12 @@ const (
 // ErrNoSubscriber occurs when a published message is not received by any subscriber
 var ErrNoSubscriber = errors.New("no subscriber for channel")
 
-// App of package
 type App struct {
 	tracer      trace.Tracer
 	redisClient *redis.Client
 	metric      *prometheus.CounterVec
 }
 
-// Config of package
 type Config struct {
 	address  *string
 	username *string
@@ -40,7 +38,6 @@ type Config struct {
 	database *int
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		address:  flags.String(fs, prefix, "redis", "Address", "Redis Address (blank to disable)", "localhost:6379", overrides),
@@ -51,7 +48,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-// New creates new App from Config
 func New(config Config, prometheusRegisterer prometheus.Registerer, tracer trace.Tracer) App {
 	address := strings.TrimSpace(*config.address)
 	if len(address) == 0 {

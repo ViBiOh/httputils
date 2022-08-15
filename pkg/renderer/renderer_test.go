@@ -25,8 +25,13 @@ func TestFlags(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
@@ -36,8 +41,8 @@ func TestFlags(t *testing.T) {
 
 			result := writer.String()
 
-			if result != tc.want {
-				t.Errorf("Flags() = `%s`, want `%s`", result, tc.want)
+			if result != testCase.want {
+				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -78,10 +83,15 @@ func TestIsStaticRootPaths(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := isStaticPaths(tc.args.requestPath); got != tc.want {
-				t.Errorf("isStaticPaths() = %t, want %t", got, tc.want)
+			t.Parallel()
+
+			if got := isStaticPaths(testCase.args.requestPath); got != testCase.want {
+				t.Errorf("isStaticPaths() = %t, want %t", got, testCase.want)
 			}
 		})
 	}
@@ -137,10 +147,15 @@ func TestFeedContent(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := tc.instance.feedContent(tc.args.content); !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("feedContent() = %v, want %v", tc.args.content, tc.want)
+			t.Parallel()
+
+			if got := testCase.instance.feedContent(testCase.args.content); !reflect.DeepEqual(got, testCase.want) {
+				t.Errorf("feedContent() = %v, want %v", testCase.args.content, testCase.want)
 			}
 		})
 	}
@@ -268,21 +283,26 @@ func TestHandler(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
-			tc.instance.Handler(tc.templateFunc).ServeHTTP(writer, tc.request)
+			testCase.instance.Handler(testCase.templateFunc).ServeHTTP(writer, testCase.request)
 
-			if got := writer.Code; got != tc.wantStatus {
-				t.Errorf("Handler = %d, want %d", got, tc.wantStatus)
+			if got := writer.Code; got != testCase.wantStatus {
+				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)
 			}
 
-			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.want {
-				t.Errorf("Handler = `%s`, want `%s`", string(got), tc.want)
+			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.want {
+				t.Errorf("Handler = `%s`, want `%s`", string(got), testCase.want)
 			}
 
-			for key := range tc.wantHeader {
-				want := tc.wantHeader.Get(key)
+			for key := range testCase.wantHeader {
+				want := testCase.wantHeader.Get(key)
 				if got := writer.Header().Get(key); got != want {
 					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
 				}

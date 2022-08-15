@@ -44,10 +44,15 @@ func TestGetBool(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if result := GetBool(tc.request, tc.name); result != tc.want {
-				t.Errorf("GetBool(%#v, `%s`) = %#v, want %#v", tc.request, tc.name, result, tc.want)
+			t.Parallel()
+
+			if result := GetBool(testCase.request, testCase.name); result != testCase.want {
+				t.Errorf("GetBool(%#v, `%s`) = %#v, want %#v", testCase.request, testCase.name, result, testCase.want)
 			}
 		})
 	}

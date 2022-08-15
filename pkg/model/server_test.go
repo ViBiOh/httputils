@@ -58,21 +58,26 @@ func TestChainMiddlewares(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
-			ChainMiddlewares(handler, tc.middlewares...).ServeHTTP(writer, tc.request)
+			ChainMiddlewares(handler, testCase.middlewares...).ServeHTTP(writer, testCase.request)
 
-			if result := writer.Code; result != tc.wantStatus {
-				t.Errorf("ChainMiddlewares = %d, want %d", result, tc.wantStatus)
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("ChainMiddlewares = %d, want %d", result, testCase.wantStatus)
 			}
 
-			if result, _ := readContent(writer.Result().Body); string(result) != tc.want {
-				t.Errorf("ChainMiddlewares = `%s`, want `%s`", string(result), tc.want)
+			if result, _ := readContent(writer.Result().Body); string(result) != testCase.want {
+				t.Errorf("ChainMiddlewares = `%s`, want `%s`", string(result), testCase.want)
 			}
 
-			for key := range tc.wantHeader {
-				want := tc.wantHeader.Get(key)
+			for key := range testCase.wantHeader {
+				want := testCase.wantHeader.Get(key)
 				if result := writer.Header().Get(key); result != want {
 					t.Errorf("`%s` Header = `%s`, want `%s`", key, result, want)
 				}

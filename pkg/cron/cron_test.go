@@ -75,19 +75,24 @@ func TestString(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			redisMock := mocks.NewSemaphore(ctrl)
 
 			if intention == "full case" {
-				tc.cron.Exclusive(redisMock, "test", time.Minute)
+				testCase.cron.Exclusive(redisMock, "test", time.Minute)
 			}
 
-			if result := tc.cron.String(); result != tc.want {
-				t.Errorf("String() = `%s`, want `%s`", result, tc.want)
+			if result := testCase.cron.String(); result != testCase.want {
+				t.Errorf("String() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -114,24 +119,29 @@ func TestAt(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			tc.cron.At(tc.input)
+			t.Parallel()
+
+			testCase.cron.At(testCase.input)
 
 			failed := false
 
-			if len(tc.cron.errors) == 0 && tc.wantErr != nil {
+			if len(testCase.cron.errors) == 0 && testCase.wantErr != nil {
 				failed = true
-			} else if len(tc.cron.errors) != 0 && tc.wantErr == nil {
+			} else if len(testCase.cron.errors) != 0 && testCase.wantErr == nil {
 				failed = true
-			} else if len(tc.cron.errors) > 0 && tc.cron.errors[0].Error() != tc.wantErr.Error() {
+			} else if len(testCase.cron.errors) > 0 && testCase.cron.errors[0].Error() != testCase.wantErr.Error() {
 				failed = true
-			} else if tc.cron.dayTime.String() != tc.want.String() {
+			} else if testCase.cron.dayTime.String() != testCase.want.String() {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("At() = (`%s`, `%s`), want (`%s`, `%s`)", tc.cron.dayTime, tc.cron.errors, tc.want, tc.wantErr)
+				t.Errorf("At() = (`%s`, `%s`), want (`%s`, `%s`)", testCase.cron.dayTime, testCase.cron.errors, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -172,24 +182,29 @@ func TestIn(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			tc.instance.In(tc.args.tz)
+			t.Parallel()
+
+			testCase.instance.In(testCase.args.tz)
 
 			failed := false
 
-			if len(tc.instance.errors) == 0 && tc.wantErr != nil {
+			if len(testCase.instance.errors) == 0 && testCase.wantErr != nil {
 				failed = true
-			} else if len(tc.instance.errors) != 0 && tc.wantErr == nil {
+			} else if len(testCase.instance.errors) != 0 && testCase.wantErr == nil {
 				failed = true
-			} else if len(tc.instance.errors) > 0 && tc.instance.errors[0].Error() != tc.wantErr.Error() {
+			} else if len(testCase.instance.errors) > 0 && testCase.instance.errors[0].Error() != testCase.wantErr.Error() {
 				failed = true
-			} else if tc.instance.dayTime.String() != tc.want.String() {
+			} else if testCase.instance.dayTime.String() != testCase.want.String() {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("In() = (`%s`, `%s`), want (`%s`, `%s`)", tc.instance.dayTime, tc.instance.errors, tc.want, tc.wantErr)
+				t.Errorf("In() = (`%s`, `%s`), want (`%s`, `%s`)", testCase.instance.dayTime, testCase.instance.errors, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -218,10 +233,15 @@ func TestFindMatchingDay(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if result := tc.cron.findMatchingDay(tc.input); result.String() != tc.want.String() {
-				t.Errorf("findMatchingDay() = `%s`, want `%s`", result, tc.want)
+			t.Parallel()
+
+			if result := testCase.cron.findMatchingDay(testCase.input); result.String() != testCase.want.String() {
+				t.Errorf("findMatchingDay() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -278,12 +298,17 @@ func TestGetTickerDuration(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			tc.cron.clock = tc.clock
-			result := tc.cron.getTickerDuration(tc.input)
-			if !reflect.DeepEqual(result, tc.want) {
-				t.Errorf("getTickerDuration() = `%s`, want `%s`", result, tc.want)
+			t.Parallel()
+
+			testCase.cron.clock = testCase.clock
+			result := testCase.cron.getTickerDuration(testCase.input)
+			if !reflect.DeepEqual(result, testCase.want) {
+				t.Errorf("getTickerDuration() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -324,10 +349,15 @@ func TestHasError(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if result := tc.cron.hasError(); result != tc.want {
-				t.Errorf("hasError() = %t, want %t", result, tc.want)
+			t.Parallel()
+
+			if result := testCase.cron.hasError(); result != testCase.want {
+				t.Errorf("hasError() = %t, want %t", result, testCase.want)
 			}
 		})
 	}
@@ -453,23 +483,28 @@ func TestStart(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			redisMock := mocks.NewSemaphore(ctrl)
 
 			if intention == "run in exclusive error" {
-				tc.cron.Exclusive(redisMock, "test", time.Minute)
+				testCase.cron.Exclusive(redisMock, "test", time.Minute)
 				redisMock.EXPECT().Exclusive(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(true, errors.New("redis error"))
 			}
 
 			var wg sync.WaitGroup
 			wg.Add(1)
-			tc.cron.clock = tc.clock
+			testCase.cron.clock = testCase.clock
 
-			go tc.cron.OnError(tc.onError(&wg, tc.cron)).Start(tc.action(&wg, tc.cron), nil)
+			go testCase.cron.OnError(testCase.onError(&wg, testCase.cron)).Start(testCase.action(&wg, testCase.cron), nil)
 
 			actionDone := make(chan struct{})
 			go func() {
@@ -479,10 +514,10 @@ func TestStart(t *testing.T) {
 
 			select {
 			case <-time.After(time.Second * 5):
-				tc.cron.Shutdown()
+				testCase.cron.Shutdown()
 				t.Errorf("Start() did not complete within 5 seconds")
 			case <-actionDone:
-				tc.cron.Shutdown()
+				testCase.cron.Shutdown()
 			}
 		})
 	}

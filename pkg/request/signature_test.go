@@ -34,17 +34,22 @@ func TestAddSignature(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 
-			AddSignature(req, tc.args.keyID, tc.args.secret, tc.args.payload)
+			AddSignature(req, testCase.args.keyID, testCase.args.secret, testCase.args.payload)
 
-			if got := req.Header.Get("Digest"); got != tc.wantDigest {
-				t.Errorf("AddSignature() = `%s`, want `%s`", got, tc.wantDigest)
+			if got := req.Header.Get("Digest"); got != testCase.wantDigest {
+				t.Errorf("AddSignature() = `%s`, want `%s`", got, testCase.wantDigest)
 			}
-			if got := strings.Join(req.Header.Values("Authorization"), ", "); got != tc.wantAuthorization {
-				t.Errorf("AddSignature() = `%s`, want `%s`", got, tc.wantAuthorization)
+			if got := strings.Join(req.Header.Values("Authorization"), ", "); got != testCase.wantAuthorization {
+				t.Errorf("AddSignature() = `%s`, want `%s`", got, testCase.wantAuthorization)
 			}
 		})
 	}
@@ -81,6 +86,11 @@ func TestValidateSignature(t *testing.T) {
 	reqInvalidSecret.Header.Add("Digest", fmt.Sprintf("SHA-512=%x", sha512.Sum512([]byte(`Hello World`))))
 	reqInvalidSecret.Header.Add("Authorization", `headers="(request-target) digest"`)
 	reqInvalidSecret.Header.Add("Authorization", `signature="5lf5ogggfJ1LXJciRS2BscNtMnYHWDOr2myJ9TJyZnu+37EXUpmchhl6LxyzU0bfpqAloLFEFw+1NEBSgNC+lQ=="`)
+
+	reqValidSecret := httptest.NewRequest(http.MethodGet, "/", strings.NewReader("Hello World"))
+	reqValidSecret.Header.Add("Digest", fmt.Sprintf("SHA-512=%x", sha512.Sum512([]byte(`Hello World`))))
+	reqValidSecret.Header.Add("Authorization", `headers="(request-target) digest"`)
+	reqValidSecret.Header.Add("Authorization", `signature="5lf5ogggfJ1LXJciRS2BscNtMnYHWDOr2myJ9TJyZnu+37EXUpmchhl6LxyzU0bfpqAloLFEFw+1NEBSgNC+lQ=="`)
 
 	cases := map[string]struct {
 		args    args
@@ -145,7 +155,7 @@ func TestValidateSignature(t *testing.T) {
 		},
 		"valid secret": {
 			args{
-				req:    reqInvalidSecret,
+				req:    reqValidSecret,
 				secret: []byte(`password`),
 			},
 			true,
@@ -153,23 +163,28 @@ func TestValidateSignature(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			got, gotErr := ValidateSignature(tc.args.req, tc.args.secret)
+			t.Parallel()
+
+			got, gotErr := ValidateSignature(testCase.args.req, testCase.args.secret)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
-				got != tc.want:
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
+				got != testCase.want:
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("ValidateSignature() = (%t, `%s`), want (%t, `%s`)", got, gotErr, tc.want, tc.wantErr)
+				t.Errorf("ValidateSignature() = (%t, `%s`), want (%t, `%s`)", got, gotErr, testCase.want, testCase.wantErr)
 			}
 		})
 	}

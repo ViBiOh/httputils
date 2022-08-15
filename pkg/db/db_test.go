@@ -22,8 +22,13 @@ func TestFlags(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
@@ -33,8 +38,8 @@ func TestFlags(t *testing.T) {
 
 			result := writer.String()
 
-			if result != tc.want {
-				t.Errorf("Flags() = `%s`, want `%s`", result, tc.want)
+			if result != testCase.want {
+				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -55,8 +60,13 @@ func TestEnabled(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -64,11 +74,11 @@ func TestEnabled(t *testing.T) {
 
 			switch intention {
 			case "provided":
-				tc.instance.db = mockDatabase
+				testCase.instance.db = mockDatabase
 			}
 
-			if got := tc.instance.Enabled(); got != tc.want {
-				t.Errorf("Enabled() = %t, want %t", got, tc.want)
+			if got := testCase.instance.Enabled(); got != testCase.want {
+				t.Errorf("Enabled() = %t, want %t", got, testCase.want)
 			}
 		})
 	}
@@ -86,8 +96,13 @@ func TestPing(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -102,8 +117,8 @@ func TestPing(t *testing.T) {
 				mockDatabase.EXPECT().Ping(gomock.Any()).Return(errors.New("context deadline exceeded"))
 			}
 
-			if got := instance.Ping(); (got == nil) != tc.want {
-				t.Errorf("Ping() = %t, want %t", got, tc.want)
+			if got := instance.Ping(); (got == nil) != testCase.want {
+				t.Errorf("Ping() = %t, want %t", got, testCase.want)
 			}
 		})
 	}
@@ -168,10 +183,15 @@ func TestReadTx(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := readTx(tc.args.ctx); got != tc.want {
-				t.Errorf("readTx() = %v, want %v", got, tc.want)
+			t.Parallel()
+
+			if got := readTx(testCase.args.ctx); got != testCase.want {
+				t.Errorf("readTx() = %v, want %v", got, testCase.want)
 			}
 		})
 	}
@@ -238,8 +258,13 @@ func TestDoAtomic(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -247,7 +272,7 @@ func TestDoAtomic(t *testing.T) {
 
 			instance := App{db: mockDatabase}
 
-			ctx := tc.args.ctx
+			ctx := testCase.args.ctx
 
 			switch intention {
 			case "error":
@@ -269,20 +294,20 @@ func TestDoAtomic(t *testing.T) {
 				tx.EXPECT().Rollback(gomock.Any()).Return(errors.New("cannot close transaction"))
 			}
 
-			gotErr := instance.DoAtomic(ctx, tc.args.action)
+			gotErr := instance.DoAtomic(ctx, testCase.args.action)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("DoAtomic() = `%s`, want `%s`", gotErr, tc.wantErr)
+				t.Errorf("DoAtomic() = `%s`, want `%s`", gotErr, testCase.wantErr)
 			}
 		})
 	}
@@ -303,8 +328,13 @@ func TestList(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -347,14 +377,14 @@ func TestList(t *testing.T) {
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Get() = (`%s`), want (`%s`)", gotErr, tc.wantErr)
+				t.Errorf("Get() = (`%s`), want (`%s`)", gotErr, testCase.wantErr)
 			}
 		})
 	}
@@ -375,8 +405,13 @@ func TestGet(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -417,14 +452,14 @@ func TestGet(t *testing.T) {
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Get() = (`%s`), want (`%s`)", gotErr, tc.wantErr)
+				t.Errorf("Get() = (`%s`), want (`%s`)", gotErr, testCase.wantErr)
 			}
 		})
 	}
@@ -445,8 +480,13 @@ func TestCreate(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -481,14 +521,14 @@ func TestCreate(t *testing.T) {
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Create() = (`%s`), want (`%s`)", gotErr, tc.wantErr)
+				t.Errorf("Create() = (`%s`), want (`%s`)", gotErr, testCase.wantErr)
 			}
 		})
 	}
@@ -509,8 +549,13 @@ func TestExec(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -538,14 +583,14 @@ func TestExec(t *testing.T) {
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Exec() = `%s`, want `%s`", gotErr, tc.wantErr)
+				t.Errorf("Exec() = `%s`, want `%s`", gotErr, testCase.wantErr)
 			}
 		})
 	}
@@ -566,8 +611,13 @@ func TestOne(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -600,14 +650,14 @@ func TestOne(t *testing.T) {
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("One() = `%s`, want `%s`", gotErr, tc.wantErr)
+				t.Errorf("One() = `%s`, want `%s`", gotErr, testCase.wantErr)
 			}
 		})
 	}
@@ -628,8 +678,13 @@ func TestBulk(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -660,14 +715,14 @@ func TestBulk(t *testing.T) {
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Bulk() = `%s`, want `%s`", gotErr, tc.wantErr)
+				t.Errorf("Bulk() = `%s`, want `%s`", gotErr, testCase.wantErr)
 			}
 		})
 	}

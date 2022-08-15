@@ -58,10 +58,15 @@ func TestLinkNextHeader(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := tc.instance.LinkNextHeader(tc.args.urlPath, tc.args.extraArgs); got != tc.want {
-				t.Errorf("LinkNextHeader() = `%s`, want `%s`", got, tc.want)
+			t.Parallel()
+
+			if got := testCase.instance.LinkNextHeader(testCase.args.urlPath, testCase.args.extraArgs); got != testCase.want {
+				t.Errorf("LinkNextHeader() = `%s`, want `%s`", got, testCase.want)
 			}
 		})
 	}
@@ -174,20 +179,25 @@ func TestParsePagination(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			result, err := ParsePagination(tc.request, tc.defaultPageSize, tc.maxPageSize)
+			t.Parallel()
+
+			result, err := ParsePagination(testCase.request, testCase.defaultPageSize, testCase.maxPageSize)
 
 			failed := false
 
-			if tc.wantErr != nil && !errors.Is(err, tc.wantErr) {
+			if testCase.wantErr != nil && !errors.Is(err, testCase.wantErr) {
 				failed = true
-			} else if !reflect.DeepEqual(result, tc.want) {
+			} else if !reflect.DeepEqual(result, testCase.want) {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("ParsePagination() = (%#v, `%s`), want (%#v, `%s`)", result, err, tc.want, tc.wantErr)
+				t.Errorf("ParsePagination() = (%#v, `%s`), want (%#v, `%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}

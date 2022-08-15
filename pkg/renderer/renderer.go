@@ -28,7 +28,6 @@ var (
 	staticCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Hour * 24).Seconds())
 )
 
-// App of package
 type App struct {
 	tracer           trace.Tracer
 	tpl              *template.Template
@@ -40,7 +39,6 @@ type App struct {
 	minify           bool
 }
 
-// Config of package
 type Config struct {
 	publicURL  *string
 	pathPrefix *string
@@ -48,7 +46,6 @@ type Config struct {
 	minify     *bool
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		publicURL:  flags.String(fs, prefix, "", "PublicURL", "Public URL", "http://localhost:1080", overrides),
@@ -58,7 +55,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-// New creates new App from Config
 func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace.Tracer) (App, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {

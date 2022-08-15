@@ -11,7 +11,6 @@ import (
 
 var _ model.Middleware = App{}.Middleware
 
-// App of package
 type App struct {
 	origin      string
 	headers     string
@@ -20,7 +19,6 @@ type App struct {
 	credentials string
 }
 
-// Config of package
 type Config struct {
 	origin      *string
 	headers     *string
@@ -29,7 +27,6 @@ type Config struct {
 	credentials *bool
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		origin:      flags.String(fs, prefix, "cors", "Origin", "Access-Control-Allow-Origin", "*", overrides),
@@ -40,7 +37,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-// New creates new App from Config
 func New(config Config) App {
 	return App{
 		origin:      *config.origin,

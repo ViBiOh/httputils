@@ -42,13 +42,11 @@ type Database interface {
 	QueryRow(context.Context, string, ...any) pgx.Row
 }
 
-// App of package
 type App struct {
 	tracer trace.Tracer
 	db     Database
 }
 
-// Config of package
 type Config struct {
 	host    *string
 	port    *uint
@@ -59,7 +57,6 @@ type Config struct {
 	maxConn *uint
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		host:    flags.String(fs, prefix, "database", "Host", "Host", "", overrides),
@@ -72,7 +69,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-// New creates new App from Config
 func New(config Config, tracer trace.Tracer) (App, error) {
 	host := strings.TrimSpace(*config.host)
 	if len(host) == 0 {

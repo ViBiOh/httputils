@@ -78,21 +78,26 @@ func TestRedirect(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
-			tc.instance.Redirect(writer, tc.request, tc.path, tc.message)
+			testCase.instance.Redirect(writer, testCase.request, testCase.path, testCase.message)
 
-			if got := writer.Code; got != tc.wantStatus {
-				t.Errorf("Redirect = %d, want %d", got, tc.wantStatus)
+			if got := writer.Code; got != testCase.wantStatus {
+				t.Errorf("Redirect = %d, want %d", got, testCase.wantStatus)
 			}
 
-			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.want {
-				t.Errorf("Redirect = `%s`, want `%s`", string(got), tc.want)
+			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.want {
+				t.Errorf("Redirect = `%s`, want `%s`", string(got), testCase.want)
 			}
 
-			for key := range tc.wantHeader {
-				want := tc.wantHeader.Get(key)
+			for key := range testCase.wantHeader {
+				want := testCase.wantHeader.Get(key)
 				if got := writer.Header().Get(key); got != want {
 					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
 				}

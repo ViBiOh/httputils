@@ -21,8 +21,13 @@ func TestFlags(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
@@ -32,8 +37,8 @@ func TestFlags(t *testing.T) {
 
 			result := writer.String()
 
-			if result != tc.want {
-				t.Errorf("Flags() = `%s`, want `%s`", result, tc.want)
+			if result != testCase.want {
+				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -83,21 +88,26 @@ func TestMiddleware(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			handler := tc.instance.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			t.Parallel()
+
+			handler := testCase.instance.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 			}))
 
-			for _, req := range tc.requests {
+			for _, req := range testCase.requests {
 				handler.ServeHTTP(httptest.NewRecorder(), req)
 			}
 
 			writer := httptest.NewRecorder()
-			tc.instance.Handler().ServeHTTP(writer, httptest.NewRequest(http.MethodGet, metricsEndpoint, nil))
+			testCase.instance.Handler().ServeHTTP(writer, httptest.NewRequest(http.MethodGet, metricsEndpoint, nil))
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); !strings.Contains(string(result), tc.want) {
-				t.Errorf("Middleware() = `%s`, want `%s`", string(result), tc.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); !strings.Contains(string(result), testCase.want) {
+				t.Errorf("Middleware() = `%s`, want `%s`", string(result), testCase.want)
 			}
 		})
 	}
@@ -118,10 +128,15 @@ func TestRegisterer(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if result := tc.instance.Registerer(); !reflect.DeepEqual(result, tc.want) {
-				t.Errorf("Registerer() = %#v, want %#v", result, tc.want)
+			t.Parallel()
+
+			if result := testCase.instance.Registerer(); !reflect.DeepEqual(result, testCase.want) {
+				t.Errorf("Registerer() = %#v, want %#v", result, testCase.want)
 			}
 		})
 	}
@@ -158,10 +173,15 @@ func TestIsIgnored(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := tc.instance.isIgnored(tc.args.path); got != tc.want {
-				t.Errorf("isIgnored() = %t, want %t", got, tc.want)
+			t.Parallel()
+
+			if got := testCase.instance.isIgnored(testCase.args.path); got != testCase.want {
+				t.Errorf("isIgnored() = %t, want %t", got, testCase.want)
 			}
 		})
 	}

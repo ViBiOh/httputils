@@ -92,8 +92,13 @@ func TestRetrieve(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -113,23 +118,23 @@ func TestRetrieve(t *testing.T) {
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("store error"))
 			}
 
-			got, gotErr := Retrieve(context.TODO(), mockRedisClient, tc.args.key, tc.args.onMiss, tc.args.duration)
+			got, gotErr := Retrieve(context.TODO(), mockRedisClient, testCase.args.key, testCase.args.onMiss, testCase.args.duration)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
-				!reflect.DeepEqual(got, tc.want):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
+				!reflect.DeepEqual(got, testCase.want):
 				failed = true
 			}
 
 			time.Sleep(time.Millisecond * 200)
 
 			if failed {
-				t.Errorf("Retrieve() = (%+v, `%s`), want (%+v, `%s`)", got, gotErr, tc.want, tc.wantErr)
+				t.Errorf("Retrieve() = (%+v, `%s`), want (%+v, `%s`)", got, gotErr, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -170,8 +175,13 @@ func TestRetrieveError(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -182,23 +192,23 @@ func TestRetrieveError(t *testing.T) {
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return("", nil)
 			}
 
-			got, gotErr := Retrieve(context.TODO(), mockRedisClient, tc.args.key, tc.args.onMiss, tc.args.duration)
+			got, gotErr := Retrieve(context.TODO(), mockRedisClient, testCase.args.key, testCase.args.onMiss, testCase.args.duration)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
-				got.ID != tc.want.ID:
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
+				got.ID != testCase.want.ID:
 				failed = true
 			}
 
 			time.Sleep(time.Millisecond * 200)
 
 			if failed {
-				t.Errorf("Retrieve() = (%+v, `%s`), want (%+v, `%s`)", got, gotErr, tc.want, tc.wantErr)
+				t.Errorf("Retrieve() = (%+v, `%s`), want (%+v, `%s`)", got, gotErr, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -233,8 +243,13 @@ func TestEvictOnSuccess(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -247,20 +262,20 @@ func TestEvictOnSuccess(t *testing.T) {
 				mockRedisClient.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(errors.New("redis failed"))
 			}
 
-			gotErr := EvictOnSuccess(context.Background(), mockRedisClient, "key", tc.args.err)
+			gotErr := EvictOnSuccess(context.Background(), mockRedisClient, "key", testCase.args.err)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("EvictOnSuccess() = `%s`, want `%s`", gotErr, tc.wantErr)
+				t.Errorf("EvictOnSuccess() = `%s`, want `%s`", gotErr, testCase.wantErr)
 			}
 		})
 	}

@@ -51,10 +51,15 @@ func TestString(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := tc.instance.String(); got != tc.want {
-				t.Errorf("String() = `%s`, want `%s`", got, tc.want)
+			t.Parallel()
+
+			if got := testCase.instance.String(); got != testCase.want {
+				t.Errorf("String() = `%s`, want `%s`", got, testCase.want)
 			}
 		})
 	}
@@ -75,10 +80,15 @@ func TestIsZero(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := tc.instance.IsZero(); got != tc.want {
-				t.Errorf("IsZero() = %t, want %t", got, tc.want)
+			t.Parallel()
+
+			if got := testCase.instance.IsZero(); got != testCase.want {
+				t.Errorf("IsZero() = %t, want %t", got, testCase.want)
 			}
 		})
 	}
@@ -131,10 +141,15 @@ func TestPath(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := tc.instance.Path(tc.args.path); !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("Path() = %#v, want %#v", got, tc.want)
+			t.Parallel()
+
+			if got := testCase.instance.Path(testCase.args.path); !reflect.DeepEqual(got, testCase.want) {
+				t.Errorf("Path() = %#v, want %#v", got, testCase.want)
 			}
 		})
 	}
@@ -328,24 +343,27 @@ func TestSend(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			resp, err := tc.request.Send(tc.ctx, tc.payload)
+			resp, err := testCase.request.Send(testCase.ctx, testCase.payload)
 			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && err != nil,
-				tc.wantErr != nil && err == nil,
-				tc.wantErr != nil && err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()),
-				string(result) != tc.want:
+				testCase.wantErr == nil && err != nil,
+				testCase.wantErr != nil && err == nil,
+				testCase.wantErr != nil && err != nil && !strings.Contains(err.Error(), testCase.wantErr.Error()),
+				string(result) != testCase.want:
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
+				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -382,25 +400,28 @@ func TestForm(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			resp, err := tc.request.Form(tc.ctx, tc.payload)
+			resp, err := testCase.request.Form(testCase.ctx, testCase.payload)
 			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 
-			if err == nil && tc.wantErr != nil {
+			if err == nil && testCase.wantErr != nil {
 				failed = true
-			} else if err != nil && tc.wantErr == nil {
+			} else if err != nil && testCase.wantErr == nil {
 				failed = true
-			} else if err != nil && err.Error() != tc.wantErr.Error() {
+			} else if err != nil && err.Error() != testCase.wantErr.Error() {
 				failed = true
-			} else if string(result) != tc.want {
+			} else if string(result) != testCase.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Form() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
+				t.Errorf("Form() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -483,24 +504,27 @@ func TestMultipart(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			resp, err := tc.request.Multipart(tc.ctx, tc.feed)
+			resp, err := testCase.request.Multipart(testCase.ctx, testCase.feed)
 			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && err != nil,
-				tc.wantErr != nil && err == nil,
-				tc.wantErr != nil && err != nil && !strings.HasPrefix(err.Error(), tc.wantErr.Error()),
-				string(result) != tc.want:
+				testCase.wantErr == nil && err != nil,
+				testCase.wantErr != nil && err == nil,
+				testCase.wantErr != nil && err != nil && !strings.HasPrefix(err.Error(), testCase.wantErr.Error()),
+				string(result) != testCase.want:
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Multipart() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
+				t.Errorf("Multipart() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -543,24 +567,27 @@ func TestJSON(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			resp, err := tc.request.JSON(tc.ctx, tc.payload)
+			resp, err := testCase.request.JSON(testCase.ctx, testCase.payload)
 			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && err != nil,
-				tc.wantErr != nil && err == nil,
-				tc.wantErr != nil && err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()),
-				string(result) != tc.want:
+				testCase.wantErr == nil && err != nil,
+				testCase.wantErr != nil && err == nil,
+				testCase.wantErr != nil && err != nil && !strings.Contains(err.Error(), testCase.wantErr.Error()),
+				string(result) != testCase.want:
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
+				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -603,24 +630,27 @@ func TestStreamJSON(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			resp, err := tc.request.StreamJSON(tc.ctx, tc.payload)
+			resp, err := testCase.request.StreamJSON(testCase.ctx, testCase.payload)
 			result, _ := ReadBodyResponse(resp)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && err != nil,
-				tc.wantErr != nil && err == nil,
-				tc.wantErr != nil && err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()),
-				string(result) != tc.want:
+				testCase.wantErr == nil && err != nil,
+				testCase.wantErr != nil && err == nil,
+				testCase.wantErr != nil && err != nil && !strings.Contains(err.Error(), testCase.wantErr.Error()),
+				string(result) != testCase.want:
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, tc.want, tc.wantErr)
+				t.Errorf("Send() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -641,8 +671,13 @@ func TestDiscardBody(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -668,14 +703,14 @@ func TestDiscardBody(t *testing.T) {
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("DiscardBody() = `%s`, want `%s`", gotErr, tc.wantErr)
+				t.Errorf("DiscardBody() = `%s`, want `%s`", gotErr, testCase.wantErr)
 			}
 		})
 	}

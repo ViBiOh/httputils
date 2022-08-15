@@ -130,15 +130,20 @@ func TestRun(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			var result int
-			err := tc.instance.Run(func(synchronization uint64, items []any) error {
+			err := testCase.instance.Run(func(synchronization uint64, items []any) error {
 				if synchronization != 0 {
 					return nil
 				}
 
-				if result > 3 && tc.businessFail {
+				if result > 3 && testCase.businessFail {
 					return errRead
 				}
 
@@ -146,10 +151,10 @@ func TestRun(t *testing.T) {
 				return nil
 			})
 
-			if tc.wantErr != nil && !errors.Is(err, tc.wantErr) {
-				t.Errorf("Read() = %v, want %v", err, tc.wantErr)
-			} else if tc.want != result {
-				t.Errorf("Run() = %d, want %d", result, tc.want)
+			if testCase.wantErr != nil && !errors.Is(err, testCase.wantErr) {
+				t.Errorf("Read() = %v, want %v", err, testCase.wantErr)
+			} else if testCase.want != result {
+				t.Errorf("Run() = %d, want %d", result, testCase.want)
 			}
 		})
 	}

@@ -24,7 +24,6 @@ var (
 	colorBlue   = []byte("\033[34m")
 )
 
-// Config of package
 type Config struct {
 	level      *string
 	json       *bool
@@ -54,7 +53,6 @@ type Logger struct {
 	jsonFormat bool
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		level:      flags.String(fs, prefix, "logger", "Level", "Logger level", "INFO", overrides),

@@ -38,8 +38,13 @@ func TestWithContext(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			var gotErr error
 
 			func() {
@@ -49,8 +54,8 @@ func TestWithContext(t *testing.T) {
 					}
 				}()
 
-				for _, ctx := range tc.args.contexts {
-					tc.instance.WithContext(ctx)
+				for _, ctx := range testCase.args.contexts {
+					testCase.instance.WithContext(ctx)
 				}
 			}()
 
@@ -58,14 +63,14 @@ func TestWithContext(t *testing.T) {
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("WithContext() = %s, want %s", gotErr, tc.wantErr)
+				t.Errorf("WithContext() = %s, want %s", gotErr, testCase.wantErr)
 			}
 		})
 	}
@@ -113,30 +118,35 @@ func TestFailFastGo(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			if intention != "no error" {
-				tc.instance.WithContext(context.Background())
+				testCase.instance.WithContext(context.Background())
 			}
 
-			for _, f := range tc.args.funcs {
-				tc.instance.Go(f)
+			for _, f := range testCase.args.funcs {
+				testCase.instance.Go(f)
 			}
 
-			gotErr := tc.instance.Wait()
+			gotErr := testCase.instance.Wait()
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Go() = `%s`, want `%s`", gotErr, tc.wantErr)
+				t.Errorf("Go() = `%s`, want `%s`", gotErr, testCase.wantErr)
 			}
 		})
 	}

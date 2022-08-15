@@ -72,13 +72,18 @@ func TestHandler(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			tc.router.Handler().ServeHTTP(writer, tc.request)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if got := writer.Code; got != tc.want {
-				t.Errorf("Handler = HTTP/%d, want HTTP/%d", got, tc.want)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			testCase.router.Handler().ServeHTTP(writer, testCase.request)
+
+			if got := writer.Code; got != testCase.want {
+				t.Errorf("Handler = HTTP/%d, want HTTP/%d", got, testCase.want)
 			}
 		})
 	}
@@ -128,10 +133,15 @@ func TestGetParams(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := GetParams(tc.args.req); !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("GetParams() = %+v, want %+v", got, tc.want)
+			t.Parallel()
+
+			if got := GetParams(testCase.args.req); !reflect.DeepEqual(got, testCase.want) {
+				t.Errorf("GetParams() = %+v, want %+v", got, testCase.want)
 			}
 		})
 	}

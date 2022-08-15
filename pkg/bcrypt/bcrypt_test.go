@@ -27,23 +27,28 @@ func TestFindBestCost(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			got, gotErr := FindBestCost(tc.args.maxDuration)
+			t.Parallel()
+
+			got, gotErr := FindBestCost(testCase.args.maxDuration)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
-				got != tc.want:
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
+				got != testCase.want:
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("FindBestCost() = (%d, `%s`), want (%d, `%s`)", got, gotErr, tc.want, tc.wantErr)
+				t.Errorf("FindBestCost() = (%d, `%s`), want (%d, `%s`)", got, gotErr, testCase.want, testCase.wantErr)
 			}
 		})
 	}

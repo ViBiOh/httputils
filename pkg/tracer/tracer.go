@@ -21,18 +21,15 @@ import (
 
 var noopFunc = func(...tr.SpanEndOption) {}
 
-// App of package
 type App struct {
 	provider *trace.TracerProvider
 }
 
-// Config of package
 type Config struct {
 	url  *string
 	rate *string
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		url:  flags.String(fs, prefix, "tracing", "URL", "Jaeger endpoint URL (e.g. http://jaeger:14268/api/traces)", "", overrides),
@@ -66,7 +63,6 @@ func newResource() (*resource.Resource, error) {
 	return r, nil
 }
 
-// New creates new App from Config
 func New(config Config) (App, error) {
 	url := strings.TrimSpace(*config.url)
 

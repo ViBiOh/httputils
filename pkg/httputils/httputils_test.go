@@ -49,17 +49,22 @@ func TestHandler(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			Handler(handler, healthApp).ServeHTTP(writer, tc.request)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if got := writer.Code; got != tc.wantStatus {
-				t.Errorf("Handler = %d, want %d", got, tc.wantStatus)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			Handler(handler, healthApp).ServeHTTP(writer, testCase.request)
+
+			if got := writer.Code; got != testCase.wantStatus {
+				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)
 			}
 
-			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.want {
-				t.Errorf("Handler = `%s`, want `%s`", string(got), tc.want)
+			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.want {
+				t.Errorf("Handler = `%s`, want `%s`", string(got), testCase.want)
 			}
 		})
 	}
@@ -92,18 +97,23 @@ func TestVersionHandler(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			os.Setenv("VERSION", tc.environment)
-			writer := httptest.NewRecorder()
-			versionHandler().ServeHTTP(writer, tc.request)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if result := writer.Code; result != tc.wantStatus {
-				t.Errorf("VersionHandler = %d, want %d", result, tc.wantStatus)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			os.Setenv("VERSION", testCase.environment)
+			writer := httptest.NewRecorder()
+			versionHandler().ServeHTTP(writer, testCase.request)
+
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("VersionHandler = %d, want %d", result, testCase.wantStatus)
 			}
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
-				t.Errorf("VersionHandler = `%s`, want `%s`", string(result), tc.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("VersionHandler = `%s`, want `%s`", string(result), testCase.want)
 			}
 		})
 	}

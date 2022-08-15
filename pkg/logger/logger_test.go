@@ -34,8 +34,13 @@ func TestFlags(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
@@ -45,8 +50,8 @@ func TestFlags(t *testing.T) {
 
 			result := writer.String()
 
-			if result != tc.want {
-				t.Errorf("Flags() = `%s`, want `%s`", result, tc.want)
+			if result != testCase.want {
+				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -105,18 +110,23 @@ func TestStart(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		writer := bytes.NewBuffer(nil)
-		tc.instance.outWriter = writer
-		tc.instance.errWriter = writer
-		go tc.instance.Start()
+		testCase.instance.outWriter = writer
+		testCase.instance.errWriter = writer
+		go testCase.instance.Start()
 
 		t.Run(intention, func(t *testing.T) {
-			tc.instance.events <- tc.args.e
-			tc.instance.Close()
+			t.Parallel()
 
-			if got := writer.String(); got != tc.want {
-				t.Errorf("Start() = `%s`, want `%s`", got, tc.want)
+			testCase.instance.events <- testCase.args.e
+			testCase.instance.Close()
+
+			if got := writer.String(); got != testCase.want {
+				t.Errorf("Start() = `%s`, want `%s`", got, testCase.want)
 			}
 		})
 	}
@@ -154,9 +164,14 @@ func TestClose(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			logger := newLogger(tc.args.out, tc.args.err, levelInfo, false, "time", "level", "msg")
+			t.Parallel()
+
+			logger := newLogger(testCase.args.out, testCase.args.err, levelInfo, false, "time", "level", "msg")
 
 			go logger.Start()
 
@@ -205,21 +220,26 @@ func TestOutput(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := bytes.NewBuffer(nil)
 			logger := newLogger(writer, writer, levelInfo, false, "time", "level", "msg")
 			logger.clock = clock.New(time.Date(2020, 9, 21, 18, 34, 57, 0, time.UTC))
 
 			go logger.Start()
 
-			logger.output(tc.args.lev, nil, tc.args.format, tc.args.a...)
+			logger.output(testCase.args.lev, nil, testCase.args.format, testCase.args.a...)
 			logger.Close()
 
 			got := writer.String()
 
-			if got != tc.want {
-				t.Errorf("output() = `%s`, want `%s`", got, tc.want)
+			if got != testCase.want {
+				t.Errorf("output() = `%s`, want `%s`", got, testCase.want)
 			}
 		})
 	}
@@ -344,8 +364,13 @@ func TestJSON(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			logger := Logger{
 				outputBuffer: bytes.NewBuffer(nil),
 				timeKey:      "ts",
@@ -354,12 +379,12 @@ func TestJSON(t *testing.T) {
 			}
 
 			var values map[string]any
-			if err := json.Unmarshal(logger.json(tc.args.e), &values); err != nil {
+			if err := json.Unmarshal(logger.json(testCase.args.e), &values); err != nil {
 				t.Errorf("unmarshal json payload: %s", err)
 			}
 
-			if fmt.Sprintf("%+v", values) != fmt.Sprintf("%+v", tc.want) {
-				t.Errorf("json() = %+v, want %+v", values, tc.want)
+			if fmt.Sprintf("%+v", values) != fmt.Sprintf("%+v", testCase.want) {
+				t.Errorf("json() = %+v, want %+v", values, testCase.want)
 			}
 		})
 	}
@@ -460,14 +485,19 @@ func TestText(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			logger := Logger{
 				outputBuffer: bytes.NewBuffer(nil),
 			}
 
-			if got := logger.text(tc.args.e); !strings.Contains(string(got), tc.want) {
-				t.Errorf("text() = `%s`, want `%s`", got, tc.want)
+			if got := logger.text(testCase.args.e); !strings.Contains(string(got), testCase.want) {
+				t.Errorf("text() = `%s`, want `%s`", got, testCase.want)
 			}
 		})
 	}

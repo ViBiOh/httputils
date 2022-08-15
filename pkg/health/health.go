@@ -21,7 +21,6 @@ const (
 	ReadyPath = "/ready"
 )
 
-// App of package
 type App struct {
 	done chan struct{}
 	end  chan struct{}
@@ -32,13 +31,11 @@ type App struct {
 	graceDuration time.Duration
 }
 
-// Config of package
 type Config struct {
 	okStatus      *int
 	graceDuration *time.Duration
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		okStatus:      flags.Int(fs, prefix, "http", "OkStatus", "Healthy HTTP Status code", http.StatusNoContent, overrides),
@@ -46,7 +43,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-// New creates new App from Config
 func New(config Config, pingers ...model.Pinger) App {
 	return App{
 		okStatus:      *config.okStatus,

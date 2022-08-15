@@ -25,10 +25,15 @@ func TestIsRoot(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if result := IsRoot(tc.input); result != tc.want {
-				t.Errorf("IsRoot() = %t, want %t", result, tc.want)
+			t.Parallel()
+
+			if result := IsRoot(testCase.input); result != testCase.want {
+				t.Errorf("IsRoot() = %t, want %t", result, testCase.want)
 			}
 		})
 	}

@@ -21,8 +21,13 @@ func TestFlags(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
@@ -32,8 +37,8 @@ func TestFlags(t *testing.T) {
 
 			result := writer.String()
 
-			if result != tc.want {
-				t.Errorf("Flags() = `%s`, want `%s`", result, tc.want)
+			if result != testCase.want {
+				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -62,17 +67,22 @@ func TestHealthHandler(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			tc.instance.HealthHandler().ServeHTTP(writer, tc.request)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if got := writer.Code; got != tc.wantStatus {
-				t.Errorf("Handler = %d, want %d", got, tc.wantStatus)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			testCase.instance.HealthHandler().ServeHTTP(writer, testCase.request)
+
+			if got := writer.Code; got != testCase.wantStatus {
+				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)
 			}
 
-			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.want {
-				t.Errorf("Handler = `%s`, want `%s`", string(got), tc.want)
+			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.want {
+				t.Errorf("Handler = `%s`, want `%s`", string(got), testCase.want)
 			}
 		})
 	}
@@ -122,17 +132,22 @@ func TestReadyHandler(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			tc.instance.ReadyHandler().ServeHTTP(writer, tc.request)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if got := writer.Code; got != tc.wantStatus {
-				t.Errorf("Handler = %d, want %d", got, tc.wantStatus)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			testCase.instance.ReadyHandler().ServeHTTP(writer, testCase.request)
+
+			if got := writer.Code; got != testCase.wantStatus {
+				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)
 			}
 
-			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.want {
-				t.Errorf("Handler = `%s`, want `%s`", string(got), tc.want)
+			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.want {
+				t.Errorf("Handler = `%s`, want `%s`", string(got), testCase.want)
 			}
 		})
 	}

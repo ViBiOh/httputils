@@ -12,7 +12,6 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
-// App of package
 type App struct {
 	done chan struct{}
 
@@ -26,7 +25,6 @@ type App struct {
 	shutdownTimeout time.Duration
 }
 
-// Config of package
 type Config struct {
 	address *string
 	port    *uint
@@ -39,7 +37,6 @@ type Config struct {
 	shutdownTimeout *time.Duration
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		address:         flags.String(fs, prefix, "server", "Address", "Listen address", "", overrides),
@@ -53,7 +50,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-// New creates new App from Config
 func New(config Config) App {
 	port := *config.port
 	done := make(chan struct{})

@@ -46,13 +46,11 @@ type Client struct {
 	sync.RWMutex
 }
 
-// Config of package
 type Config struct {
 	uri      *string
 	prefetch *int
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string) Config {
 	return Config{
 		uri:      flags.String(fs, prefix, "amqp", "URI", "Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>", "", nil),

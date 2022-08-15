@@ -38,13 +38,18 @@ func TestMiddleware(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			Middleware(tc.next).ServeHTTP(writer, tc.request)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if got := writer.Code; got != tc.wantStatus {
-				t.Errorf("Middleware = %d, want %d", got, tc.wantStatus)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			Middleware(testCase.next).ServeHTTP(writer, testCase.request)
+
+			if got := writer.Code; got != testCase.wantStatus {
+				t.Errorf("Middleware = %d, want %d", got, testCase.wantStatus)
 			}
 		})
 	}

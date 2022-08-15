@@ -26,13 +26,11 @@ func init() {
 	defaultHeader.Set("User-Agent", defaultUserAgent)
 }
 
-// Config of package
 type Config struct {
 	url       *string
 	userAgent *string
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		url:       flags.String(fs, prefix, "alcotest", "Url", "URL to check", "", overrides),

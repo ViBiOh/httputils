@@ -23,17 +23,22 @@ func TestBadRequest(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			BadRequest(writer, tc.err)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if result := writer.Code; result != tc.wantStatus {
-				t.Errorf("BadRequest() = %d, want status %d", result, tc.wantStatus)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			BadRequest(writer, testCase.err)
+
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("BadRequest() = %d, want status %d", result, testCase.wantStatus)
 			}
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
-				t.Errorf("BadRequest() = `%s`, want `%s`", string(result), tc.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("BadRequest() = `%s`, want `%s`", string(result), testCase.want)
 			}
 		})
 	}
@@ -52,17 +57,22 @@ func TestUnauthorized(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			Unauthorized(writer, tc.err)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if result := writer.Code; result != tc.wantStatus {
-				t.Errorf("Unauthorized() = %d, want status %d", result, tc.wantStatus)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			Unauthorized(writer, testCase.err)
+
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("Unauthorized() = %d, want status %d", result, testCase.wantStatus)
 			}
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
-				t.Errorf("Unauthorized() = `%s`, want `%s`", string(result), tc.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("Unauthorized() = `%s`, want `%s`", string(result), testCase.want)
 			}
 		})
 	}
@@ -79,17 +89,22 @@ func TestForbidden(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
 			Forbidden(writer)
 
-			if result := writer.Code; result != tc.wantStatus {
-				t.Errorf("Forbidden() = %d, want status %d", result, tc.wantStatus)
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("Forbidden() = %d, want status %d", result, testCase.wantStatus)
 			}
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
-				t.Errorf("Forbidden() = `%s`, want `%s`", string(result), tc.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("Forbidden() = `%s`, want `%s`", string(result), testCase.want)
 			}
 		})
 	}
@@ -106,17 +121,22 @@ func TestNotFound(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
 			NotFound(writer)
 
-			if result := writer.Code; result != tc.wantStatus {
-				t.Errorf("NotFound() = %d, want status %d", result, tc.wantStatus)
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("NotFound() = %d, want status %d", result, testCase.wantStatus)
 			}
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
-				t.Errorf("NotFound() = `%s`, want `%s`", string(result), tc.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("NotFound() = `%s`, want `%s`", string(result), testCase.want)
 			}
 		})
 	}
@@ -135,17 +155,22 @@ func TestInternalServerError(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			InternalServerError(writer, tc.err)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if result := writer.Code; result != tc.wantStatus {
-				t.Errorf("InternalServerError() = %d, want status %d", result, tc.wantStatus)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			InternalServerError(writer, testCase.err)
+
+			if result := writer.Code; result != testCase.wantStatus {
+				t.Errorf("InternalServerError() = %d, want status %d", result, testCase.wantStatus)
 			}
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
-				t.Errorf("InternalServerError() = `%s`, want `%s`", string(result), tc.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("InternalServerError() = `%s`, want `%s`", string(result), testCase.want)
 			}
 		})
 	}
@@ -202,20 +227,25 @@ func TestHandleError(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
 
-			if got := HandleError(writer, tc.err); got != tc.want {
-				t.Errorf("HandleError = %t, want %t", got, tc.want)
+			if got := HandleError(writer, testCase.err); got != testCase.want {
+				t.Errorf("HandleError = %t, want %t", got, testCase.want)
 			}
 
-			if got := writer.Code; got != tc.wantStatus {
-				t.Errorf("HandleError = HTTP/%d, want HTTP/%d", got, tc.wantStatus)
+			if got := writer.Code; got != testCase.wantStatus {
+				t.Errorf("HandleError = HTTP/%d, want HTTP/%d", got, testCase.wantStatus)
 			}
 
-			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != tc.wantMessage {
-				t.Errorf("HandleError = `%s`, want `%s`", string(got), tc.wantMessage)
+			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.wantMessage {
+				t.Errorf("HandleError = `%s`, want `%s`", string(got), testCase.wantMessage)
 			}
 		})
 	}
@@ -289,10 +319,15 @@ func TestErrorStatus(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got, gotMessage := ErrorStatus(tc.args.err); got != tc.want && gotMessage != tc.wantMessage {
-				t.Errorf("ErrorStatus() = (%d, `%s`), want (%d, `%s`)", got, gotMessage, tc.want, tc.wantMessage)
+			t.Parallel()
+
+			if got, gotMessage := ErrorStatus(testCase.args.err); got != testCase.want && gotMessage != testCase.wantMessage {
+				t.Errorf("ErrorStatus() = (%d, `%s`), want (%d, `%s`)", got, gotMessage, testCase.want, testCase.wantMessage)
 			}
 		})
 	}

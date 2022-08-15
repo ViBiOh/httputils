@@ -80,20 +80,25 @@ func TestReadContent(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			result, err := readContent(tc.reader)
+			t.Parallel()
+
+			result, err := readContent(testCase.reader)
 
 			failed := false
 
-			if tc.wantErr != nil && errors.Is(err, tc.wantErr) {
+			if testCase.wantErr != nil && errors.Is(err, testCase.wantErr) {
 				failed = true
-			} else if !reflect.DeepEqual(result, tc.want) {
+			} else if !reflect.DeepEqual(result, testCase.want) {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("readContent() = (`%s`, `%s`), want (`%s`, `%s`)", result, err, tc.want, tc.wantErr)
+				t.Errorf("readContent() = (`%s`, `%s`), want (`%s`, `%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -117,20 +122,25 @@ func TestReadBodyRequest(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			result, err := ReadBodyRequest(tc.input)
+			t.Parallel()
+
+			result, err := ReadBodyRequest(testCase.input)
 
 			failed := false
 
-			if tc.wantErr != nil && errors.Is(err, tc.wantErr) {
+			if testCase.wantErr != nil && errors.Is(err, testCase.wantErr) {
 				failed = true
-			} else if !reflect.DeepEqual(result, tc.want) {
+			} else if !reflect.DeepEqual(result, testCase.want) {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("ReadBodyRequest() = (`%s`, `%s`), want (`%s`, `%s`)", result, err, tc.want, tc.wantErr)
+				t.Errorf("ReadBodyRequest() = (`%s`, `%s`), want (`%s`, `%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -154,24 +164,29 @@ func TestReadBodyResponse(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
-			if _, err := writer.Write(tc.input); err != nil {
+			if _, err := writer.Write(testCase.input); err != nil {
 				t.Errorf("write: %s", err)
 			}
 			result, err := ReadBodyResponse(writer.Result())
 
 			failed := false
 
-			if tc.wantErr != nil && errors.Is(err, tc.wantErr) {
+			if testCase.wantErr != nil && errors.Is(err, testCase.wantErr) {
 				failed = true
-			} else if !reflect.DeepEqual(result, tc.want) {
+			} else if !reflect.DeepEqual(result, testCase.want) {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("ReadBodyResponse() = (`%s`, `%s`), want (`%s`, `%s`)", result, err, tc.want, tc.wantErr)
+				t.Errorf("ReadBodyResponse() = (`%s`, `%s`), want (`%s`, `%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}

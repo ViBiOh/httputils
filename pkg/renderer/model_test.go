@@ -18,10 +18,15 @@ func TestEtag(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := tc.instance.etag(); got != tc.want {
-				t.Errorf("Etag() = `%s`, want `%s`", got, tc.want)
+			t.Parallel()
+
+			if got := testCase.instance.etag(); got != testCase.want {
+				t.Errorf("Etag() = `%s`, want `%s`", got, testCase.want)
 			}
 		})
 	}
@@ -56,10 +61,15 @@ func TestParseMessage(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := ParseMessage(tc.args.r); got != tc.want {
-				t.Errorf("ParseMessage() = %v, want %v", got, tc.want)
+			t.Parallel()
+
+			if got := ParseMessage(testCase.args.r); got != testCase.want {
+				t.Errorf("ParseMessage() = %v, want %v", got, testCase.want)
 			}
 		})
 	}

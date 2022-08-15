@@ -28,20 +28,17 @@ var (
 	codeMethodLabels = []string{"code", "method"}
 )
 
-// App of package
 type App struct {
 	registry *prometheus.Registry
 	ignore   []string
 	gzip     bool
 }
 
-// Config of package
 type Config struct {
 	ignore *string
 	gzip   *bool
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		ignore: flags.String(fs, prefix, "prometheus", "Ignore", "Ignored path prefixes for metrics, comma separated", "", overrides),
@@ -49,7 +46,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-// New creates new App from Config
 func New(config Config) App {
 	var ignore []string
 	ignoredPaths := *config.ignore

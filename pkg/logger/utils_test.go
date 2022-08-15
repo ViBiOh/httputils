@@ -28,13 +28,18 @@ func TestWriteEscapedJSON(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			output := bytes.NewBuffer(nil)
 
-			WriteEscapedJSON(tc.args.content, output)
-			if got := output.String(); got != tc.want {
-				t.Errorf("WriteEscapedJSON() = `%s`, want `%s`", got, tc.want)
+			WriteEscapedJSON(testCase.args.content, output)
+			if got := output.String(); got != testCase.want {
+				t.Errorf("WriteEscapedJSON() = `%s`, want `%s`", got, testCase.want)
 			}
 		})
 	}

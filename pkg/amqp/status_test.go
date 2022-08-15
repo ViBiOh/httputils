@@ -27,10 +27,15 @@ func TestEnabled(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := tc.instance.Enabled(); got != tc.want {
-				t.Errorf("Enabled() = %t, want %t", got, tc.want)
+			t.Parallel()
+
+			if got := testCase.instance.Enabled(); got != testCase.want {
+				t.Errorf("Enabled() = %t, want %t", got, testCase.want)
 			}
 		})
 	}
@@ -51,8 +56,13 @@ func TestPing(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -60,24 +70,24 @@ func TestPing(t *testing.T) {
 
 			switch intention {
 			case "not opened":
-				tc.instance.connection = mockAMQPConnection
+				testCase.instance.connection = mockAMQPConnection
 				mockAMQPConnection.EXPECT().IsClosed().Return(true)
 			}
 
-			got := tc.instance.Ping()
+			got := testCase.instance.Ping()
 
 			failed := false
 
-			if tc.want == nil && got != nil {
+			if testCase.want == nil && got != nil {
 				failed = true
-			} else if tc.want != nil && got == nil {
+			} else if testCase.want != nil && got == nil {
 				failed = true
-			} else if tc.want != nil && !strings.Contains(got.Error(), tc.want.Error()) {
+			} else if testCase.want != nil && !strings.Contains(got.Error(), testCase.want.Error()) {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Ping() = `%s`, want `%s`", got, tc.want)
+				t.Errorf("Ping() = `%s`, want `%s`", got, testCase.want)
 			}
 		})
 	}

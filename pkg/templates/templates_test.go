@@ -29,23 +29,28 @@ func TestWriteTemplate(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := bytes.NewBuffer(nil)
-			err := WriteTemplate(tc.tpl, writer, nil, "text/css")
+			err := WriteTemplate(testCase.tpl, writer, nil, "text/css")
 
 			result := writer.String()
 
 			failed := false
 
-			if tc.wantErr != nil && (err == nil || err.Error() != tc.wantErr.Error()) {
+			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
 				failed = true
-			} else if result != tc.want {
+			} else if result != testCase.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("WriteTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", result, err, tc.want, tc.wantErr)
+				t.Errorf("WriteTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", result, err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -69,23 +74,28 @@ func TestResponseHTMLTemplate(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
-			err := ResponseHTMLTemplate(tc.tpl, writer, nil, 200)
+			err := ResponseHTMLTemplate(testCase.tpl, writer, nil, 200)
 
 			result, _ := request.ReadBodyResponse(writer.Result())
 
 			failed := false
 
-			if tc.wantErr != nil && (err == nil || err.Error() != tc.wantErr.Error()) {
+			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
 				failed = true
-			} else if string(result) != tc.want {
+			} else if string(result) != testCase.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("ResponseHTMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, tc.want, tc.wantErr)
+				t.Errorf("ResponseHTMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -137,23 +147,28 @@ func TestResponseHTMLTemplateRaw(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
-			err := ResponseHTMLTemplateRaw(tc.tpl, writer, nil, 200)
+			err := ResponseHTMLTemplateRaw(testCase.tpl, writer, nil, 200)
 
 			result, _ := request.ReadBodyResponse(writer.Result())
 
 			failed := false
 
-			if tc.wantErr != nil && (err == nil || err.Error() != tc.wantErr.Error()) {
+			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
 				failed = true
-			} else if string(result) != tc.want {
+			} else if string(result) != testCase.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("ResponseHTMLTemplateRaw() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, tc.want, tc.wantErr)
+				t.Errorf("ResponseHTMLTemplateRaw() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -177,23 +192,28 @@ func TestResponseXMLTemplate(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
-			err := ResponseXMLTemplate(tc.tpl, writer, nil, 200)
+			err := ResponseXMLTemplate(testCase.tpl, writer, nil, 200)
 
 			result, _ := request.ReadBodyResponse(writer.Result())
 
 			failed := false
 
-			if tc.wantErr != nil && (err == nil || err.Error() != tc.wantErr.Error()) {
+			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
 				failed = true
-			} else if string(result) != tc.want {
+			} else if string(result) != testCase.want {
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("ResponseXMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, tc.want, tc.wantErr)
+				t.Errorf("ResponseXMLTemplate() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
 			}
 		})
 	}

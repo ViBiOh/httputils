@@ -18,21 +18,18 @@ const (
 
 var _ model.Middleware = App{}.Middleware
 
-// App of package
 type App struct {
 	csp          string
 	frameOptions string
 	hsts         bool
 }
 
-// Config of package
 type Config struct {
 	csp          *string
 	hsts         *bool
 	frameOptions *string
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		csp:          flags.String(fs, prefix, "owasp", "Csp", cspHeader, "default-src 'self'; base-uri 'self'", overrides),
@@ -41,7 +38,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-// New creates new App from Config
 func New(config Config) App {
 	return App{
 		csp:          *config.csp,

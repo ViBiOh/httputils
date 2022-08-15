@@ -37,16 +37,21 @@ func TestCounterVec(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			counter := CounterVec(tc.args.registry, tc.args.namespace, tc.args.subsystem, tc.args.name, tc.args.labels...)
+			t.Parallel()
+
+			counter := CounterVec(testCase.args.registry, testCase.args.namespace, testCase.args.subsystem, testCase.args.name, testCase.args.labels...)
 
 			var buffer strings.Builder
 
 			if counter != nil {
 				counter.WithLabelValues("output").Inc()
 
-				metrics, err := tc.args.registry.Gather()
+				metrics, err := testCase.args.registry.Gather()
 				if err != nil {
 					t.Errorf("gather metric: %s", err)
 				}
@@ -60,8 +65,8 @@ func TestCounterVec(t *testing.T) {
 				}
 			}
 
-			if got := buffer.String(); got != tc.want {
-				t.Errorf("CounterVec() = `%s`, want `%s`", got, tc.want)
+			if got := buffer.String(); got != testCase.want {
+				t.Errorf("CounterVec() = `%s`, want `%s`", got, testCase.want)
 			}
 		})
 	}

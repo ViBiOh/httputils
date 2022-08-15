@@ -14,7 +14,6 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// App of package
 type App struct {
 	amqpClient    *amqpclient.Client
 	done          chan struct{}
@@ -28,7 +27,6 @@ type App struct {
 	exclusive     bool
 }
 
-// Config of package
 type Config struct {
 	exchange      *string
 	queue         *string
@@ -38,7 +36,6 @@ type Config struct {
 	exclusive     *bool
 }
 
-// Flags adds flags for configuring package
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
 		exchange:      flags.String(fs, prefix, "amqp", "Exchange", "Exchange name", "", overrides),
@@ -50,7 +47,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-// New creates new App from Config
 func New(config Config, amqpClient *amqpclient.Client, handler func(amqp.Delivery) error) (App, error) {
 	return NewFromString(amqpClient, handler, strings.TrimSpace(*config.exchange), strings.TrimSpace(*config.queue), strings.TrimSpace(*config.routingKey), *config.retryInterval, *config.exclusive, *config.maxRetry)
 }

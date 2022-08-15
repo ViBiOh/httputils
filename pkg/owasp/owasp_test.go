@@ -18,8 +18,13 @@ func TestFlags(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
@@ -29,8 +34,8 @@ func TestFlags(t *testing.T) {
 
 			result := writer.String()
 
-			if result != tc.want {
-				t.Errorf("Flags() = `%s`, want `%s`", result, tc.want)
+			if result != testCase.want {
+				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -49,12 +54,17 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 
-			if result := New(Flags(fs, "")); !reflect.DeepEqual(result, tc.want) {
-				t.Errorf("New() = %#v, want %#v", result, tc.want)
+			if result := New(Flags(fs, "")); !reflect.DeepEqual(result, testCase.want) {
+				t.Errorf("New() = %#v, want %#v", result, testCase.want)
 			}
 		})
 	}
@@ -163,17 +173,22 @@ func TestMiddleware(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			tc.app.Middleware(tc.next).ServeHTTP(writer, tc.request)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if got := writer.Code; got != tc.wantStatus {
-				t.Errorf("Middleware = %d, want %d", got, tc.wantStatus)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			testCase.app.Middleware(testCase.next).ServeHTTP(writer, testCase.request)
+
+			if got := writer.Code; got != testCase.wantStatus {
+				t.Errorf("Middleware = %d, want %d", got, testCase.wantStatus)
 			}
 
-			for key := range tc.wantHeader {
-				want := tc.wantHeader.Get(key)
+			for key := range testCase.wantHeader {
+				want := testCase.wantHeader.Get(key)
 				if got := writer.Header().Get(key); !strings.HasPrefix(got, want) {
 					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
 				}

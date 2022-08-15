@@ -11,6 +11,15 @@ func TestComputeSynchro(t *testing.T) {
 	simple := NewSource(nil, Identity, nil)
 	simple.currentKey = "AAAAA00000"
 
+	substring := NewSource(nil, Identity, nil)
+	substring.currentKey = "AAAAA00000"
+
+	extrastring := NewSource(nil, Identity, nil)
+	extrastring.currentKey = "AAAAA00000"
+
+	unmatch := NewSource(nil, Identity, nil)
+	unmatch.currentKey = "AAAAA00000"
+
 	cases := map[string]struct {
 		instance *Source[string]
 		input    string
@@ -22,27 +31,32 @@ func TestComputeSynchro(t *testing.T) {
 			true,
 		},
 		"substring": {
-			simple,
+			substring,
 			"AAAAA",
 			true,
 		},
 		"extrastring": {
-			simple,
+			extrastring,
 			"AAAAA00000zzzzz",
 			true,
 		},
 		"unmatch": {
-			simple,
+			unmatch,
 			"AAAAA00001",
 			false,
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			tc.instance.ComputeSynchro(tc.input)
-			if tc.instance.synchronized != tc.want {
-				t.Errorf("computeSynchro() = %t, want %t", tc.instance.synchronized, tc.want)
+			t.Parallel()
+
+			testCase.instance.ComputeSynchro(testCase.input)
+			if testCase.instance.synchronized != testCase.want {
+				t.Errorf("computeSynchro() = %t, want %t", testCase.instance.synchronized, testCase.want)
 			}
 		})
 	}
@@ -109,20 +123,25 @@ func TestSourceRead(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			err := tc.instance.read()
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if tc.want != nil && !errors.Is(err, tc.want) {
-				t.Errorf("Read() = %v, want %v", err, tc.want)
-			} else if !reflect.DeepEqual(tc.wantCurrent, tc.instance.current) {
-				t.Errorf("Read().Current = `%s`, want `%s`", tc.wantCurrent, tc.instance.current)
-			} else if tc.wantCurrentKey != tc.instance.currentKey {
-				t.Errorf("Read().currentKey = `%s`, want `%s`", tc.wantCurrentKey, tc.instance.currentKey)
-			} else if !reflect.DeepEqual(tc.wantNext, tc.instance.next) {
-				t.Errorf("Read().next = `%s`, want `%s`", tc.wantNext, tc.instance.next)
-			} else if tc.wantNextKey != tc.instance.nextKey {
-				t.Errorf("Read().nextKey = `%s`, want `%s`", tc.wantNextKey, tc.instance.nextKey)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			err := testCase.instance.read()
+
+			if testCase.want != nil && !errors.Is(err, testCase.want) {
+				t.Errorf("Read() = %v, want %v", err, testCase.want)
+			} else if !reflect.DeepEqual(testCase.wantCurrent, testCase.instance.current) {
+				t.Errorf("Read().Current = `%s`, want `%s`", testCase.wantCurrent, testCase.instance.current)
+			} else if testCase.wantCurrentKey != testCase.instance.currentKey {
+				t.Errorf("Read().currentKey = `%s`, want `%s`", testCase.wantCurrentKey, testCase.instance.currentKey)
+			} else if !reflect.DeepEqual(testCase.wantNext, testCase.instance.next) {
+				t.Errorf("Read().next = `%s`, want `%s`", testCase.wantNext, testCase.instance.next)
+			} else if testCase.wantNextKey != testCase.instance.nextKey {
+				t.Errorf("Read().nextKey = `%s`, want `%s`", testCase.wantNextKey, testCase.instance.nextKey)
 			}
 		})
 	}

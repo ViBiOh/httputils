@@ -18,8 +18,13 @@ func TestFlags(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 			Flags(fs, "")
 
@@ -29,8 +34,8 @@ func TestFlags(t *testing.T) {
 
 			result := writer.String()
 
-			if result != tc.want {
-				t.Errorf("Flags() = `%s`, want `%s`", result, tc.want)
+			if result != testCase.want {
+				t.Errorf("Flags() = `%s`, want `%s`", result, testCase.want)
 			}
 		})
 	}
@@ -50,12 +55,17 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
 
-			if result := New(Flags(fs, "")); !reflect.DeepEqual(result, tc.want) {
-				t.Errorf("New() = %#v, want %#v", result, tc.want)
+			if result := New(Flags(fs, "")); !reflect.DeepEqual(result, testCase.want) {
+				t.Errorf("New() = %#v, want %#v", result, testCase.want)
 			}
 		})
 	}
@@ -110,18 +120,23 @@ func TestMiddleware(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
 
-			tc.app.Middleware(tc.next).ServeHTTP(writer, tc.request)
+			testCase.app.Middleware(testCase.next).ServeHTTP(writer, testCase.request)
 
-			if writer.Code != tc.want {
-				t.Errorf("Middleware() = %d, want %d", writer.Code, tc.want)
+			if writer.Code != testCase.want {
+				t.Errorf("Middleware() = %d, want %d", writer.Code, testCase.want)
 			}
 
-			if !reflect.DeepEqual(writer.Header(), tc.wantHeader) {
-				t.Errorf("Middleware() = %#v, want %#v", writer.Header(), tc.wantHeader)
+			if !reflect.DeepEqual(writer.Header(), testCase.wantHeader) {
+				t.Errorf("Middleware() = %#v, want %#v", writer.Header(), testCase.wantHeader)
 			}
 		})
 	}

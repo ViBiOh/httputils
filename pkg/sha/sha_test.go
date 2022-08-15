@@ -21,10 +21,15 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			if got := New(tc.args.o); got != tc.want {
-				t.Errorf("New() = `%s`, want `%s`", got, tc.want)
+			t.Parallel()
+
+			if got := New(testCase.args.o); got != testCase.want {
+				t.Errorf("New() = `%s`, want `%s`", got, testCase.want)
 			}
 		})
 	}
@@ -61,16 +66,21 @@ func TestStream(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			stream := Stream()
 
-			for _, item := range tc.args.o {
+			for _, item := range testCase.args.o {
 				stream.Write(item)
 			}
 
-			if got := stream.Sum(); got != tc.want {
-				t.Errorf("Stream() = `%s`, want `%s`", got, tc.want)
+			if got := stream.Sum(); got != testCase.want {
+				t.Errorf("Stream() = `%s`, want `%s`", got, testCase.want)
 			}
 		})
 	}

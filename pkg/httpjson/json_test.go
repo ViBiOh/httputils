@@ -51,23 +51,28 @@ func TestRawWrite(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			gotErr := RawWrite(tc.args.writer, tc.args.obj)
+			t.Parallel()
+
+			gotErr := RawWrite(testCase.args.writer, testCase.args.obj)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
-				tc.args.writer.String() != tc.want:
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
+				testCase.args.writer.String() != testCase.want:
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("RawWrite() = (`%s`, `%s`), want (`%s`, `%s`)", tc.args.writer.String(), gotErr, tc.want, tc.wantErr)
+				t.Errorf("RawWrite() = (`%s`, `%s`), want (`%s`, `%s`)", testCase.args.writer.String(), gotErr, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -102,20 +107,25 @@ func TestWrite(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			writer := httptest.NewRecorder()
-			Write(writer, http.StatusOK, tc.obj)
+			Write(writer, http.StatusOK, testCase.obj)
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
-				t.Errorf("Write() = `%s`, want `%s`", string(result), tc.want)
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("Write() = `%s`, want `%s`", string(result), testCase.want)
 			}
 
-			if result := writer.Result().StatusCode; result != tc.wantStatus {
-				t.Errorf("Write() = %d, want %d", result, tc.wantStatus)
+			if result := writer.Result().StatusCode; result != testCase.wantStatus {
+				t.Errorf("Write() = %d, want %d", result, testCase.wantStatus)
 			}
 
-			for key, value := range tc.wantHeader {
+			for key, value := range testCase.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
 					t.Errorf("Write().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
 				}
@@ -135,7 +145,7 @@ func BenchmarkRawWrite(b *testing.B) {
 }
 
 func BenchmarkWrite(b *testing.B) {
-	tc := struct {
+	testCase := struct {
 		obj any
 	}{
 		testStruct{id: "Test", Active: true, Amount: 12.34},
@@ -144,7 +154,7 @@ func BenchmarkWrite(b *testing.B) {
 	writer := httptest.NewRecorder()
 
 	for i := 0; i < b.N; i++ {
-		Write(writer, http.StatusOK, &tc.obj)
+		Write(writer, http.StatusOK, &testCase.obj)
 	}
 }
 
@@ -166,16 +176,21 @@ func TestWriteArray(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			WriteArray(writer, http.StatusOK, tc.obj)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
-				t.Errorf("TestWriteArray() = `%s`, want `%s`", string(result), tc.want)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			WriteArray(writer, http.StatusOK, testCase.obj)
+
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("TestWriteArray() = `%s`, want `%s`", string(result), testCase.want)
 			}
 
-			for key, value := range tc.wantHeader {
+			for key, value := range testCase.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
 					t.Errorf("TestWriteArray().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
 				}
@@ -219,16 +234,21 @@ func TestWritePagination(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
-		t.Run(intention, func(t *testing.T) {
-			writer := httptest.NewRecorder()
-			WritePagination(writer, http.StatusOK, tc.pageSize, tc.total, tc.last, tc.obj)
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
 
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != tc.want {
-				t.Errorf("WritePagination() = `%s`, want `%s`", string(result), tc.want)
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			WritePagination(writer, http.StatusOK, testCase.pageSize, testCase.total, testCase.last, testCase.obj)
+
+			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
+				t.Errorf("WritePagination() = `%s`, want `%s`", string(result), testCase.want)
 			}
 
-			for key, value := range tc.wantHeader {
+			for key, value := range testCase.wantHeader {
 				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
 					t.Errorf("WritePagination().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
 				}
@@ -269,23 +289,28 @@ func TestParse(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			gotErr := Parse(tc.args.req, &tc.args.obj)
+			t.Parallel()
+
+			gotErr := Parse(testCase.args.req, &testCase.args.obj)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
-				!reflect.DeepEqual(tc.args.obj, tc.want):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
+				!reflect.DeepEqual(testCase.args.obj, testCase.want):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Parse() = (%+v, `%s`), want (%+v, `%s`)", tc.args.obj, gotErr, tc.want, tc.wantErr)
+				t.Errorf("Parse() = (%+v, `%s`), want (%+v, `%s`)", testCase.args.obj, gotErr, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -356,23 +381,28 @@ func TestRead(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
-			gotErr := Read(tc.args.resp, &tc.args.obj)
+			t.Parallel()
+
+			gotErr := Read(testCase.args.resp, &testCase.args.obj)
 
 			failed := false
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
-				!reflect.DeepEqual(tc.args.obj, tc.want):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
+				!reflect.DeepEqual(testCase.args.obj, testCase.want):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Read() = (%+v, `%s`), want (%+v, `%s`)", tc.args.obj, gotErr, tc.want, tc.wantErr)
+				t.Errorf("Read() = (%+v, `%s`), want (%+v, `%s`)", testCase.args.obj, gotErr, testCase.want, testCase.wantErr)
 			}
 		})
 	}
@@ -451,8 +481,13 @@ func TestStream(t *testing.T) {
 		},
 	}
 
-	for intention, tc := range cases {
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
 		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
 			output := make(chan simpleStruct, 4)
 			done := make(chan struct{})
 			var got []string
@@ -464,7 +499,7 @@ func TestStream(t *testing.T) {
 				}
 			}()
 
-			gotErr := Stream(tc.args.stream, output, tc.args.key, true)
+			gotErr := Stream(testCase.args.stream, output, testCase.args.key, true)
 
 			<-done
 
@@ -472,15 +507,15 @@ func TestStream(t *testing.T) {
 
 			switch {
 			case
-				tc.wantErr == nil && gotErr != nil,
-				tc.wantErr != nil && gotErr == nil,
-				tc.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), tc.wantErr.Error()),
-				!reflect.DeepEqual(got, tc.want):
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
+				!reflect.DeepEqual(got, testCase.want):
 				failed = true
 			}
 
 			if failed {
-				t.Errorf("Stream() = (%+v, `%s`), want (%+v, `%s`)", got, gotErr, tc.want, tc.wantErr)
+				t.Errorf("Stream() = (%+v, `%s`), want (%+v, `%s`)", got, gotErr, testCase.want, testCase.wantErr)
 			}
 		})
 	}
