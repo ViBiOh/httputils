@@ -18,15 +18,15 @@ func connect(uri string, prefetch int, onDisconnect func()) (*amqp.Connection, *
 		Dial:      amqp.DefaultDial(10 * time.Second),
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("connect to amqp: %s", err)
+		return nil, nil, fmt.Errorf("connect to amqp: %w", err)
 	}
 
 	channel, err := createChannel(connection, prefetch)
 	if err != nil {
-		err := fmt.Errorf("create channel: %s", err)
+		err := fmt.Errorf("create channel: %w", err)
 
 		if closeErr := connection.Close(); closeErr != nil {
-			err = model.WrapError(err, fmt.Errorf("close connection: %s", closeErr))
+			err = model.WrapError(err, fmt.Errorf("close connection: %w", closeErr))
 		}
 
 		return nil, nil, err
@@ -58,11 +58,11 @@ func createChannel(connection Connection, prefetch int) (channel *amqp.Channel, 
 
 	channel, err = connection.Channel()
 	if err != nil {
-		return nil, fmt.Errorf("open channel: %s", err)
+		return nil, fmt.Errorf("open channel: %w", err)
 	}
 
 	if err = channel.Qos(prefetch, 0, false); err != nil {
-		return nil, fmt.Errorf("configure QoS on channel: %s", err)
+		return nil, fmt.Errorf("configure QoS on channel: %w", err)
 	}
 
 	return channel, nil
@@ -91,7 +91,7 @@ func (c *Client) createChannel() (channel *amqp.Channel, err error) {
 
 	channel, err = createChannel(c.connection, c.prefetch)
 	if err != nil {
-		err = fmt.Errorf("create channel: %s", err)
+		err = fmt.Errorf("create channel: %w", err)
 	}
 
 	return
@@ -99,7 +99,7 @@ func (c *Client) createChannel() (channel *amqp.Channel, err error) {
 
 func closeChannel(err error, channel *amqp.Channel) error {
 	if closeErr := channel.Close(); closeErr != nil {
-		return model.WrapError(err, fmt.Errorf("close channel: %s", closeErr))
+		return model.WrapError(err, fmt.Errorf("close channel: %w", closeErr))
 	}
 
 	return err

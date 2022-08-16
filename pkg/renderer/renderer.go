@@ -58,7 +58,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace.Tracer) (App, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
-		return App{}, fmt.Errorf("get static/ filesystem: %s", err)
+		return App{}, fmt.Errorf("get static/ filesystem: %w", err)
 	}
 
 	pathPrefix := strings.TrimSuffix(*config.pathPrefix, "/")
@@ -89,7 +89,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace
 
 	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
 	if err != nil {
-		return App{}, fmt.Errorf("parse templates/*.html templates: %s", err)
+		return App{}, fmt.Errorf("parse templates/*.html templates: %w", err)
 	}
 
 	instance.tpl = tpl

@@ -33,7 +33,7 @@ func (c *Client) reconnect() error {
 
 	newConnection, newChannel, err := connect(c.uri, c.prefetch, c.onDisconnect)
 	if err != nil {
-		return fmt.Errorf("reconnect to amqp: %s", err)
+		return fmt.Errorf("reconnect to amqp: %w", err)
 	}
 
 	c.connection = newConnection
@@ -50,7 +50,7 @@ func (c *Client) reconnect() error {
 func (c *Client) cancelListeners() (err error) {
 	for _, listener := range c.listeners {
 		if cancelErr := listener.cancel(); cancelErr != nil {
-			err = model.WrapError(err, fmt.Errorf("cancel listener `%s`: %s", listener.name, cancelErr))
+			err = model.WrapError(err, fmt.Errorf("cancel listener `%s`: %w", listener.name, cancelErr))
 		}
 	}
 
@@ -60,7 +60,7 @@ func (c *Client) cancelListeners() (err error) {
 func (c *Client) closeListeners() (err error) {
 	for _, listener := range c.listeners {
 		if cancelErr := listener.close(); cancelErr != nil {
-			err = model.WrapError(err, fmt.Errorf("close listener `%s`: %s", listener.name, cancelErr))
+			err = model.WrapError(err, fmt.Errorf("close listener `%s`: %w", listener.name, cancelErr))
 		}
 	}
 

@@ -436,7 +436,7 @@ func TestStart(t *testing.T) {
 			},
 			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
 				return func(err error) {
-					t.Error(fmt.Errorf("should not be there: %s", err))
+					t.Error(fmt.Errorf("should not be there: %w", err))
 				}
 			},
 		},
@@ -464,7 +464,7 @@ func TestStart(t *testing.T) {
 			},
 			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
 				return func(err error) {
-					t.Error(fmt.Errorf("should not be there: %s", err))
+					t.Error(fmt.Errorf("should not be there: %w", err))
 				}
 			},
 		},

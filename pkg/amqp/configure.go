@@ -30,11 +30,11 @@ func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive 
 	var queue amqp.Queue
 	queue, err = channel.QueueDeclare(queueName, true, false, exclusive, false, args)
 	if err != nil {
-		return fmt.Errorf("declare queue: %s", err)
+		return fmt.Errorf("declare queue: %w", err)
 	}
 
 	if err = channel.QueueBind(queue.Name, routingKey, exchangeName, false, nil); err != nil {
-		return fmt.Errorf("bind queue `%s` to `%s`: %s", queue.Name, exchangeName, err)
+		return fmt.Errorf("bind queue `%s` to `%s`: %w", queue.Name, exchangeName, err)
 	}
 
 	return nil
@@ -92,7 +92,7 @@ func (c *Client) Publisher(exchangeName, exchangeType string, args amqp.Table) (
 
 func declareExchange(channel *amqp.Channel, exchangeName, exchangeType string, args amqp.Table) error {
 	if err := channel.ExchangeDeclare(exchangeName, exchangeType, true, false, false, false, args); err != nil {
-		return fmt.Errorf("declare exchange `%s`: %s", exchangeName, err)
+		return fmt.Errorf("declare exchange `%s`: %w", exchangeName, err)
 	}
 
 	return nil

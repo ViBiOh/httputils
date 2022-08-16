@@ -22,7 +22,7 @@ func (a App) Publish(ctx context.Context, channel string, value any) error {
 	if err != nil {
 		a.increase("error")
 
-		return fmt.Errorf("publish: %s", err)
+		return fmt.Errorf("publish: %w", err)
 	}
 
 	if count == 0 {

@@ -20,7 +20,7 @@ type listener struct {
 func (c *Client) getListener() (*listener, error) {
 	listener, err := c.createListener(c.prefetch)
 	if err != nil {
-		return listener, fmt.Errorf("create listener: %s", err)
+		return listener, fmt.Errorf("create listener: %w", err)
 	}
 
 	c.RLock()
@@ -43,7 +43,7 @@ identity:
 	var err error
 	output.name, err = uuid.New()
 	if err != nil {
-		return &output, fmt.Errorf("generate uuid: %s", err)
+		return &output, fmt.Errorf("generate uuid: %w", err)
 	}
 
 	if c.listeners[output.name] != nil {
@@ -68,7 +68,7 @@ func (l *listener) createChannel(connection Connection) (err error) {
 	defer l.Unlock()
 
 	if l.channel, err = createChannel(connection, l.prefetch); err != nil {
-		err = fmt.Errorf("create channel: %s", err)
+		err = fmt.Errorf("create channel: %w", err)
 	}
 
 	return

@@ -261,7 +261,7 @@ func (r Request) Build(ctx context.Context, payload io.ReadCloser) (*http.Reques
 	if len(r.signatureSecret) != 0 {
 		body, err := readContent(payload)
 		if err != nil {
-			return nil, fmt.Errorf("read content for signature: %s", err)
+			return nil, fmt.Errorf("read content for signature: %w", err)
 		}
 
 		AddSignature(req, r.signatureKeydID, r.signatureSecret, body)
@@ -282,7 +282,7 @@ func (r Request) Build(ctx context.Context, payload io.ReadCloser) (*http.Reques
 func (r Request) Send(ctx context.Context, payload io.ReadCloser) (*http.Response, error) {
 	req, err := r.Build(ctx, payload)
 	if err != nil {
-		return nil, fmt.Errorf("build request: %s", err)
+		return nil, fmt.Errorf("build request: %w", err)
 	}
 
 	return DoWithClient(r.client, req)
@@ -305,7 +305,7 @@ func (r Request) Multipart(ctx context.Context, feed func(mw *multipart.Writer) 
 	go func() {
 		defer func() {
 			if pipeCloseErr := writer.CloseWithError(multipartWriter.Close()); pipeCloseErr != nil {
-				feedErr = model.WrapError(feedErr, fmt.Errorf("close multipart writer: %s", pipeCloseErr))
+				feedErr = model.WrapError(feedErr, fmt.Errorf("close multipart writer: %w", pipeCloseErr))
 			}
 		}()
 
@@ -319,7 +319,7 @@ func (r Request) Multipart(ctx context.Context, feed func(mw *multipart.Writer) 
 
 	if feedErr != nil {
 		if discardErr := DiscardBody(resp.Body); discardErr != nil {
-			feedErr = model.WrapError(feedErr, fmt.Errorf("discard body: %s", discardErr))
+			feedErr = model.WrapError(feedErr, fmt.Errorf("discard body: %w", discardErr))
 		}
 
 		return resp, feedErr
@@ -398,7 +398,7 @@ func DiscardBody(body io.ReadCloser) error {
 	var err error
 
 	if _, err = discarder.ReadFrom(body); err != nil {
-		err = fmt.Errorf("read from body: %s", err)
+		err = fmt.Errorf("read from body: %w", err)
 	}
 
 	if closeErr := body.Close(); closeErr != nil {

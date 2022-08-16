@@ -21,11 +21,11 @@ func (a App) Push(ctx context.Context, key string, value any) error {
 	defer end()
 
 	if content, err := json.Marshal(value); err != nil {
-		return fmt.Errorf("marshal: %s", err)
+		return fmt.Errorf("marshal: %w", err)
 	} else if err := a.redisClient.LPush(ctx, key, content).Err(); err != nil {
 		a.increase("error")
 
-		return fmt.Errorf("push: %s", err)
+		return fmt.Errorf("push: %w", err)
 	}
 
 	return nil
@@ -79,7 +79,7 @@ func PullFor[T any](ctx context.Context, app App, key string, done <-chan struct
 		if err != nil {
 			handler(instance, err)
 		} else if unmarshalErr := json.Unmarshal([]byte(content), &instance); unmarshalErr != nil {
-			handler(instance, fmt.Errorf("unmarshal: %s", unmarshalErr))
+			handler(instance, fmt.Errorf("unmarshal: %w", unmarshalErr))
 		} else {
 			handler(instance, nil)
 		}

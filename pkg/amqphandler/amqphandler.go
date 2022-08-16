@@ -76,7 +76,7 @@ func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) er
 
 		var err error
 		if app.delayExchange, err = app.amqpClient.DelayedExchange(queue, exchange, routingKey, app.retryInterval); err != nil {
-			return app, fmt.Errorf("configure dead-letter exchange: %s", err)
+			return app, fmt.Errorf("configure dead-letter exchange: %w", err)
 		}
 	}
 
@@ -165,7 +165,7 @@ func (a App) configure(init bool) (string, error) {
 	}
 
 	if err := a.amqpClient.Consumer(queue, a.routingKey, a.exchange, a.exclusive, a.delayExchange); err != nil {
-		return "", fmt.Errorf("configure amqp consumer for routingKey `%s` and exchange `%s`: %s", a.routingKey, a.exchange, err)
+		return "", fmt.Errorf("configure amqp consumer for routingKey `%s` and exchange `%s`: %w", a.routingKey, a.exchange, err)
 	}
 
 	return queue, nil

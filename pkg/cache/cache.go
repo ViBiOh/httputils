@@ -58,7 +58,7 @@ func EvictOnSuccess(ctx context.Context, redisClient RedisClient, key string, er
 	}
 
 	if err = redisClient.Delete(ctx, key); err != nil {
-		return fmt.Errorf("evict key `%s` from cache: %s", key, err)
+		return fmt.Errorf("evict key `%s` from cache: %w", key, err)
 	}
 
 	return nil

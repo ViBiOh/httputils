@@ -14,7 +14,7 @@ var ErrNoDeathCount = errors.New("no death count")
 func (a App) Retry(message amqp.Delivery) error {
 	count, err := GetDeathCount(message)
 	if err != nil && !errors.Is(err, ErrNoDeathCount) {
-		return fmt.Errorf("get death count from message: %s", err)
+		return fmt.Errorf("get death count from message: %w", err)
 	}
 
 	if count >= a.maxRetry {

@@ -34,7 +34,7 @@ func AddSignature(r *http.Request, keyID string, secret, payload []byte) {
 func ValidateSignature(r *http.Request, secret []byte) (bool, error) {
 	body, err := ReadBodyRequest(r)
 	if err != nil {
-		return false, fmt.Errorf("read body: %s", err)
+		return false, fmt.Errorf("read body: %w", err)
 	}
 
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
@@ -45,7 +45,7 @@ func ValidateSignature(r *http.Request, secret []byte) (bool, error) {
 
 	signatureString, signature, err := parseAuthorizationHeader(r)
 	if err != nil {
-		return false, model.WrapInvalid(fmt.Errorf("parse authorization header: %s", err))
+		return false, model.WrapInvalid(fmt.Errorf("parse authorization header: %w", err))
 	}
 
 	return hmac.Equal(signContent(secret, signatureString), signature), nil
@@ -79,7 +79,7 @@ func parseAuthorizationHeader(r *http.Request) ([]byte, []byte, error) {
 
 	signature, err := base64.StdEncoding.DecodeString(strings.Trim(strings.TrimPrefix(rawSignature, "signature="), `"`))
 	if err != nil {
-		return nil, nil, fmt.Errorf("decode base64 signature: %s", err)
+		return nil, nil, fmt.Errorf("decode base64 signature: %w", err)
 	}
 
 	signatureString := buildSignatureString(r, strings.Split(strings.Trim(strings.TrimPrefix(rawHeaders, "headers="), `"`), " "))
