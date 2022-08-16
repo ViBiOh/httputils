@@ -111,6 +111,10 @@ func (r Request) String() string {
 		builder.WriteString("`")
 	}
 
+	if r.contentLength > 0 {
+		builder.WriteString(", ContentLength: 8000")
+	}
+
 	return builder.String()
 }
 
@@ -232,6 +236,12 @@ func (r Request) ContentJSON() Request {
 // AcceptJSON set Accept header to application/json
 func (r Request) AcceptJSON() Request {
 	return r.Accept("application/json")
+}
+
+func (r Request) ContentLength(contentLength int64) Request {
+	r.contentLength = contentLength
+
+	return r
 }
 
 // WithClient defines net/http client to use, instead of default one (15sec timeout and no redirect)

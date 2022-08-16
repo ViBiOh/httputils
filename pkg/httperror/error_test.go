@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
@@ -342,6 +343,99 @@ func TestErrorStatus(t *testing.T) {
 
 			if got, gotMessage := ErrorStatus(testCase.args.err); got != testCase.want && gotMessage != testCase.wantMessage {
 				t.Errorf("ErrorStatus() = (%d, `%s`), want (%d, `%s`)", got, gotMessage, testCase.want, testCase.wantMessage)
+			}
+		})
+	}
+}
+
+func TestFromStatus(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		status int
+		err    error
+	}
+
+	cases := map[string]struct {
+		args    args
+		wantErr error
+	}{
+		"no error": {
+			args{},
+			nil,
+		},
+		"bad": {
+			args{
+				status: http.StatusBadRequest,
+				err:    errors.New("failure"),
+			},
+			errors.New("failure: invalid"),
+		},
+		"unauthorized": {
+			args{
+				status: http.StatusUnauthorized,
+				err:    errors.New("failure"),
+			},
+			errors.New("failure: unauthorized"),
+		},
+		"forbidden": {
+			args{
+				status: http.StatusForbidden,
+				err:    errors.New("failure"),
+			},
+			errors.New("failure: forbidden"),
+		},
+		"not found": {
+			args{
+				status: http.StatusNotFound,
+				err:    errors.New("failure"),
+			},
+			errors.New("failure: not found"),
+		},
+		"not allowed": {
+			args{
+				status: http.StatusMethodNotAllowed,
+				err:    errors.New("failure"),
+			},
+			errors.New("failure: method not allowed"),
+		},
+		"internal error": {
+			args{
+				status: http.StatusInternalServerError,
+				err:    errors.New("failure"),
+			},
+			errors.New("failure: internal error"),
+		},
+		"unknown": {
+			args{
+				status: http.StatusTeapot,
+				err:    errors.New("failure"),
+			},
+			errors.New("failure"),
+		},
+	}
+
+	for intention, testCase := range cases {
+		intention := intention
+		testCase := testCase
+
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			gotErr := FromStatus(testCase.args.status, testCase.args.err)
+
+			failed := false
+
+			switch {
+			case
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("FromStatus() = `%s`, want `%s`", gotErr, testCase.wantErr)
 			}
 		})
 	}

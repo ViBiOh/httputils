@@ -40,8 +40,8 @@ func TestString(t *testing.T) {
 		want     string
 	}{
 		"simple": {
-			New(),
-			"GET",
+			New().ContentLength(8000),
+			"GET, ContentLength: 8000",
 		},
 		"basic auth": {
 			Post("http://localhost").BasicAuth("admin", "password").ContentType("text/plain"),
