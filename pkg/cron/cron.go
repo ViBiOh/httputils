@@ -16,7 +16,7 @@ import (
 
 //go:generate mockgen -source cron.go -destination ../mocks/cron.go -package mocks -mock_names Semaphore=Semaphore
 
-// Semaphore client
+// Semaphore client.
 type Semaphore interface {
 	Exclusive(context.Context, string, time.Duration, func(context.Context) error) (bool, error)
 }
@@ -27,7 +27,7 @@ const (
 
 var _ fmt.Stringer = New()
 
-// Cron definition
+// Cron definition.
 type Cron struct {
 	tracer       trace.Tracer
 	clock        clock.Clock
@@ -49,7 +49,7 @@ type Cron struct {
 	day      byte
 }
 
-// New creates new cron
+// New creates new cron.
 func New() *Cron {
 	return &Cron{
 		dayTime: time.Date(0, 1, 1, 8, 0, 0, 0, time.UTC),
@@ -82,66 +82,66 @@ func (c *Cron) String() string {
 	return buffer.String()
 }
 
-// Days sets recurence to every day
+// Days sets recurence to every day.
 func (c *Cron) Days() *Cron {
 	return c.Monday().Tuesday().Wednesday().Thursday().Friday().Saturday().Sunday()
 }
 
-// Weekdays sets recurence to every day except sunday and saturday
+// Weekdays sets recurence to every day except sunday and saturday.
 func (c *Cron) Weekdays() *Cron {
 	return c.Monday().Tuesday().Wednesday().Thursday().Friday()
 }
 
-// Sunday sets recurence to every Sunday
+// Sunday sets recurence to every Sunday.
 func (c *Cron) Sunday() *Cron {
 	c.day = c.day | 1<<time.Sunday
 
 	return c
 }
 
-// Monday sets recurence to every Monday
+// Monday sets recurence to every Monday.
 func (c *Cron) Monday() *Cron {
 	c.day = c.day | 1<<time.Monday
 
 	return c
 }
 
-// Tuesday sets recurence to every Tuesday
+// Tuesday sets recurence to every Tuesday.
 func (c *Cron) Tuesday() *Cron {
 	c.day = c.day | 1<<time.Tuesday
 
 	return c
 }
 
-// Wednesday sets recurence to every Wednesday
+// Wednesday sets recurence to every Wednesday.
 func (c *Cron) Wednesday() *Cron {
 	c.day = c.day | 1<<time.Wednesday
 
 	return c
 }
 
-// Thursday sets recurence to every Thursday
+// Thursday sets recurence to every Thursday.
 func (c *Cron) Thursday() *Cron {
 	c.day = c.day | 1<<time.Thursday
 
 	return c
 }
 
-// Friday sets recurence to every Friday
+// Friday sets recurence to every Friday.
 func (c *Cron) Friday() *Cron {
 	c.day = c.day | 1<<time.Friday
 
 	return c
 }
 
-// Saturday sets recurence to every Saturday
+// Saturday sets recurence to every Saturday.
 func (c *Cron) Saturday() *Cron {
 	c.day = c.day | 1<<time.Saturday
 
 	return c
 }
 
-// At sets hour of run in format HH:MM
+// At sets hour of run in format HH:MM.
 func (c *Cron) At(hour string) *Cron {
 	hourTime, err := time.ParseInLocation(hourFormat, hour, c.dayTime.Location())
 
@@ -154,7 +154,7 @@ func (c *Cron) At(hour string) *Cron {
 	return c
 }
 
-// Exclusive runs cron in an exclusive manner with a distributed lock on Redis
+// Exclusive runs cron in an exclusive manner with a distributed lock on Redis.
 func (c *Cron) Exclusive(semaphoreApp Semaphore, name string, timeout time.Duration) *Cron {
 	c.semaphoreApp = semaphoreApp
 	c.name = name
@@ -163,7 +163,7 @@ func (c *Cron) Exclusive(semaphoreApp Semaphore, name string, timeout time.Durat
 	return c
 }
 
-// In sets timezone
+// In sets timezone.
 func (c *Cron) In(tz string) *Cron {
 	timezone, err := time.LoadLocation(tz)
 	if err != nil {
@@ -184,7 +184,7 @@ func (c *Cron) In(tz string) *Cron {
 	return c
 }
 
-// Each sets interval of each run
+// Each sets interval of each run.
 func (c *Cron) Each(interval time.Duration) *Cron {
 	if c.day != 0 {
 		c.errors = append(c.errors, errors.New("cannot set interval and days on the same cron"))
@@ -195,28 +195,28 @@ func (c *Cron) Each(interval time.Duration) *Cron {
 	return c
 }
 
-// Retry sets interval retry if action failed
+// Retry sets interval retry if action failed.
 func (c *Cron) Retry(retryInterval time.Duration) *Cron {
 	c.retryInterval = retryInterval
 
 	return c
 }
 
-// MaxRetry sets maximum retry count
+// MaxRetry sets maximum retry count.
 func (c *Cron) MaxRetry(maxRetry uint) *Cron {
 	c.maxRetry = maxRetry
 
 	return c
 }
 
-// OnSignal sets signal listened for trigerring cron
+// OnSignal sets signal listened for trigerring cron.
 func (c *Cron) OnSignal(signal os.Signal) *Cron {
 	c.signal = signal
 
 	return c
 }
 
-// OnError defines error handling function
+// OnError defines error handling function.
 func (c *Cron) OnError(onError func(error)) *Cron {
 	c.onError = onError
 
@@ -275,21 +275,21 @@ func (c *Cron) hasError() bool {
 	return false
 }
 
-// WithTracer starts a span on each context
+// WithTracer starts a span on each context.
 func (c *Cron) WithTracer(tracer trace.Tracer) *Cron {
 	c.tracer = tracer
 
 	return c
 }
 
-// Now run cron now
+// Now run cron now.
 func (c *Cron) Now() *Cron {
 	c.now <- c.clock.Now()
 
 	return c
 }
 
-// Start cron
+// Start cron.
 func (c *Cron) Start(action func(context.Context) error, done <-chan struct{}) {
 	if c.hasError() {
 		return
@@ -354,7 +354,7 @@ func (c *Cron) Start(action func(context.Context) error, done <-chan struct{}) {
 	}
 }
 
-// Shutdown cron, do not attempt Start() after
+// Shutdown cron, do not attempt Start() after.
 func (c *Cron) Shutdown() {
 	close(c.now)
 }

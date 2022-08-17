@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// FailFast describes a task group with a fail-fast approach
+// FailFast describes a task group with a fail-fast approach.
 type FailFast struct {
 	err     error
 	done    chan struct{}
@@ -15,7 +15,7 @@ type FailFast struct {
 	wg      sync.WaitGroup
 }
 
-// NewFailFast creates a Group with given concurrency limit
+// NewFailFast creates a Group with given concurrency limit.
 func NewFailFast(limit uint64) *FailFast {
 	return &FailFast{
 		done:    make(chan struct{}),
@@ -23,7 +23,7 @@ func NewFailFast(limit uint64) *FailFast {
 	}
 }
 
-// WithContext make the given context cancelable for the group
+// WithContext make the given context cancelable for the group.
 func (g *FailFast) WithContext(ctx context.Context) context.Context {
 	if g.cancel != nil {
 		panic("cancelable context already set-up")
@@ -34,7 +34,7 @@ func (g *FailFast) WithContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-// Go run given function in a goroutine according to limiter and current status
+// Go run given function in a goroutine according to limiter and current status.
 func (g *FailFast) Go(f func() error) {
 	g.wg.Add(1)
 
@@ -53,7 +53,7 @@ func (g *FailFast) Go(f func() error) {
 	}
 }
 
-// Wait for Group to end
+// Wait for Group to end.
 func (g *FailFast) Wait() error {
 	g.wg.Wait()
 

@@ -9,12 +9,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// NoRedirection discard redirection
+// NoRedirection discard redirection.
 var NoRedirection = func(*http.Request, []*http.Request) error {
 	return http.ErrUseLastResponse
 }
 
-// CreateClient creates http client with given timeout and redirection handling
+// CreateClient creates http client with given timeout and redirection handling.
 func CreateClient(timeout time.Duration, onRedirect func(*http.Request, []*http.Request) error) *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
@@ -40,7 +40,7 @@ func CreateClient(timeout time.Duration, onRedirect func(*http.Request, []*http.
 	}
 }
 
-// AddTracerToDefaultClient change default client
+// AddTracerToDefaultClient change default client.
 func AddTracerToDefaultClient(tracerProvider trace.TracerProvider) {
 	defaultHTTPClient = tracer.AddTracerToClient(defaultHTTPClient, tracerProvider)
 }

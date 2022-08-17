@@ -5,7 +5,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// Gauges creates and registers gauges
+// Gauges creates and registers gauges.
 func Gauges(prometheusRegisterer prometheus.Registerer, namespace, subsystem string, names ...string) map[string]prometheus.Gauge {
 	if model.IsNil(prometheusRegisterer) {
 		return nil
@@ -20,7 +20,7 @@ func Gauges(prometheusRegisterer prometheus.Registerer, namespace, subsystem str
 	return metrics
 }
 
-// Gauge creates and registers a gauge
+// Gauge creates and registers a gauge.
 func Gauge(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string) prometheus.Gauge {
 	if model.IsNil(prometheusRegisterer) {
 		return nil
@@ -37,7 +37,7 @@ func Gauge(prometheusRegisterer prometheus.Registerer, namespace, subsystem, nam
 	return metric
 }
 
-// GaugeVec creates and register a gauge vector
+// GaugeVec creates and register a gauge vector.
 func GaugeVec(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string, labels ...string) *prometheus.GaugeVec {
 	if model.IsNil(prometheusRegisterer) {
 		return nil

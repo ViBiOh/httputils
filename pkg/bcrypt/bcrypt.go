@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// FindBestCost finds best bcrypt cost
+// FindBestCost finds best bcrypt cost.
 func FindBestCost(maxDuration time.Duration) (int, error) {
 	password := []byte("b6aa8c7d9931406946efe9ba2fadc1a6") // random string
 

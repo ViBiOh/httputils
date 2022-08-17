@@ -2,7 +2,7 @@ package amqp
 
 import "errors"
 
-// Enabled checks if connection is set up
+// Enabled checks if connection is set up.
 func (c *Client) Enabled() bool {
 	c.RLock()
 	enabled := c.connection != nil
@@ -11,7 +11,7 @@ func (c *Client) Enabled() bool {
 	return enabled
 }
 
-// Ping checks if connection is live
+// Ping checks if connection is live.
 func (c *Client) Ping() error {
 	c.RLock()
 
@@ -24,7 +24,7 @@ func (c *Client) Ping() error {
 	return nil
 }
 
-// Vhost returns connection Vhost
+// Vhost returns connection Vhost.
 func (c *Client) Vhost() string {
 	return c.vhost
 }

@@ -26,7 +26,7 @@ var (
 	defaultHTTPClient = CreateClient(15*time.Second, NoRedirection)
 )
 
-// Request describe a complete request
+// Request describe a complete request.
 type Request struct {
 	client *http.Client
 	header http.Header
@@ -51,37 +51,37 @@ func create(method, url string) Request {
 	}
 }
 
-// New create a new Request
+// New create a new Request.
 func New() Request {
 	return create(http.MethodGet, "")
 }
 
-// Get create GET to given url
+// Get create GET to given url.
 func Get(url string) Request {
 	return create(http.MethodGet, url)
 }
 
-// Post create POST to given url
+// Post create POST to given url.
 func Post(url string) Request {
 	return create(http.MethodPost, url)
 }
 
-// Put create PUT to given url
+// Put create PUT to given url.
 func Put(url string) Request {
 	return create(http.MethodPut, url)
 }
 
-// Patch create PATCH to given url
+// Patch create PATCH to given url.
 func Patch(url string) Request {
 	return create(http.MethodPatch, url)
 }
 
-// Delete create DELETE to given url
+// Delete create DELETE to given url.
 func Delete(url string) Request {
 	return create(http.MethodDelete, url)
 }
 
-// String representation of the request
+// String representation of the request.
 func (r Request) String() string {
 	var builder strings.Builder
 
@@ -118,12 +118,12 @@ func (r Request) String() string {
 	return builder.String()
 }
 
-// IsZero checks if instance is valued
+// IsZero checks if instance is valued.
 func (r Request) IsZero() bool {
 	return len(r.method) == 0 || len(r.url) == 0
 }
 
-// MethodURL set method and URL of Request
+// MethodURL set method and URL of Request.
 func (r Request) MethodURL(method, url string) Request {
 	r.method = method
 	r.url = url
@@ -131,21 +131,21 @@ func (r Request) MethodURL(method, url string) Request {
 	return r
 }
 
-// Method set method of Request
+// Method set method of Request.
 func (r Request) Method(method string) Request {
 	r.method = method
 
 	return r
 }
 
-// URL set URL of Request
+// URL set URL of Request.
 func (r Request) URL(url string) Request {
 	r.url = url
 
 	return r
 }
 
-// Path appends given path to the current URL
+// Path appends given path to the current URL.
 func (r Request) Path(path string) Request {
 	if len(path) == 0 {
 		return r
@@ -172,32 +172,32 @@ func (r Request) Path(path string) Request {
 	return r
 }
 
-// Get set GET to given url
+// Get set GET to given url.
 func (r Request) Get(url string) Request {
 	return r.MethodURL(http.MethodGet, url)
 }
 
-// Post set POST to given url
+// Post set POST to given url.
 func (r Request) Post(url string) Request {
 	return r.MethodURL(http.MethodPost, url)
 }
 
-// Put set PUT to given url
+// Put set PUT to given url.
 func (r Request) Put(url string) Request {
 	return r.MethodURL(http.MethodPut, url)
 }
 
-// Patch set PATCH to given url
+// Patch set PATCH to given url.
 func (r Request) Patch(url string) Request {
 	return r.MethodURL(http.MethodPatch, url)
 }
 
-// Delete set DELETE to given url
+// Delete set DELETE to given url.
 func (r Request) Delete(url string) Request {
 	return r.MethodURL(http.MethodDelete, url)
 }
 
-// BasicAuth add Basic Auth header
+// BasicAuth add Basic Auth header.
 func (r Request) BasicAuth(username, password string) Request {
 	r.username = username
 	r.password = password
@@ -205,7 +205,7 @@ func (r Request) BasicAuth(username, password string) Request {
 	return r
 }
 
-// Header add header to request
+// Header add header to request.
 func (r Request) Header(name, value string) Request {
 	r.header = r.header.Clone()
 	r.header.Add(name, value)
@@ -213,27 +213,27 @@ func (r Request) Header(name, value string) Request {
 	return r
 }
 
-// Accept set Accept header
+// Accept set Accept header.
 func (r Request) Accept(accept string) Request {
 	return r.Header("Accept", accept)
 }
 
-// ContentType set Content-Type header
+// ContentType set Content-Type header.
 func (r Request) ContentType(contentType string) Request {
 	return r.Header("Content-Type", contentType)
 }
 
-// ContentForm set Content-Type header to application/x-www-form-urlencoded
+// ContentForm set Content-Type header to application/x-www-form-urlencoded.
 func (r Request) ContentForm() Request {
 	return r.ContentType("application/x-www-form-urlencoded")
 }
 
-// ContentJSON set Content-Type header to application/json
+// ContentJSON set Content-Type header to application/json.
 func (r Request) ContentJSON() Request {
 	return r.ContentType("application/json")
 }
 
-// AcceptJSON set Accept header to application/json
+// AcceptJSON set Accept header to application/json.
 func (r Request) AcceptJSON() Request {
 	return r.Accept("application/json")
 }
@@ -244,14 +244,14 @@ func (r Request) ContentLength(contentLength int64) Request {
 	return r
 }
 
-// WithClient defines net/http client to use, instead of default one (15sec timeout and no redirect)
+// WithClient defines net/http client to use, instead of default one (15sec timeout and no redirect).
 func (r Request) WithClient(client *http.Client) Request {
 	r.client = client
 
 	return r
 }
 
-// WithSignatureAuthorization add Authorization header when sending request by calculating digest and HMAC signature header
+// WithSignatureAuthorization add Authorization header when sending request by calculating digest and HMAC signature header.
 func (r Request) WithSignatureAuthorization(keyID string, secret []byte) Request {
 	r.signatureKeydID = keyID
 	r.signatureSecret = secret
@@ -259,7 +259,7 @@ func (r Request) WithSignatureAuthorization(keyID string, secret []byte) Request
 	return r
 }
 
-// Build create request for given context and payload
+// Build create request for given context and payload.
 func (r Request) Build(ctx context.Context, payload io.ReadCloser) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, r.method, r.url, payload)
 	if err != nil {
@@ -288,7 +288,7 @@ func (r Request) Build(ctx context.Context, payload io.ReadCloser) (*http.Reques
 	return req, nil
 }
 
-// Send build request and send it with defined client
+// Send build request and send it with defined client.
 func (r Request) Send(ctx context.Context, payload io.ReadCloser) (*http.Response, error) {
 	req, err := r.Build(ctx, payload)
 	if err != nil {
@@ -298,7 +298,7 @@ func (r Request) Send(ctx context.Context, payload io.ReadCloser) (*http.Respons
 	return DoWithClient(r.client, req)
 }
 
-// Form send request with given context and url.Values as payload
+// Form send request with given context and url.Values as payload.
 func (r Request) Form(ctx context.Context, data url.Values) (*http.Response, error) {
 	payload := data.Encode()
 	r.contentLength = int64(len(payload))
@@ -306,7 +306,7 @@ func (r Request) Form(ctx context.Context, data url.Values) (*http.Response, err
 	return r.ContentForm().Send(ctx, io.NopCloser(strings.NewReader(payload)))
 }
 
-// Multipart send request with given context and given interface as multipart content
+// Multipart send request with given context and given interface as multipart content.
 func (r Request) Multipart(ctx context.Context, feed func(mw *multipart.Writer) error) (*http.Response, error) {
 	reader, writer := io.Pipe()
 	multipartWriter := multipart.NewWriter(writer)
@@ -338,7 +338,7 @@ func (r Request) Multipart(ctx context.Context, feed func(mw *multipart.Writer) 
 	return resp, nil
 }
 
-// JSON send request with given context and given interface as JSON payload
+// JSON send request with given context and given interface as JSON payload.
 func (r Request) JSON(ctx context.Context, body any) (*http.Response, error) {
 	payload, err := json.Marshal(body)
 	if err != nil {
@@ -351,7 +351,7 @@ func (r Request) JSON(ctx context.Context, body any) (*http.Response, error) {
 	return resp, err
 }
 
-// StreamJSON send request with given context and given interface as JSON stream
+// StreamJSON send request with given context and given interface as JSON stream.
 func (r Request) StreamJSON(ctx context.Context, body any) (*http.Response, error) {
 	reader, writer := io.Pipe()
 
@@ -369,7 +369,7 @@ func (r Request) StreamJSON(ctx context.Context, body any) (*http.Response, erro
 	return resp, err
 }
 
-// DoWithClient send request with given client
+// DoWithClient send request with given client.
 func DoWithClient(client *http.Client, req *http.Request) (*http.Response, error) {
 	resp, err := client.Do(req)
 	if err != nil {
@@ -403,7 +403,7 @@ func convertResponseError(resp *http.Response) string {
 	return builder.String()
 }
 
-// DiscardBody of a response
+// DiscardBody of a response.
 func DiscardBody(body io.ReadCloser) error {
 	var err error
 
@@ -418,7 +418,7 @@ func DiscardBody(body io.ReadCloser) error {
 	return err
 }
 
-// Do send request with default client
+// Do send request with default client.
 func Do(req *http.Request) (*http.Response, error) {
 	return DoWithClient(defaultHTTPClient, req)
 }

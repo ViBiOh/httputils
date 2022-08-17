@@ -8,7 +8,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
-// Close closes opened ressources
+// Close closes opened ressources.
 func (c *Client) Close() {
 	c.Lock()
 	defer c.Unlock()

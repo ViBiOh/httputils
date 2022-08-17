@@ -28,32 +28,32 @@ func httpError(w http.ResponseWriter, status int, payload string, err error) {
 	}
 }
 
-// BadRequest logs error and sets BadRequest status
+// BadRequest logs error and sets BadRequest status.
 func BadRequest(w http.ResponseWriter, err error) {
 	httpError(w, http.StatusBadRequest, err.Error(), err)
 }
 
-// Unauthorized logs error and sets Unauthorized status
+// Unauthorized logs error and sets Unauthorized status.
 func Unauthorized(w http.ResponseWriter, err error) {
 	httpError(w, http.StatusUnauthorized, err.Error(), err)
 }
 
-// Forbidden sets Forbidden status
+// Forbidden sets Forbidden status.
 func Forbidden(w http.ResponseWriter) {
 	httpError(w, http.StatusForbidden, "⛔️", nil)
 }
 
-// NotFound sets NotFound status
+// NotFound sets NotFound status.
 func NotFound(w http.ResponseWriter) {
 	httpError(w, http.StatusNotFound, "¯\\_(ツ)_/¯", nil)
 }
 
-// InternalServerError logs error and sets InternalServerError status
+// InternalServerError logs error and sets InternalServerError status.
 func InternalServerError(w http.ResponseWriter, err error) {
 	httpError(w, http.StatusInternalServerError, internalError, err)
 }
 
-// HandleError return a status code according to given error
+// HandleError return a status code according to given error.
 func HandleError(w http.ResponseWriter, err error) bool {
 	if err == nil {
 		return false
@@ -77,7 +77,7 @@ func HandleError(w http.ResponseWriter, err error) bool {
 	return true
 }
 
-// ErrorStatus guess HTTP status and message from given error
+// ErrorStatus guess HTTP status and message from given error.
 func ErrorStatus(err error) (status int, message string) {
 	status = http.StatusInternalServerError
 	if err == nil {
@@ -104,7 +104,7 @@ func ErrorStatus(err error) (status int, message string) {
 	return
 }
 
-// FromStatus wraps model's error according to status
+// FromStatus wraps model's error according to status.
 func FromStatus(status int, err error) error {
 	switch status {
 	case http.StatusBadRequest:

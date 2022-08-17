@@ -1,6 +1,6 @@
 package breaksync
 
-// Rupture in a break/sync algorithm
+// Rupture in a break/sync algorithm.
 type Rupture struct {
 	extract func(string) string
 	name    string
@@ -8,7 +8,7 @@ type Rupture struct {
 	first   bool
 }
 
-// NewRupture creates and initialize Rupture
+// NewRupture creates and initialize Rupture.
 func NewRupture(name string, extract func(string) string) *Rupture {
 	return &Rupture{
 		first:   false,

@@ -22,17 +22,17 @@ const (
 	metricNamespace = "amqp"
 )
 
-// ErrNoConfig occurs when URI is not provided
+// ErrNoConfig occurs when URI is not provided.
 var ErrNoConfig = errors.New("URI is required")
 
-// Connection for AMQP
+// Connection for AMQP.
 type Connection interface {
 	io.Closer
 	Channel() (*amqp.Channel, error)
 	IsClosed() bool
 }
 
-// Client wraps all object required for AMQP usage
+// Client wraps all object required for AMQP usage.
 type Client struct {
 	channel         *amqp.Channel
 	connection      Connection
@@ -58,12 +58,12 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 	}
 }
 
-// New inits AMQP connection from Config
+// New inits AMQP connection from Config.
 func New(config Config, prometheusRegister prometheus.Registerer) (*Client, error) {
 	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, prometheusRegister)
 }
 
-// NewFromURI inits AMQP connection from given URI
+// NewFromURI inits AMQP connection from given URI.
 func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Registerer) (*Client, error) {
 	if len(uri) == 0 {
 		return nil, ErrNoConfig
@@ -96,7 +96,7 @@ func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Register
 	return client, nil
 }
 
-// Publish sends payload to the underlying exchange
+// Publish sends payload to the underlying exchange.
 func (c *Client) Publish(payload amqp.Publishing, exchange, routingKey string) error {
 	c.RLock()
 	defer c.RUnlock()
@@ -112,7 +112,7 @@ func (c *Client) Publish(payload amqp.Publishing, exchange, routingKey string) e
 	return nil
 }
 
-// PublishJSON sends JSON payload to the underlying exchange
+// PublishJSON sends JSON payload to the underlying exchange.
 func (c *Client) PublishJSON(item any, exchange, routingKey string) error {
 	payload, err := json.Marshal(item)
 	if err != nil {

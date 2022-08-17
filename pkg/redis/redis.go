@@ -21,7 +21,7 @@ const (
 	metricsNamespace = "redis"
 )
 
-// ErrNoSubscriber occurs when a published message is not received by any subscriber
+// ErrNoSubscriber occurs when a published message is not received by any subscriber.
 var ErrNoSubscriber = errors.New("no subscriber for channel")
 
 type App struct {
@@ -70,7 +70,7 @@ func (a App) enabled() bool {
 	return a.redisClient != nil
 }
 
-// Ping check redis availability
+// Ping check redis availability.
 func (a App) Ping() error {
 	if !a.enabled() {
 		return nil
@@ -79,7 +79,7 @@ func (a App) Ping() error {
 	return a.redisClient.Ping(context.Background()).Err()
 }
 
-// Store give key/val with duration
+// Store give key/val with duration.
 func (a App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
 	if !a.enabled() {
 		return nil
@@ -99,7 +99,7 @@ func (a App) Store(ctx context.Context, key string, value any, duration time.Dur
 	return err
 }
 
-// Load given key
+// Load given key.
 func (a App) Load(ctx context.Context, key string) (string, error) {
 	if !a.enabled() {
 		return "", nil
@@ -127,7 +127,7 @@ func (a App) Load(ctx context.Context, key string) (string, error) {
 	return "", nil
 }
 
-// Delete given keys
+// Delete given keys.
 func (a App) Delete(ctx context.Context, keys ...string) error {
 	if !a.enabled() {
 		return nil
@@ -162,7 +162,7 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 	return nil
 }
 
-// Exclusive get an exclusive lock for given name during duration
+// Exclusive get an exclusive lock for given name during duration.
 func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
 	if !a.enabled() {
 		return false, fmt.Errorf("redis not enabled")

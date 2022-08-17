@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	// ErrCannotMarshal occurs when marshaller failed
+	// ErrCannotMarshal occurs when marshaller failed.
 	ErrCannotMarshal = errors.New("cannot marshall json")
 
 	headers = http.Header{}
@@ -36,7 +36,7 @@ type pagination struct {
 	Total     uint   `json:"total"`
 }
 
-// RawWrite writes marshalled obj to io.Writer
+// RawWrite writes marshalled obj to io.Writer.
 func RawWrite(w io.Writer, obj any) error {
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
 		return fmt.Errorf("%s: %w", err, ErrCannotMarshal)
@@ -45,7 +45,7 @@ func RawWrite(w io.Writer, obj any) error {
 	return nil
 }
 
-// Write writes marshalled obj to http.ResponseWriter with correct header
+// Write writes marshalled obj to http.ResponseWriter with correct header.
 func Write(w http.ResponseWriter, status int, obj any) {
 	for key, value := range headers {
 		w.Header()[key] = value
@@ -57,12 +57,12 @@ func Write(w http.ResponseWriter, status int, obj any) {
 	}
 }
 
-// WriteArray write marshalled obj wrapped into an object to http.ResponseWriter with correct header
+// WriteArray write marshalled obj wrapped into an object to http.ResponseWriter with correct header.
 func WriteArray(w http.ResponseWriter, status int, array any) {
 	Write(w, status, items{array})
 }
 
-// WritePagination write marshalled obj wrapped into an object to http.ResponseWriter with correct header
+// WritePagination write marshalled obj wrapped into an object to http.ResponseWriter with correct header.
 func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, last string, array any) {
 	pageCount := total / pageSize
 	if total%pageSize != 0 {
@@ -72,7 +72,7 @@ func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, la
 	Write(w, status, pagination{Items: array, PageSize: pageSize, PageCount: pageCount, Total: total, Last: last})
 }
 
-// Parse read body resquest and unmarshal it into given interface
+// Parse read body resquest and unmarshal it into given interface.
 func Parse(req *http.Request, obj any) error {
 	if err := json.NewDecoder(req.Body).Decode(obj); err != nil {
 		return fmt.Errorf("parse JSON: %w", err)
@@ -81,7 +81,7 @@ func Parse(req *http.Request, obj any) error {
 	return nil
 }
 
-// Read body response and unmarshal it into given interface
+// Read body response and unmarshal it into given interface.
 func Read(resp *http.Response, obj any) error {
 	var err error
 
@@ -96,7 +96,7 @@ func Read(resp *http.Response, obj any) error {
 	return err
 }
 
-// Stream reads io.Reader and stream content to given chan
+// Stream reads io.Reader and stream content to given chan.
 func Stream[T any](stream io.Reader, output chan<- T, key string, closeChan bool) error {
 	if closeChan {
 		defer close(output)

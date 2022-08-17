@@ -15,7 +15,7 @@ import (
 
 var svgCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Hour * 4).Seconds())
 
-// Redirect user to a defined path with a message
+// Redirect user to a defined path with a message.
 func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
 	joinChar := "?"
 	if strings.Contains(pathname, "?") {

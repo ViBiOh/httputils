@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// GetBool converts query params to boolean
+// GetBool converts query params to boolean.
 func GetBool(r *http.Request, name string) bool {
 	params, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {

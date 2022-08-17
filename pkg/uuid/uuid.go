@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// New generate a uuid
+// New generate a uuid.
 func New() (string, error) {
 	raw := make([]byte, 16)
 	_, err := rand.Read(raw)

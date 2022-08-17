@@ -26,13 +26,13 @@ func getURLPart(url string) (string, string) {
 	return url, urlPart
 }
 
-// Router with path management
+// Router with path management.
 type Router struct {
 	defaultHandler http.Handler
 	root           node
 }
 
-// NewRouter creates a new empty Router
+// NewRouter creates a new empty Router.
 func NewRouter() Router {
 	return Router{
 		defaultHandler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -44,59 +44,59 @@ func NewRouter() Router {
 	}
 }
 
-// DefaultHandler sets default handler when no route is not found
+// DefaultHandler sets default handler when no route is not found.
 func (r Router) DefaultHandler(handler http.Handler) Router {
 	r.defaultHandler = handler
 
 	return r
 }
 
-// Get configure route for GET method
+// Get configure route for GET method.
 func (r Router) Get(pattern string, handler http.Handler) Router {
 	return r.AddRoute(http.MethodGet, pattern, handler)
 }
 
-// Head configure route for HEAD method
+// Head configure route for HEAD method.
 func (r Router) Head(pattern string, handler http.Handler) Router {
 	return r.AddRoute(http.MethodHead, pattern, handler)
 }
 
-// Post configure route for POST method
+// Post configure route for POST method.
 func (r Router) Post(pattern string, handler http.Handler) Router {
 	return r.AddRoute(http.MethodPost, pattern, handler)
 }
 
-// Put configure route for PUT method
+// Put configure route for PUT method.
 func (r Router) Put(pattern string, handler http.Handler) Router {
 	return r.AddRoute(http.MethodPut, pattern, handler)
 }
 
-// Patch configure route for PATCH method
+// Patch configure route for PATCH method.
 func (r Router) Patch(pattern string, handler http.Handler) Router {
 	return r.AddRoute(http.MethodPatch, pattern, handler)
 }
 
-// Delete configure route for DELETE method
+// Delete configure route for DELETE method.
 func (r Router) Delete(pattern string, handler http.Handler) Router {
 	return r.AddRoute(http.MethodDelete, pattern, handler)
 }
 
-// Connect configure route for CONNECT method
+// Connect configure route for CONNECT method.
 func (r Router) Connect(pattern string, handler http.Handler) Router {
 	return r.AddRoute(http.MethodConnect, pattern, handler)
 }
 
-// Options configure route for OPTIONS method
+// Options configure route for OPTIONS method.
 func (r Router) Options(pattern string, handler http.Handler) Router {
 	return r.AddRoute(http.MethodOptions, pattern, handler)
 }
 
-// Trace configure route for TRACE method
+// Trace configure route for TRACE method.
 func (r Router) Trace(pattern string, handler http.Handler) Router {
 	return r.AddRoute(http.MethodTrace, pattern, handler)
 }
 
-// Any configure route for any method in the specs
+// Any configure route for any method in the specs.
 func (r Router) Any(pattern string, handler http.Handler) Router {
 	return r.
 		Get(pattern, handler).
@@ -112,7 +112,7 @@ func (r Router) Any(pattern string, handler http.Handler) Router {
 
 // AddRoute for given method and pattern. Pattern must startss with a slash, should not contain trailing slash.
 // Path variable must be prefixed with ':', next to the slash separator
-// Glob variable must be prefixed with '*', next to the slash separator, at the end of the pattern
+// Glob variable must be prefixed with '*', next to the slash separator, at the end of the pattern.
 func (r Router) AddRoute(method, pattern string, handler http.Handler) Router {
 	if len(method) == 0 {
 		panic("method is required")
@@ -153,7 +153,7 @@ func sanitizeURL(req *http.Request) string {
 	return url
 }
 
-// Handler for request. Should be use with net/http
+// Handler for request. Should be use with net/http.
 func (r Router) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		handler, hasVariable := r.root.find(req.Method, sanitizeURL(req))
@@ -170,7 +170,7 @@ func (r Router) Handler() http.Handler {
 	})
 }
 
-// GetParams of a request
+// GetParams of a request.
 func GetParams(r *http.Request) map[string]string {
 	switch value := r.Context().Value(contextKey).(type) {
 	case *node:

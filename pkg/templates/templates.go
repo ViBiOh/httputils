@@ -43,7 +43,7 @@ func init() {
 	xmlHeaders.Add("Cache-Control", "no-cache")
 }
 
-// WriteTemplate write template name from given template into writer for provided content with given minification
+// WriteTemplate write template name from given template into writer for provided content with given minification.
 func WriteTemplate(tpl *template.Template, w io.Writer, content any, mediatype string) error {
 	buffer := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buffer)
@@ -56,7 +56,7 @@ func WriteTemplate(tpl *template.Template, w io.Writer, content any, mediatype s
 	return minifier.Minify(mediatype, w, buffer)
 }
 
-// ResponseHTMLTemplate write template name from given template into writer for provided content with HTML minification
+// ResponseHTMLTemplate write template name from given template into writer for provided content with HTML minification.
 func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content any, status int) error {
 	buffer := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buffer)
@@ -74,7 +74,7 @@ func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content
 	return minifier.Minify("text/html", w, buffer)
 }
 
-// ResponseHTMLTemplateRaw write template name from given template into writer for provided content
+// ResponseHTMLTemplateRaw write template name from given template into writer for provided content.
 func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, content any, status int) error {
 	for key, value := range htmlHeaders {
 		w.Header()[key] = value
@@ -84,7 +84,7 @@ func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, cont
 	return tpl.Execute(w, content)
 }
 
-// ResponseXMLTemplate write template name from given template into writer for provided content with XML minification
+// ResponseXMLTemplate write template name from given template into writer for provided content with XML minification.
 func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content any, status int) error {
 	buffer := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buffer)

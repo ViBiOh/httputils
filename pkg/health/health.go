@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	// LivePath is the path for checking that HTTP service is live
+	// LivePath is the path for checking that HTTP service is live.
 	LivePath = "/health"
 
-	// ReadyPath is the path for checking that HTTP service is ready (checking dependencies)
+	// ReadyPath is the path for checking that HTTP service is ready (checking dependencies).
 	ReadyPath = "/ready"
 )
 
@@ -54,24 +54,24 @@ func New(config Config, pingers ...model.Pinger) App {
 	}
 }
 
-// Done returns the chan closed when SIGTERM is received
+// Done returns the chan closed when SIGTERM is received.
 func (a App) Done() <-chan struct{} {
 	return a.done
 }
 
-// End returns the chan closed when graceful duration is over
+// End returns the chan closed when graceful duration is over.
 func (a App) End() <-chan struct{} {
 	return a.end
 }
 
-// HealthHandler for request. Should be use with net/http
+// HealthHandler for request. Should be use with net/http.
 func (a App) HealthHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(a.okStatus)
 	})
 }
 
-// ReadyHandler for request. Should be use with net/http
+// ReadyHandler for request. Should be use with net/http.
 func (a App) ReadyHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		select {
@@ -87,7 +87,7 @@ func (a App) ReadyHandler() http.Handler {
 	})
 }
 
-// WaitForTermination waits for SIGTERM or done plus grace duration
+// WaitForTermination waits for SIGTERM or done plus grace duration.
 func (a App) WaitForTermination(done <-chan struct{}) {
 	defer close(a.end)
 
@@ -103,7 +103,7 @@ func (a App) WaitForTermination(done <-chan struct{}) {
 	}
 }
 
-// waitForDone waits for the SIGTERM signal or close of done
+// waitForDone waits for the SIGTERM signal or close of done.
 func (a App) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	signalsChan := make(chan os.Signal, 1)
 	defer close(signalsChan)

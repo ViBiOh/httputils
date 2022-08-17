@@ -21,7 +21,7 @@ func readContent(body io.ReadCloser) ([]byte, error) {
 	return content, err
 }
 
-// ReadBodyRequest return content of a body request (defined as a ReadCloser)
+// ReadBodyRequest return content of a body request (defined as a ReadCloser).
 func ReadBodyRequest(r *http.Request) ([]byte, error) {
 	if r == nil {
 		return nil, nil
@@ -30,7 +30,7 @@ func ReadBodyRequest(r *http.Request) ([]byte, error) {
 	return io.ReadAll(r.Body)
 }
 
-// ReadBodyResponse return content of a body response (defined as a ReadCloser)
+// ReadBodyResponse return content of a body response (defined as a ReadCloser).
 func ReadBodyResponse(r *http.Response) ([]byte, error) {
 	if r == nil {
 		return nil, nil

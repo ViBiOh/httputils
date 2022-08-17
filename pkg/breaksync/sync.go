@@ -2,7 +2,7 @@ package breaksync
 
 const finalValue = "\uffff"
 
-// Synchronization in a break/sync algorithm
+// Synchronization in a break/sync algorithm.
 type Synchronization struct {
 	currentKey string
 	nextKey    string
@@ -13,14 +13,14 @@ type Synchronization struct {
 	end bool
 }
 
-// NewSynchronization creates and initializes Synchronization
+// NewSynchronization creates and initializes Synchronization.
 func NewSynchronization() *Synchronization {
 	return &Synchronization{
 		end: false,
 	}
 }
 
-// AddSources adds given source
+// AddSources adds given source.
 func (s *Synchronization) AddSources(sources ...SyncSource) *Synchronization {
 	s.sources = append(s.sources, sources...)
 
@@ -33,7 +33,7 @@ func (s *Synchronization) AddSources(sources ...SyncSource) *Synchronization {
 	return s
 }
 
-// Run start break/sync algorithm
+// Run start break/sync algorithm.
 func (s *Synchronization) Run(business func(uint64, []any) error) (err error) {
 	if err = s.read(); err != nil {
 		return

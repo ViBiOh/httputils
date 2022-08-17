@@ -105,12 +105,12 @@ func New(config Config) (App, error) {
 	}, nil
 }
 
-// GetProvider returns current provider
+// GetProvider returns current provider.
 func (a App) GetProvider() tr.TracerProvider {
 	return a.provider
 }
 
-// GetTracer return a new tracer
+// GetTracer return a new tracer.
 func (a App) GetTracer(name string) tr.Tracer {
 	if a.provider == nil {
 		return nil
@@ -119,7 +119,7 @@ func (a App) GetTracer(name string) tr.Tracer {
 	return a.provider.Tracer(name)
 }
 
-// Middleware for net/http package allowing tracer with open telemetry
+// Middleware for net/http package allowing tracer with open telemetry.
 func (a App) Middleware(next http.Handler) http.Handler {
 	if next == nil || a.provider == nil {
 		return next
@@ -128,7 +128,7 @@ func (a App) Middleware(next http.Handler) http.Handler {
 	return otelhttp.NewHandler(next, "http", otelhttp.WithTracerProvider(a.provider), otelhttp.WithPropagators(propagation.TraceContext{}))
 }
 
-// Close shutdowns tracer provider gracefully
+// Close shutdowns tracer provider gracefully.
 func (a App) Close() {
 	if a.provider == nil {
 		return
@@ -139,7 +139,7 @@ func (a App) Close() {
 	}
 }
 
-// StartSpan starts a span from given context and tracer, if not nil
+// StartSpan starts a span from given context and tracer, if not nil.
 func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.SpanStartOption) (context.Context, func(options ...tr.SpanEndOption)) {
 	if tracer == nil {
 		return ctx, noopFunc
@@ -151,7 +151,7 @@ func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.Sp
 	return ctx, span.End
 }
 
-// AddTraceToLogger add span ID to the given logger
+// AddTraceToLogger add span ID to the given logger.
 func AddTraceToLogger(span tr.Span, logger logger.Provider) logger.Provider {
 	if model.IsNil(span) || !span.IsRecording() {
 		return logger
@@ -170,7 +170,7 @@ func AddTraceToLogger(span tr.Span, logger logger.Provider) logger.Provider {
 	return logger
 }
 
-// AddTracerToClient add tracer to a given http client
+// AddTracerToClient add tracer to a given http client.
 func AddTracerToClient(httpClient *http.Client, tracerProvider tr.TracerProvider) *http.Client {
 	if model.IsNil(tracerProvider) {
 		return httpClient

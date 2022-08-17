@@ -23,17 +23,17 @@ type key struct{}
 var ctxTxKey key
 
 var (
-	// ErrNoHost occurs when host is not provided in configuration
+	// ErrNoHost occurs when host is not provided in configuration.
 	ErrNoHost = errors.New("no host for database connection")
 
-	// ErrNoTransaction occurs when no transaction is provided but needed
+	// ErrNoTransaction occurs when no transaction is provided but needed.
 	ErrNoTransaction = errors.New("no transaction in context, please wrap with DoAtomic()")
 
-	// SQLTimeout when running queries
+	// SQLTimeout when running queries.
 	SQLTimeout = time.Second * 5
 )
 
-// Database interface needed for working
+// Database interface needed for working.
 type Database interface {
 	Ping(context.Context) error
 	Close()
@@ -93,12 +93,12 @@ func New(config Config, tracer trace.Tracer) (App, error) {
 	return instance, instance.Ping()
 }
 
-// Enabled check if sql.DB is provided
+// Enabled check if sql.DB is provided.
 func (a App) Enabled() bool {
 	return a.db != nil
 }
 
-// Ping indicate if database is ready or not
+// Ping indicate if database is ready or not.
 func (a App) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
 	defer cancel()
@@ -106,12 +106,12 @@ func (a App) Ping() error {
 	return a.db.Ping(ctx)
 }
 
-// Close the database connection
+// Close the database connection.
 func (a App) Close() {
 	a.db.Close()
 }
 
-// StoreTx stores given transaction in context
+// StoreTx stores given transaction in context.
 func StoreTx(ctx context.Context, tx pgx.Tx) context.Context {
 	return context.WithValue(ctx, ctxTxKey, tx)
 }
@@ -129,7 +129,7 @@ func readTx(ctx context.Context) pgx.Tx {
 	return nil
 }
 
-// DoAtomic execute given action in a transactionnal context
+// DoAtomic execute given action in a transactionnal context.
 func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) error {
 	if action == nil {
 		return errors.New("no action provided")
@@ -160,7 +160,7 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) e
 	return err
 }
 
-// List execute multiple rows query
+// List execute multiple rows query.
 func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) (err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list")
 	defer end()
@@ -189,7 +189,7 @@ func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query strin
 	return
 }
 
-// Get execute single row query
+// Get execute single row query.
 func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) error {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "get")
 	defer end()
@@ -204,7 +204,7 @@ func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string,
 	return scanner(a.db.QueryRow(ctx, query, args...))
 }
 
-// Create execute query with a RETURNING id
+// Create execute query with a RETURNING id.
 func (a App) Create(ctx context.Context, query string, args ...any) (uint64, error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "create")
 	defer end()
@@ -222,14 +222,14 @@ func (a App) Create(ctx context.Context, query string, args ...any) (uint64, err
 	return newID, tx.QueryRow(ctx, query, args...).Scan(&newID)
 }
 
-// Exec execute query with specified timeout, disregarding result
+// Exec execute query with specified timeout, disregarding result.
 func (a App) Exec(ctx context.Context, query string, args ...any) error {
 	_, err := a.exec(ctx, query, args...)
 
 	return err
 }
 
-// One execute query with specified timeout, for exactly one row
+// One execute query with specified timeout, for exactly one row.
 func (a App) One(ctx context.Context, query string, args ...any) error {
 	output, err := a.exec(ctx, query, args...)
 	if err != nil {
@@ -278,7 +278,7 @@ func (bc *feeder) Err() error {
 	return bc.err
 }
 
-// Bulk load data into schema and table by batch
+// Bulk load data into schema and table by batch.
 func (a App) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) error {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "bulk")
 	defer end()

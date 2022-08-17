@@ -13,14 +13,14 @@ import (
 
 //go:generate mockgen -source cache.go -destination ../mocks/cache.go -package mocks -mock_names RedisClient=RedisClient
 
-// RedisClient for caching response
+// RedisClient for caching response.
 type RedisClient interface {
 	Load(ctx context.Context, key string) (string, error)
 	Store(ctx context.Context, key string, value any, duration time.Duration) error
 	Delete(ctx context.Context, keys ...string) error
 }
 
-// Retrieve loads an item from the cache for given key or retrieve it (and store it in cache after)
+// Retrieve loads an item from the cache for given key or retrieve it (and store it in cache after).
 func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, onMiss func(context.Context) (T, error), duration time.Duration) (item T, err error) {
 	content, err := redisClient.Load(ctx, key)
 	if err != nil {
@@ -51,7 +51,7 @@ func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, o
 	return item, err
 }
 
-// EvictOnSuccess evict the given key if there is no error
+// EvictOnSuccess evict the given key if there is no error.
 func EvictOnSuccess(ctx context.Context, redisClient RedisClient, key string, err error) error {
 	if err != nil {
 		return err

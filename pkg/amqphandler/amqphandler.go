@@ -51,7 +51,7 @@ func New(config Config, amqpClient *amqpclient.Client, handler func(amqp.Deliver
 	return NewFromString(amqpClient, handler, strings.TrimSpace(*config.exchange), strings.TrimSpace(*config.queue), strings.TrimSpace(*config.routingKey), *config.retryInterval, *config.exclusive, *config.maxRetry)
 }
 
-// NewFromString creates new App from string configuration
+// NewFromString creates new App from string configuration.
 func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) error, exchange, queue, routingKey string, retryInterval time.Duration, exclusive bool, maxRetry uint) (App, error) {
 	app := App{
 		amqpClient:    amqpClient,
@@ -83,12 +83,12 @@ func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) er
 	return app, nil
 }
 
-// Done returns the chan used for synchronization
+// Done returns the chan used for synchronization.
 func (a App) Done() <-chan struct{} {
 	return a.done
 }
 
-// Start amqp handler
+// Start amqp handler.
 func (a App) Start(done <-chan struct{}) {
 	defer close(a.done)
 

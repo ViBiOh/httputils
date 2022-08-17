@@ -9,7 +9,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
-// Middleware for request. Should be use with net/http
+// Middleware for request. Should be use with net/http.
 func Middleware(next http.Handler) http.Handler {
 	if next == nil {
 		return next
@@ -29,7 +29,7 @@ func Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// LoggerRecover catch panic and output it in log
+// LoggerRecover catch panic and output it in log.
 func LoggerRecover() {
 	if r := recover(); r != nil {
 		output := make([]byte, 1024)
