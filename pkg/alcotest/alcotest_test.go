@@ -46,8 +46,7 @@ func TestFlags(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -111,8 +110,7 @@ func TestGetStatusCode(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			result, err := GetStatusCode(testCase.url, testCase.userAgent)
@@ -168,8 +166,7 @@ func TestDo(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			failed := false
@@ -228,8 +225,7 @@ func TestDoAndExit(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			result := -1

@@ -36,8 +36,7 @@ func TestCompute(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()

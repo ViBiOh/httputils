@@ -54,8 +54,7 @@ func TestString(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -85,8 +84,7 @@ func TestIsZero(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -148,8 +146,7 @@ func TestPath(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -355,8 +352,7 @@ func TestSend(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			resp, err := testCase.request.Send(testCase.ctx, testCase.payload)
@@ -415,8 +411,7 @@ func TestForm(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			resp, err := testCase.request.Form(testCase.ctx, testCase.payload)
@@ -524,8 +519,7 @@ func TestMultipart(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			resp, err := testCase.request.Multipart(testCase.ctx, testCase.feed)
@@ -590,8 +584,7 @@ func TestJSON(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			resp, err := testCase.request.JSON(testCase.ctx, testCase.payload)
@@ -656,8 +649,7 @@ func TestStreamJSON(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			resp, err := testCase.request.StreamJSON(testCase.ctx, testCase.payload)
@@ -699,8 +691,7 @@ func TestDiscardBody(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()

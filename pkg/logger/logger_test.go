@@ -37,8 +37,7 @@ func TestFlags(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -115,8 +114,7 @@ func TestStart(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		writer := bytes.NewBuffer(nil)
 		testCase.instance.outWriter = writer
@@ -171,8 +169,7 @@ func TestClose(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -229,8 +226,7 @@ func TestOutput(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -375,8 +371,7 @@ func TestJSON(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -498,8 +493,7 @@ func TestText(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()

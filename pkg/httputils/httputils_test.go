@@ -49,8 +49,7 @@ func TestHandler(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -97,8 +96,7 @@ func TestVersionHandler(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Setenv("VERSION", testCase.environment)

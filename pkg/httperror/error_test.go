@@ -27,8 +27,7 @@ func TestBadRequest(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -63,8 +62,7 @@ func TestUnauthorized(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -97,8 +95,7 @@ func TestForbidden(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -131,8 +128,7 @@ func TestNotFound(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -167,8 +163,7 @@ func TestInternalServerError(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -241,8 +236,7 @@ func TestHandleError(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -335,8 +329,7 @@ func TestErrorStatus(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -416,8 +409,7 @@ func TestFromStatus(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention := intention
-		testCase := testCase
+		intention, testCase := intention, testCase
 
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
@@ -436,6 +428,63 @@ func TestFromStatus(t *testing.T) {
 
 			if failed {
 				t.Errorf("FromStatus() = `%s`, want `%s`", gotErr, testCase.wantErr)
+			}
+		})
+	}
+}
+
+func TestFromResponse(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		resp *http.Response
+		err  error
+	}
+
+	cases := map[string]struct {
+		args    args
+		want    bool
+		wantErr error
+	}{
+		"empty": {
+			args{
+				err: errors.New("failure"),
+			},
+			false,
+			errors.New("failure"),
+		},
+		"valid": {
+			args{
+				resp: &http.Response{
+					StatusCode: http.StatusMethodNotAllowed,
+				},
+				err: errors.New("failure"),
+			},
+			false,
+			errors.New("failure: method not allowed"),
+		},
+	}
+
+	for intention, testCase := range cases {
+		intention, testCase := intention, testCase
+
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			gotErr := FromResponse(testCase.args.resp, testCase.args.err)
+
+			failed := false
+
+			switch {
+			case
+				testCase.wantErr == nil && gotErr != nil,
+				testCase.wantErr != nil && gotErr == nil,
+				testCase.wantErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()):
+				failed = true
+			}
+
+			if failed {
+				t.Errorf("FromResponse() = `%s`, want `%s`", gotErr, testCase.wantErr)
 			}
 		})
 	}

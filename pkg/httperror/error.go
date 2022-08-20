@@ -123,3 +123,12 @@ func FromStatus(status int, err error) error {
 		return err
 	}
 }
+
+// FromResponse wraps model's error according to given response
+func FromResponse(resp *http.Response, err error) error {
+	if resp == nil {
+		return err
+	}
+
+	return FromStatus(resp.StatusCode, err)
+}
