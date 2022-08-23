@@ -81,12 +81,12 @@ func main() {
 		logger.Info("content=`%s`", content)
 	})
 
-	amqpClient, err := amqp.New(amqpConfig, prometheusApp.Registerer())
+	amqpClient, err := amqp.New(amqpConfig, prometheusApp.Registerer(), tracerApp.GetTracer("amqp"))
 	if err != nil {
 		logger.Error("get amqp client: %s", err)
 	}
 
-	amqpApp, err := amqphandler.New(amqHandlerConfig, amqpClient, amqpHandler)
+	amqpApp, err := amqphandler.New(amqHandlerConfig, amqpClient, tracerApp.GetTracer("amqp_handler"), amqpHandler)
 	logger.Fatal(err)
 
 	rendererApp, err := renderer.New(rendererConfig, content, nil, tracerApp.GetTracer("renderer"))
@@ -115,7 +115,7 @@ func main() {
 		return renderer.NewPage("public", http.StatusOK, nil), nil
 	}
 
-	go amqpApp.Start(healthApp.Done())
+	go amqpApp.Start(context.Background(), healthApp.Done())
 	go promServer.Start("prometheus", healthApp.End(), prometheusApp.Handler())
 	go appServer.Start("http", healthApp.End(), httputils.Handler(rendererApp.Handler(templateFunc), healthApp, recoverer.Middleware, prometheusApp.Middleware, tracerApp.Middleware, owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware))
 
@@ -123,7 +123,7 @@ func main() {
 	server.GracefulWait(appServer.Done(), promServer.Done(), amqpApp.Done())
 }
 
-func amqpHandler(message amqplib.Delivery) error {
+func amqpHandler(_ context.Context, message amqplib.Delivery) error {
 	var payload map[string]any
 	if err := json.Unmarshal(message.Body, &payload); err != nil {
 		return fmt.Errorf("parse payload: %w", err)

@@ -13,6 +13,8 @@ import (
 
 //go:generate mockgen -source cache.go -destination ../mocks/cache.go -package mocks -mock_names RedisClient=RedisClient
 
+var CacheTimeout = time.Millisecond * 300
+
 // RedisClient for caching response.
 type RedisClient interface {
 	Load(ctx context.Context, key string) (string, error)
@@ -22,12 +24,15 @@ type RedisClient interface {
 
 // Retrieve loads an item from the cache for given key or retrieve it (and store it in cache after).
 func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, onMiss func(context.Context) (T, error), duration time.Duration) (item T, err error) {
-	content, err := redisClient.Load(ctx, key)
+	loadCtx, cancel := context.WithTimeout(context.Background(), CacheTimeout)
+	defer cancel()
+
+	content, err := redisClient.Load(loadCtx, key)
 	if err != nil {
-		loggerWithTrace(ctx).Error("read from cache: %s", err)
+		loggerWithTrace(loadCtx, key).Error("read from cache: %s", err)
 	} else if len(content) != 0 {
 		if err = json.Unmarshal([]byte(content), &item); err != nil {
-			loggerWithTrace(ctx).Error("unmarshal from cache: %s", err)
+			loggerWithTrace(loadCtx, key).Error("unmarshal from cache: %s", err)
 		} else {
 			return item, nil
 		}
@@ -41,9 +46,9 @@ func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, o
 			defer cancel()
 
 			if payload, err := json.Marshal(item); err != nil {
-				loggerWithTrace(ctx).Error("marshal to cache: %s", err)
+				loggerWithTrace(ctx, key).Error("marshal to cache: %s", err)
 			} else if err = redisClient.Store(storeCtx, key, payload, duration); err != nil {
-				loggerWithTrace(ctx).Error("write to cache: %s", err)
+				loggerWithTrace(ctx, key).Error("write to cache: %s", err)
 			}
 		}()
 	}
@@ -64,6 +69,6 @@ func EvictOnSuccess(ctx context.Context, redisClient RedisClient, key string, er
 	return nil
 }
 
-func loggerWithTrace(ctx context.Context) logger.Provider {
-	return tracer.AddTraceToLogger(trace.SpanFromContext(ctx), logger.GetGlobal())
+func loggerWithTrace(ctx context.Context, key string) logger.Provider {
+	return tracer.AddTraceToLogger(trace.SpanFromContext(ctx), logger.GetGlobal()).WithField("key", key)
 }

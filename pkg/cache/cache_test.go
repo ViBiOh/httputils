@@ -92,6 +92,20 @@ func TestRetrieve(t *testing.T) {
 			},
 			nil,
 		},
+		"slow cache": {
+			args{
+				key: "8000",
+				onMiss: func(_ context.Context) (cacheableItem, error) {
+					return cacheableItem{
+						ID: 9000,
+					}, nil
+				},
+			},
+			cacheableItem{
+				ID: 9000,
+			},
+			nil,
+		},
 	}
 
 	for intention, testCase := range cases {
@@ -117,9 +131,19 @@ func TestRetrieve(t *testing.T) {
 			case "store error":
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return("", nil)
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("store error"))
+			case "slow cache":
+				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, key string) (string, error) {
+					select {
+					case <-time.NewTimer(time.Second).C:
+						return `{"id":8000}`, nil
+					case <-ctx.Done():
+						return "", ctx.Err()
+					}
+				})
+				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			}
 
-			got, gotErr := Retrieve(context.TODO(), mockRedisClient, testCase.args.key, testCase.args.onMiss, testCase.args.duration)
+			got, gotErr := Retrieve(context.Background(), mockRedisClient, testCase.args.key, testCase.args.onMiss, testCase.args.duration)
 
 			failed := false
 

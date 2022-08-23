@@ -14,6 +14,7 @@ import (
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/streadway/amqp"
+	"go.opentelemetry.io/otel/trace"
 )
 
 //go:generate mockgen -source amqp.go -destination ../mocks/amqp.go -package mocks -mock_names Connection=AMQPConnection
@@ -34,6 +35,7 @@ type Connection interface {
 
 // Client wraps all object required for AMQP usage.
 type Client struct {
+	tracer          trace.Tracer
 	channel         *amqp.Channel
 	connection      Connection
 	listeners       map[string]*listener
@@ -59,17 +61,18 @@ func Flags(fs *flag.FlagSet, prefix string) Config {
 }
 
 // New inits AMQP connection from Config.
-func New(config Config, prometheusRegister prometheus.Registerer) (*Client, error) {
-	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, prometheusRegister)
+func New(config Config, prometheusRegister prometheus.Registerer, tracer trace.Tracer) (*Client, error) {
+	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, prometheusRegister, tracer)
 }
 
 // NewFromURI inits AMQP connection from given URI.
-func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Registerer) (*Client, error) {
+func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Registerer, tracer trace.Tracer) (*Client, error) {
 	if len(uri) == 0 {
 		return nil, ErrNoConfig
 	}
 
 	client := &Client{
+		tracer:          tracer,
 		uri:             uri,
 		prefetch:        prefetch,
 		listeners:       make(map[string]*listener),

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/streadway/amqp"
 )
 
@@ -61,6 +62,9 @@ func (c *Client) shouldCreateExclusiveQueue(name string) (bool, int) {
 
 // Exclusive get an exclusive lock from given queue during duration.
 func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
+	ctx, end := tracer.StartSpan(ctx, c.tracer, "exclusive")
+	defer end()
+
 	var channel *amqp.Channel
 	channel, err = c.createChannel()
 	if err != nil {

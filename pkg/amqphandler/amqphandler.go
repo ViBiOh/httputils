@@ -1,6 +1,7 @@
 package amqphandler
 
 import (
+	"context"
 	"crypto/rand"
 	"errors"
 	"flag"
@@ -11,13 +12,18 @@ import (
 	"github.com/ViBiOh/flags"
 	amqpclient "github.com/ViBiOh/httputils/v4/pkg/amqp"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/streadway/amqp"
+	"go.opentelemetry.io/otel/trace"
 )
+
+type Handler func(context.Context, amqp.Delivery) error
 
 type App struct {
 	amqpClient    *amqpclient.Client
+	tracer        trace.Tracer
 	done          chan struct{}
-	handler       func(amqp.Delivery) error
+	handler       Handler
 	exchange      string
 	delayExchange string
 	queue         string
@@ -47,14 +53,15 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, amqpClient *amqpclient.Client, handler func(amqp.Delivery) error) (App, error) {
-	return NewFromString(amqpClient, handler, strings.TrimSpace(*config.exchange), strings.TrimSpace(*config.queue), strings.TrimSpace(*config.routingKey), *config.retryInterval, *config.exclusive, *config.maxRetry)
+func New(config Config, amqpClient *amqpclient.Client, tracer trace.Tracer, handler Handler) (App, error) {
+	return NewFromString(amqpClient, tracer, handler, strings.TrimSpace(*config.exchange), strings.TrimSpace(*config.queue), strings.TrimSpace(*config.routingKey), *config.retryInterval, *config.exclusive, *config.maxRetry)
 }
 
 // NewFromString creates new App from string configuration.
-func NewFromString(amqpClient *amqpclient.Client, handler func(amqp.Delivery) error, exchange, queue, routingKey string, retryInterval time.Duration, exclusive bool, maxRetry uint) (App, error) {
+func NewFromString(amqpClient *amqpclient.Client, tracer trace.Tracer, handler Handler, exchange, queue, routingKey string, retryInterval time.Duration, exclusive bool, maxRetry uint) (App, error) {
 	app := App{
 		amqpClient:    amqpClient,
+		tracer:        tracer,
 		exchange:      exchange,
 		queue:         queue,
 		exclusive:     exclusive,
@@ -89,7 +96,7 @@ func (a App) Done() <-chan struct{} {
 }
 
 // Start amqp handler.
-func (a App) Start(done <-chan struct{}) {
+func (a App) Start(ctx context.Context, done <-chan struct{}) {
 	defer close(a.done)
 
 	if a.amqpClient == nil {
@@ -124,12 +131,15 @@ func (a App) Start(done <-chan struct{}) {
 	defer log.Info("End listening messages")
 
 	for message := range messages {
-		a.handleMessage(log, message)
+		a.handleMessage(ctx, log, message)
 	}
 }
 
-func (a App) handleMessage(log logger.Provider, message amqp.Delivery) {
-	err := a.handler(message)
+func (a App) handleMessage(ctx context.Context, log logger.Provider, message amqp.Delivery) {
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "handle")
+	defer end()
+
+	err := a.handler(ctx, message)
 
 	if err == nil {
 		if err = message.Ack(false); err != nil {
