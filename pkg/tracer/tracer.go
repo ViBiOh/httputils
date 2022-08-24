@@ -19,7 +19,9 @@ import (
 	tr "go.opentelemetry.io/otel/trace"
 )
 
-var noopFunc = func(...tr.SpanEndOption) {}
+var noopFunc = func(...tr.SpanEndOption) {
+	// Nothing to do
+}
 
 type App struct {
 	provider *trace.TracerProvider

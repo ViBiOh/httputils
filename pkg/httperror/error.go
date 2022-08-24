@@ -108,17 +108,17 @@ func ErrorStatus(err error) (status int, message string) {
 func FromStatus(status int, err error) error {
 	switch status {
 	case http.StatusBadRequest:
-		return fmt.Errorf("%s: %w", err, model.ErrInvalid)
+		return wrapError(err, model.ErrInvalid)
 	case http.StatusUnauthorized:
-		return fmt.Errorf("%s: %w", err, model.ErrUnauthorized)
+		return wrapError(err, model.ErrUnauthorized)
 	case http.StatusForbidden:
-		return fmt.Errorf("%s: %w", err, model.ErrForbidden)
+		return wrapError(err, model.ErrForbidden)
 	case http.StatusNotFound:
-		return fmt.Errorf("%s: %w", err, model.ErrNotFound)
+		return wrapError(err, model.ErrNotFound)
 	case http.StatusMethodNotAllowed:
-		return fmt.Errorf("%s: %w", err, model.ErrMethodNotAllowed)
+		return wrapError(err, model.ErrMethodNotAllowed)
 	case http.StatusInternalServerError:
-		return fmt.Errorf("%s: %w", err, model.ErrInternalError)
+		return wrapError(err, model.ErrInternalError)
 	default:
 		return err
 	}
@@ -131,4 +131,8 @@ func FromResponse(resp *http.Response, err error) error {
 	}
 
 	return FromStatus(resp.StatusCode, err)
+}
+
+func wrapError(err, target error) error {
+	return fmt.Errorf("%s: %w", err, target)
 }

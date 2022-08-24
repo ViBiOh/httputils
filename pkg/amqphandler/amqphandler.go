@@ -54,22 +54,17 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 func New(config Config, amqpClient *amqpclient.Client, tracer trace.Tracer, handler Handler) (App, error) {
-	return NewFromString(amqpClient, tracer, handler, strings.TrimSpace(*config.exchange), strings.TrimSpace(*config.queue), strings.TrimSpace(*config.routingKey), *config.retryInterval, *config.exclusive, *config.maxRetry)
-}
-
-// NewFromString creates new App from string configuration.
-func NewFromString(amqpClient *amqpclient.Client, tracer trace.Tracer, handler Handler, exchange, queue, routingKey string, retryInterval time.Duration, exclusive bool, maxRetry uint) (App, error) {
 	app := App{
 		amqpClient:    amqpClient,
 		tracer:        tracer,
-		exchange:      exchange,
-		queue:         queue,
-		exclusive:     exclusive,
-		routingKey:    routingKey,
-		retryInterval: retryInterval,
+		exchange:      strings.TrimSpace(*config.exchange),
+		queue:         strings.TrimSpace(*config.queue),
+		exclusive:     *config.exclusive,
+		routingKey:    strings.TrimSpace(*config.routingKey),
+		retryInterval: *config.retryInterval,
 		done:          make(chan struct{}),
 		handler:       handler,
-		maxRetry:      int64(maxRetry),
+		maxRetry:      int64(*config.maxRetry),
 	}
 
 	if app.amqpClient == nil {
@@ -77,12 +72,12 @@ func NewFromString(amqpClient *amqpclient.Client, tracer trace.Tracer, handler H
 	}
 
 	if app.retryInterval > 0 && app.maxRetry > 0 {
-		if len(exchange) == 0 {
+		if len(app.exchange) == 0 {
 			return app, errors.New("no exchange name for delaying retries")
 		}
 
 		var err error
-		if app.delayExchange, err = app.amqpClient.DelayedExchange(queue, exchange, routingKey, app.retryInterval); err != nil {
+		if app.delayExchange, err = app.amqpClient.DelayedExchange(app.queue, app.exchange, app.routingKey, app.retryInterval); err != nil {
 			return app, fmt.Errorf("configure dead-letter exchange: %w", err)
 		}
 	}
