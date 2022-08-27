@@ -14,6 +14,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/go-redis/redis/v8"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -85,7 +86,7 @@ func (a App) Store(ctx context.Context, key string, value any, duration time.Dur
 		return nil
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "store")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithAttributes(attribute.String("key", key)))
 	defer end()
 
 	err := a.redisClient.SetEX(ctx, key, value, duration).Err()
@@ -105,7 +106,7 @@ func (a App) Load(ctx context.Context, key string) (string, error) {
 		return "", nil
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "load")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "load", trace.WithAttributes(attribute.String("key", key)))
 	defer end()
 
 	content, err := a.redisClient.Get(ctx, key).Result()
@@ -133,7 +134,7 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 		return nil
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete", trace.WithAttributes(attribute.StringSlice("keys", keys)))
 	defer end()
 
 	pipeline := a.redisClient.Pipeline()
@@ -168,7 +169,7 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 		return false, fmt.Errorf("redis not enabled")
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "exclusive")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "exclusive", trace.WithAttributes(attribute.String("name", name)))
 	defer end()
 
 	a.increase("exclusive")
