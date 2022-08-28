@@ -24,6 +24,10 @@ type RedisClient interface {
 
 // Retrieve loads an item from the cache for given key or retrieve it (and store it in cache after).
 func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, onMiss func(context.Context) (T, error), duration time.Duration) (item T, err error) {
+	if redisClient == nil {
+		return onMiss(ctx)
+	}
+
 	loadCtx, cancel := context.WithTimeout(context.Background(), CacheTimeout)
 	defer cancel()
 
@@ -58,7 +62,7 @@ func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, o
 
 // EvictOnSuccess evict the given key if there is no error.
 func EvictOnSuccess(ctx context.Context, redisClient RedisClient, key string, err error) error {
-	if err != nil {
+	if err != nil || redisClient == nil {
 		return err
 	}
 
