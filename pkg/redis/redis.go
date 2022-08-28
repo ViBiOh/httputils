@@ -22,7 +22,6 @@ const (
 	metricsNamespace = "redis"
 )
 
-// ErrNoSubscriber occurs when a published message is not received by any subscriber.
 var ErrNoSubscriber = errors.New("no subscriber for channel")
 
 type App struct {
@@ -71,7 +70,6 @@ func (a App) enabled() bool {
 	return a.redisClient != nil
 }
 
-// Ping check redis availability.
 func (a App) Ping() error {
 	if !a.enabled() {
 		return nil
@@ -80,7 +78,6 @@ func (a App) Ping() error {
 	return a.redisClient.Ping(context.Background()).Err()
 }
 
-// Store give key/val with duration.
 func (a App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
 	if !a.enabled() {
 		return nil
@@ -100,7 +97,6 @@ func (a App) Store(ctx context.Context, key string, value any, duration time.Dur
 	return err
 }
 
-// Load given key.
 func (a App) Load(ctx context.Context, key string) (string, error) {
 	if !a.enabled() {
 		return "", nil
@@ -128,7 +124,6 @@ func (a App) Load(ctx context.Context, key string) (string, error) {
 	return "", nil
 }
 
-// Delete given keys.
 func (a App) Delete(ctx context.Context, keys ...string) error {
 	if !a.enabled() {
 		return nil
@@ -163,7 +158,35 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 	return nil
 }
 
-// Exclusive get an exclusive lock for given name during duration.
+func (a App) Scan(ctx context.Context, pattern string, pageSize int64) (output []string, err error) {
+	if !a.enabled() {
+		return
+	}
+
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "scan", trace.WithAttributes(attribute.String("pattern", pattern)))
+	defer end()
+
+	cursor := uint64(0)
+
+	for {
+		var keys []string
+		keys, cursor, err = a.redisClient.Scan(ctx, cursor, pattern, pageSize).Result()
+		if err != nil {
+			a.increase("error")
+			err = fmt.Errorf("exec scan: %w", err)
+			return
+		}
+
+		output = append(output, keys...)
+
+		if cursor == 0 {
+			break
+		}
+	}
+
+	return
+}
+
 func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
 	if !a.enabled() {
 		return false, fmt.Errorf("redis not enabled")
