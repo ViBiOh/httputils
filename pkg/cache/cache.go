@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -24,7 +25,7 @@ type RedisClient interface {
 
 // Retrieve loads an item from the cache for given key or retrieve it (and store it in cache after).
 func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, onMiss func(context.Context) (T, error), duration time.Duration) (item T, err error) {
-	if redisClient == nil {
+	if model.IsNil(redisClient) {
 		return onMiss(ctx)
 	}
 
@@ -62,7 +63,7 @@ func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, o
 
 // EvictOnSuccess evict the given key if there is no error.
 func EvictOnSuccess(ctx context.Context, redisClient RedisClient, key string, err error) error {
-	if err != nil || redisClient == nil {
+	if err != nil || model.IsNil(redisClient) {
 		return err
 	}
 
