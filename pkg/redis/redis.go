@@ -124,6 +124,32 @@ func (a App) Load(ctx context.Context, key string) (string, error) {
 	return "", nil
 }
 
+func (a App) BatchLoad(ctx context.Context, keys ...string) (map[string]string, error) {
+	if !a.enabled() {
+		return nil, nil
+	}
+
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "batch_load")
+	defer end()
+
+	content, err := a.redisClient.MGet(ctx, keys...).Result()
+	if err != nil {
+		a.increase("error")
+
+		return nil, fmt.Errorf("batch load: %w", err)
+	}
+
+	a.increase("batch_load")
+	output := make(map[string]string, len(content))
+
+	for index, raw := range content {
+		value, _ := raw.(string)
+		output[keys[index]] = value
+	}
+
+	return output, nil
+}
+
 func (a App) Delete(ctx context.Context, keys ...string) error {
 	if !a.enabled() {
 		return nil
