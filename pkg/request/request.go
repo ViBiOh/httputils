@@ -146,7 +146,11 @@ func (r Request) URL(url string) Request {
 }
 
 // Path appends given path to the current URL.
-func (r Request) Path(path string) Request {
+func (r Request) Path(path string, a ...any) Request {
+	if len(a) > 0 {
+		path = fmt.Sprintf(path, a...)
+	}
+
 	if len(path) == 0 {
 		return r
 	}

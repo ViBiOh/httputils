@@ -101,6 +101,7 @@ func TestPath(t *testing.T) {
 
 	type args struct {
 		path string
+		args []any
 	}
 
 	cases := map[string]struct {
@@ -143,6 +144,14 @@ func TestPath(t *testing.T) {
 			},
 			Delete("http://localhost/hello"),
 		},
+		"sprintf slash": {
+			Delete("http://localhost/"),
+			args{
+				path: "/hello/%s",
+				args: []any{"world"},
+			},
+			Delete("http://localhost/hello/world"),
+		},
 	}
 
 	for intention, testCase := range cases {
@@ -151,7 +160,7 @@ func TestPath(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
-			if got := testCase.instance.Path(testCase.args.path); !reflect.DeepEqual(got, testCase.want) {
+			if got := testCase.instance.Path(testCase.args.path, testCase.args.args...); !reflect.DeepEqual(got, testCase.want) {
 				t.Errorf("Path() = %#v, want %#v", got, testCase.want)
 			}
 		})
