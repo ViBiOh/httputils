@@ -81,8 +81,6 @@ func main() {
 		logger.Info("content=`%s`", content)
 	})
 
-	fmt.Println(redisApp.BatchLoad(context.Background(), "fibr:ceca4a33:tzhumbnail:", "fibr:ceca4a33:thumbnail:"))
-
 	amqpClient, err := amqp.New(amqpConfig, prometheusApp.Registerer(), tracerApp.GetTracer("amqp"))
 	if err != nil {
 		logger.Error("get amqp client: %s", err)
