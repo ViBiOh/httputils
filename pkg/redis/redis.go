@@ -97,15 +97,15 @@ func (a App) Store(ctx context.Context, key string, value any, duration time.Dur
 	return err
 }
 
-func (a App) Load(ctx context.Context, key string) (string, error) {
+func (a App) Load(ctx context.Context, key string) ([]byte, error) {
 	if !a.enabled() {
-		return "", nil
+		return nil, nil
 	}
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "load", trace.WithAttributes(attribute.String("key", key)))
 	defer end()
 
-	content, err := a.redisClient.Get(ctx, key).Result()
+	content, err := a.redisClient.Get(ctx, key).Bytes()
 
 	if err == nil {
 		a.increase("load")
@@ -116,12 +116,12 @@ func (a App) Load(ctx context.Context, key string) (string, error) {
 	if err != redis.Nil {
 		a.increase("error")
 
-		return "", fmt.Errorf("load: %w", err)
+		return nil, fmt.Errorf("load: %w", err)
 	}
 
 	a.increase("miss")
 
-	return "", nil
+	return nil, nil
 }
 
 func (a App) BatchLoad(ctx context.Context, keys ...string) (map[string]string, error) {

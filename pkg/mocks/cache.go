@@ -55,10 +55,10 @@ func (mr *RedisClientMockRecorder) Delete(ctx interface{}, keys ...interface{}) 
 }
 
 // Load mocks base method.
-func (m *RedisClient) Load(ctx context.Context, key string) (string, error) {
+func (m *RedisClient) Load(ctx context.Context, key string) ([]byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Load", ctx, key)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

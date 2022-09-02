@@ -121,23 +121,23 @@ func TestRetrieve(t *testing.T) {
 
 			switch intention {
 			case "cache error":
-				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return("", errors.New("cache failed"))
+				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return(nil, errors.New("cache failed"))
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			case "cache unmarshal":
-				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return("{", nil)
+				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return([]byte("{"), nil)
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			case "cached":
-				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return(`{"id":8000}`, nil)
+				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return([]byte(`{"id":8000}`), nil)
 			case "store error":
-				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return("", nil)
+				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return(nil, nil)
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("store error"))
 			case "slow cache":
-				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, key string) (string, error) {
+				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, key string) ([]byte, error) {
 					select {
 					case <-time.NewTimer(time.Second).C:
-						return `{"id":8000}`, nil
+						return []byte(`{"id":8000}`), nil
 					case <-ctx.Done():
-						return "", ctx.Err()
+						return nil, ctx.Err()
 					}
 				})
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
@@ -215,7 +215,7 @@ func TestRetrieveError(t *testing.T) {
 
 			switch intention {
 			case "marshal error":
-				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return("", nil)
+				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return(nil, nil)
 			}
 
 			got, gotErr := Retrieve(context.TODO(), mockRedisClient, testCase.args.key, testCase.args.onMiss, testCase.args.duration)

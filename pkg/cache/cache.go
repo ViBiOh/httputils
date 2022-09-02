@@ -18,7 +18,7 @@ var CacheTimeout = time.Millisecond * 300
 
 // RedisClient for caching response.
 type RedisClient interface {
-	Load(ctx context.Context, key string) (string, error)
+	Load(ctx context.Context, key string) ([]byte, error)
 	Store(ctx context.Context, key string, value any, duration time.Duration) error
 	Delete(ctx context.Context, keys ...string) error
 }
@@ -36,7 +36,7 @@ func Retrieve[T any](ctx context.Context, redisClient RedisClient, key string, o
 	if err != nil {
 		loggerWithTrace(loadCtx, key).Error("read from cache: %s", err)
 	} else if len(content) != 0 {
-		if err = json.Unmarshal([]byte(content), &item); err != nil {
+		if err = json.Unmarshal(content, &item); err != nil {
 			loggerWithTrace(loadCtx, key).Error("unmarshal from cache: %s", err)
 		} else {
 			return item, nil
