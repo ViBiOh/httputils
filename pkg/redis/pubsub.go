@@ -9,7 +9,6 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-// Publish a message to a given channel.
 func (a App) Publish(ctx context.Context, channel string, value any) error {
 	if !a.enabled() {
 		return nil
@@ -32,7 +31,6 @@ func (a App) Publish(ctx context.Context, channel string, value any) error {
 	return nil
 }
 
-// Subscribe to a given channel.
 func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error) {
 	if !a.enabled() {
 		return nil, func(_ context.Context) error { return nil }
@@ -48,7 +46,6 @@ func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Messa
 	}
 }
 
-// SubscribeFor pubsub with unmarshal of given type.
 func SubscribeFor[T any](ctx context.Context, app App, channel string, handler func(T, error)) func(context.Context) error {
 	subscription, unsubscribe := app.Subscribe(ctx, channel)
 

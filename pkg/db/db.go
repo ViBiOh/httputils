@@ -100,6 +100,10 @@ func (a App) Enabled() bool {
 
 // Ping indicate if database is ready or not.
 func (a App) Ping() error {
+	if !a.Enabled() {
+		return nil
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
 	defer cancel()
 

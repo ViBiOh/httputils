@@ -143,7 +143,7 @@ func TestRetrieve(t *testing.T) {
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			}
 
-			got, gotErr := Retrieve(context.Background(), mockRedisClient, testCase.args.key, testCase.args.onMiss, testCase.args.duration)
+			got, gotErr := Retrieve(context.Background(), mockRedisClient, testCase.args.onMiss, testCase.args.duration, testCase.args.key)
 
 			failed := false
 
@@ -218,7 +218,7 @@ func TestRetrieveError(t *testing.T) {
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return(nil, nil)
 			}
 
-			got, gotErr := Retrieve(context.TODO(), mockRedisClient, testCase.args.key, testCase.args.onMiss, testCase.args.duration)
+			got, gotErr := Retrieve(context.TODO(), mockRedisClient, testCase.args.onMiss, testCase.args.duration, testCase.args.key)
 
 			failed := false
 

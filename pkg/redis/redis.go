@@ -75,7 +75,10 @@ func (a App) Ping() error {
 		return nil
 	}
 
-	return a.redisClient.Ping(context.Background()).Err()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	return a.redisClient.Ping(ctx).Err()
 }
 
 func (a App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
@@ -124,7 +127,7 @@ func (a App) Load(ctx context.Context, key string) ([]byte, error) {
 	return nil, nil
 }
 
-func (a App) BatchLoad(ctx context.Context, keys ...string) (map[string]string, error) {
+func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	if !a.enabled() {
 		return nil, nil
 	}
@@ -140,11 +143,11 @@ func (a App) BatchLoad(ctx context.Context, keys ...string) (map[string]string, 
 	}
 
 	a.increase("batch_load")
-	output := make(map[string]string, len(content))
+	output := make([]string, len(content))
 
 	for index, raw := range content {
 		value, _ := raw.(string)
-		output[keys[index]] = value
+		output[index] = value
 	}
 
 	return output, nil

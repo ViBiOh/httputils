@@ -69,16 +69,36 @@ func (mr *RedisClientMockRecorder) Load(ctx, key interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Load", reflect.TypeOf((*RedisClient)(nil).Load), ctx, key)
 }
 
-// Store mocks base method.
-func (m *RedisClient) Store(ctx context.Context, key string, value any, duration time.Duration) error {
+// LoadMany mocks base method.
+func (m *RedisClient) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Store", ctx, key, value, duration)
+	varargs := []interface{}{ctx}
+	for _, a := range keys {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "LoadMany", varargs...)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoadMany indicates an expected call of LoadMany.
+func (mr *RedisClientMockRecorder) LoadMany(ctx interface{}, keys ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx}, keys...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadMany", reflect.TypeOf((*RedisClient)(nil).LoadMany), varargs...)
+}
+
+// Store mocks base method.
+func (m *RedisClient) Store(ctx context.Context, key string, value any, ttl time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Store", ctx, key, value, ttl)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Store indicates an expected call of Store.
-func (mr *RedisClientMockRecorder) Store(ctx, key, value, duration interface{}) *gomock.Call {
+func (mr *RedisClientMockRecorder) Store(ctx, key, value, ttl interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*RedisClient)(nil).Store), ctx, key, value, duration)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*RedisClient)(nil).Store), ctx, key, value, ttl)
 }
