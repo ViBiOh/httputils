@@ -17,9 +17,10 @@ import (
 //go:generate mockgen -source cache.go -destination ../mocks/cache.go -package mocks -mock_names RedisClient=RedisClient
 
 var (
+	ErrIgnore = errors.New("ignore error")
+
 	syncActionTimeout  = time.Millisecond * 150
 	asyncActionTimeout = time.Second * 5
-	errEmptyContent    = errors.New("empty content")
 )
 
 type RedisClient interface {
@@ -30,19 +31,21 @@ type RedisClient interface {
 }
 
 type App[K any, V any] struct {
-	tracer trace.Tracer
-	client RedisClient
-	toKey  func(K) string
-	onMiss func(context.Context, K) (V, error)
-	ttl    time.Duration
+	tracer      trace.Tracer
+	client      RedisClient
+	toKey       func(K) string
+	onMiss      func(context.Context, K) (V, error)
+	ttl         time.Duration
+	concurrency uint64
 }
 
-func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), ttl time.Duration, tracer trace.Tracer) App[K, V] {
+func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), ttl time.Duration, concurrency uint64, tracer trace.Tracer) App[K, V] {
 	return App[K, V]{
-		client: client,
-		toKey:  toKey,
-		onMiss: onMiss,
-		ttl:    ttl,
+		client:      client,
+		toKey:       toKey,
+		onMiss:      onMiss,
+		ttl:         ttl,
+		concurrency: concurrency,
 	}
 }
 
@@ -60,16 +63,20 @@ func (a App[K, V]) Get(ctx context.Context, item K) (V, error) {
 	key := a.toKey(item)
 
 	content, err := a.client.Load(loadCtx, key)
-	if err != nil {
-		loggerWithTrace(loadCtx, key).Error("load from cache: %s", err)
-	} else if value, err := unmarshal[V](content); err != nil {
+	if len(content) > 0 {
+		var value V
+
+		err := json.Unmarshal(content, &value)
+		if err == nil {
+			return value, nil
+		}
+
 		loggerWithTrace(loadCtx, key).Error("unmarshal from cache: %s", err)
-	} else {
-		return value, nil
+	} else if err != nil {
+		loggerWithTrace(loadCtx, key).Error("load from cache: %s", err)
 	}
 
 	value, err := a.onMiss(ctx, item)
-
 	if err == nil {
 		go a.store(context.Background(), key, value)
 	}
@@ -77,7 +84,7 @@ func (a App[K, V]) Get(ctx context.Context, item K) (V, error) {
 	return value, err
 }
 
-func (a App[K, V]) List(ctx context.Context, concurrency uint64, items ...K) ([]V, error) {
+func (a App[K, V]) List(ctx context.Context, items ...K) ([]V, error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list")
 	defer end()
 
@@ -100,30 +107,36 @@ func (a App[K, V]) List(ctx context.Context, concurrency uint64, items ...K) ([]
 	}
 
 	valuesLen := len(values)
-	wg := concurrent.NewLimited(concurrency)
+	wg := concurrent.NewLimited(a.concurrency)
 
 	output := make([]V, len(items))
 	for index, item := range items {
 		index, item := index, item
 
 		wg.Go(func() {
-			if index < valuesLen {
-				if value, err := unmarshal[V]([]byte(values[index])); err != nil {
-					loggerWithTrace(ctx, a.toKey(item)).Error("unmarshal from cache: %s", err)
-				} else {
+			if index < valuesLen && len(values[index]) > 0 {
+				var value V
+
+				err := json.Unmarshal([]byte(values[index]), &value)
+				if err == nil {
 					output[index] = value
 					return
 				}
+
+				loggerWithTrace(ctx, a.toKey(item)).Error("unmarshal from cache: %s", err)
 			}
 
 			value, err := a.onMiss(ctx, item)
-			if err != nil {
-				loggerWithTrace(ctx, a.toKey(item)).Error("onMiss to cache: %s", err)
+			if err == nil {
+				output[index] = value
+				go a.store(context.Background(), a.toKey(item), value)
+
 				return
 			}
 
-			output[index] = value
-			go a.store(context.Background(), a.toKey(item), value)
+			if !errors.Is(err, ErrIgnore) {
+				loggerWithTrace(ctx, a.toKey(item)).Error("onMiss to cache: %s", err)
+			}
 		})
 	}
 
@@ -132,7 +145,7 @@ func (a App[K, V]) List(ctx context.Context, concurrency uint64, items ...K) ([]
 	return output, nil
 }
 
-func (a App[K, V]) EvictOnSuccess(ctx context.Context, key string, err error) error {
+func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "evict")
 	defer end()
 
@@ -140,20 +153,13 @@ func (a App[K, V]) EvictOnSuccess(ctx context.Context, key string, err error) er
 		return err
 	}
 
+	key := a.toKey(item)
+
 	if err = a.client.Delete(ctx, key); err != nil {
 		return fmt.Errorf("evict key `%s` from cache: %w", key, err)
 	}
 
 	return nil
-}
-
-func unmarshal[T any](content []byte) (item T, err error) {
-	if len(content) == 0 {
-		err = errEmptyContent
-		return
-	}
-
-	return item, json.Unmarshal(content, &item)
 }
 
 func (a App[k, V]) store(ctx context.Context, key string, item any) {

@@ -282,7 +282,7 @@ func TestEvictOnSuccess(t *testing.T) {
 			args{
 				err: nil,
 			},
-			errors.New("evict key `key` from cache"),
+			errors.New("evict key `8000` from cache"),
 		},
 	}
 
@@ -309,7 +309,7 @@ func TestEvictOnSuccess(t *testing.T) {
 				toKey:  strconv.Itoa,
 			}
 
-			gotErr := instance.EvictOnSuccess(context.Background(), "key", testCase.args.err)
+			gotErr := instance.EvictOnSuccess(context.Background(), 8000, testCase.args.err)
 
 			failed := false
 
