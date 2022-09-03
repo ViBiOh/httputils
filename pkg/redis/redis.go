@@ -132,7 +132,7 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 		return nil, nil
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "batch_load")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "load_many")
 	defer end()
 
 	content, err := a.redisClient.MGet(ctx, keys...).Result()

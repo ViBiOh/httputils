@@ -30,13 +30,14 @@ type RedisClient interface {
 }
 
 type App[K any, V any] struct {
+	tracer trace.Tracer
 	client RedisClient
 	toKey  func(K) string
 	onMiss func(context.Context, K) (V, error)
 	ttl    time.Duration
 }
 
-func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), ttl time.Duration) App[K, V] {
+func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), ttl time.Duration, tracer trace.Tracer) App[K, V] {
 	return App[K, V]{
 		client: client,
 		toKey:  toKey,
@@ -46,6 +47,9 @@ func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(con
 }
 
 func (a App[K, V]) Get(ctx context.Context, item K) (V, error) {
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "get")
+	defer end()
+
 	if model.IsNil(a.client) {
 		return a.onMiss(ctx, item)
 	}
@@ -67,13 +71,16 @@ func (a App[K, V]) Get(ctx context.Context, item K) (V, error) {
 	value, err := a.onMiss(ctx, item)
 
 	if err == nil {
-		go store(context.Background(), a.client, key, value, a.ttl)
+		go a.store(context.Background(), key, value)
 	}
 
 	return value, err
 }
 
 func (a App[K, V]) List(ctx context.Context, concurrency uint64, items ...K) ([]V, error) {
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "list")
+	defer end()
+
 	var values []string
 	var err error
 
@@ -116,7 +123,7 @@ func (a App[K, V]) List(ctx context.Context, concurrency uint64, items ...K) ([]
 			}
 
 			output[index] = value
-			go store(context.Background(), a.client, a.toKey(item), value, a.ttl)
+			go a.store(context.Background(), a.toKey(item), value)
 		})
 	}
 
@@ -126,6 +133,9 @@ func (a App[K, V]) List(ctx context.Context, concurrency uint64, items ...K) ([]
 }
 
 func (a App[K, V]) EvictOnSuccess(ctx context.Context, key string, err error) error {
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "evict")
+	defer end()
+
 	if err != nil || model.IsNil(a.client) {
 		return err
 	}
@@ -146,13 +156,16 @@ func unmarshal[T any](content []byte) (item T, err error) {
 	return item, json.Unmarshal(content, &item)
 }
 
-func store(ctx context.Context, client RedisClient, key string, item any, ttl time.Duration) {
+func (a App[k, V]) store(ctx context.Context, key string, item any) {
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "store")
+	defer end()
+
 	storeCtx, cancel := context.WithTimeout(ctx, asyncActionTimeout)
 	defer cancel()
 
 	if payload, err := json.Marshal(item); err != nil {
 		loggerWithTrace(ctx, key).Error("marshal to cache: %s", err)
-	} else if err = client.Store(storeCtx, key, payload, ttl); err != nil {
+	} else if err = a.client.Store(storeCtx, key, payload, a.ttl); err != nil {
 		loggerWithTrace(ctx, key).Error("write to cache: %s", err)
 	}
 }
