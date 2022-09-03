@@ -77,12 +77,15 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	}
 
 	value, err := a.onMiss(ctx, id)
+
 	if err == nil {
 		go func() {
 			if storeErr := a.store(context.Background(), key, value); storeErr != nil {
 				loggerWithTrace(ctx, key).Error("store to cache: %s", err)
 			}
 		}()
+	} else if errors.Is(err, ErrIgnore) {
+		err = nil
 	}
 
 	return value, err
