@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -21,12 +22,12 @@ type jsonErrorItem struct {
 	Value func() string `json:"value"`
 }
 
-func TestRetrieve(t *testing.T) {
+func TestGet(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		key      string
-		onMiss   func(_ context.Context) (cacheableItem, error)
+		key      int
+		onMiss   func(context.Context, int) (cacheableItem, error)
 		duration time.Duration
 	}
 
@@ -37,8 +38,8 @@ func TestRetrieve(t *testing.T) {
 	}{
 		"cache error": {
 			args{
-				key: "8000",
-				onMiss: func(_ context.Context) (cacheableItem, error) {
+				key: 8000,
+				onMiss: func(_ context.Context, id int) (cacheableItem, error) {
 					return cacheableItem{
 						ID: 8000,
 					}, nil
@@ -52,8 +53,8 @@ func TestRetrieve(t *testing.T) {
 		},
 		"cache unmarshal": {
 			args{
-				key: "8000",
-				onMiss: func(_ context.Context) (cacheableItem, error) {
+				key: 8000,
+				onMiss: func(_ context.Context, id int) (cacheableItem, error) {
 					return cacheableItem{
 						ID: 8000,
 					}, nil
@@ -67,8 +68,8 @@ func TestRetrieve(t *testing.T) {
 		},
 		"cached": {
 			args{
-				key: "8000",
-				onMiss: func(_ context.Context) (cacheableItem, error) {
+				key: 8000,
+				onMiss: func(_ context.Context, id int) (cacheableItem, error) {
 					return cacheableItem{}, nil
 				},
 			},
@@ -79,8 +80,8 @@ func TestRetrieve(t *testing.T) {
 		},
 		"store error": {
 			args{
-				key: "8000",
-				onMiss: func(_ context.Context) (cacheableItem, error) {
+				key: 8000,
+				onMiss: func(_ context.Context, id int) (cacheableItem, error) {
 					return cacheableItem{
 						ID: 8000,
 					}, nil
@@ -94,8 +95,8 @@ func TestRetrieve(t *testing.T) {
 		},
 		"slow cache": {
 			args{
-				key: "8000",
-				onMiss: func(_ context.Context) (cacheableItem, error) {
+				key: 8000,
+				onMiss: func(_ context.Context, id int) (cacheableItem, error) {
 					return cacheableItem{
 						ID: 9000,
 					}, nil
@@ -143,7 +144,14 @@ func TestRetrieve(t *testing.T) {
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			}
 
-			got, gotErr := Retrieve(context.Background(), mockRedisClient, testCase.args.onMiss, testCase.args.duration, testCase.args.key)
+			instance := App[int, cacheableItem]{
+				client: mockRedisClient,
+				onMiss: testCase.args.onMiss,
+				toKey:  strconv.Itoa,
+				ttl:    testCase.args.duration,
+			}
+
+			got, gotErr := instance.Get(context.Background(), testCase.args.key)
 
 			failed := false
 
@@ -165,12 +173,12 @@ func TestRetrieve(t *testing.T) {
 	}
 }
 
-func TestRetrieveError(t *testing.T) {
+func TestGetError(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		key      string
-		onMiss   func(_ context.Context) (jsonErrorItem, error)
+		key      int
+		onMiss   func(context.Context, int) (jsonErrorItem, error)
 		duration time.Duration
 	}
 
@@ -185,10 +193,10 @@ func TestRetrieveError(t *testing.T) {
 	}{
 		"marshal error": {
 			args{
-				key: "8000",
-				onMiss: func(_ context.Context) (jsonErrorItem, error) {
+				key: 8000,
+				onMiss: func(_ context.Context, id int) (jsonErrorItem, error) {
 					return jsonErrorItem{
-						ID:    8000,
+						ID:    id,
 						Value: funcValue,
 					}, nil
 				},
@@ -218,7 +226,14 @@ func TestRetrieveError(t *testing.T) {
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return(nil, nil)
 			}
 
-			got, gotErr := Retrieve(context.TODO(), mockRedisClient, testCase.args.onMiss, testCase.args.duration, testCase.args.key)
+			instance := App[int, jsonErrorItem]{
+				client: mockRedisClient,
+				onMiss: testCase.args.onMiss,
+				toKey:  strconv.Itoa,
+				ttl:    testCase.args.duration,
+			}
+
+			got, gotErr := instance.Get(context.TODO(), testCase.args.key)
 
 			failed := false
 

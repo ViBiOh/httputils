@@ -29,41 +29,64 @@ type RedisClient interface {
 	Delete(ctx context.Context, keys ...string) error
 }
 
-func Retrieve[T any](ctx context.Context, client RedisClient, onMiss func(context.Context) (T, error), ttl time.Duration, key string) (item T, err error) {
-	if model.IsNil(client) {
-		return onMiss(ctx)
+type App[K any, V any] struct {
+	client RedisClient
+	toKey  func(K) string
+	onMiss func(context.Context, K) (V, error)
+	ttl    time.Duration
+}
+
+func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), ttl time.Duration) App[K, V] {
+	return App[K, V]{
+		client: client,
+		toKey:  toKey,
+		onMiss: onMiss,
+		ttl:    ttl,
+	}
+}
+
+func (a App[K, V]) Get(ctx context.Context, item K) (V, error) {
+	if model.IsNil(a.client) {
+		return a.onMiss(ctx, item)
 	}
 
 	loadCtx, cancel := context.WithTimeout(ctx, syncActionTimeout)
 	defer cancel()
 
-	content, err := client.Load(loadCtx, key)
+	key := a.toKey(item)
+
+	content, err := a.client.Load(loadCtx, key)
 	if err != nil {
 		loggerWithTrace(loadCtx, key).Error("load from cache: %s", err)
-	} else if item, err = unmarshal[T](content); err != nil {
+	} else if value, err := unmarshal[V](content); err != nil {
 		loggerWithTrace(loadCtx, key).Error("unmarshal from cache: %s", err)
 	} else {
-		return item, nil
+		return value, nil
 	}
 
-	item, err = onMiss(ctx)
+	value, err := a.onMiss(ctx, item)
 
 	if err == nil {
-		go store(context.Background(), client, key, item, ttl)
+		go store(context.Background(), a.client, key, value, a.ttl)
 	}
 
-	return item, err
+	return value, err
 }
 
-func RetrieveMany[T any](ctx context.Context, client RedisClient, onMiss func(context.Context, string) (T, error), ttl time.Duration, concurrency uint64, keys ...string) ([]T, error) {
+func (a App[K, V]) List(ctx context.Context, concurrency uint64, items ...K) ([]V, error) {
 	var values []string
 	var err error
 
-	if !model.IsNil(client) {
+	if !model.IsNil(a.client) {
 		loadCtx, cancel := context.WithTimeout(ctx, syncActionTimeout)
 		defer cancel()
 
-		values, err = client.LoadMany(loadCtx, keys...)
+		keys := make([]string, len(items))
+		for index, id := range items {
+			keys[index] = a.toKey(id)
+		}
+
+		values, err = a.client.LoadMany(loadCtx, keys...)
 		if err != nil {
 			logger.Error("load many from cache: %s", err)
 		}
@@ -72,28 +95,28 @@ func RetrieveMany[T any](ctx context.Context, client RedisClient, onMiss func(co
 	valuesLen := len(values)
 	wg := concurrent.NewLimited(concurrency)
 
-	output := make([]T, len(keys))
-	for index, key := range keys {
-		index, key := index, key
+	output := make([]V, len(items))
+	for index, item := range items {
+		index, item := index, item
 
 		wg.Go(func() {
 			if index < valuesLen {
-				if item, err := unmarshal[T]([]byte(values[index])); err != nil {
-					loggerWithTrace(ctx, key).Error("unmarshal from cache: %s", err)
+				if value, err := unmarshal[V]([]byte(values[index])); err != nil {
+					loggerWithTrace(ctx, a.toKey(item)).Error("unmarshal from cache: %s", err)
 				} else {
-					output[index] = item
+					output[index] = value
 					return
 				}
 			}
 
-			item, err := onMiss(ctx, key)
+			value, err := a.onMiss(ctx, item)
 			if err != nil {
-				loggerWithTrace(ctx, key).Error("onMiss to cache: %s", err)
+				loggerWithTrace(ctx, a.toKey(item)).Error("onMiss to cache: %s", err)
 				return
 			}
 
-			output[index] = item
-			go store(context.Background(), client, key, item, ttl)
+			output[index] = value
+			go store(context.Background(), a.client, a.toKey(item), value, a.ttl)
 		})
 	}
 
