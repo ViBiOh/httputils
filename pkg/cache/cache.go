@@ -125,6 +125,18 @@ func (a App[K, V]) List(ctx context.Context, concurrency uint64, items ...K) ([]
 	return output, nil
 }
 
+func (a App[K, V]) EvictOnSuccess(ctx context.Context, key string, err error) error {
+	if err != nil || model.IsNil(a.client) {
+		return err
+	}
+
+	if err = a.client.Delete(ctx, key); err != nil {
+		return fmt.Errorf("evict key `%s` from cache: %w", key, err)
+	}
+
+	return nil
+}
+
 func unmarshal[T any](content []byte) (item T, err error) {
 	if len(content) == 0 {
 		err = errEmptyContent
@@ -143,18 +155,6 @@ func store(ctx context.Context, client RedisClient, key string, item any, ttl ti
 	} else if err = client.Store(storeCtx, key, payload, ttl); err != nil {
 		loggerWithTrace(ctx, key).Error("write to cache: %s", err)
 	}
-}
-
-func EvictOnSuccess(ctx context.Context, redisClient RedisClient, key string, err error) error {
-	if err != nil || model.IsNil(redisClient) {
-		return err
-	}
-
-	if err = redisClient.Delete(ctx, key); err != nil {
-		return fmt.Errorf("evict key `%s` from cache: %w", key, err)
-	}
-
-	return nil
 }
 
 func loggerWithTrace(ctx context.Context, key string) logger.Provider {

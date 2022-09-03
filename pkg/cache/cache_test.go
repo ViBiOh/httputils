@@ -304,7 +304,12 @@ func TestEvictOnSuccess(t *testing.T) {
 				mockRedisClient.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(errors.New("redis failed"))
 			}
 
-			gotErr := EvictOnSuccess(context.Background(), mockRedisClient, "key", testCase.args.err)
+			instance := App[int, jsonErrorItem]{
+				client: mockRedisClient,
+				toKey:  strconv.Itoa,
+			}
+
+			gotErr := instance.EvictOnSuccess(context.Background(), "key", testCase.args.err)
 
 			failed := false
 
