@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
@@ -50,12 +51,12 @@ func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(con
 }
 
 func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "get")
-	defer end()
-
 	if model.IsNil(a.client) {
 		return a.onMiss(ctx, id)
 	}
+
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "get")
+	defer end()
 
 	key := a.toKey(id)
 
@@ -81,7 +82,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	if err == nil {
 		go func() {
 			if storeErr := a.store(context.Background(), key, value); storeErr != nil {
-				loggerWithTrace(ctx, key).Error("store to cache: %s", err)
+				loggerWithTrace(ctx, key).Error("store to cache: %s", storeErr)
 			}
 		}()
 	} else if errors.Is(err, ErrIgnore) {
@@ -95,24 +96,7 @@ func (a App[K, V]) List(ctx context.Context, items ...K) ([]V, error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list")
 	defer end()
 
-	var values []string
-	var err error
-
-	if !model.IsNil(a.client) {
-		keys := make([]string, len(items))
-		for index, id := range items {
-			keys[index] = a.toKey(id)
-		}
-
-		loadCtx, cancel := context.WithTimeout(ctx, syncActionTimeout)
-		defer cancel()
-
-		values, err = a.client.LoadMany(loadCtx, keys...)
-		if err != nil {
-			logger.Error("load many from cache: %s", err)
-		}
-	}
-
+	values := a.getValues(ctx, items)
 	valuesLen := len(values)
 	wg := concurrent.NewLimited(a.concurrency)
 
@@ -134,21 +118,20 @@ func (a App[K, V]) List(ctx context.Context, items ...K) ([]V, error) {
 			}
 
 			value, err := a.onMiss(ctx, item)
-			if err == nil {
-				output[index] = value
-
-				go func() {
-					if storeErr := a.Store(context.Background(), item, value); storeErr != nil {
-						loggerWithTrace(ctx, a.toKey(item)).Error("store to cache: %s", err)
-					}
-				}()
-
+			if err != nil {
+				if !errors.Is(err, ErrIgnore) {
+					loggerWithTrace(ctx, a.toKey(item)).Error("onMiss to cache: %s", err)
+				}
 				return
 			}
 
-			if !errors.Is(err, ErrIgnore) {
-				loggerWithTrace(ctx, a.toKey(item)).Error("onMiss to cache: %s", err)
-			}
+			output[index] = value
+
+			go func() {
+				if storeErr := a.Store(context.Background(), item, value); storeErr != nil {
+					loggerWithTrace(ctx, a.toKey(item)).Error("store to cache: %s", storeErr)
+				}
+			}()
 		})
 	}
 
@@ -176,6 +159,27 @@ func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error 
 
 func (a App[K, V]) Store(ctx context.Context, id K, value V) error {
 	return a.store(ctx, a.toKey(id), value)
+}
+
+func (a App[K, V]) getValues(ctx context.Context, items []K) []string {
+	if model.IsNil(a.client) {
+		return nil
+	}
+
+	keys := make([]string, len(items))
+	for index, id := range items {
+		keys[index] = a.toKey(id)
+	}
+
+	loadCtx, cancel := context.WithTimeout(ctx, syncActionTimeout)
+	defer cancel()
+
+	values, err := a.client.LoadMany(loadCtx, keys...)
+	if err != nil {
+		loggerWithTrace(ctx, strconv.Itoa(len(keys))).Error("load many from cache: %s", err)
+	}
+
+	return values
 }
 
 func (a App[k, V]) store(ctx context.Context, key string, item any) error {
