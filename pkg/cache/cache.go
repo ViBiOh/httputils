@@ -77,15 +77,9 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 		loggerWithTrace(ctx, key).Error("load from cache: %s", err)
 	}
 
-	value, err := a.onMiss(ctx, id)
+	value, err := a.fetch(ctx, id)
 
-	if err == nil {
-		go func() {
-			if storeErr := a.store(context.Background(), key, value); storeErr != nil {
-				loggerWithTrace(ctx, key).Error("store to cache: %s", storeErr)
-			}
-		}()
-	} else if errors.Is(err, ErrIgnore) {
+	if err != nil && errors.Is(err, ErrIgnore) {
 		err = nil
 	}
 
@@ -111,27 +105,23 @@ func (a App[K, V]) List(ctx context.Context, items ...K) ([]V, error) {
 				err := json.Unmarshal([]byte(values[index]), &value)
 				if err == nil {
 					output[index] = value
+
 					return
 				}
 
 				loggerWithTrace(ctx, a.toKey(item)).Error("unmarshal from cache: %s", err)
 			}
 
-			value, err := a.onMiss(ctx, item)
+			value, err := a.fetch(ctx, item)
 			if err != nil {
 				if !errors.Is(err, ErrIgnore) {
 					loggerWithTrace(ctx, a.toKey(item)).Error("onMiss to cache: %s", err)
 				}
+
 				return
 			}
 
 			output[index] = value
-
-			go func() {
-				if storeErr := a.Store(context.Background(), item, value); storeErr != nil {
-					loggerWithTrace(ctx, a.toKey(item)).Error("store to cache: %s", storeErr)
-				}
-			}()
 		})
 	}
 
@@ -158,16 +148,45 @@ func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error 
 }
 
 func (a App[K, V]) Store(ctx context.Context, id K, value V) error {
-	return a.store(ctx, a.toKey(id), value)
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "store")
+	defer end()
+
+	storeCtx, cancel := context.WithTimeout(ctx, asyncActionTimeout)
+	defer cancel()
+
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("marshal: %w", err)
+	}
+
+	if err = a.client.Store(storeCtx, a.toKey(id), payload, a.ttl); err != nil {
+		return fmt.Errorf("store: %w", err)
+	}
+
+	return nil
 }
 
-func (a App[K, V]) getValues(ctx context.Context, items []K) []string {
+func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
+	value, err := a.onMiss(ctx, id)
+
+	if err == nil {
+		go func() {
+			if storeErr := a.Store(context.Background(), id, value); storeErr != nil {
+				loggerWithTrace(ctx, a.toKey(id)).Error("store to cache: %s", storeErr)
+			}
+		}()
+	}
+
+	return value, err
+}
+
+func (a App[K, V]) getValues(ctx context.Context, ids []K) []string {
 	if model.IsNil(a.client) {
 		return nil
 	}
 
-	keys := make([]string, len(items))
-	for index, id := range items {
+	keys := make([]string, len(ids))
+	for index, id := range ids {
 		keys[index] = a.toKey(id)
 	}
 
@@ -180,25 +199,6 @@ func (a App[K, V]) getValues(ctx context.Context, items []K) []string {
 	}
 
 	return values
-}
-
-func (a App[k, V]) store(ctx context.Context, key string, item any) error {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "store")
-	defer end()
-
-	storeCtx, cancel := context.WithTimeout(ctx, asyncActionTimeout)
-	defer cancel()
-
-	payload, err := json.Marshal(item)
-	if err != nil {
-		return fmt.Errorf("marshal: %w", err)
-	}
-
-	if err = a.client.Store(storeCtx, key, payload, a.ttl); err != nil {
-		return fmt.Errorf("store: %w", err)
-	}
-
-	return nil
 }
 
 func loggerWithTrace(ctx context.Context, key string) logger.Provider {
