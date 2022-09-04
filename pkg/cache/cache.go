@@ -63,18 +63,10 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	loadCtx, cancel := context.WithTimeout(ctx, syncActionTimeout)
 	defer cancel()
 
-	content, err := a.client.Load(loadCtx, key)
-	if len(content) > 0 {
-		var value V
-
-		err := json.Unmarshal(content, &value)
-		if err == nil {
-			return value, nil
-		}
-
-		loggerWithTrace(ctx, key).Error("unmarshal from cache: %s", err)
-	} else if err != nil {
+	if content, err := a.client.Load(loadCtx, key); err != nil {
 		loggerWithTrace(ctx, key).Error("load from cache: %s", err)
+	} else if value, ok := a.unmarshal(ctx, key, content); ok {
+		return value, nil
 	}
 
 	value, err := a.fetch(ctx, id)
@@ -99,17 +91,10 @@ func (a App[K, V]) List(ctx context.Context, items ...K) ([]V, error) {
 		index, item := index, item
 
 		wg.Go(func() {
-			if index < valuesLen && len(values[index]) > 0 {
-				var value V
-
-				err := json.Unmarshal([]byte(values[index]), &value)
-				if err == nil {
+			if index < valuesLen {
+				if value, ok := a.unmarshal(ctx, a.toKey(item), []byte(values[index])); ok {
 					output[index] = value
-
-					return
 				}
-
-				loggerWithTrace(ctx, a.toKey(item)).Error("unmarshal from cache: %s", err)
 			}
 
 			value, err := a.fetch(ctx, item)
@@ -178,6 +163,21 @@ func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	}
 
 	return value, err
+}
+
+func (a App[K, V]) unmarshal(ctx context.Context, key string, content []byte) (value V, ok bool) {
+	if len(content) == 0 {
+		return
+	}
+
+	err := json.Unmarshal(content, &value)
+	if err != nil {
+		loggerWithTrace(ctx, key).Error("unmarshal from cache: %s", err)
+	} else {
+		ok = true
+	}
+
+	return
 }
 
 func (a App[K, V]) getValues(ctx context.Context, ids []K) []string {
