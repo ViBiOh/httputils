@@ -142,7 +142,7 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 		return nil, fmt.Errorf("batch load: %w", err)
 	}
 
-	a.increase("batch_load")
+	a.increase("load_many")
 	output := make([]string, len(content))
 
 	for index, raw := range content {
