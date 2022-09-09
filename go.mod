@@ -41,7 +41,7 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/tdewolff/parse/v2 v2.6.3 // indirect
 	go.opentelemetry.io/otel/metric v0.31.0 // indirect
-	golang.org/x/sys v0.0.0-20220908164124-27713097b956 // indirect
+	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 )
