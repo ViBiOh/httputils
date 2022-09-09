@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -18,8 +17,6 @@ import (
 //go:generate mockgen -source cache.go -destination ../mocks/cache.go -package mocks -mock_names RedisClient=RedisClient
 
 var (
-	ErrIgnore = errors.New("ignore error")
-
 	syncActionTimeout  = time.Millisecond * 150
 	asyncActionTimeout = time.Second * 5
 )
@@ -36,15 +33,17 @@ type App[K any, V any] struct {
 	client      RedisClient
 	toKey       func(K) string
 	onMiss      func(context.Context, K) (V, error)
+	onMissError func(K, error)
 	ttl         time.Duration
 	concurrency uint64
 }
 
-func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), ttl time.Duration, concurrency uint64, tracer trace.Tracer) App[K, V] {
+func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), onMissError func(K, error), ttl time.Duration, concurrency uint64, tracer trace.Tracer) App[K, V] {
 	return App[K, V]{
 		client:      client,
 		toKey:       toKey,
 		onMiss:      onMiss,
+		onMissError: onMissError,
 		ttl:         ttl,
 		concurrency: concurrency,
 	}
@@ -70,9 +69,8 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	}
 
 	value, err := a.fetch(ctx, id)
-
-	if err != nil && errors.Is(err, ErrIgnore) {
-		err = nil
+	if err != nil {
+		a.onMissError(id, err)
 	}
 
 	return value, err
@@ -99,9 +97,7 @@ func (a App[K, V]) List(ctx context.Context, items ...K) ([]V, error) {
 
 			value, err := a.fetch(ctx, item)
 			if err != nil {
-				if !errors.Is(err, ErrIgnore) {
-					loggerWithTrace(ctx, a.toKey(item)).Error("onMiss to cache: %s", err)
-				}
+				a.onMissError(item, err)
 
 				return
 			}
