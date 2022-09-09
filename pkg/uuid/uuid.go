@@ -8,8 +8,8 @@ import (
 // New generate a uuid.
 func New() (string, error) {
 	raw := make([]byte, 16)
-	_, err := rand.Read(raw)
-	if err != nil {
+
+	if _, err := rand.Read(raw); err != nil {
 		return "", fmt.Errorf("read random: %w", err)
 	}
 

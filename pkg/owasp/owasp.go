@@ -97,8 +97,8 @@ func WriteNonce(w http.ResponseWriter, nonce string) {
 // Nonce creates a unique nonce identifier.
 func Nonce() string {
 	raw := make([]byte, 16)
-	_, err := rand.Read(raw)
-	if err != nil {
+
+	if _, err := rand.Read(raw); err != nil {
 		return "r4nd0m"
 	}
 

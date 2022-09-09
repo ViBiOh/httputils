@@ -48,8 +48,8 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 
 func New(config Config) App {
 	var ignore []string
-	ignoredPaths := *config.ignore
-	if len(ignoredPaths) != 0 {
+
+	if ignoredPaths := *config.ignore; len(ignoredPaths) != 0 {
 		ignore = strings.Split(ignoredPaths, ",")
 	}
 

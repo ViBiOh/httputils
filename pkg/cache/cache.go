@@ -33,17 +33,15 @@ type App[K any, V any] struct {
 	client      RedisClient
 	toKey       func(K) string
 	onMiss      func(context.Context, K) (V, error)
-	onMissError func(K, error)
 	ttl         time.Duration
 	concurrency uint64
 }
 
-func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), onMissError func(K, error), ttl time.Duration, concurrency uint64, tracer trace.Tracer) App[K, V] {
+func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), ttl time.Duration, concurrency uint64, tracer trace.Tracer) App[K, V] {
 	return App[K, V]{
 		client:      client,
 		toKey:       toKey,
 		onMiss:      onMiss,
-		onMissError: onMissError,
 		ttl:         ttl,
 		concurrency: concurrency,
 	}
@@ -68,27 +66,22 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 		return value, nil
 	}
 
-	value, err := a.fetch(ctx, id)
-	if err != nil {
-		a.onMissError(id, err)
-	}
-
-	return value, err
+	return a.fetch(ctx, id)
 }
 
-func (a App[K, V]) List(ctx context.Context, items ...K) ([]V, error) {
+func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) []V {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list")
 	defer end()
 
 	values := a.getValues(ctx, items)
 	valuesLen := len(values)
-	wg := concurrent.NewLimited(a.concurrency)
+	wg := concurrent.NewFailFast(a.concurrency)
 
 	output := make([]V, len(items))
 	for index, item := range items {
 		index, item := index, item
 
-		wg.Go(func() {
+		wg.Go(func() error {
 			if index < valuesLen {
 				if value, ok := a.unmarshal(ctx, a.toKey(item), []byte(values[index])); ok {
 					output[index] = value
@@ -97,27 +90,31 @@ func (a App[K, V]) List(ctx context.Context, items ...K) ([]V, error) {
 
 			value, err := a.fetch(ctx, item)
 			if err != nil {
-				a.onMissError(item, err)
+				if !onMissError(item, err) {
+					return err
+				}
 
-				return
+				return nil
 			}
 
 			output[index] = value
+
+			return nil
 		})
 	}
 
-	wg.Wait()
+	_ = wg.Wait()
 
-	return output, nil
+	return output
 }
 
 func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "evict")
-	defer end()
-
 	if err != nil || model.IsNil(a.client) {
 		return err
 	}
+
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "evict")
+	defer end()
 
 	key := a.toKey(item)
 
@@ -129,6 +126,14 @@ func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error 
 }
 
 func (a App[K, V]) Store(ctx context.Context, id K, value V) error {
+	if model.IsNil(a.client) {
+		return nil
+	}
+
+	return a.store(ctx, id, value)
+}
+
+func (a App[K, V]) store(ctx context.Context, id K, value V) error {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "store")
 	defer end()
 
@@ -152,7 +157,7 @@ func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 
 	if err == nil {
 		go func() {
-			if storeErr := a.Store(context.Background(), id, value); storeErr != nil {
+			if storeErr := a.store(context.Background(), id, value); storeErr != nil {
 				loggerWithTrace(ctx, a.toKey(id)).Error("store to cache: %s", storeErr)
 			}
 		}()

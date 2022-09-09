@@ -94,8 +94,7 @@ func (l *listener) close() error {
 }
 
 func (c *Client) removeListener(name string) {
-	listener := c.listeners[name]
-	if listener == nil {
+	if listener := c.listeners[name]; listener == nil {
 		return
 	}
 

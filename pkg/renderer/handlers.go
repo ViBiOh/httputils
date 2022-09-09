@@ -23,6 +23,7 @@ func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 	}
 
 	var anchor string
+
 	parts := strings.SplitN(pathname, "#", 2)
 	if len(parts) == 2 && len(parts[1]) > 0 {
 		anchor = "#" + parts[1]

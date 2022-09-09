@@ -107,6 +107,7 @@ func (s *Synchronization) computeItems(items []any) uint64 {
 		if !source.IsSynchronized() {
 			itemsFlags += 1 << i
 		}
+
 		items[i] = source.Current()
 	}
 
