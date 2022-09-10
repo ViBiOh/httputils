@@ -69,7 +69,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	return a.fetch(ctx, id)
 }
 
-func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) []V {
+func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list")
 	defer end()
 
@@ -103,9 +103,7 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 		})
 	}
 
-	_ = wg.Wait()
-
-	return output
+	return output, wg.Wait()
 }
 
 func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
