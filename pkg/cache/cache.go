@@ -85,6 +85,8 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 			if index < valuesLen {
 				if value, ok := a.unmarshal(ctx, a.toKey(item), []byte(values[index])); ok {
 					output[index] = value
+
+					return nil
 				}
 			}
 
