@@ -72,8 +72,10 @@ func main() {
 	prometheusApp := prometheus.New(prometheusConfig)
 	healthApp := health.New(healthConfig)
 
+	ctx := healthApp.Context()
+
 	redisApp := redis.New(redisConfig, prometheusApp.Registerer(), tracerApp.GetTracer("redis"))
-	go redisApp.Pull(context.Background(), "httputils:tasks", healthApp.Done(), func(content string, err error) {
+	go redisApp.Pull(ctx, "httputils:tasks", func(content string, err error) {
 		if err != nil {
 			logger.Fatal(err)
 		}

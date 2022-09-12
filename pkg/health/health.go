@@ -1,6 +1,7 @@
 package health
 
 import (
+	"context"
 	"flag"
 	"net/http"
 	"os"
@@ -52,6 +53,18 @@ func New(config Config, pingers ...model.Pinger) App {
 		done: make(chan struct{}),
 		end:  make(chan struct{}),
 	}
+}
+
+// Context of the app, canceled when App is Done()
+func (a App) Context() context.Context {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		defer cancel()
+		<-a.done
+	}()
+
+	return ctx
 }
 
 // Done returns the chan closed when SIGTERM is received.

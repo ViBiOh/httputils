@@ -32,21 +32,10 @@ func (a App) Push(ctx context.Context, key string, value any) error {
 }
 
 // Pull tasks from a list.
-func (a App) Pull(ctx context.Context, key string, done <-chan struct{}, handler func(string, error)) {
+func (a App) Pull(ctx context.Context, key string, handler func(string, error)) {
 	if !a.enabled() {
 		return
 	}
-
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	go func() {
-		select {
-		case <-ctx.Done():
-		case <-done:
-			cancel()
-		}
-	}()
 
 	for {
 		content, err := a.redisClient.BRPop(ctx, 0, key).Result()
@@ -72,8 +61,8 @@ func (a App) Pull(ctx context.Context, key string, done <-chan struct{}, handler
 }
 
 // PullFor pull with unmarshal of given type.
-func PullFor[T any](ctx context.Context, app App, key string, done <-chan struct{}, handler func(T, error)) {
-	app.Pull(ctx, key, done, func(content string, err error) {
+func PullFor[T any](ctx context.Context, app App, key string, handler func(T, error)) {
+	app.Pull(ctx, key, func(content string, err error) {
 		var instance T
 
 		if err != nil {
