@@ -69,6 +69,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	return a.fetch(ctx, id)
 }
 
+// If onMissError returns false, List stops by returning an error
 func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list")
 	defer end()
