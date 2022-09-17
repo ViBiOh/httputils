@@ -62,7 +62,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 
 	if content, err := a.client.Load(loadCtx, key); err != nil {
 		loggerWithTrace(ctx, key).Error("load from cache: %s", err)
-	} else if value, ok := a.unmarshal(ctx, key, content); ok {
+	} else if value, ok := unmarshal[V](ctx, key, content); ok {
 		return value, nil
 	}
 
@@ -84,7 +84,7 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 
 		wg.Go(func() error {
 			if index < valuesLen {
-				if value, ok := a.unmarshal(ctx, a.toKey(item), []byte(values[index])); ok {
+				if value, ok := unmarshal[V](ctx, a.toKey(item), []byte(values[index])); ok {
 					output[index] = value
 
 					return nil
@@ -138,13 +138,13 @@ func (a App[K, V]) store(ctx context.Context, id K, value V) error {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "store")
 	defer end()
 
-	storeCtx, cancel := context.WithTimeout(ctx, asyncActionTimeout)
-	defer cancel()
-
 	payload, err := json.Marshal(value)
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	}
+
+	storeCtx, cancel := context.WithTimeout(ctx, asyncActionTimeout)
+	defer cancel()
 
 	if err = a.client.Store(storeCtx, a.toKey(id), payload, a.ttl); err != nil {
 		return fmt.Errorf("store: %w", err)
@@ -167,7 +167,7 @@ func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	return value, err
 }
 
-func (a App[K, V]) unmarshal(ctx context.Context, key string, content []byte) (value V, ok bool) {
+func unmarshal[V any](ctx context.Context, key string, content []byte) (value V, ok bool) {
 	if len(content) == 0 {
 		return
 	}
