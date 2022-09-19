@@ -8,7 +8,7 @@ endif
 APP_NAME = http
 PACKAGES ?= ./...
 
-MAIN_SOURCE = cmd/http/http.go
+MAIN_SOURCE = ./cmd/http
 MAIN_RUNNER = go run $(MAIN_SOURCE)
 ifeq ($(DEBUG), true)
 	MAIN_RUNNER = dlv debug $(MAIN_SOURCE) --

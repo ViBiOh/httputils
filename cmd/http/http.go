@@ -4,30 +4,22 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"net/http"
-	"os"
 	"syscall"
 	"time"
 
-	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
-	"github.com/ViBiOh/httputils/v4/pkg/amqp"
 	"github.com/ViBiOh/httputils/v4/pkg/amqphandler"
 	"github.com/ViBiOh/httputils/v4/pkg/cors"
 	"github.com/ViBiOh/httputils/v4/pkg/cron"
-	"github.com/ViBiOh/httputils/v4/pkg/health"
 	"github.com/ViBiOh/httputils/v4/pkg/httputils"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
-	"github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
-	"github.com/ViBiOh/httputils/v4/pkg/redis"
 	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	amqplib "github.com/streadway/amqp"
 )
 
@@ -35,47 +27,26 @@ import (
 var content embed.FS
 
 func main() {
-	fs := flag.NewFlagSet("http", flag.ExitOnError)
+	config, err := newConfig()
+	if err != nil {
+		logger.Fatal(fmt.Errorf("config: %w", err))
+	}
 
-	appServerConfig := server.Flags(fs, "")
-	promServerConfig := server.Flags(fs, "prometheus", flags.NewOverride("Port", uint(9090)), flags.NewOverride("IdleTimeout", 10*time.Second), flags.NewOverride("ShutdownTimeout", 5*time.Second))
+	alcotest.DoAndExit(config.alcotest)
 
-	healthConfig := health.Flags(fs, "")
-	alcotestConfig := alcotest.Flags(fs, "")
-	loggerConfig := logger.Flags(fs, "logger")
-	prometheusConfig := prometheus.Flags(fs, "prometheus")
-	tracerConfig := tracer.Flags(fs, "tracer")
-	owaspConfig := owasp.Flags(fs, "", flags.NewOverride("Csp", "default-src 'self'; base-uri 'self'; script-src 'httputils-nonce'"))
-	corsConfig := cors.Flags(fs, "cors")
+	client, err := newClient(config)
+	if err != nil {
+		logger.Fatal(fmt.Errorf("client: %w", err))
+	}
 
-	amqpConfig := amqp.Flags(fs, "amqp")
-	amqHandlerConfig := amqphandler.Flags(fs, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RoutingKey", "local"), flags.NewOverride("RetryInterval", 10*time.Second))
+	defer client.Close()
 
-	redisConfig := redis.Flags(fs, "redis")
+	appServer := server.New(config.appServer)
+	promServer := server.New(config.promServer)
 
-	rendererConfig := renderer.Flags(fs, "renderer")
+	ctx := client.health.Context()
 
-	logger.Fatal(fs.Parse(os.Args[1:]))
-
-	alcotest.DoAndExit(alcotestConfig)
-	logger.Global(logger.New(loggerConfig))
-	defer logger.Close()
-
-	tracerApp, err := tracer.New(tracerConfig)
-	logger.Fatal(err)
-	defer tracerApp.Close()
-
-	request.AddTracerToDefaultClient(tracerApp.GetProvider())
-
-	appServer := server.New(appServerConfig)
-	promServer := server.New(promServerConfig)
-	prometheusApp := prometheus.New(prometheusConfig)
-	healthApp := health.New(healthConfig)
-
-	ctx := healthApp.Context()
-
-	redisApp := redis.New(redisConfig, prometheusApp.Registerer(), tracerApp.GetTracer("redis"))
-	go redisApp.Pull(ctx, "httputils:tasks", func(content string, err error) {
+	go client.redis.Pull(ctx, "httputils:tasks", func(content string, err error) {
 		if err != nil {
 			logger.Fatal(err)
 		}
@@ -83,15 +54,10 @@ func main() {
 		logger.Info("content=`%s`", content)
 	})
 
-	amqpClient, err := amqp.New(amqpConfig, prometheusApp.Registerer(), tracerApp.GetTracer("amqp"))
-	if err != nil {
-		logger.Error("get amqp client: %s", err)
-	}
-
-	amqpApp, err := amqphandler.New(amqHandlerConfig, amqpClient, tracerApp.GetTracer("amqp_handler"), amqpHandler)
+	amqpApp, err := amqphandler.New(config.amqHandler, client.amqp, client.tracer.GetTracer("amqp_handler"), amqpHandler)
 	logger.Fatal(err)
 
-	rendererApp, err := renderer.New(rendererConfig, content, nil, tracerApp.GetTracer("renderer"))
+	rendererApp, err := renderer.New(config.renderer, content, nil, client.tracer.GetTracer("renderer"))
 	logger.Fatal(err)
 
 	speakingClock := cron.New().Each(5 * time.Minute).OnSignal(syscall.SIGUSR1).OnError(func(err error) {
@@ -101,7 +67,7 @@ func main() {
 		logger.Info("Clock is ticking")
 
 		return nil
-	}, healthApp.Done())
+	}, client.health.Done())
 	defer speakingClock.Shutdown()
 
 	templateFunc := func(w http.ResponseWriter, r *http.Request) (renderer.Page, error) {
@@ -117,11 +83,11 @@ func main() {
 		return renderer.NewPage("public", http.StatusOK, nil), nil
 	}
 
-	go amqpApp.Start(context.Background(), healthApp.Done())
-	go promServer.Start("prometheus", healthApp.End(), prometheusApp.Handler())
-	go appServer.Start("http", healthApp.End(), httputils.Handler(rendererApp.Handler(templateFunc), healthApp, recoverer.Middleware, prometheusApp.Middleware, tracerApp.Middleware, owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware))
+	go amqpApp.Start(context.Background(), client.health.Done())
+	go promServer.Start("prometheus", client.health.End(), client.prometheus.Handler())
+	go appServer.Start("http", client.health.End(), httputils.Handler(rendererApp.Handler(templateFunc), client.health, recoverer.Middleware, client.prometheus.Middleware, client.tracer.Middleware, owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
 
-	healthApp.WaitForTermination(appServer.Done())
+	client.health.WaitForTermination(appServer.Done())
 	server.GracefulWait(appServer.Done(), promServer.Done(), amqpApp.Done())
 }
 

@@ -10,6 +10,10 @@ import (
 
 // Close closes opened ressources.
 func (c *Client) Close() {
+	if c == nil {
+		return
+	}
+
 	c.Lock()
 	defer c.Unlock()
 
