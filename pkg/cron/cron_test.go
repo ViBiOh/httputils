@@ -518,7 +518,7 @@ func TestStart(t *testing.T) {
 			wg.Add(1)
 			testCase.cron.clock = testCase.clock
 
-			go testCase.cron.OnError(testCase.onError(&wg, testCase.cron)).Start(testCase.action(&wg, testCase.cron), nil)
+			go testCase.cron.OnError(testCase.onError(&wg, testCase.cron)).Start(context.Background(), testCase.action(&wg, testCase.cron))
 
 			actionDone := make(chan struct{})
 			go func() {

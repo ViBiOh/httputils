@@ -290,7 +290,7 @@ func (c *Cron) Now() *Cron {
 }
 
 // Start cron.
-func (c *Cron) Start(action func(context.Context) error, done <-chan struct{}) {
+func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 	if c.hasError() {
 		return
 	}
@@ -337,6 +337,8 @@ func (c *Cron) Start(action func(context.Context) error, done <-chan struct{}) {
 
 		defer signal.Stop(signals)
 	}
+
+	done := ctx.Done()
 
 	for {
 		select {
