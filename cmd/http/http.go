@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
-	"github.com/ViBiOh/httputils/v4/pkg/amqphandler"
 	"github.com/ViBiOh/httputils/v4/pkg/cors"
 	"github.com/ViBiOh/httputils/v4/pkg/cron"
 	"github.com/ViBiOh/httputils/v4/pkg/httputils"
@@ -39,6 +38,11 @@ func main() {
 		logger.Fatal(fmt.Errorf("client: %w", err))
 	}
 
+	adapter, err := newAdapter(config, client)
+	if err != nil {
+		logger.Fatal(fmt.Errorf("adapter: %w", err))
+	}
+
 	defer client.Close()
 
 	appServer := server.New(config.appServer)
@@ -53,12 +57,6 @@ func main() {
 
 		logger.Info("content=`%s`", content)
 	})
-
-	amqpApp, err := amqphandler.New(config.amqHandler, client.amqp, client.tracer.GetTracer("amqp_handler"), amqpHandler)
-	logger.Fatal(err)
-
-	rendererApp, err := renderer.New(config.renderer, content, nil, client.tracer.GetTracer("renderer"))
-	logger.Fatal(err)
 
 	speakingClock := cron.New().Each(5 * time.Minute).OnSignal(syscall.SIGUSR1).OnError(func(err error) {
 		logger.Error("error while running cron: %s", err)
@@ -83,12 +81,12 @@ func main() {
 		return renderer.NewPage("public", http.StatusOK, nil), nil
 	}
 
-	go amqpApp.Start(context.Background(), client.health.Done())
+	go adapter.amqp.Start(context.Background(), client.health.Done())
 	go promServer.Start("prometheus", client.health.End(), client.prometheus.Handler())
-	go appServer.Start("http", client.health.End(), httputils.Handler(rendererApp.Handler(templateFunc), client.health, recoverer.Middleware, client.prometheus.Middleware, client.tracer.Middleware, owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
+	go appServer.Start("http", client.health.End(), httputils.Handler(adapter.renderer.Handler(templateFunc), client.health, recoverer.Middleware, client.prometheus.Middleware, client.tracer.Middleware, owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
 
 	client.health.WaitForTermination(appServer.Done())
-	server.GracefulWait(appServer.Done(), promServer.Done(), amqpApp.Done())
+	server.GracefulWait(appServer.Done(), promServer.Done(), adapter.amqp.Done())
 }
 
 func amqpHandler(_ context.Context, message amqplib.Delivery) error {
