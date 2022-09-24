@@ -311,7 +311,7 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 	}
 
 	run := func() {
-		ctx, end := tracer.StartSpan(context.Background(), c.tracer, "cron")
+		ctx, end := tracer.StartSpan(ctx, c.tracer, "cron")
 		defer end()
 
 		if c.semaphoreApp == nil {
