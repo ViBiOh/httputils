@@ -5,10 +5,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"runtime"
 	"strings"
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
@@ -20,13 +22,14 @@ import (
 
 const (
 	metricsNamespace = "redis"
+	defaultPageSize  = 100
 )
 
 var ErrNoSubscriber = errors.New("no subscriber for channel")
 
 type App struct {
 	tracer      trace.Tracer
-	redisClient *redis.Client
+	redisClient redis.UniversalClient
 	metric      *prometheus.CounterVec
 }
 
@@ -167,6 +170,41 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 		pipeline.Del(ctx, key)
 	}
 
+	return a.execPipeline(ctx, pipeline)
+}
+
+func (a App) DeletePattern(ctx context.Context, pattern string) error {
+	if !a.enabled() {
+		return nil
+	}
+
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete_pattern", trace.WithAttributes(attribute.String("pattenr", pattern)))
+	defer end()
+
+	scanOutput := make(chan string, runtime.NumCPU())
+
+	wg := concurrent.NewFailFast(1)
+	scanCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	wg.Go(func() error {
+		pipeline := a.redisClient.Pipeline()
+
+		for key := range scanOutput {
+			pipeline.Del(ctx, key)
+		}
+
+		return a.execPipeline(ctx, pipeline)
+	})
+
+	if err := a.Scan(scanCtx, pattern, scanOutput, defaultPageSize); err != nil {
+		return fmt.Errorf("scan: %w", err)
+	}
+
+	return wg.Wait()
+}
+
+func (a App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
 	results, err := pipeline.Exec(ctx)
 	if err != nil {
 		a.increase("error")
@@ -187,33 +225,37 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 	return nil
 }
 
-func (a App) Scan(ctx context.Context, pattern string, pageSize int64) (output []string, err error) {
+func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pageSize int64) error {
+	defer close(output)
+
 	if !a.enabled() {
-		return
+		return nil
 	}
+
+	var keys []string
+	var err error
+	var cursor uint64
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "scan", trace.WithAttributes(attribute.String("pattern", pattern)))
 	defer end()
 
-	cursor := uint64(0)
-
 	for {
-		var keys []string
 		keys, cursor, err = a.redisClient.Scan(ctx, cursor, pattern, pageSize).Result()
 		if err != nil {
 			a.increase("error")
-			err = fmt.Errorf("exec scan: %w", err)
-			return
+			return fmt.Errorf("exec scan: %w", err)
 		}
 
-		output = append(output, keys...)
+		for _, key := range keys {
+			output <- key
+		}
 
 		if cursor == 0 {
 			break
 		}
 	}
 
-	return
+	return nil
 }
 
 func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {

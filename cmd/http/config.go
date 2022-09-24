@@ -42,7 +42,6 @@ func newConfig() (configuration, error) {
 	return configuration{
 		appServer:  server.Flags(fs, ""),
 		promServer: server.Flags(fs, "prometheus", flags.NewOverride("Port", uint(9090)), flags.NewOverride("IdleTimeout", 10*time.Second), flags.NewOverride("ShutdownTimeout", 5*time.Second)),
-
 		health:     health.Flags(fs, ""),
 		alcotest:   alcotest.Flags(fs, ""),
 		logger:     logger.Flags(fs, "logger"),
@@ -50,12 +49,9 @@ func newConfig() (configuration, error) {
 		tracer:     tracer.Flags(fs, "tracer"),
 		owasp:      owasp.Flags(fs, "", flags.NewOverride("Csp", "default-src 'self'; base-uri 'self'; script-src 'httputils-nonce'")),
 		cors:       cors.Flags(fs, "cors"),
-
 		amqp:       amqp.Flags(fs, "amqp"),
 		amqHandler: amqphandler.Flags(fs, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RoutingKey", "local"), flags.NewOverride("RetryInterval", 10*time.Second)),
-
-		redis: redis.Flags(fs, "redis"),
-
-		renderer: renderer.Flags(fs, "renderer"),
+		redis:      redis.Flags(fs, "redis"),
+		renderer:   renderer.Flags(fs, "renderer"),
 	}, fs.Parse(os.Args[1:])
 }
