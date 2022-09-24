@@ -122,7 +122,7 @@ func (a App) Load(ctx context.Context, key string) ([]byte, error) {
 	if err != redis.Nil {
 		a.increase("error")
 
-		return nil, fmt.Errorf("load: %w", err)
+		return nil, fmt.Errorf("exec get: %w", err)
 	}
 
 	a.increase("miss")
@@ -142,7 +142,7 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	if err != nil {
 		a.increase("error")
 
-		return nil, fmt.Errorf("batch load: %w", err)
+		return nil, fmt.Errorf("exec mget: %w", err)
 	}
 
 	a.increase("load_many")
@@ -198,7 +198,7 @@ func (a App) DeletePattern(ctx context.Context, pattern string) error {
 	})
 
 	if err := a.Scan(scanCtx, pattern, scanOutput, defaultPageSize); err != nil {
-		return fmt.Errorf("scan: %w", err)
+		return fmt.Errorf("exec scan: %w", err)
 	}
 
 	return wg.Wait()
@@ -209,14 +209,14 @@ func (a App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
 	if err != nil {
 		a.increase("error")
 
-		return fmt.Errorf("exec delete pipeline: %w", err)
+		return fmt.Errorf("exec pipeline: %w", err)
 	}
 
 	for _, result := range results {
 		if err = result.Err(); err != nil {
 			a.increase("error")
 
-			return fmt.Errorf("delete key: %w", err)
+			return fmt.Errorf("pipeline item `%s`: %w", result.Name(), err)
 		}
 
 		a.increase("delete")
@@ -270,7 +270,7 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 
 	if acquired, err = a.redisClient.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
 		a.increase("error")
-		err = fmt.Errorf("check semaphore: %w", err)
+		err = fmt.Errorf("exec setnx: %w", err)
 
 		return
 	} else if !acquired {
