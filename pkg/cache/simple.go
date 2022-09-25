@@ -33,7 +33,7 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 				return
 			}
 
-			storeCtx, cancel := context.WithTimeout(ctx, asyncActionTimeout)
+			storeCtx, cancel := context.WithTimeout(context.Background(), asyncActionTimeout)
 			defer cancel()
 
 			if err = client.Store(storeCtx, key, payload, ttl); err != nil {
