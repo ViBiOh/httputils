@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-// WriteEscapedJSON escapes value from raw string to be JSON compatible.
 func WriteEscapedJSON(content string, output *bytes.Buffer) {
 	if !strings.ContainsRune(content, '\\') && !strings.ContainsRune(content, '\b') && !strings.ContainsRune(content, '\f') && !strings.ContainsRune(content, '\r') && !strings.ContainsRune(content, '\n') && !strings.ContainsRune(content, '\t') && !strings.ContainsRune(content, '"') {
 		output.WriteString(content)

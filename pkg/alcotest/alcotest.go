@@ -38,7 +38,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-// GetStatusCode return status code of a GET on given url.
 func GetStatusCode(url, userAgent string) (status int, err error) {
 	statusReq := req
 
@@ -75,7 +74,6 @@ func GetStatusCode(url, userAgent string) (status int, err error) {
 	return
 }
 
-// Do test status code of given URL.
 func Do(url, userAgent string) error {
 	statusCode, err := GetStatusCode(url, userAgent)
 	if err != nil {
@@ -89,7 +87,6 @@ func Do(url, userAgent string) error {
 	return nil
 }
 
-// DoAndExit test status code of given URL (if present) and exit program with correct status.
 func DoAndExit(config Config) {
 	url := *config.url
 	if len(url) == 0 {

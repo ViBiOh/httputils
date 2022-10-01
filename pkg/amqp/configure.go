@@ -7,7 +7,6 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// Consumer configures client for consumming from given queue, bind to given exchange, and return delayed Exchange name to publish.
 func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive bool, dlExchange string) (err error) {
 	var channel *amqp.Channel
 	channel, err = c.createChannel()
@@ -40,7 +39,6 @@ func (c *Client) Consumer(queueName, routingKey, exchangeName string, exclusive 
 	return nil
 }
 
-// DelayedExchange configures dead-letter exchange with given ttl.
 func (c *Client) DelayedExchange(queueName, exchangeName, routingKey string, retryDelay time.Duration) (delayExchange string, err error) {
 	var channel *amqp.Channel
 	channel, err = c.createChannel()
@@ -75,7 +73,6 @@ func (c *Client) DelayedExchange(queueName, exchangeName, routingKey string, ret
 	return delayExchange, nil
 }
 
-// Publisher configures client for publishing to given exchange.
 func (c *Client) Publisher(exchangeName, exchangeType string, args amqp.Table) (err error) {
 	var channel *amqp.Channel
 	channel, err = c.createChannel()

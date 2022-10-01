@@ -5,7 +5,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// Counters creates and registers counters.
 func Counters(prometheusRegisterer prometheus.Registerer, namespace, subsystem string, names ...string) map[string]prometheus.Counter {
 	if model.IsNil(prometheusRegisterer) {
 		return nil
@@ -20,7 +19,6 @@ func Counters(prometheusRegisterer prometheus.Registerer, namespace, subsystem s
 	return metrics
 }
 
-// Counter creates and registers a counter.
 func Counter(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string) prometheus.Counter {
 	if model.IsNil(prometheusRegisterer) {
 		return nil
@@ -37,7 +35,6 @@ func Counter(prometheusRegisterer prometheus.Registerer, namespace, subsystem, n
 	return metric
 }
 
-// CounterVec creates and register a counter vector.
 func CounterVec(prometheusRegisterer prometheus.Registerer, namespace, subsystem, name string, labels ...string) *prometheus.CounterVec {
 	if model.IsNil(prometheusRegisterer) {
 		return nil

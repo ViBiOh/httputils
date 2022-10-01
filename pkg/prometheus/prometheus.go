@@ -65,7 +65,6 @@ func New(config Config) App {
 	}
 }
 
-// Handler for request. Should be use with net/http.
 func (a App) Handler() http.Handler {
 	instrumentHandler := promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{
 		DisableCompression: !a.gzip,
@@ -82,7 +81,6 @@ func (a App) Handler() http.Handler {
 	})
 }
 
-// Middleware for net/http.
 func (a App) Middleware(next http.Handler) http.Handler {
 	if next == nil {
 		return next
@@ -99,7 +97,6 @@ func (a App) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// Registerer return served registerer.
 func (a App) Registerer() prometheus.Registerer {
 	return a.registry
 }

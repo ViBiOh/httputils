@@ -47,7 +47,6 @@ func New(config Config) App {
 	}
 }
 
-// Middleware for net/http package allowing cors header.
 func (a App) Middleware(next http.Handler) http.Handler {
 	headers := http.Header{}
 

@@ -4,14 +4,12 @@ import (
 	"io"
 )
 
-// Identity consider key as rupture value.
 var Identity = func(a string) string {
 	return a
 }
 
 var _ SyncSource = &Source[string]{}
 
-// SyncSource behavior interface.
 type SyncSource interface {
 	ReadRupture() *Rupture
 	Current() any
@@ -22,7 +20,6 @@ type SyncSource interface {
 	Read() error
 }
 
-// Source of data in a break/sync algorithm.
 type Source[T any] struct {
 	next    T
 	current T
@@ -38,7 +35,6 @@ type Source[T any] struct {
 	synchronized bool
 }
 
-// NewSource creates and initialize Source.
 func NewSource[T any](reader func() (T, error), keyer func(T) string, readRupture *Rupture) *Source[T] {
 	return &Source[T]{
 		synchronized: true,
@@ -104,7 +100,6 @@ func (s *Source[T]) read() error {
 	return nil
 }
 
-// NewSliceSource is a source from a slice, read sequentially.
 func NewSliceSource[T any](arr []T, keyer func(T) string, readRupture *Rupture) *Source[T] {
 	index := -1
 
@@ -120,7 +115,6 @@ func NewSliceSource[T any](arr []T, keyer func(T) string, readRupture *Rupture) 
 	}, keyer, readRupture)
 }
 
-// NewChanSource is a source from a chan, read sequentially.
 func NewChanSource[T any](input <-chan T, keyer func(T) string, readRupture *Rupture) *Source[T] {
 	var ok bool
 

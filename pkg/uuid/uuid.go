@@ -5,7 +5,6 @@ import (
 	"fmt"
 )
 
-// New generate a uuid.
 func New() (string, error) {
 	raw := make([]byte, 16)
 

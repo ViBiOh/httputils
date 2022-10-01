@@ -7,10 +7,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// ErrNoDeathCount occurs when no death count is found in message.
 var ErrNoDeathCount = errors.New("no death count")
 
-// Retry a message if possible on error.
 func (a App) Retry(message amqp.Delivery) error {
 	count, err := GetDeathCount(message)
 	if err != nil && !errors.Is(err, ErrNoDeathCount) {
@@ -24,7 +22,6 @@ func (a App) Retry(message amqp.Delivery) error {
 	return message.Nack(false, false)
 }
 
-// GetDeathCount of a message.
 func GetDeathCount(message amqp.Delivery) (int64, error) {
 	table := message.Headers
 

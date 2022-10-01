@@ -46,7 +46,6 @@ func New(config Config) App {
 	}
 }
 
-// Middleware for net/http package allowing owasp header.
 func (a App) Middleware(next http.Handler) http.Handler {
 	headers := http.Header{}
 
@@ -87,14 +86,12 @@ func (a App) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// WriteNonce to the underlying response writer.
 func WriteNonce(w http.ResponseWriter, nonce string) {
 	if nonceWriter, ok := w.(responseWriter); ok {
 		nonceWriter.WriteNonce(nonce)
 	}
 }
 
-// Nonce creates a unique nonce identifier.
 func Nonce() string {
 	raw := make([]byte, 16)
 

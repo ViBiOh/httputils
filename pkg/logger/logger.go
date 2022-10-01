@@ -32,7 +32,6 @@ type Config struct {
 	messageKey *string
 }
 
-// Logger defines a logger instance.
 type Logger struct {
 	clock clock.Clock
 
@@ -68,7 +67,6 @@ func init() {
 	go logger.Start()
 }
 
-// New creates a Logger.
 func New(config Config) Logger {
 	level, err := parseLevel(*config.level)
 
@@ -102,7 +100,6 @@ func newLogger(outWriter, errWriter io.Writer, lev level, json bool, timeKey, le
 	}
 }
 
-// Start starts logger's writer.
 func (l Logger) Start() {
 	var payload []byte
 	var err error
@@ -150,38 +147,31 @@ func getColor(level level) []byte {
 	}
 }
 
-// Close ends logger gracefully.
 func (l Logger) Close() {
 	close(l.events)
 	<-l.done
 }
 
-// Trace logs tracing message.
 func (l Logger) Trace(format string, a ...any) {
 	l.output(levelTrace, nil, format, a...)
 }
 
-// Debug logs debug message.
 func (l Logger) Debug(format string, a ...any) {
 	l.output(levelDebug, nil, format, a...)
 }
 
-// Info logs info message.
 func (l Logger) Info(format string, a ...any) {
 	l.output(levelInfo, nil, format, a...)
 }
 
-// Warn logs warning message.
 func (l Logger) Warn(format string, a ...any) {
 	l.output(levelWarning, nil, format, a...)
 }
 
-// Error logs error message.
 func (l Logger) Error(format string, a ...any) {
 	l.output(levelError, nil, format, a...)
 }
 
-// Fatal logs error message and exit with status code 1.
 func (l Logger) Fatal(err error) {
 	if err == nil {
 		return
@@ -193,7 +183,6 @@ func (l Logger) Fatal(err error) {
 	exitFunc(1)
 }
 
-// WithField add given name and value to a context.
 func (l Logger) WithField(name string, value any) Provider {
 	return FieldsContext{
 		outputFn: l.output,
@@ -276,24 +265,18 @@ func (l Logger) text(e event) []byte {
 	return l.outputBuffer.Bytes()
 }
 
-// Providing function wrapper for interface compatibility
-
-// Errorf logs error message.
 func (l Logger) Errorf(format string, a ...any) {
 	l.Error(format, a...)
 }
 
-// Warningf logs warning message.
 func (l Logger) Warningf(format string, a ...any) {
 	l.Warn(format, a...)
 }
 
-// Infof logs info message.
 func (l Logger) Infof(format string, a ...any) {
 	l.Info(format, a...)
 }
 
-// Debugf logs debug message.
 func (l Logger) Debugf(format string, a ...any) {
 	l.Debug(format, a...)
 }

@@ -101,7 +101,6 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace
 	return instance, nil
 }
 
-// PublicURL computes public URL of given path.
 func (a App) PublicURL(url string) string {
 	return a.publicURL + a.url(url)
 }
@@ -145,7 +144,6 @@ func (a App) feedContent(content map[string]any) map[string]any {
 	return content
 }
 
-// Handler for request. Should be use with net/http.
 func (a App) Handler(templateFunc TemplateFunc) http.Handler {
 	svgHandler := http.StripPrefix(svgPath, a.svg())
 

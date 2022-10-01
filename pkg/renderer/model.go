@@ -8,17 +8,14 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/sha"
 )
 
-// TemplateFunc handle a request and returns which template to render with which status and datas.
 type TemplateFunc = func(http.ResponseWriter, *http.Request) (Page, error)
 
-// Page describes a page for the renderer.
 type Page struct {
 	Content  map[string]any
 	Template string
 	Status   int
 }
 
-// NewPage creates a new page.
 func NewPage(template string, status int, content map[string]any) Page {
 	return Page{
 		Template: template,
@@ -31,7 +28,6 @@ func (p Page) etag() string {
 	return sha.New(p)
 }
 
-// Message for render.
 type Message struct {
 	Level   string
 	Content string
@@ -52,7 +48,6 @@ func (m Message) String() string {
 	return fmt.Sprintf("messageContent=%s&messageLevel=%s", url.QueryEscape(m.Content), url.QueryEscape(m.Level))
 }
 
-// ParseMessage parses messages from request.
 func ParseMessage(r *http.Request) Message {
 	values := r.URL.Query()
 
@@ -62,12 +57,10 @@ func ParseMessage(r *http.Request) Message {
 	}
 }
 
-// NewSuccessMessage create a success message.
 func NewSuccessMessage(format string, a ...any) Message {
 	return newMessage("success", format, a...)
 }
 
-// NewErrorMessage create a error message.
 func NewErrorMessage(format string, a ...any) Message {
 	return newMessage("error", format, a...)
 }

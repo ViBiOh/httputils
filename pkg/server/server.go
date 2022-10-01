@@ -74,12 +74,10 @@ func New(config Config) App {
 	}
 }
 
-// Done returns the chan closed when server is shutdown.
 func (a App) Done() <-chan struct{} {
 	return a.done
 }
 
-// Start http server for given handler, until done is closed.
 func (a App) Start(name string, done <-chan struct{}, handler http.Handler) {
 	defer close(a.done)
 	serverLogger := logger.WithField("server", name)

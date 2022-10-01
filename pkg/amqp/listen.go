@@ -9,10 +9,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// QueueResolver return the name of the queue to listen.
 type QueueResolver func() (string, error)
 
-// Listen listens to configured queue.
 func (c *Client) Listen(queueResolver QueueResolver, exchange, routingKey string) (string, <-chan amqp.Delivery, error) {
 	queueName, err := queueResolver()
 	if err != nil {
@@ -35,7 +33,6 @@ func (c *Client) Listen(queueResolver QueueResolver, exchange, routingKey string
 	return listener.name, forward, nil
 }
 
-// StopListener cancel consumer listening.
 func (c *Client) StopListener(consumer string) (err error) {
 	c.Lock()
 	defer c.Unlock()

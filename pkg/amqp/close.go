@@ -8,7 +8,6 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
-// Close closes opened ressources.
 func (c *Client) Close() {
 	if c == nil {
 		return

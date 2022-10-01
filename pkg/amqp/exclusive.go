@@ -10,7 +10,6 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// SetupExclusive configure the exclusive queue.
 func (c *Client) SetupExclusive(name string) (err error) {
 	create, count := c.shouldCreateExclusiveQueue(name)
 	if !create && count > 0 {
@@ -60,7 +59,6 @@ func (c *Client) shouldCreateExclusiveQueue(name string) (bool, int) {
 	return false, queue.Messages
 }
 
-// Exclusive get an exclusive lock from given queue during duration.
 func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
 	ctx, end := tracer.StartSpan(ctx, c.tracer, "exclusive")
 	defer end()

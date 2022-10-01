@@ -4,34 +4,30 @@ import (
 	"sync"
 )
 
-// Limited describes a task group with limited parallelism.
 type Limited struct {
 	limiter chan bool
 	wg      sync.WaitGroup
 }
 
-// NewLimited creates a Limited with given concurrency limit.
 func NewLimited(limit uint64) *Limited {
 	return &Limited{
 		limiter: make(chan bool, limit),
 	}
 }
 
-// Go run given function in a goroutine according to limiter.
-func (g *Limited) Go(f func()) {
-	g.wg.Add(1)
-	g.limiter <- true
+func (l *Limited) Go(f func()) {
+	l.wg.Add(1)
+	l.limiter <- true
 
 	go func() {
-		defer g.wg.Done()
-		defer func() { <-g.limiter }()
+		defer l.wg.Done()
+		defer func() { <-l.limiter }()
 
 		f()
 	}()
 }
 
-// Wait for Limited to end.
-func (g *Limited) Wait() {
-	g.wg.Wait()
-	close(g.limiter)
+func (l *Limited) Wait() {
+	l.wg.Wait()
+	close(l.limiter)
 }

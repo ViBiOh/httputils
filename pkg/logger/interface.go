@@ -1,6 +1,5 @@
 package logger
 
-// Provider of logging definition.
 type Provider interface {
 	WithField(name string, value any) Provider
 	Trace(format string, a ...any)

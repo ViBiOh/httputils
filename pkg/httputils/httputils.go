@@ -9,7 +9,6 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
-// Handler creates the handler for default httputils behavior.
 func Handler(handler http.Handler, healthApp health.App, middlewares ...model.Middleware) http.Handler {
 	versionHandler := versionHandler()
 	HealthHandler := healthApp.HealthHandler()

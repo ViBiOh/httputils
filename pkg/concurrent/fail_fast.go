@@ -5,7 +5,6 @@ import (
 	"sync"
 )
 
-// FailFast describes a task group with a fail-fast approach.
 type FailFast struct {
 	err     error
 	done    chan struct{}
@@ -15,7 +14,6 @@ type FailFast struct {
 	wg      sync.WaitGroup
 }
 
-// NewFailFast creates a Group with given concurrency limit.
 func NewFailFast(limit uint64) *FailFast {
 	return &FailFast{
 		done:    make(chan struct{}),
@@ -23,59 +21,56 @@ func NewFailFast(limit uint64) *FailFast {
 	}
 }
 
-// WithContext make the given context cancelable for the group.
-func (g *FailFast) WithContext(ctx context.Context) context.Context {
-	if g.cancel != nil {
+func (ff *FailFast) WithContext(ctx context.Context) context.Context {
+	if ff.cancel != nil {
 		panic("cancelable context already set-up")
 	}
 
-	ctx, g.cancel = context.WithCancel(ctx)
+	ctx, ff.cancel = context.WithCancel(ctx)
 
 	return ctx
 }
 
-// Go run given function in a goroutine according to limiter and current status.
-func (g *FailFast) Go(f func() error) {
-	g.wg.Add(1)
+func (ff *FailFast) Go(f func() error) {
+	ff.wg.Add(1)
 
 	select {
-	case <-g.done:
-		g.wg.Done()
-	case g.limiter <- true:
+	case <-ff.done:
+		ff.wg.Done()
+	case ff.limiter <- true:
 		go func() {
-			defer g.wg.Done()
-			defer func() { <-g.limiter }()
+			defer ff.wg.Done()
+			defer func() { <-ff.limiter }()
 
 			if err := f(); err != nil {
-				g.close(err)
+				ff.close(err)
 			}
 		}()
 	}
 }
 
-// Wait for Group to end.
-func (g *FailFast) Wait() error {
-	g.wg.Wait()
+func (ff *FailFast) Wait() error {
+	ff.wg.Wait()
 
 	select {
-	case <-g.done:
+	case <-ff.done:
 	default:
-		close(g.done)
+		close(ff.done)
 	}
 
-	close(g.limiter)
+	close(ff.limiter)
 
-	return g.err
+	return ff.err
 }
 
-func (g *FailFast) close(err error) {
-	g.once.Do(func() {
-		close(g.done)
+func (ff *FailFast) close(err error) {
+	ff.once.Do(func() {
+		close(ff.done)
 
-		if g.cancel != nil {
-			g.cancel()
+		if ff.cancel != nil {
+			ff.cancel()
 		}
 
-		g.err = err
+		ff.err = err
 	})
 }

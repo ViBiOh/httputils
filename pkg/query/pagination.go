@@ -9,17 +9,11 @@ import (
 )
 
 var (
-	// ErrInvalidValue occurs when value is in invalid format.
-	ErrInvalidValue = errors.New("invalid value")
-
-	// ErrMaxPageSizeExceeded occurs when pagesize read is above defined limit.
+	ErrInvalidValue        = errors.New("invalid value")
 	ErrMaxPageSizeExceeded = errors.New("maximum page size exceeded")
-
-	// ErrPageSizeInvalid occurs when pagesize read is equal to 0.
-	ErrPageSizeInvalid = errors.New("page size must be greater than zero")
+	ErrPageSizeInvalid     = errors.New("page size must be greater than zero")
 )
 
-// Pagination describes pagination params.
 type Pagination struct {
 	Last     string
 	Sort     string
@@ -27,7 +21,6 @@ type Pagination struct {
 	Desc     bool
 }
 
-// LinkNextHeader returns next header for pagination.
 func (p Pagination) LinkNextHeader(urlPath string, extraArgs url.Values) string {
 	data := url.Values{}
 	for key, values := range extraArgs {
@@ -50,7 +43,6 @@ func (p Pagination) LinkNextHeader(urlPath string, extraArgs url.Values) string 
 	return fmt.Sprintf(`<%s?%s>; rel="next"`, urlPath, data.Encode())
 }
 
-// ParsePagination parse common pagination param from request.
 func ParsePagination(r *http.Request, defaultPageSize, maxPageSize uint) (pagination Pagination, err error) {
 	var parsed uint64
 	var parsedUint uint
