@@ -8,8 +8,8 @@ import (
 )
 
 type adapter struct {
-	amqp     amqphandler.App
 	renderer renderer.App
+	amqp     amqphandler.App
 }
 
 func newAdapter(config configuration, client client) (adapter, error) {
