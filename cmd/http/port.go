@@ -19,17 +19,20 @@ type port struct {
 func newPort(config configuration, client client, adapter adapter) port {
 	var output port
 
-	cacheTracer := client.tracer.GetTracer("port")
+	portTracer := client.tracer.GetTracer("port")
 
 	simpleCache := cache.New(client.redis, func(id string) string { return id }, func(ctx context.Context, id string) (string, error) {
-		_, end := tracer.StartSpan(ctx, cacheTracer, "onMiss", trace.WithSpanKind(trace.SpanKindInternal))
+		_, end := tracer.StartSpan(ctx, portTracer, "onMiss", trace.WithSpanKind(trace.SpanKindInternal))
 		defer end()
 
 		return id, nil
-	}, time.Hour, 4, cacheTracer)
+	}, time.Hour, 4, portTracer)
 
 	output.template = func(w http.ResponseWriter, r *http.Request) (renderer.Page, error) {
-		resp, err := request.Get("https://api.vibioh.fr/dump/").Send(r.Context(), nil)
+		ctx, end := tracer.StartSpan(r.Context(), portTracer, "handler", trace.WithSpanKind(trace.SpanKindInternal))
+		defer end()
+
+		resp, err := request.Get("https://api.vibioh.fr/dump/").Send(ctx, nil)
 		if err != nil {
 			return renderer.Page{}, err
 		}
