@@ -25,7 +25,17 @@ func NewPage(template string, status int, content map[string]any) Page {
 }
 
 func (p Page) etag() string {
-	return sha.New(p)
+	streamer := sha.Stream()
+
+	streamer.WriteString(p.Template)
+	streamer.Write(p.Status)
+
+	for key, value := range p.Content {
+		streamer.WriteString(key)
+		streamer.Write(value)
+	}
+
+	return streamer.Sum()
 }
 
 type Message struct {

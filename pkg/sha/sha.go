@@ -11,7 +11,7 @@ func New(content any) string {
 	hasher := sha256.New()
 
 	// no err check https://golang.org/pkg/hash/#Hash
-	_, _ = fmt.Fprintf(hasher, "%#v", content)
+	_, _ = fmt.Fprintf(hasher, "%v", content)
 
 	return hex.EncodeToString(hasher.Sum(nil))
 }
@@ -26,9 +26,23 @@ func Stream() StreamHasher {
 	}
 }
 
+func (s StreamHasher) WriteString(o string) StreamHasher {
+	// no err check https://golang.org/pkg/hash/#Hash
+	_, _ = s.hasher.Write([]byte(o))
+
+	return s
+}
+
+func (s StreamHasher) WriteBytes(o []byte) StreamHasher {
+	// no err check https://golang.org/pkg/hash/#Hash
+	_, _ = s.hasher.Write(o)
+
+	return s
+}
+
 func (s StreamHasher) Write(o any) StreamHasher {
 	// no err check https://golang.org/pkg/hash/#Hash
-	_, _ = fmt.Fprintf(s.hasher, "%#v", o)
+	_, _ = fmt.Fprintf(s.hasher, "%v", o)
 
 	return s
 }

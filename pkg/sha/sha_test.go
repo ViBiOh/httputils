@@ -19,7 +19,7 @@ func TestNew(t *testing.T) {
 			args{
 				o: value,
 			},
-			"4d967a30111bf29f0eba01c448b375c1629b2fed01cdfcc3aed91f1b57d5dd5e",
+			"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
 		},
 	}
 
@@ -59,13 +59,13 @@ func TestStream(t *testing.T) {
 			args{
 				o: []any{value},
 			},
-			"4d967a30111bf29f0eba01c448b375c1629b2fed01cdfcc3aed91f1b57d5dd5e",
+			"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
 		},
 		"multiple": {
 			args{
 				o: []any{value, value},
 			},
-			"bfc919009a7b3b1f6b7ed14e39c8b0194782f1caf3067ce874953cc887f1ac4f",
+			"37268335dd6931045bdcdf92623ff819a64244b53d0e746d438797349d4da578",
 		},
 	}
 

@@ -16,7 +16,7 @@ func TestEtag(t *testing.T) {
 	}{
 		"simple": {
 			NewPage("index", http.StatusOK, nil),
-			"b1c86216f372f99944c9bbcd9cc99cd6224556b506e275d8be6b03f0316bbbfd",
+			"193ae4a71a838059505f10018201f75ab95cd965c0ac4ce34849c19f59a0da82",
 		},
 	}
 
@@ -74,5 +74,32 @@ func TestParseMessage(t *testing.T) {
 				t.Errorf("ParseMessage() = %v, want %v", got, testCase.want)
 			}
 		})
+	}
+}
+
+type testStruct struct {
+	ID    uint64
+	Name  string
+	Items []string
+}
+
+func (ts testStruct) String() string {
+	return ""
+}
+
+func BenchmarkEtag(b *testing.B) {
+	page := Page{
+		Content: map[string]any{
+			"Version": "localhsot",
+			"Items": []testStruct{
+				{ID: 8000, Name: "John", Items: []string{"one", "two", "three"}},
+			},
+		},
+		Template: "index",
+		Status:   http.StatusOK,
+	}
+
+	for i := 0; i < b.N; i++ {
+		page.etag()
 	}
 }
