@@ -130,7 +130,7 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) e
 		return errors.New("no action provided")
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "transaction")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "transaction", trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	if readTx(ctx) != nil {
@@ -156,7 +156,7 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) e
 }
 
 func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) (err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "list")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
@@ -184,7 +184,7 @@ func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query strin
 }
 
 func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) error {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "get")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "get", trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
@@ -198,7 +198,7 @@ func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string,
 }
 
 func (a App) Create(ctx context.Context, query string, args ...any) (uint64, error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "create")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "create", trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	tx := readTx(ctx)
@@ -234,7 +234,7 @@ func (a App) One(ctx context.Context, query string, args ...any) error {
 }
 
 func (a App) exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "exec")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "exec", trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	tx := readTx(ctx)
@@ -269,7 +269,7 @@ func (bc *feeder) Err() error {
 }
 
 func (a App) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) error {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "bulk")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "bulk", trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	tx := readTx(ctx)

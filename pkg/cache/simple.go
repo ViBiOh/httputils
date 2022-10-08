@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 )
 
 func Load[V any](ctx context.Context, client RedisClient, key string, onMiss func(context.Context) (V, error), ttl time.Duration) (V, error) {
@@ -26,20 +27,20 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 	value, err := onMiss(ctx)
 
 	if err == nil {
-		go func() {
+		go func(ctx context.Context) {
 			payload, err := json.Marshal(value)
 			if err != nil {
 				loggerWithTrace(ctx, key).Error("marshal: %s", err)
 				return
 			}
 
-			storeCtx, cancel := context.WithTimeout(context.Background(), asyncActionTimeout)
+			storeCtx, cancel := context.WithTimeout(ctx, asyncActionTimeout)
 			defer cancel()
 
 			if err = client.Store(storeCtx, key, payload, ttl); err != nil {
 				loggerWithTrace(ctx, key).Error("store: %s", err)
 			}
-		}()
+		}(tracer.CopyToBackground(ctx))
 	}
 
 	return value, err

@@ -142,10 +142,18 @@ func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.Sp
 		return ctx, noopFunc
 	}
 
-	var span tr.Span
-	ctx, span = tracer.Start(ctx, name, opts...)
+	ctx, span := tracer.Start(ctx, name, opts...)
 
 	return ctx, span.End
+}
+
+func CopyToBackground(ctx context.Context) context.Context {
+	span := tr.SpanFromContext(ctx)
+	if span == nil {
+		return context.Background()
+	}
+
+	return tr.ContextWithSpan(context.Background(), span)
 }
 
 func AddTraceToLogger(span tr.Span, logger logger.Provider) logger.Provider {

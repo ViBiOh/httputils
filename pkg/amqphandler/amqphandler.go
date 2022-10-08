@@ -131,7 +131,7 @@ func (a App) Start(ctx context.Context, done <-chan struct{}) {
 }
 
 func (a App) handleMessage(ctx context.Context, log logger.Provider, message amqp.Delivery) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "handle")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer))
 	defer end()
 
 	err := a.handler(ctx, message)

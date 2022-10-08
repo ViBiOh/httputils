@@ -8,6 +8,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/streadway/amqp"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (c *Client) SetupExclusive(name string) (err error) {
@@ -60,7 +61,7 @@ func (c *Client) shouldCreateExclusiveQueue(name string) (bool, int) {
 }
 
 func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
-	ctx, end := tracer.StartSpan(ctx, c.tracer, "exclusive")
+	ctx, end := tracer.StartSpan(ctx, c.tracer, "exclusive", trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	var channel *amqp.Channel

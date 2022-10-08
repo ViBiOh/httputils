@@ -89,7 +89,7 @@ func (a App) Store(ctx context.Context, key string, value any, duration time.Dur
 		return nil
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithAttributes(attribute.String("key", key)))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithAttributes(attribute.String("key", key)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	err := a.redisClient.SetEX(ctx, key, value, duration).Err()
@@ -108,7 +108,7 @@ func (a App) Load(ctx context.Context, key string) ([]byte, error) {
 		return nil, nil
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "load", trace.WithAttributes(attribute.String("key", key)))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "load", trace.WithAttributes(attribute.String("key", key)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	content, err := a.redisClient.Get(ctx, key).Bytes()
@@ -135,7 +135,7 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 		return nil, nil
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "load_many")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "load_many", trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	content, err := a.redisClient.MGet(ctx, keys...).Result()
@@ -161,7 +161,7 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 		return nil
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete", trace.WithAttributes(attribute.StringSlice("keys", keys)))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete", trace.WithAttributes(attribute.StringSlice("keys", keys)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	pipeline := a.redisClient.Pipeline()
@@ -178,7 +178,7 @@ func (a App) DeletePattern(ctx context.Context, pattern string) error {
 		return nil
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete_pattern", trace.WithAttributes(attribute.String("pattenr", pattern)))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete_pattern", trace.WithAttributes(attribute.String("pattenr", pattern)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	scanOutput := make(chan string, runtime.NumCPU())
@@ -236,7 +236,7 @@ func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pag
 	var err error
 	var cursor uint64
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "scan", trace.WithAttributes(attribute.String("pattern", pattern)))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "scan", trace.WithAttributes(attribute.String("pattern", pattern)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	for {
@@ -263,7 +263,7 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 		return false, fmt.Errorf("redis not enabled")
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "exclusive", trace.WithAttributes(attribute.String("name", name)))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "exclusive", trace.WithAttributes(attribute.String("name", name)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	a.increase("exclusive")

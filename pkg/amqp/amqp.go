@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -12,6 +13,7 @@ import (
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/streadway/amqp"
 	"go.opentelemetry.io/otel/trace"
@@ -94,7 +96,10 @@ func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Register
 	return client, nil
 }
 
-func (c *Client) Publish(payload amqp.Publishing, exchange, routingKey string) error {
+func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange, routingKey string) error {
+	_, end := tracer.StartSpan(ctx, c.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
+	defer end()
+
 	c.RLock()
 	defer c.RUnlock()
 
@@ -109,13 +114,16 @@ func (c *Client) Publish(payload amqp.Publishing, exchange, routingKey string) e
 	return nil
 }
 
-func (c *Client) PublishJSON(item any, exchange, routingKey string) error {
+func (c *Client) PublishJSON(ctx context.Context, item any, exchange, routingKey string) error {
+	ctx, end := tracer.StartSpan(ctx, c.tracer, "publish_json", trace.WithSpanKind(trace.SpanKindProducer))
+	defer end()
+
 	payload, err := json.Marshal(item)
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	}
 
-	if err = c.Publish(amqp.Publishing{
+	if err = c.Publish(ctx, amqp.Publishing{
 		ContentType: "application/json",
 		Body:        payload,
 	}, exchange, routingKey); err != nil {

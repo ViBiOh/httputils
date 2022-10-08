@@ -52,7 +52,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 		return a.onMiss(ctx, id)
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "get")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "get", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
 	key := a.toKey(id)
@@ -71,7 +71,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 
 // If onMissError returns false, List stops by returning an error
 func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "list")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
 	values := a.getValues(ctx, items)
@@ -114,7 +114,7 @@ func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error 
 		return err
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "evict")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "evict", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
 	key := a.toKey(item)
@@ -135,7 +135,7 @@ func (a App[K, V]) Store(ctx context.Context, id K, value V) error {
 }
 
 func (a App[K, V]) store(ctx context.Context, id K, value V) error {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "store")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
 	payload, err := json.Marshal(value)
@@ -154,14 +154,17 @@ func (a App[K, V]) store(ctx context.Context, id K, value V) error {
 }
 
 func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "fetch", trace.WithSpanKind(trace.SpanKindInternal))
+	defer end()
+
 	value, err := a.onMiss(ctx, id)
 
 	if err == nil {
-		go func() {
-			if storeErr := a.store(context.Background(), id, value); storeErr != nil {
+		go func(ctx context.Context) {
+			if storeErr := a.store(ctx, id, value); storeErr != nil {
 				loggerWithTrace(ctx, a.toKey(id)).Error("store to cache: %s", storeErr)
 			}
-		}()
+		}(tracer.CopyToBackground(ctx))
 	}
 
 	return value, err

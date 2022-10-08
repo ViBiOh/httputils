@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (a App) Push(ctx context.Context, key string, value any) error {
@@ -16,7 +17,7 @@ func (a App) Push(ctx context.Context, key string, value any) error {
 		return nil
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "push")
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "push", trace.WithSpanKind(trace.SpanKindProducer))
 	defer end()
 
 	if content, err := json.Marshal(value); err != nil {
