@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 
 	"github.com/ViBiOh/httputils/v4/pkg/sha"
 )
@@ -30,16 +31,27 @@ func (p Page) etag() string {
 	streamer.WriteString(p.Template)
 	streamer.Write(p.Status)
 
-	for key, value := range p.Content {
+	keys := make([]string, 0, len(p.Content))
+	for key := range p.Content {
+		index := sort.Search(len(keys), func(i int) bool {
+			return keys[i] >= key
+		})
+
+		keys = append(keys, key)
+		copy(keys[index+1:], keys[index:])
+		keys[index] = key
+	}
+
+	for _, key := range keys {
 		streamer.WriteString(key)
 
-		switch typedValue := value.(type) {
+		switch typedValue := p.Content[key].(type) {
 		case string:
 			streamer.WriteString(typedValue)
 		case []byte:
 			streamer.WriteBytes(typedValue)
 		default:
-			streamer.Write(value)
+			streamer.Write(typedValue)
 		}
 	}
 
