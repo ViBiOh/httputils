@@ -32,7 +32,15 @@ func (p Page) etag() string {
 
 	for key, value := range p.Content {
 		streamer.WriteString(key)
-		streamer.Write(value)
+
+		switch typedValue := value.(type) {
+		case string:
+			streamer.WriteString(typedValue)
+		case []byte:
+			streamer.WriteBytes(typedValue)
+		default:
+			streamer.Write(value)
+		}
 	}
 
 	return streamer.Sum()
