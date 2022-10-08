@@ -2,17 +2,20 @@ package templates
 
 import (
 	"bytes"
+	"context"
 	"html/template"
 	"io"
 	"net/http"
 	"regexp"
 	"sync"
 
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/html"
 	"github.com/tdewolff/minify/v2/js"
 	"github.com/tdewolff/minify/v2/svg"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -43,7 +46,10 @@ func init() {
 	xmlHeaders.Add("Cache-Control", "no-cache")
 }
 
-func WriteTemplate(tpl *template.Template, w io.Writer, content any, mediatype string) error {
+func WriteTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template, w io.Writer, content any, mediatype string) error {
+	_, end := tracer.StartSpan(ctx, tr, "html_template", trace.WithSpanKind(trace.SpanKindInternal))
+	defer end()
+
 	buffer := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buffer)
 
@@ -55,7 +61,10 @@ func WriteTemplate(tpl *template.Template, w io.Writer, content any, mediatype s
 	return minifier.Minify(mediatype, w, buffer)
 }
 
-func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content any, status int) error {
+func ResponseHTMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template, w http.ResponseWriter, content any, status int) error {
+	_, end := tracer.StartSpan(ctx, tr, "html_template", trace.WithSpanKind(trace.SpanKindInternal))
+	defer end()
+
 	buffer := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buffer)
 
@@ -72,7 +81,10 @@ func ResponseHTMLTemplate(tpl *template.Template, w http.ResponseWriter, content
 	return minifier.Minify("text/html", w, buffer)
 }
 
-func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, content any, status int) error {
+func ResponseHTMLTemplateRaw(ctx context.Context, tr trace.Tracer, tpl *template.Template, w http.ResponseWriter, content any, status int) error {
+	_, end := tracer.StartSpan(ctx, tr, "html_template_raw", trace.WithSpanKind(trace.SpanKindInternal))
+	defer end()
+
 	for key, value := range htmlHeaders {
 		w.Header()[key] = value
 	}
@@ -81,7 +93,10 @@ func ResponseHTMLTemplateRaw(tpl *template.Template, w http.ResponseWriter, cont
 	return tpl.Execute(w, content)
 }
 
-func ResponseXMLTemplate(tpl *template.Template, w http.ResponseWriter, content any, status int) error {
+func ResponseXMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template, w http.ResponseWriter, content any, status int) error {
+	_, end := tracer.StartSpan(ctx, tr, "xml_template", trace.WithSpanKind(trace.SpanKindInternal))
+	defer end()
+
 	buffer := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buffer)
 

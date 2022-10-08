@@ -11,6 +11,8 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
+	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var svgCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Hour * 4).Seconds())
@@ -31,7 +33,7 @@ func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", a.url(parts[0]), joinChar, message, anchor), http.StatusFound)
 }
 
-func (a App) Error(w http.ResponseWriter, _ *http.Request, content map[string]any, err error) {
+func (a App) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error) {
 	logger.Error("%s", err)
 
 	content = a.feedContent(content)
@@ -45,7 +47,7 @@ func (a App) Error(w http.ResponseWriter, _ *http.Request, content map[string]an
 	owasp.WriteNonce(w, nonce)
 	content["nonce"] = nonce
 
-	if err = templates.ResponseHTMLTemplate(a.tpl.Lookup("error"), w, content, status); err != nil {
+	if err = templates.ResponseHTMLTemplate(r.Context(), a.tracer, a.tpl.Lookup("error"), w, content, status); err != nil {
 		httperror.InternalServerError(w, err)
 	}
 }
@@ -79,7 +81,7 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 		page.Content["Message"] = message
 	}
 
-	if matchEtag(w, r, page) {
+	if a.matchEtag(w, r, page) {
 		w.WriteHeader(http.StatusNotModified)
 
 		return
@@ -90,12 +92,15 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 		responder = templates.ResponseHTMLTemplateRaw
 	}
 
-	if err = responder(a.tpl.Lookup(page.Template), w, page.Content, page.Status); err != nil {
+	if err = responder(r.Context(), a.tracer, a.tpl.Lookup(page.Template), w, page.Content, page.Status); err != nil {
 		httperror.InternalServerError(w, err)
 	}
 }
 
-func matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
+func (a App) matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
+	_, end := tracer.StartSpan(r.Context(), a.tracer, "match_etag", trace.WithSpanKind(trace.SpanKindInternal))
+	defer end()
+
 	etag := page.etag()
 
 	noneMatch := r.Header.Get("If-None-Match")
@@ -142,7 +147,7 @@ func (a App) svg() http.Handler {
 		w.Header().Add("Cache-Control", svgCacheDuration)
 		w.Header().Add("Content-Type", "image/svg+xml")
 
-		if err := templates.WriteTemplate(tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {
+		if err := templates.WriteTemplate(r.Context(), a.tracer, tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {
 			httperror.InternalServerError(w, err)
 		}
 	})
