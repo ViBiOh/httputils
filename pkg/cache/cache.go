@@ -44,6 +44,7 @@ func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(con
 		onMiss:      onMiss,
 		ttl:         ttl,
 		concurrency: concurrency,
+		tracer:      tracer,
 	}
 }
 
