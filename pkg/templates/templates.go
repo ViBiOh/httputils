@@ -46,8 +46,15 @@ func init() {
 	xmlHeaders.Add("Cache-Control", "no-cache")
 }
 
+func minifyWithTracing(ctx context.Context, tr trace.Tracer, mediatype string, input io.Reader, output io.Writer) error {
+	_, end := tracer.StartSpan(ctx, tr, "minify", trace.WithSpanKind(trace.SpanKindInternal))
+	defer end()
+
+	return minifier.Minify(mediatype, output, input)
+}
+
 func WriteTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template, w io.Writer, content any, mediatype string) error {
-	_, end := tracer.StartSpan(ctx, tr, "html_template", trace.WithSpanKind(trace.SpanKindInternal))
+	_, end := tracer.StartSpan(ctx, tr, "template", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
 	buffer := bufferPool.Get().(*bytes.Buffer)
@@ -58,7 +65,7 @@ func WriteTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template,
 		return err
 	}
 
-	return minifier.Minify(mediatype, w, buffer)
+	return minifyWithTracing(ctx, tr, mediatype, buffer, w)
 }
 
 func ResponseHTMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template, w http.ResponseWriter, content any, status int) error {
@@ -78,7 +85,7 @@ func ResponseHTMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Te
 	}
 	w.WriteHeader(status)
 
-	return minifier.Minify("text/html", w, buffer)
+	return minifyWithTracing(ctx, tr, "text/html", buffer, w)
 }
 
 func ResponseHTMLTemplateRaw(ctx context.Context, tr trace.Tracer, tpl *template.Template, w http.ResponseWriter, content any, status int) error {
@@ -111,5 +118,5 @@ func ResponseXMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Tem
 	}
 	w.WriteHeader(status)
 
-	return minifier.Minify("text/xml", w, buffer)
+	return minifyWithTracing(ctx, tr, "text/xml", buffer, w)
 }
