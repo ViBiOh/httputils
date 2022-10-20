@@ -13,7 +13,7 @@ require (
 	github.com/prometheus/common v0.37.0
 	github.com/streadway/amqp v1.0.0
 	github.com/tdewolff/minify/v2 v2.12.4
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.36.3
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.36.4
 	go.opentelemetry.io/otel v1.11.1
 	go.opentelemetry.io/otel/exporters/jaeger v1.11.1
 	go.opentelemetry.io/otel/sdk v1.11.1
