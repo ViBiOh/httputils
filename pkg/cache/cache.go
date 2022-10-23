@@ -76,20 +76,22 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 	defer end()
 
 	values := a.getValues(ctx, items)
-	valuesLen := len(values)
-	wg := concurrent.NewFailFast(a.concurrency)
+
+	if valuesLen := len(values); valuesLen != len(items) {
+		return nil, fmt.Errorf("get returned %d values while expecting %d", valuesLen, len(items))
+	}
 
 	output := make([]V, len(items))
+	wg := concurrent.NewFailFast(a.concurrency)
+
 	for index, item := range items {
 		index, item := index, item
 
 		wg.Go(func() error {
-			if index < valuesLen {
-				if value, ok := a.unmarshal(ctx, a.toKey(item), []byte(values[index])); ok {
-					output[index] = value
+			if value, ok := a.unmarshal(ctx, a.toKey(item), []byte(values[index])); ok {
+				output[index] = value
 
-					return nil
-				}
+				return nil
 			}
 
 			value, err := a.fetch(ctx, item)
@@ -108,6 +110,48 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 	}
 
 	return output, wg.Wait()
+}
+
+// Param fetchMany has to return the same number of values as requested and in the same order
+func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context, []K) ([]V, error), items ...K) ([]V, error) {
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
+	defer end()
+
+	values := a.getValues(ctx, items)
+
+	if valuesLen := len(values); valuesLen != len(items) {
+		return nil, fmt.Errorf("get returned %d values while expecting %d", valuesLen, len(items))
+	}
+
+	var missingIds []K
+	var missingIndex []int
+
+	output := make([]V, len(items))
+	for index, item := range items {
+		if value, ok := a.unmarshal(ctx, a.toKey(item), []byte(values[index])); ok {
+			output[index] = value
+
+			continue
+		}
+
+		missingIds = append(missingIds, item)
+		missingIndex = append(missingIndex, index)
+	}
+
+	missingValues, err := fetchMany(ctx, missingIds)
+	if err != nil {
+		return output, fmt.Errorf("fetch: %w", err)
+	}
+
+	if valuesLen := len(missingValues); valuesLen != len(missingIndex) {
+		return output, fmt.Errorf("fetch returned %d values while expecting %d", valuesLen, len(missingIndex))
+	}
+
+	for index, value := range missingValues {
+		output[missingIndex[index]] = value
+	}
+
+	return output, nil
 }
 
 func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
