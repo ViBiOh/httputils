@@ -21,7 +21,6 @@ var (
 	colorReset  = []byte("\033[0m")
 	colorRed    = []byte("\033[31m")
 	colorYellow = []byte("\033[33m")
-	colorBlue   = []byte("\033[34m")
 )
 
 type Config struct {
@@ -136,8 +135,6 @@ func (l Logger) Start() {
 
 func getColor(level level) []byte {
 	switch level {
-	case levelInfo:
-		return colorBlue
 	case levelWarning:
 		return colorYellow
 	case levelError, levelFatal:
