@@ -58,12 +58,13 @@ init:
 ## format: Format code. e.g Prettier (js), format (golang)
 .PHONY: format
 format:
-	goimports -w $(shell find . -name "*.go")
-	gofumpt -w $(shell find . -name "*.go") 2>/dev/null
+	$(shell find . -name "*.go" -exec goimports -w {} +)
+	$(shell find . -name "*.go" -exec gofumpt -w {} +)
 
 ## style: Check lint, code styling rules. e.g. pylint, phpcs, eslint, style (java) etc ...
 .PHONY: style
 style:
+	fieldalignment -test=false $(PACKAGES)
 	golangci-lint run
 
 ## mocks: Generate mocks
