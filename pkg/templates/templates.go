@@ -69,7 +69,7 @@ func WriteTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template,
 }
 
 func ResponseHTMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template, w http.ResponseWriter, content any, status int) error {
-	_, end := tracer.StartSpan(ctx, tr, "html_template", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := tracer.StartSpan(ctx, tr, "html_template", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
 	buffer := bufferPool.Get().(*bytes.Buffer)
@@ -101,7 +101,7 @@ func ResponseHTMLTemplateRaw(ctx context.Context, tr trace.Tracer, tpl *template
 }
 
 func ResponseXMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template, w http.ResponseWriter, content any, status int) error {
-	_, end := tracer.StartSpan(ctx, tr, "xml_template", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := tracer.StartSpan(ctx, tr, "xml_template", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
 	buffer := bufferPool.Get().(*bytes.Buffer)
