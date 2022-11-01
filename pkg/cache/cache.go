@@ -63,7 +63,9 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 
 	if content, err := a.client.Load(loadCtx, key); err != nil {
 		loggerWithTrace(ctx, key).Error("load from cache: %s", err)
-	} else if value, ok := a.unmarshal(ctx, key, content); ok {
+	} else if value, ok, err := a.unmarshal(ctx, content); err != nil {
+		loggerWithTrace(ctx, key).Error("unmarshal from cache: %s", err)
+	} else if ok {
 		return value, nil
 	}
 
@@ -88,13 +90,18 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 		index, item := index, item
 
 		wg.Go(func() error {
-			if value, ok := a.unmarshal(ctx, a.toKey(item), []byte(values[index])); ok {
+			value, ok, err := a.unmarshal(ctx, []byte(values[index]))
+			if ok {
 				output[index] = value
 
 				return nil
 			}
 
-			value, err := a.fetch(ctx, item)
+			if err != nil {
+				loggerWithTrace(ctx, a.toKey(item)).Error("unmarshal from cache: %s", err)
+			}
+
+			value, err = a.fetch(ctx, item)
 			if err != nil {
 				if !onMissError(item, err) {
 					return err
@@ -128,10 +135,16 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 
 	output := make([]V, len(items))
 	for index, item := range items {
-		if value, ok := a.unmarshal(ctx, a.toKey(item), []byte(values[index])); ok {
+		value, ok, err := a.unmarshal(ctx, []byte(values[index]))
+
+		if ok {
 			output[index] = value
 
 			continue
+		}
+
+		if err != nil {
+			loggerWithTrace(ctx, a.toKey(item)).Error("unmarshal from cache: %s", err)
 		}
 
 		missingIds = append(missingIds, item)
@@ -215,22 +228,20 @@ func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	return value, err
 }
 
-func (a App[K, V]) unmarshal(ctx context.Context, key string, content []byte) (value V, ok bool) {
+func (a App[K, V]) unmarshal(ctx context.Context, content []byte) (V, bool, error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "unmarshal", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
-	return unmarshal[V](ctx, key, content)
+	return unmarshal[V](ctx, content)
 }
 
-func unmarshal[V any](ctx context.Context, key string, content []byte) (value V, ok bool) {
+func unmarshal[V any](ctx context.Context, content []byte) (value V, ok bool, err error) {
 	if len(content) == 0 {
 		return
 	}
 
-	err := json.Unmarshal(content, &value)
-	if err != nil {
-		loggerWithTrace(ctx, key).Error("unmarshal from cache: %s", err)
-	} else {
+	err = json.Unmarshal(content, &value)
+	if err == nil {
 		ok = true
 	}
 
