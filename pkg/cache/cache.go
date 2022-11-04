@@ -74,6 +74,25 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 
 // If onMissError returns false, List stops by returning an error
 func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
+	if model.IsNil(a.client) {
+		output := make([]V, len(items))
+
+		for index, item := range items {
+			value, err := a.fetch(ctx, item)
+			if err != nil {
+				if !onMissError(item, err) {
+					return nil, err
+				}
+
+				continue
+			}
+
+			output[index] = value
+		}
+
+		return output, nil
+	}
+
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
@@ -121,6 +140,10 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 
 // Param fetchMany has to return the same number of values as requested and in the same order
 func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context, []K) ([]V, error), items ...K) ([]V, error) {
+	if model.IsNil(a.client) {
+		return fetchMany(ctx, items)
+	}
+
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
