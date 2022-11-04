@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
@@ -14,8 +13,6 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"go.opentelemetry.io/otel/trace"
 )
-
-var svgCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Hour * 4).Seconds())
 
 func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
 	joinChar := "?"
@@ -144,7 +141,7 @@ func (a App) svg() http.Handler {
 			return
 		}
 
-		w.Header().Add("Cache-Control", svgCacheDuration)
+		w.Header().Add("Cache-Control", staticCacheDuration)
 		w.Header().Add("Content-Type", "image/svg+xml")
 
 		if err := templates.WriteTemplate(r.Context(), a.tracer, tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {

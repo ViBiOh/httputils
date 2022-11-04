@@ -25,7 +25,7 @@ const (
 var (
 	staticFolders       = []string{"/images", "/scripts", "/styles"}
 	staticRootPaths     = []string{"/robots.txt", "/sitemap.xml", "/favicon.ico"}
-	staticCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Hour * 24).Seconds())
+	staticCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Hour * 24 * 180).Seconds())
 )
 
 type App struct {
