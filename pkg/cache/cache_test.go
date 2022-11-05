@@ -119,6 +119,7 @@ func TestGet(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRedisClient := mocks.NewRedisClient(ctrl)
+			mockRedisClient.EXPECT().Enabled().Return(true)
 
 			switch intention {
 			case "cache error":
@@ -220,6 +221,7 @@ func TestGetError(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRedisClient := mocks.NewRedisClient(ctrl)
+			mockRedisClient.EXPECT().Enabled().Return(true)
 
 			switch intention {
 			case "marshal error":
@@ -299,8 +301,10 @@ func TestEvictOnSuccess(t *testing.T) {
 
 			switch intention {
 			case "evict":
+				mockRedisClient.EXPECT().Enabled().Return(true)
 				mockRedisClient.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil)
 			case "evict error":
+				mockRedisClient.EXPECT().Enabled().Return(true)
 				mockRedisClient.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(errors.New("redis failed"))
 			}
 

@@ -13,7 +13,7 @@ import (
 )
 
 func (a App) Push(ctx context.Context, key string, value any) error {
-	if !a.enabled() {
+	if !a.Enabled() {
 		return nil
 	}
 
@@ -32,7 +32,7 @@ func (a App) Push(ctx context.Context, key string, value any) error {
 }
 
 func (a App) Pull(ctx context.Context, key string, handler func(string, error)) {
-	if !a.enabled() {
+	if !a.Enabled() {
 		return
 	}
 

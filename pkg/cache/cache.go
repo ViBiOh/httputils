@@ -9,7 +9,6 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -22,6 +21,7 @@ var (
 )
 
 type RedisClient interface {
+	Enabled() bool
 	Load(ctx context.Context, key string) ([]byte, error)
 	LoadMany(ctx context.Context, keys ...string) ([]string, error)
 	Store(ctx context.Context, key string, value any, ttl time.Duration) error
@@ -49,7 +49,7 @@ func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(con
 }
 
 func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
-	if model.IsNil(a.client) {
+	if !a.client.Enabled() {
 		return a.onMiss(ctx, id)
 	}
 
@@ -74,7 +74,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 
 // If onMissError returns false, List stops by returning an error
 func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
-	if model.IsNil(a.client) {
+	if !a.client.Enabled() {
 		output := make([]V, len(items))
 
 		for index, item := range items {
@@ -140,7 +140,7 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 
 // Param fetchMany has to return the same number of values as requested and in the same order
 func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context, []K) ([]V, error), items ...K) ([]V, error) {
-	if model.IsNil(a.client) {
+	if !a.client.Enabled() {
 		return fetchMany(ctx, items)
 	}
 
@@ -191,7 +191,7 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 }
 
 func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
-	if err != nil || model.IsNil(a.client) {
+	if err != nil || !a.client.Enabled() {
 		return err
 	}
 
@@ -208,7 +208,7 @@ func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error 
 }
 
 func (a App[K, V]) Store(ctx context.Context, id K, value V) error {
-	if model.IsNil(a.client) {
+	if !a.client.Enabled() {
 		return nil
 	}
 
@@ -272,10 +272,6 @@ func unmarshal[V any](ctx context.Context, content []byte) (value V, ok bool, er
 }
 
 func (a App[K, V]) getValues(ctx context.Context, ids []K) []string {
-	if model.IsNil(a.client) {
-		return nil
-	}
-
 	keys := make([]string, len(ids))
 	for index, id := range ids {
 		keys[index] = a.toKey(id)

@@ -69,12 +69,12 @@ func New(config Config, prometheusRegisterer prometheus.Registerer, tracer trace
 	}
 }
 
-func (a App) enabled() bool {
+func (a App) Enabled() bool {
 	return a.redisClient != nil
 }
 
 func (a App) Ping() error {
-	if !a.enabled() {
+	if !a.Enabled() {
 		return nil
 	}
 
@@ -85,7 +85,7 @@ func (a App) Ping() error {
 }
 
 func (a App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
-	if !a.enabled() {
+	if !a.Enabled() {
 		return nil
 	}
 
@@ -104,7 +104,7 @@ func (a App) Store(ctx context.Context, key string, value any, duration time.Dur
 }
 
 func (a App) Load(ctx context.Context, key string) ([]byte, error) {
-	if !a.enabled() {
+	if !a.Enabled() {
 		return nil, nil
 	}
 
@@ -131,7 +131,7 @@ func (a App) Load(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
-	if !a.enabled() {
+	if !a.Enabled() {
 		return nil, nil
 	}
 
@@ -157,7 +157,7 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 }
 
 func (a App) Delete(ctx context.Context, keys ...string) error {
-	if !a.enabled() {
+	if !a.Enabled() {
 		return nil
 	}
 
@@ -174,7 +174,7 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 }
 
 func (a App) DeletePattern(ctx context.Context, pattern string) error {
-	if !a.enabled() {
+	if !a.Enabled() {
 		return nil
 	}
 
@@ -228,7 +228,7 @@ func (a App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
 func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pageSize int64) error {
 	defer close(output)
 
-	if !a.enabled() {
+	if !a.Enabled() {
 		return nil
 	}
 
@@ -259,7 +259,7 @@ func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pag
 }
 
 func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
-	if !a.enabled() {
+	if !a.Enabled() {
 		return false, fmt.Errorf("redis not enabled")
 	}
 

@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 )
 
 func Load[V any](ctx context.Context, client RedisClient, key string, onMiss func(context.Context) (V, error), ttl time.Duration) (V, error) {
-	if model.IsNil(client) {
+	if !client.Enabled() {
 		return onMiss(ctx)
 	}
 
@@ -49,7 +48,7 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 }
 
 func EvictOnSucces(ctx context.Context, client RedisClient, key string, err error) error {
-	if err != nil || model.IsNil(client) {
+	if err != nil || !client.Enabled() {
 		return err
 	}
 

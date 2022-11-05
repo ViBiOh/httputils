@@ -54,6 +54,20 @@ func (mr *RedisClientMockRecorder) Delete(ctx interface{}, keys ...interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*RedisClient)(nil).Delete), varargs...)
 }
 
+// Enabled mocks base method.
+func (m *RedisClient) Enabled() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Enabled")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Enabled indicates an expected call of Enabled.
+func (mr *RedisClientMockRecorder) Enabled() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enabled", reflect.TypeOf((*RedisClient)(nil).Enabled))
+}
+
 // Load mocks base method.
 func (m *RedisClient) Load(ctx context.Context, key string) ([]byte, error) {
 	m.ctrl.T.Helper()

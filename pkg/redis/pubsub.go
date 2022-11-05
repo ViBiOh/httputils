@@ -11,7 +11,7 @@ import (
 )
 
 func (a App) Publish(ctx context.Context, channel string, value any) error {
-	if !a.enabled() {
+	if !a.Enabled() {
 		return nil
 	}
 
@@ -33,7 +33,7 @@ func (a App) Publish(ctx context.Context, channel string, value any) error {
 }
 
 func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error) {
-	if !a.enabled() {
+	if !a.Enabled() {
 		return nil, func(_ context.Context) error { return nil }
 	}
 
