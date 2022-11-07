@@ -318,19 +318,34 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 	done := ctx.Done()
 
 	for {
-		select {
-		case <-done:
+		if c.iterate(done, signals, shouldRetry, run) {
 			return
-		case <-signals:
-			run()
-		case <-time.After(c.getTickerDuration(shouldRetry)):
-			run()
-		case _, ok := <-c.now:
-			if ok {
-				run()
-			}
 		}
 	}
+}
+
+func (c *Cron) iterate(done <-chan struct{}, signals <-chan os.Signal, shouldRetry bool, run func()) bool {
+	timer := time.NewTimer(c.getTickerDuration(shouldRetry))
+	defer func() {
+		if !timer.Stop() {
+			go func() { <-timer.C }()
+		}
+	}()
+
+	select {
+	case <-done:
+		return true
+	case <-signals:
+		run()
+	case <-timer.C:
+		run()
+	case _, ok := <-c.now:
+		if ok {
+			run()
+		}
+	}
+
+	return false
 }
 
 func (c *Cron) Shutdown() {
