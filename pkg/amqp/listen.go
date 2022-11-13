@@ -34,8 +34,8 @@ func (c *Client) Listen(queueResolver QueueResolver, exchange, routingKey string
 }
 
 func (c *Client) StopListener(consumer string) (err error) {
-	c.Lock()
-	defer c.Unlock()
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	listener := c.listeners[consumer]
 	if listener == nil {
@@ -57,8 +57,8 @@ func (c *Client) StopListener(consumer string) (err error) {
 
 func (c *Client) listen(listener *listener, queue string) (<-chan amqp.Delivery, error) {
 	if listener.channel == nil {
-		c.RLock()
-		defer c.RUnlock()
+		c.mutex.RLock()
+		defer c.mutex.RUnlock()
 
 		if err := listener.createChannel(c.connection); err != nil {
 			return nil, err

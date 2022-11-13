@@ -44,7 +44,7 @@ type Client struct {
 	vhost           string
 	uri             string
 	prefetch        int
-	sync.RWMutex
+	mutex           sync.RWMutex
 }
 
 type Config struct {
@@ -100,8 +100,8 @@ func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange,
 	_, end := tracer.StartSpan(ctx, c.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
 	defer end()
 
-	c.RLock()
-	defer c.RUnlock()
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
 	if err := c.channel.Publish(exchange, routingKey, false, false, payload); err != nil {
 		c.increase("error", exchange, routingKey)

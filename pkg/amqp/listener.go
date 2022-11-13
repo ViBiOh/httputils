@@ -23,8 +23,8 @@ func (c *Client) getListener() (*listener, error) {
 		return listener, fmt.Errorf("create listener: %w", err)
 	}
 
-	c.RLock()
-	defer c.RUnlock()
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
 	if err = listener.createChannel(c.connection); err != nil {
 		return listener, err
@@ -34,8 +34,8 @@ func (c *Client) getListener() (*listener, error) {
 }
 
 func (c *Client) createListener(prefetch int) (*listener, error) {
-	c.Lock()
-	defer c.Unlock()
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	var output listener
 

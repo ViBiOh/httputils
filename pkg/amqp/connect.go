@@ -86,8 +86,8 @@ func (c *Client) onDisconnect() {
 }
 
 func (c *Client) createChannel() (channel *amqp.Channel, err error) {
-	c.RLock()
-	defer c.RUnlock()
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
 	channel, err = createChannel(c.connection, c.prefetch)
 	if err != nil {

@@ -13,8 +13,8 @@ func (c *Client) Close() {
 		return
 	}
 
-	c.Lock()
-	defer c.Unlock()
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	var err error
 
@@ -31,8 +31,8 @@ func (c *Client) Close() {
 }
 
 func (c *Client) reconnect() error {
-	c.Lock()
-	defer c.Unlock()
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	newConnection, newChannel, err := connect(c.uri, c.prefetch, c.onDisconnect)
 	if err != nil {
@@ -73,8 +73,8 @@ func (c *Client) closeListeners() (err error) {
 func (c *Client) reconnectListeners() {
 	for _, item := range c.listeners {
 		func(listener *listener) {
-			c.Lock()
-			defer c.Unlock()
+			c.mutex.Lock()
+			defer c.mutex.Unlock()
 
 			if err := listener.createChannel(c.connection); err != nil {
 				logger.WithField("name", listener.name).Error("recreate channel: %s", err)
