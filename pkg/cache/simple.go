@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -18,7 +19,11 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 	defer cancel()
 
 	if content, err := client.Load(loadCtx, key); err != nil {
-		loggerWithTrace(ctx, key).Error("load: %s", err)
+		if errors.Is(err, context.Canceled) {
+			loggerWithTrace(ctx, key).Warn("load: %s", err)
+		} else {
+			loggerWithTrace(ctx, key).Error("load: %s", err)
+		}
 	} else if value, ok, err := unmarshal[V](ctx, content); err != nil {
 		logUnmarshallError(ctx, key, err)
 	} else if ok {

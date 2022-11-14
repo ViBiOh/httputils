@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -62,7 +63,11 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	defer cancel()
 
 	if content, err := a.client.Load(loadCtx, key); err != nil {
-		loggerWithTrace(ctx, key).Error("load from cache: %s", err)
+		if errors.Is(err, context.Canceled) {
+			loggerWithTrace(ctx, key).Warn("load from cache: %s", err)
+		} else {
+			loggerWithTrace(ctx, key).Error("load from cache: %s", err)
+		}
 	} else if value, ok, err := a.unmarshal(ctx, content); err != nil {
 		logUnmarshallError(ctx, key, err)
 	} else if ok {
@@ -286,7 +291,11 @@ func (a App[K, V]) getValues(ctx context.Context, ids []K) []string {
 
 	values, err := a.client.LoadMany(loadCtx, keys...)
 	if err != nil {
-		loggerWithTrace(ctx, strconv.Itoa(len(keys))).Error("load many from cache: %s", err)
+		if errors.Is(err, context.Canceled) {
+			loggerWithTrace(ctx, strconv.Itoa(len(keys))).Warn("load many from cache: %s", err)
+		} else {
+			loggerWithTrace(ctx, strconv.Itoa(len(keys))).Error("load many from cache: %s", err)
+		}
 	}
 
 	return values
