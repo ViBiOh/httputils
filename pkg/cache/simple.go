@@ -20,7 +20,7 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 	if content, err := client.Load(loadCtx, key); err != nil {
 		loggerWithTrace(ctx, key).Error("load: %s", err)
 	} else if value, ok, err := unmarshal[V](ctx, content); err != nil {
-		loggerWithTrace(ctx, key).Error("unmarshal from cache: %s", err)
+		logUnmarshallError(ctx, key, err)
 	} else if ok {
 		return value, nil
 	}

@@ -64,7 +64,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	if content, err := a.client.Load(loadCtx, key); err != nil {
 		loggerWithTrace(ctx, key).Error("load from cache: %s", err)
 	} else if value, ok, err := a.unmarshal(ctx, content); err != nil {
-		loggerWithTrace(ctx, key).Error("unmarshal from cache: %s", err)
+		logUnmarshallError(ctx, key, err)
 	} else if ok {
 		return value, nil
 	}
@@ -75,22 +75,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 // If onMissError returns false, List stops by returning an error
 func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
 	if !a.client.Enabled() {
-		output := make([]V, len(items))
-
-		for index, item := range items {
-			value, err := a.fetch(ctx, item)
-			if err != nil {
-				if !onMissError(item, err) {
-					return nil, err
-				}
-
-				continue
-			}
-
-			output[index] = value
-		}
-
-		return output, nil
+		return a.listRaw(ctx, onMissError, items...)
 	}
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
@@ -117,7 +102,7 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 			}
 
 			if err != nil {
-				loggerWithTrace(ctx, a.toKey(item)).Error("unmarshal from cache: %s", err)
+				logUnmarshallError(ctx, a.toKey(item), err)
 			}
 
 			value, err = a.fetch(ctx, item)
@@ -136,6 +121,25 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 	}
 
 	return output, wg.Wait()
+}
+
+func (a App[K, V]) listRaw(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
+	output := make([]V, len(items))
+
+	for index, item := range items {
+		value, err := a.fetch(ctx, item)
+		if err != nil {
+			if !onMissError(item, err) {
+				return nil, err
+			}
+
+			continue
+		}
+
+		output[index] = value
+	}
+
+	return output, nil
 }
 
 // Param fetchMany has to return the same number of values as requested and in the same order
@@ -167,7 +171,7 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 		}
 
 		if err != nil {
-			loggerWithTrace(ctx, a.toKey(item)).Error("unmarshal from cache: %s", err)
+			logUnmarshallError(ctx, a.toKey(item), err)
 		}
 
 		missingIds = append(missingIds, item)
@@ -290,4 +294,8 @@ func (a App[K, V]) getValues(ctx context.Context, ids []K) []string {
 
 func loggerWithTrace(ctx context.Context, key string) logger.Provider {
 	return tracer.AddTraceToLogger(trace.SpanFromContext(ctx), logger.GetGlobal()).WithField("key", key)
+}
+
+func logUnmarshallError(ctx context.Context, key string, err error) {
+	loggerWithTrace(ctx, key).Error("unmarshal from cache: %s", err)
 }
