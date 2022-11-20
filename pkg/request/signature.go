@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
@@ -19,14 +21,19 @@ const (
 )
 
 // AddSignature add Authorization header based on content signature based on https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12
-func AddSignature(r *http.Request, keyID string, secret, payload []byte) {
+func AddSignature(r *http.Request, created time.Time, keyID string, secret, payload []byte) {
 	digest := fmt.Sprintf("SHA-512=%x", sha512.Sum512(payload))
 	r.Header.Add("Digest", digest)
 
+	createdValue := created.Unix()
+
+	r.Header.Add("Date", created.Format(time.RFC3339))
+
 	r.Header.Add(authorizationHeader, fmt.Sprintf(`Signature keyId="%s"`, keyID))
 	r.Header.Add(authorizationHeader, `algorithm="hs2019"`)
-	r.Header.Add(authorizationHeader, `headers="(request-target) digest"`)
-	signature := signContent(secret, buildSignatureString(r, []string{"(request-target)", "digest"}))
+	r.Header.Add(authorizationHeader, `created=`+strconv.FormatInt(createdValue, 10))
+	r.Header.Add(authorizationHeader, `headers="(request-target) (created) digest"`)
+	signature := signContent(secret, buildSignatureString(r, []string{"(request-target)", "(created)", "digest"}, createdValue))
 	r.Header.Add(authorizationHeader, fmt.Sprintf(`signature="%s"`, base64.StdEncoding.EncodeToString(signature)))
 }
 
@@ -59,35 +66,48 @@ func signContent(secret, content []byte) []byte {
 }
 
 func parseAuthorizationHeader(r *http.Request) ([]byte, []byte, error) {
-	var rawHeaders, rawSignature string
+	var headers, algorithm, rawSignature string
+	var created int64
+	var err error
 
 	for _, value := range r.Header.Values(authorizationHeader) {
 		if strings.HasPrefix(value, "headers=") {
-			rawHeaders = value
+			headers = strings.TrimPrefix(value, "headers=")
+		} else if strings.HasPrefix(value, "created=") {
+			rawCreated := strings.TrimPrefix(value, "created=")
+
+			created, err = strconv.ParseInt(rawCreated, 10, 64)
+			if err != nil {
+				return nil, nil, fmt.Errorf("(created) is not an integer: %w", err)
+			}
 		} else if strings.HasPrefix(value, "signature=") {
-			rawSignature = value
+			rawSignature = strings.TrimPrefix(value, "signature=")
+		} else if strings.HasPrefix(value, "algorithm=") {
+			algorithm = strings.Trim(strings.TrimPrefix(value, "algorithm="), `"`)
 		}
 	}
 
-	if len(rawHeaders) == 0 {
-		return nil, nil, errors.New("no headers section found in Authorization")
+	if len(headers) == 0 {
+		headers = "(created)"
 	}
 
 	if len(rawSignature) == 0 {
 		return nil, nil, errors.New("no signature section found in Authorization")
 	}
 
-	signature, err := base64.StdEncoding.DecodeString(strings.Trim(strings.TrimPrefix(rawSignature, "signature="), `"`))
+	if strings.Contains(headers, "(created)") && (strings.HasPrefix(algorithm, "rsa") || strings.HasPrefix(algorithm, "hmac") || strings.HasPrefix(algorithm, "ecdsa")) {
+		return nil, nil, errors.New("`created` header is incompatible with algorithm")
+	}
+
+	signature, err := base64.StdEncoding.DecodeString(strings.Trim(rawSignature, `"`))
 	if err != nil {
 		return nil, nil, fmt.Errorf("decode base64 signature: %w", err)
 	}
 
-	signatureString := buildSignatureString(r, strings.Split(strings.Trim(strings.TrimPrefix(rawHeaders, "headers="), `"`), " "))
-
-	return signatureString, signature, nil
+	return buildSignatureString(r, strings.Split(strings.Trim(headers, `"`), " "), created), signature, nil
 }
 
-func buildSignatureString(r *http.Request, parts []string) []byte {
+func buildSignatureString(r *http.Request, parts []string, created int64) []byte {
 	var signatureString bytes.Buffer
 
 	for i, header := range parts {
@@ -95,9 +115,14 @@ func buildSignatureString(r *http.Request, parts []string) []byte {
 			signatureString.WriteString("\n")
 		}
 
-		if header == "(request-target)" {
+		switch header {
+		case "(request-target)":
+			signatureString.WriteString("(request-target): ")
 			signatureString.WriteString(strings.ToLower(fmt.Sprintf("%s %s", r.Method, r.URL.Path)))
-		} else {
+		case "(created)":
+			signatureString.WriteString("(created): ")
+			signatureString.WriteString(strconv.FormatInt(created, 10))
+		default:
 			signatureString.WriteString(strings.ToLower(header))
 			signatureString.WriteString(": ")
 

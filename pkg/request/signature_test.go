@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
@@ -32,7 +33,7 @@ func TestAddSignature(t *testing.T) {
 				payload: []byte(`Hello World`),
 			},
 			"SHA-512=2c74fd17edafd80e8447b0d46741ee243b7eb74dd2149a0ab1b9246fb30382f27e853d8585719e0e67cbda0daa8f51671064615d645ae27acb15bfb1447f459b",
-			`Signature keyId="test", algorithm="hs2019", headers="(request-target) digest", signature="5lf5ogggfJ1LXJciRS2BscNtMnYHWDOr2myJ9TJyZnu+37EXUpmchhl6LxyzU0bfpqAloLFEFw+1NEBSgNC+lQ=="`,
+			`Signature keyId="test", algorithm="hs2019", created=1671913800, headers="(request-target) (created) digest", signature="yr9tUFlYgFvIHFVth7knuim3m7lrYcv3y1j7ltPlQu5TSaCwM2xlxNo1AVyVrTYEKVgk8t2Kcq3piScvhqqoZg=="`,
 		},
 	}
 
@@ -44,7 +45,9 @@ func TestAddSignature(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 
-			AddSignature(req, testCase.args.keyID, testCase.args.secret, testCase.args.payload)
+			created := time.Date(2022, 12, 24, 20, 30, 0, 0, time.UTC)
+
+			AddSignature(req, created, testCase.args.keyID, testCase.args.secret, testCase.args.payload)
 
 			if got := req.Header.Get("Digest"); got != testCase.wantDigest {
 				t.Errorf("AddSignature() = `%s`, want `%s`", got, testCase.wantDigest)
@@ -92,8 +95,8 @@ func TestValidateSignature(t *testing.T) {
 
 	reqValidSecret := httptest.NewRequest(http.MethodGet, "/", strings.NewReader("Hello World"))
 	reqValidSecret.Header.Add("Digest", fmt.Sprintf("SHA-512=%x", sha512.Sum512([]byte(`Hello World`))))
-	reqValidSecret.Header.Add("Authorization", `headers="(request-target) digest"`)
-	reqValidSecret.Header.Add("Authorization", `signature="5lf5ogggfJ1LXJciRS2BscNtMnYHWDOr2myJ9TJyZnu+37EXUpmchhl6LxyzU0bfpqAloLFEFw+1NEBSgNC+lQ=="`)
+	reqValidSecret.Header.Add("Authorization", `headers="digest"`)
+	reqValidSecret.Header.Add("Authorization", `signature="+EouqFEr3EssEGKcNHkzn902p6IdugZapoCp8mKhPKkNWXkPTvrNswSHEb+QgQE3smqla5lFOaHomL4OZhPEGg=="`)
 
 	cases := map[string]struct {
 		args    args
@@ -159,7 +162,7 @@ func TestValidateSignature(t *testing.T) {
 		"valid secret": {
 			args{
 				req:    reqValidSecret,
-				secret: []byte(`password`),
+				secret: []byte(`SecureSymmetricKeyWithLongValueInIt`),
 			},
 			true,
 			nil,

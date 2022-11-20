@@ -250,7 +250,7 @@ func (r Request) Build(ctx context.Context, payload io.ReadCloser) (*http.Reques
 			return nil, fmt.Errorf("read content for signature: %w", err)
 		}
 
-		AddSignature(req, r.signatureKeydID, r.signatureSecret, body)
+		AddSignature(req, time.Now(), r.signatureKeydID, r.signatureSecret, body)
 		req.ContentLength = int64(len(body))
 		req.Body = io.NopCloser(bytes.NewBuffer(body))
 	} else if len(r.username) != 0 || len(r.password) != 0 {
