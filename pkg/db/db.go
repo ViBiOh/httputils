@@ -50,6 +50,7 @@ type Config struct {
 	pass    *string
 	name    *string
 	sslmode *string
+	minConn *uint
 	maxConn *uint
 }
 
@@ -60,6 +61,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 		user:    flags.String(fs, prefix, "database", "User", "User", "", overrides),
 		pass:    flags.String(fs, prefix, "database", "Pass", "Pass", "", overrides),
 		name:    flags.String(fs, prefix, "database", "Name", "Name", "", overrides),
+		minConn: flags.Uint(fs, prefix, "database", "MinConn", "Min Open Connections", 2, overrides),
 		maxConn: flags.Uint(fs, prefix, "database", "MaxConn", "Max Open Connections", 5, overrides),
 		sslmode: flags.String(fs, prefix, "database", "Sslmode", "SSL Mode", "disable", overrides),
 	}
@@ -76,7 +78,7 @@ func New(config Config, tracer trace.Tracer) (App, error) {
 	name := strings.TrimSpace(*config.name)
 	sslmode := *config.sslmode
 
-	db, err := pgxpool.Connect(context.Background(), fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_max_conns=%d", host, *config.port, user, pass, name, sslmode, *config.maxConn))
+	db, err := pgxpool.Connect(context.Background(), fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_min_conns=%d pool_max_conns=%d", host, *config.port, user, pass, name, sslmode, *config.minConn, *config.maxConn))
 	if err != nil {
 		return App{}, fmt.Errorf("connect to postgres: %w", err)
 	}
