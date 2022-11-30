@@ -7,29 +7,29 @@ func TestCompute(t *testing.T) {
 
 	cases := map[string]struct {
 		instance *Rupture
-		current  string
-		next     string
+		current  []byte
+		next     []byte
 		force    bool
 		want     bool
 	}{
 		"simple": {
-			NewRupture("simple", Identity),
-			"A0",
-			"A1",
+			NewRupture("simple", RuptureIdentity),
+			[]byte("A0"),
+			[]byte("A1"),
 			false,
 			true,
 		},
 		"equal": {
-			NewRupture("simple", Identity),
-			"A0",
-			"A0",
+			NewRupture("simple", RuptureIdentity),
+			[]byte("A0"),
+			[]byte("A0"),
 			false,
 			false,
 		},
 		"forced": {
-			NewRupture("simple", Identity),
-			"A0",
-			"A0",
+			NewRupture("simple", RuptureIdentity),
+			[]byte("A0"),
+			[]byte("A0"),
 			true,
 			true,
 		},

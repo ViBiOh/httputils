@@ -2,7 +2,6 @@ package breaksync
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"strconv"
 	"testing"
@@ -10,12 +9,12 @@ import (
 
 type card string
 
-func cardKeyer(c card) string {
-	return string(c)
+func cardKeyer(c card) []byte {
+	return []byte(c)
 }
 
-func numberKeyer(n int) string {
-	return strconv.Itoa(n)
+func numberKeyer(n int) []byte {
+	return []byte(strconv.Itoa(n))
 }
 
 type client struct {
@@ -23,8 +22,8 @@ type client struct {
 	card string
 }
 
-func clientKeyer(c client) string {
-	return c.card
+func clientKeyer(c client) []byte {
+	return []byte(c.card)
 }
 
 func TestRun(t *testing.T) {
@@ -61,8 +60,11 @@ func TestRun(t *testing.T) {
 		{"Vincent", "VISA"},
 	}
 
-	cardRupture := NewRupture("card", func(i string) string {
-		return fmt.Sprintf("%.10s", i)
+	cardRupture := NewRupture("card", func(i []byte) []byte {
+		output := make([]byte, 10)
+
+		copy(output[10-len(i):], i)
+		return output
 	})
 
 	errRead := errors.New("test error")

@@ -1,10 +1,12 @@
 package breaksync
 
-const finalValue = "\uffff"
+import "bytes"
+
+var finalValue = []byte{0xFF, 0xFF, 0xFF, 0xFF}
 
 type Synchronization struct {
-	currentKey string
-	nextKey    string
+	currentKey []byte
+	nextKey    []byte
 
 	sources  []SyncSource
 	ruptures []*Rupture
@@ -71,15 +73,15 @@ func (s *Synchronization) computeKey() {
 
 	for _, source := range s.sources {
 		if source.IsSynchronized() {
-			if nextKey := source.NextKey(); nextKey < s.nextKey {
+			if nextKey := source.NextKey(); bytes.Compare(nextKey, s.nextKey) < 0 {
 				s.nextKey = nextKey
 			}
-		} else if currentKey := source.CurrentKey(); currentKey < s.nextKey {
+		} else if currentKey := source.CurrentKey(); bytes.Compare(currentKey, s.nextKey) < 0 {
 			s.nextKey = currentKey
 		}
 	}
 
-	s.end = s.nextKey == finalValue
+	s.end = bytes.Equal(s.nextKey, finalValue)
 }
 
 func (s *Synchronization) computeSynchro() {

@@ -1,11 +1,12 @@
 package breaksync
 
 import (
+	"bytes"
 	"io"
 )
 
-var Identity = func(a string) string {
-	return a
+var Identity = func(a string) []byte {
+	return []byte(a)
 }
 
 var _ SyncSource = &Source[string]{}
@@ -13,10 +14,10 @@ var _ SyncSource = &Source[string]{}
 type SyncSource interface {
 	ReadRupture() *Rupture
 	Current() any
-	CurrentKey() string
-	NextKey() string
+	CurrentKey() []byte
+	NextKey() []byte
 	IsSynchronized() bool
-	ComputeSynchro(string)
+	ComputeSynchro([]byte)
 	Read() error
 }
 
@@ -24,18 +25,18 @@ type Source[T any] struct {
 	next    T
 	current T
 
-	keyer  func(T) string
+	keyer  func(T) []byte
 	reader func() (T, error)
 
 	readRupture *Rupture
 
-	currentKey string
-	nextKey    string
+	currentKey []byte
+	nextKey    []byte
 
 	synchronized bool
 }
 
-func NewSource[T any](reader func() (T, error), keyer func(T) string, readRupture *Rupture) *Source[T] {
+func NewSource[T any](reader func() (T, error), keyer func(T) []byte, readRupture *Rupture) *Source[T] {
 	return &Source[T]{
 		synchronized: true,
 		keyer:        keyer,
@@ -52,11 +53,11 @@ func (s *Source[T]) Current() any {
 	return s.current
 }
 
-func (s *Source[T]) CurrentKey() string {
+func (s *Source[T]) CurrentKey() []byte {
 	return s.currentKey
 }
 
-func (s *Source[T]) NextKey() string {
+func (s *Source[T]) NextKey() []byte {
 	return s.nextKey
 }
 
@@ -76,9 +77,9 @@ func (s *Source[T]) Read() error {
 	return s.read()
 }
 
-func (s *Source[T]) ComputeSynchro(key string) {
+func (s *Source[T]) ComputeSynchro(key []byte) {
 	compareKey := s.currentKey[:min(len(key), len(s.currentKey))]
-	s.synchronized = compareKey == key[:len(compareKey)]
+	s.synchronized = bytes.Equal(compareKey, key[:len(compareKey)])
 }
 
 func (s *Source[T]) read() error {
@@ -100,7 +101,7 @@ func (s *Source[T]) read() error {
 	return nil
 }
 
-func NewSliceSource[T any](arr []T, keyer func(T) string, readRupture *Rupture) *Source[T] {
+func NewSliceSource[T any](arr []T, keyer func(T) []byte, readRupture *Rupture) *Source[T] {
 	index := -1
 
 	return NewSource(func() (output T, err error) {
@@ -115,7 +116,7 @@ func NewSliceSource[T any](arr []T, keyer func(T) string, readRupture *Rupture) 
 	}, keyer, readRupture)
 }
 
-func NewChanSource[T any](input <-chan T, keyer func(T) string, readRupture *Rupture) *Source[T] {
+func NewChanSource[T any](input <-chan T, keyer func(T) []byte, readRupture *Rupture) *Source[T] {
 	var ok bool
 
 	return NewSource(func() (output T, err error) {

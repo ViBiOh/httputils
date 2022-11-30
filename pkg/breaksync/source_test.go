@@ -1,6 +1,7 @@
 package breaksync
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"reflect"
@@ -11,40 +12,40 @@ func TestComputeSynchro(t *testing.T) {
 	t.Parallel()
 
 	simple := NewSource(nil, Identity, nil)
-	simple.currentKey = "AAAAA00000"
+	simple.currentKey = []byte("AAAAA00000")
 
 	substring := NewSource(nil, Identity, nil)
-	substring.currentKey = "AAAAA00000"
+	substring.currentKey = []byte("AAAAA00000")
 
 	extrastring := NewSource(nil, Identity, nil)
-	extrastring.currentKey = "AAAAA00000"
+	extrastring.currentKey = []byte("AAAAA00000")
 
 	unmatch := NewSource(nil, Identity, nil)
-	unmatch.currentKey = "AAAAA00000"
+	unmatch.currentKey = []byte("AAAAA00000")
 
 	cases := map[string]struct {
 		instance *Source[string]
-		input    string
+		input    []byte
 		want     bool
 	}{
 		"simple": {
 			simple,
-			"AAAAA00000",
+			[]byte("AAAAA00000"),
 			true,
 		},
 		"substring": {
 			substring,
-			"AAAAA",
+			[]byte("AAAAA"),
 			true,
 		},
 		"extrastring": {
 			extrastring,
-			"AAAAA00000zzzzz",
+			[]byte("AAAAA00000zzzzz"),
 			true,
 		},
 		"unmatch": {
 			unmatch,
-			"AAAAA00001",
+			[]byte("AAAAA00001"),
 			false,
 		},
 	}
@@ -72,29 +73,29 @@ func TestSourceRead(t *testing.T) {
 		return "", errRead
 	}, Identity, nil)
 	copyErr.next = "Golang Test"
-	copyErr.nextKey = "Golang"
+	copyErr.nextKey = []byte("Golang")
 
 	copyEnd := NewSource(func() (string, error) {
 		return "", io.EOF
 	}, Identity, nil)
 	copyEnd.next = "Golang Test"
-	copyEnd.nextKey = "Golang"
+	copyEnd.nextKey = []byte("Golang")
 
 	cases := map[string]struct {
 		instance       *Source[string]
 		want           error
 		wantCurrent    any
-		wantCurrentKey string
+		wantCurrentKey []byte
 		wantNext       any
-		wantNextKey    string
+		wantNextKey    []byte
 	}{
 		"copy next in current": {
 			copyErr,
 			errRead,
 			"Golang Test",
-			"Golang",
+			[]byte("Golang"),
 			"Golang Test",
-			"Golang",
+			[]byte("Golang"),
 		},
 		"error": {
 			NewSource(func() (string, error) {
@@ -102,9 +103,9 @@ func TestSourceRead(t *testing.T) {
 			}, Identity, nil),
 			errRead,
 			"",
+			[]byte{},
 			"",
-			"",
-			"",
+			[]byte{},
 		},
 		"success": {
 			NewSource(func() (string, error) {
@@ -112,7 +113,7 @@ func TestSourceRead(t *testing.T) {
 			}, Identity, nil),
 			nil,
 			"",
-			"",
+			[]byte{},
 			"Gopher",
 			finalValue,
 		},
@@ -120,7 +121,7 @@ func TestSourceRead(t *testing.T) {
 			copyEnd,
 			nil,
 			"Golang Test",
-			"Golang",
+			[]byte("Golang"),
 			"",
 			finalValue,
 		},
@@ -138,11 +139,11 @@ func TestSourceRead(t *testing.T) {
 				t.Errorf("Read() = %v, want %v", err, testCase.want)
 			} else if !reflect.DeepEqual(testCase.wantCurrent, testCase.instance.current) {
 				t.Errorf("Read().Current = `%s`, want `%s`", testCase.wantCurrent, testCase.instance.current)
-			} else if testCase.wantCurrentKey != testCase.instance.currentKey {
+			} else if !bytes.Equal(testCase.wantCurrentKey, testCase.instance.currentKey) {
 				t.Errorf("Read().currentKey = `%s`, want `%s`", testCase.wantCurrentKey, testCase.instance.currentKey)
 			} else if !reflect.DeepEqual(testCase.wantNext, testCase.instance.next) {
 				t.Errorf("Read().next = `%s`, want `%s`", testCase.wantNext, testCase.instance.next)
-			} else if testCase.wantNextKey != testCase.instance.nextKey {
+			} else if !bytes.Equal(testCase.wantNextKey, testCase.instance.nextKey) {
 				t.Errorf("Read().nextKey = `%s`, want `%s`", testCase.wantNextKey, testCase.instance.nextKey)
 			}
 		})
