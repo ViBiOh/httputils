@@ -110,16 +110,9 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 				logUnmarshallError(ctx, a.toKey(item), err)
 			}
 
-			value, err = a.fetch(ctx, item)
-			if err != nil {
-				if !onMissError(item, err) {
-					return err
-				}
-
-				return nil
+			if output[index], err = a.fetch(ctx, item); err != nil && !onMissError(item, err) {
+				return err
 			}
-
-			output[index] = value
 
 			return nil
 		})

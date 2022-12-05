@@ -18,6 +18,9 @@ import (
 
 const (
 	authorizationHeader = "Authorization"
+	requestTargetHeader = "(request-target)"
+	createdHeader       = "(created)"
+	headerSeparator     = ": "
 )
 
 // AddSignature add Authorization header based on content signature based on https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12
@@ -33,7 +36,7 @@ func AddSignature(r *http.Request, created time.Time, keyID string, secret, payl
 	r.Header.Add(authorizationHeader, `algorithm="hs2019"`)
 	r.Header.Add(authorizationHeader, `created=`+strconv.FormatInt(createdValue, 10))
 	r.Header.Add(authorizationHeader, `headers="(request-target) (created) digest"`)
-	signature := signContent(secret, buildSignatureString(r, []string{"(request-target)", "(created)", "digest"}, createdValue))
+	signature := signContent(secret, buildSignatureString(r, []string{requestTargetHeader, createdHeader, "digest"}, createdValue))
 	r.Header.Add(authorizationHeader, fmt.Sprintf(`signature="%s"`, base64.StdEncoding.EncodeToString(signature)))
 }
 
@@ -78,7 +81,7 @@ func parseAuthorizationHeader(r *http.Request) ([]byte, []byte, error) {
 
 			created, err = strconv.ParseInt(rawCreated, 10, 64)
 			if err != nil {
-				return nil, nil, fmt.Errorf("(created) is not an integer: %w", err)
+				return nil, nil, fmt.Errorf(createdHeader+" is not an integer: %w", err)
 			}
 		} else if strings.HasPrefix(value, "signature=") {
 			rawSignature = strings.TrimPrefix(value, "signature=")
@@ -88,14 +91,14 @@ func parseAuthorizationHeader(r *http.Request) ([]byte, []byte, error) {
 	}
 
 	if len(headers) == 0 {
-		headers = "(created)"
+		headers = createdHeader
 	}
 
 	if len(rawSignature) == 0 {
 		return nil, nil, errors.New("no signature section found in Authorization")
 	}
 
-	if strings.Contains(headers, "(created)") && (strings.HasPrefix(algorithm, "rsa") || strings.HasPrefix(algorithm, "hmac") || strings.HasPrefix(algorithm, "ecdsa")) {
+	if strings.Contains(headers, createdHeader) && (strings.HasPrefix(algorithm, "rsa") || strings.HasPrefix(algorithm, "hmac") || strings.HasPrefix(algorithm, "ecdsa")) {
 		return nil, nil, errors.New("`created` header is incompatible with algorithm")
 	}
 
@@ -116,15 +119,17 @@ func buildSignatureString(r *http.Request, parts []string, created int64) []byte
 		}
 
 		switch header {
-		case "(request-target)":
-			signatureString.WriteString("(request-target): ")
+		case requestTargetHeader:
+			signatureString.WriteString(requestTargetHeader)
+			signatureString.WriteString(headerSeparator)
 			signatureString.WriteString(strings.ToLower(fmt.Sprintf("%s %s", r.Method, r.URL.Path)))
-		case "(created)":
-			signatureString.WriteString("(created): ")
+		case createdHeader:
+			signatureString.WriteString(createdHeader)
+			signatureString.WriteString(headerSeparator)
 			signatureString.WriteString(strconv.FormatInt(created, 10))
 		default:
 			signatureString.WriteString(strings.ToLower(header))
-			signatureString.WriteString(": ")
+			signatureString.WriteString(headerSeparator)
 
 			for j, value := range r.Header.Values(header) {
 				if j != 0 {
