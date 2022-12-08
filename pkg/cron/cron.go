@@ -327,23 +327,24 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 func (c *Cron) iterate(done <-chan struct{}, signals <-chan os.Signal, shouldRetry bool, run func()) bool {
 	var output bool
 
-	timer := time.NewTimer(c.getTickerDuration(shouldRetry))
+	timer := time.After(c.getTickerDuration(shouldRetry))
+	doneTimer := make(chan struct{})
+	go func() {
+		defer close(doneTimer)
+		<-timer
+	}()
 
 	select {
 	case <-done:
 		output = true
 	case <-signals:
 		run()
-	case <-timer.C:
+	case <-doneTimer:
 		run()
 	case _, ok := <-c.now:
 		if ok {
 			run()
 		}
-	}
-
-	if !timer.Stop() {
-		go func() { <-timer.C }()
 	}
 
 	return output
