@@ -10,7 +10,7 @@ require (
 	github.com/jackc/pgproto3/v2 v2.3.1
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/prometheus/client_golang v1.14.0
-	github.com/prometheus/common v0.37.0
+	github.com/prometheus/common v0.38.0
 	github.com/streadway/amqp v1.0.0
 	github.com/tdewolff/minify/v2 v2.12.4
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.37.0
@@ -24,7 +24,7 @@ require (
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
@@ -36,7 +36,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
 	github.com/jackc/pgtype v1.13.0 // indirect
 	github.com/jackc/puddle v1.3.0 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.2 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/tdewolff/parse/v2 v2.6.4 // indirect
