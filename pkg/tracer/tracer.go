@@ -163,7 +163,7 @@ func AddTraceToLogger(span tr.Span, logger logger.Provider) logger.Provider {
 	}
 
 	if spanCtx.HasSpanID() {
-		logger = logger.WithField("traceID", spanCtx.SpanID())
+		logger = logger.WithField("spanID", spanCtx.SpanID())
 	}
 
 	return logger
