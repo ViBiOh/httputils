@@ -32,12 +32,12 @@ func (ff *FailFast) WithContext(ctx context.Context) context.Context {
 }
 
 func (ff *FailFast) Go(f func() error) {
-	ff.wg.Add(1)
-
 	select {
 	case <-ff.done:
-		ff.wg.Done()
+		return
 	case ff.limiter <- true:
+		ff.wg.Add(1)
+
 		go func() {
 			defer ff.wg.Done()
 			defer func() { <-ff.limiter }()

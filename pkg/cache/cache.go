@@ -94,6 +94,7 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 
 	output := make([]V, len(items))
 	wg := concurrent.NewFailFast(a.concurrency)
+	ctx = wg.WithContext(ctx)
 
 	for index, item := range items {
 		index, item := index, item

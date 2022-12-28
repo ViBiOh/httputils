@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
@@ -173,7 +172,7 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 	return a.execPipeline(ctx, pipeline)
 }
 
-func (a App) DeletePattern(ctx context.Context, pattern string) error {
+func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
 	if !a.Enabled() {
 		return nil
 	}
@@ -183,25 +182,27 @@ func (a App) DeletePattern(ctx context.Context, pattern string) error {
 
 	scanOutput := make(chan string, runtime.NumCPU())
 
-	wg := concurrent.NewFailFast(1)
-	scanCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	done := make(chan struct{})
 
-	wg.Go(func() error {
+	go func() {
+		defer close(done)
+
 		pipeline := a.redisClient.Pipeline()
 
 		for key := range scanOutput {
 			pipeline.Del(ctx, key)
 		}
 
-		return a.execPipeline(ctx, pipeline)
-	})
+		err = a.execPipeline(ctx, pipeline)
+	}()
 
-	if err := a.Scan(scanCtx, pattern, scanOutput, defaultPageSize); err != nil {
+	if err := a.Scan(ctx, pattern, scanOutput, defaultPageSize); err != nil {
 		return fmt.Errorf("exec scan: %w", err)
 	}
 
-	return wg.Wait()
+	<-done
+
+	return
 }
 
 func (a App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
