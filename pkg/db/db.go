@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
@@ -180,7 +181,11 @@ func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query strin
 		err = scanner(rows)
 	}
 
-	rows.Close()
+	if readErr := rows.Err(); readErr != nil {
+		err = model.WrapError(err, readErr)
+
+		rows.Close()
+	}
 
 	return
 }

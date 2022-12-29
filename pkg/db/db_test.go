@@ -336,6 +336,9 @@ func TestList(t *testing.T) {
 		"error": {
 			errors.New("timeout"),
 		},
+		"read error": {
+			errors.New("boom"),
+		},
 		"tx": {
 			nil,
 		},
@@ -361,12 +364,21 @@ func TestList(t *testing.T) {
 				rows := mocks.NewRows(ctrl)
 				rows.EXPECT().Next().Return(true)
 				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Close()
+				rows.EXPECT().Err().Return(nil)
 
 				mockDatabase.EXPECT().Query(gomock.Any(), "SELECT id FROM item", 1).Return(rows, nil)
 
 			case "error":
 				mockDatabase.EXPECT().Query(gomock.Any(), "SELECT id FROM item", 1).Return(nil, errors.New("timeout"))
+
+			case "read error":
+				rows := mocks.NewRows(ctrl)
+				rows.EXPECT().Next().Return(true)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(errors.New("boom"))
+				rows.EXPECT().Close()
+
+				mockDatabase.EXPECT().Query(gomock.Any(), "SELECT id FROM item", 1).Return(rows, nil)
 
 			case "tx":
 				tx := mocks.NewTx(ctrl)
@@ -375,7 +387,7 @@ func TestList(t *testing.T) {
 				rows := mocks.NewRows(ctrl)
 				rows.EXPECT().Next().Return(true)
 				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Close()
+				rows.EXPECT().Err().Return(nil)
 
 				tx.EXPECT().Query(gomock.Any(), "SELECT id FROM item", 1).Return(rows, nil)
 			}
