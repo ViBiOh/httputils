@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"time"
 )
 
 const (
@@ -20,13 +21,22 @@ type responseWriter interface {
 	http.ResponseWriter
 	Status() int
 	Written() int64
+	Time() time.Time
 }
 
 type observableResponseWriter struct {
+	writeTime time.Time
 	http.ResponseWriter
-
 	status  int
 	written int64
+}
+
+func (r *observableResponseWriter) Time() time.Time {
+	if r.writeTime.IsZero() {
+		return time.Now()
+	}
+
+	return r.writeTime
 }
 
 func (r *observableResponseWriter) Status() int {
@@ -42,11 +52,19 @@ func (r *observableResponseWriter) Written() int64 {
 }
 
 func (r *observableResponseWriter) WriteHeader(code int) {
+	if r.writeTime.IsZero() {
+		r.writeTime = time.Now()
+	}
+
 	r.status = code
 	r.ResponseWriter.WriteHeader(code)
 }
 
 func (r *observableResponseWriter) Write(b []byte) (int, error) {
+	if r.writeTime.IsZero() {
+		r.writeTime = time.Now()
+	}
+
 	n, err := r.ResponseWriter.Write(b)
 	r.written += int64(n)
 

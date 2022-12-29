@@ -134,7 +134,7 @@ func (a App) instrumentHandler(next http.Handler) http.Handler {
 		d := newDelegator(w)
 		next.ServeHTTP(d, r)
 
-		durationVec.WithLabelValues(r.Method).Observe(time.Since(now).Seconds())
+		durationVec.WithLabelValues(r.Method).Observe(d.Time().Sub(now).Seconds())
 		counterVec.WithLabelValues(strconv.Itoa(d.Status()), r.Method).Inc()
 		sizeVec.Observe(float64(d.Written()))
 	})
