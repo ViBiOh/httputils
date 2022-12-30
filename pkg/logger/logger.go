@@ -10,9 +10,10 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/clock"
 	"golang.org/x/term"
 )
+
+type GetNow func() time.Time
 
 var (
 	logger   Logger
@@ -32,7 +33,7 @@ type Config struct {
 }
 
 type Logger struct {
-	clock clock.Clock
+	clock GetNow
 
 	timeKey    string
 	levelKey   string
@@ -82,6 +83,8 @@ func New(config Config) Logger {
 
 func newLogger(outWriter, errWriter io.Writer, lev level, json bool, timeKey, levelKey, messageKey string) Logger {
 	return Logger{
+		clock: time.Now,
+
 		done:   make(chan struct{}),
 		events: make(chan event, runtime.NumCPU()),
 
@@ -201,7 +204,7 @@ func (l Logger) output(lev level, fields []field, format string, a ...any) {
 		message = fmt.Sprintf(format, a...)
 	}
 
-	l.events <- event{timestamp: l.clock.Now(), level: lev, message: message, fields: fields}
+	l.events <- event{timestamp: l.clock(), level: lev, message: message, fields: fields}
 }
 
 func (l Logger) json(e event) []byte {

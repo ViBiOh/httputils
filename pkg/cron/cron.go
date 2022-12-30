@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/clock"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -20,15 +19,15 @@ type Semaphore interface {
 	Exclusive(context.Context, string, time.Duration, func(context.Context) error) (bool, error)
 }
 
-const (
-	hourFormat = "15:04"
-)
+type GetNow func() time.Time
+
+const hourFormat = "15:04"
 
 var _ fmt.Stringer = New()
 
 type Cron struct {
 	tracer       trace.Tracer
-	clock        clock.Clock
+	clock        GetNow
 	semaphoreApp Semaphore
 
 	signal  os.Signal
@@ -51,6 +50,7 @@ func New() *Cron {
 	return &Cron{
 		dayTime: time.Date(0, 1, 1, 8, 0, 0, 0, time.UTC),
 		now:     make(chan time.Time, 1),
+		clock:   time.Now,
 		onError: func(err error) {
 			fmt.Println(err)
 		},
@@ -221,7 +221,7 @@ func (c *Cron) getTickerDuration(shouldRetry bool) time.Duration {
 	}
 
 	tz := c.dayTime.Location()
-	now := c.clock.Now().In(tz)
+	now := c.clock().In(tz)
 
 	nextTime := c.findMatchingDay(time.Date(now.Year(), now.Month(), now.Day(), c.dayTime.Hour(), c.dayTime.Minute(), 0, 0, tz))
 	if nextTime.Before(now) {
@@ -262,7 +262,7 @@ func (c *Cron) WithTracer(tracer trace.Tracer) *Cron {
 }
 
 func (c *Cron) Now() *Cron {
-	c.now <- c.clock.Now()
+	c.now <- c.clock()
 
 	return c
 }

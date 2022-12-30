@@ -93,7 +93,7 @@ func (a App) Start(name string, done <-chan struct{}, handler http.Handler) {
 		ReadTimeout:  a.readTimeout,
 		WriteTimeout: a.writeTimeout,
 		IdleTimeout:  a.idleTimeout,
-		Handler:      handler,
+		Handler:      http.TimeoutHandler(handler, a.writeTimeout, "server timeout"),
 	}
 
 	serverDone := make(chan struct{})

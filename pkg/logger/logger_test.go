@@ -12,8 +12,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/ViBiOh/httputils/v4/pkg/clock"
 )
 
 type writeCloser struct {
@@ -233,7 +231,7 @@ func TestOutput(t *testing.T) {
 
 			writer := bytes.NewBuffer(nil)
 			logger := newLogger(writer, writer, levelInfo, false, "time", "level", "msg")
-			logger.clock = clock.New(time.Date(2020, 9, 21, 18, 34, 57, 0, time.UTC))
+			logger.clock = func() time.Time { return time.Date(2020, 9, 21, 18, 34, 57, 0, time.UTC) }
 
 			go logger.Start()
 
@@ -268,7 +266,7 @@ func BenchmarkStandardSimpleFormattedOutput(b *testing.B) {
 
 func BenchmarkNoOutput(b *testing.B) {
 	logger := newLogger(io.Discard, io.Discard, levelWarning, false, "time", "level", "msg")
-	logger.clock = clock.New(time.Now())
+	logger.clock = time.Now
 
 	go logger.Start()
 	defer logger.Close()
@@ -280,7 +278,7 @@ func BenchmarkNoOutput(b *testing.B) {
 
 func BenchmarkSimpleOutput(b *testing.B) {
 	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
-	logger.clock = clock.New(time.Now())
+	logger.clock = time.Now
 
 	go logger.Start()
 	defer logger.Close()
@@ -292,7 +290,7 @@ func BenchmarkSimpleOutput(b *testing.B) {
 
 func BenchmarkFormattedOutput(b *testing.B) {
 	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
-	logger.clock = clock.New(time.Now())
+	logger.clock = time.Now
 
 	go logger.Start()
 	defer logger.Close()
@@ -304,7 +302,7 @@ func BenchmarkFormattedOutput(b *testing.B) {
 
 func BenchmarkFormattedOutputFields(b *testing.B) {
 	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
-	logger.clock = clock.New(time.Now())
+	logger.clock = time.Now
 
 	go logger.Start()
 	defer logger.Close()

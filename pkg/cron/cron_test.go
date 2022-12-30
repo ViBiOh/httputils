@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/clock"
 	"github.com/ViBiOh/httputils/v4/pkg/mocks"
 	"github.com/golang/mock/gomock"
 )
@@ -257,49 +256,49 @@ func TestGetTickerDuration(t *testing.T) {
 
 	cases := map[string]struct {
 		cron  *Cron
-		clock clock.Clock
+		clock GetNow
 		input bool
 		want  time.Duration
 	}{
 		"retry": {
 			New().Retry(time.Minute),
-			clock.New(time.Time{}),
+			time.Now,
 			true,
 			time.Minute,
 		},
 		"no retry": {
 			New().Each(time.Hour).Retry(time.Minute),
-			clock.New(time.Time{}),
+			time.Now,
 			false,
 			time.Hour,
 		},
 		"each": {
 			New().Each(time.Hour),
-			clock.New(time.Time{}),
+			time.Now,
 			false,
 			time.Hour,
 		},
 		"same day": {
 			New().Days().At("13:00").In("UTC"),
-			clock.New(time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC)),
+			func() time.Time { return time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC) },
 			false,
 			time.Hour,
 		},
 		"one week": {
 			New().Monday().At("11:00").In("UTC"),
-			clock.New(time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC)),
+			func() time.Time { return time.Date(2019, 10, 21, 12, 0, 0, 0, time.UTC) },
 			false,
 			time.Hour * 167,
 		},
 		"another timezone": {
 			New().Wednesday().At("12:00").In("EST"),
-			clock.New(time.Date(2019, 10, 23, 12, 0, 0, 0, time.UTC)),
+			func() time.Time { return time.Date(2019, 10, 23, 12, 0, 0, 0, time.UTC) },
 			false,
 			time.Hour * 5,
 		},
 		"hour shift": {
 			New().Sunday().At("12:00").In("Europe/Paris"),
-			clock.New(time.Date(2019, 10, 26, 22, 0, 0, 0, time.UTC)),
+			func() time.Time { return time.Date(2019, 10, 26, 22, 0, 0, 0, time.UTC) },
 			false,
 			time.Hour * 13,
 		},
@@ -375,13 +374,13 @@ func TestStart(t *testing.T) {
 
 	cases := map[string]struct {
 		cron    *Cron
-		clock   clock.Clock
+		clock   GetNow
 		action  func(*sync.WaitGroup, *Cron) func(context.Context) error
 		onError func(*sync.WaitGroup, *Cron) func(error)
 	}{
 		"run once": {
 			New().Days().At("12:00"),
-			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
+			func() time.Time { return time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC) },
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				return func(_ context.Context) error {
 					wg.Done()
@@ -397,7 +396,7 @@ func TestStart(t *testing.T) {
 		},
 		"retry": {
 			New().Days().At("12:00").Retry(time.Millisecond).MaxRetry(5),
-			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
+			func() time.Time { return time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC) },
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				count := 0
 
@@ -418,7 +417,7 @@ func TestStart(t *testing.T) {
 		},
 		"run on demand": {
 			New().Days().At("12:00"),
-			clock.New(time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)),
+			func() time.Time { return time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC) },
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				cron.Now()
 
@@ -436,7 +435,7 @@ func TestStart(t *testing.T) {
 		},
 		"run on signal": {
 			New().Days().At("12:00").OnSignal(syscall.SIGUSR1),
-			clock.New(time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)),
+			func() time.Time { return time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC) },
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				p, err := os.FindProcess(os.Getpid())
 				if err != nil {
@@ -464,7 +463,7 @@ func TestStart(t *testing.T) {
 		},
 		"run in exclusive error": {
 			New().Days().At("12:00"),
-			clock.New(time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC)),
+			func() time.Time { return time.Date(2019, 10, 21, 11, 59, 59, 900, time.UTC) },
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				return func(_ context.Context) error {
 					t.Error(errors.New("should not be there"))
@@ -480,7 +479,7 @@ func TestStart(t *testing.T) {
 		},
 		"fail if misconfigured": {
 			New(),
-			clock.New(time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC)),
+			func() time.Time { return time.Date(2019, 10, 21, 11, 0, 0, 0, time.UTC) },
 			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context) error {
 				cron.Now()
 
