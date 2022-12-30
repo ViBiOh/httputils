@@ -77,6 +77,7 @@ func BenchmarkCounterVec(b *testing.B) {
 	registry := prometheus.NewRegistry()
 	counter := CounterVec(registry, "benchmark", "prometheus", "vector", "state")
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		counter.WithLabelValues("valid").Inc()
 	}
@@ -86,6 +87,7 @@ func BenchmarkCounter(b *testing.B) {
 	registry := prometheus.NewRegistry()
 	counter := Counter(registry, "benchmark", "prometheus", "counter")
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		counter.Inc()
 	}

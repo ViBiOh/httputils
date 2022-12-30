@@ -257,6 +257,7 @@ func BenchmarkDoAndExit(b *testing.B) {
 	defaultHeader.Set("User-Agent", defaultUserAgent)
 	exitFunc = func(_ int) {}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		DoAndExit(config)
 	}

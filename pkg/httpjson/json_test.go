@@ -139,6 +139,7 @@ func TestWrite(t *testing.T) {
 func BenchmarkRawWrite(b *testing.B) {
 	obj := testStruct{id: "Test", Active: true, Amount: 12.34}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if err := RawWrite(io.Discard, &obj); err != nil {
 			b.Error(err)
@@ -155,6 +156,7 @@ func BenchmarkWrite(b *testing.B) {
 
 	writer := httptest.NewRecorder()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		Write(writer, http.StatusOK, &testCase.obj)
 	}

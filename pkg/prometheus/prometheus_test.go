@@ -203,6 +203,7 @@ func BenchmarkMiddleware(b *testing.B) {
 	testRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 	recorder := httptest.NewRecorder()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		middleware.ServeHTTP(recorder, testRequest)
 	}
@@ -222,6 +223,7 @@ func BenchmarkHandler(b *testing.B) {
 	testRequest := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	recorder := httptest.NewRecorder()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		handler.ServeHTTP(recorder, testRequest)
 	}

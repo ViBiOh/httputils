@@ -250,6 +250,7 @@ func TestOutput(t *testing.T) {
 func BenchmarkStandardSimpleOutput(b *testing.B) {
 	logger := log.New(io.Discard, "", log.Ldate|log.Ltime)
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		logger.Print("[INFO] Hello world")
 	}
@@ -259,6 +260,7 @@ func BenchmarkStandardSimpleFormattedOutput(b *testing.B) {
 	logger := log.New(io.Discard, "", log.Ldate|log.Ltime)
 	now := time.Now().Unix()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		logger.Printf("Hello %s, it's %d", "Bob", now)
 	}
@@ -271,6 +273,7 @@ func BenchmarkNoOutput(b *testing.B) {
 	go logger.Start()
 	defer logger.Close()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		logger.Info("Hello world")
 	}
@@ -283,6 +286,7 @@ func BenchmarkSimpleOutput(b *testing.B) {
 	go logger.Start()
 	defer logger.Close()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		logger.Info("Hello world")
 	}
@@ -295,6 +299,7 @@ func BenchmarkFormattedOutput(b *testing.B) {
 	go logger.Start()
 	defer logger.Close()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		logger.Info("Hello %s", "Bob")
 	}
@@ -307,6 +312,7 @@ func BenchmarkFormattedOutputFields(b *testing.B) {
 	go logger.Start()
 	defer logger.Close()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		logger.WithField("success", true).WithField("count", 7).Info("Hello %s", "Bob")
 	}
@@ -402,6 +408,7 @@ func BenchmarkJSON(b *testing.B) {
 		message:   "Hello world",
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		logger.json(e)
 	}
@@ -430,6 +437,7 @@ func BenchmarkJSONWithFields(b *testing.B) {
 		},
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		logger.json(e)
 	}
@@ -516,6 +524,7 @@ func BenchmarkText(b *testing.B) {
 		message:   "Hello world",
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		logger.text(e)
 	}
@@ -544,6 +553,7 @@ func BenchmarkTextWithFields(b *testing.B) {
 		},
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		logger.text(e)
 	}

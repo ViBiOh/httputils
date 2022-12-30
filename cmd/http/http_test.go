@@ -22,6 +22,7 @@ func benchmarkHandler(b *testing.B, handler http.Handler) {
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	writer := httptest.NewRecorder()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		handler.ServeHTTP(writer, request)
 	}

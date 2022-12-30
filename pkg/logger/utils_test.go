@@ -49,6 +49,7 @@ func TestWriteEscapedJSON(t *testing.T) {
 func BenchmarkWriteEscapedJSONSimple(b *testing.B) {
 	output := bytes.NewBuffer(nil)
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		output.Reset()
 		WriteEscapedJSON("Text with simple character.", output)
@@ -58,6 +59,7 @@ func BenchmarkWriteEscapedJSONSimple(b *testing.B) {
 func BenchmarkWriteEscapedJSONComplex(b *testing.B) {
 	output := bytes.NewBuffer(nil)
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		output.Reset()
 		WriteEscapedJSON("Text with special character /\"'\b\f\t\r\n.", output)

@@ -95,6 +95,7 @@ func BenchmarkNew(b *testing.B) {
 
 	item := testStruct{}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		New(item)
 	}

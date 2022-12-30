@@ -757,6 +757,7 @@ func BenchmarkJSON(b *testing.B) {
 	req := New().Post(testServer.URL + "/simple")
 	payload := testStruct{id: "Test", Active: true, Amount: 12.34}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if _, err := req.JSON(ctx, &payload); err != nil {
 			b.Error(err)
