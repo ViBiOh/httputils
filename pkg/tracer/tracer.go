@@ -48,8 +48,8 @@ func newExporter(url string) (trace.SpanExporter, error) {
 	return exporter, nil
 }
 
-func newResource() (*resource.Resource, error) {
-	newResource, err := resource.New(context.Background(), resource.WithFromEnv())
+func newResource(ctx context.Context) (*resource.Resource, error) {
+	newResource, err := resource.New(ctx, resource.WithFromEnv())
 	if err != nil {
 		return nil, fmt.Errorf("create resource: %w", err)
 	}
@@ -65,7 +65,7 @@ func newResource() (*resource.Resource, error) {
 	return r, nil
 }
 
-func New(config Config) (App, error) {
+func New(ctx context.Context, config Config) (App, error) {
 	url := strings.TrimSpace(*config.url)
 
 	if len(url) == 0 {
@@ -77,7 +77,7 @@ func New(config Config) (App, error) {
 		return App{}, err
 	}
 
-	tracerResource, err := newResource()
+	tracerResource, err := newResource(ctx)
 	if err != nil {
 		return App{}, err
 	}
@@ -127,12 +127,12 @@ func (a App) Middleware(next http.Handler) http.Handler {
 	return otelhttp.NewHandler(next, "http", otelhttp.WithTracerProvider(a.provider), otelhttp.WithPropagators(propagation.TraceContext{}))
 }
 
-func (a App) Close() {
+func (a App) Close(ctx context.Context) {
 	if a.provider == nil {
 		return
 	}
 
-	if err := a.provider.Shutdown(context.Background()); err != nil {
+	if err := a.provider.Shutdown(ctx); err != nil {
 		logger.Error("shutdown trace provider: %s", err)
 	}
 }

@@ -13,7 +13,7 @@ import (
 )
 
 func newBackground(config configuration, client client, adapter adapter) func() {
-	ctx := client.health.Context()
+	ctx := client.health.ContextDone()
 	var closers []func()
 
 	go client.redis.Pull(ctx, "httputils:tasks", func(content string, err error) {
@@ -36,7 +36,7 @@ func newBackground(config configuration, client client, adapter adapter) func() 
 
 	closers = append(closers, speakingClock.Shutdown)
 
-	go adapter.amqp.Start(context.Background(), client.health.Done())
+	go adapter.amqp.Start(ctx)
 
 	return func() {
 		for _, closer := range closers {

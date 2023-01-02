@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"fmt"
 
@@ -24,12 +25,14 @@ func main() {
 
 	alcotest.DoAndExit(config.alcotest)
 
-	client, err := newClient(config)
+	ctx := context.Background()
+
+	client, err := newClient(ctx, config)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("client: %w", err))
 	}
 
-	defer client.Close()
+	defer client.Close(ctx)
 
 	adapter, err := newAdapter(config, client)
 	if err != nil {
@@ -42,8 +45,10 @@ func main() {
 	appServer := server.New(config.appServer)
 	promServer := server.New(config.promServer)
 
-	go promServer.Start("prometheus", client.health.End(), client.prometheus.Handler())
-	go appServer.Start("http", client.health.End(), httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.prometheus.Middleware, client.tracer.Middleware, owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
+	ctxEnd := client.health.ContextEnd()
+
+	go promServer.Start(ctxEnd, "prometheus", client.prometheus.Handler())
+	go appServer.Start(ctxEnd, "http", httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.prometheus.Middleware, client.tracer.Middleware, owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
 
 	client.health.WaitForTermination(appServer.Done())
 	server.GracefulWait(appServer.Done(), promServer.Done(), adapter.amqp.Done())

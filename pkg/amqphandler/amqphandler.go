@@ -85,13 +85,11 @@ func New(config Config, amqpClient *amqpclient.Client, tracer trace.Tracer, hand
 	return app, nil
 }
 
-// Done returns the chan used for synchronization.
 func (a App) Done() <-chan struct{} {
 	return a.done
 }
 
-// Start amqp handler.
-func (a App) Start(ctx context.Context, done <-chan struct{}) {
+func (a App) Start(ctx context.Context) {
 	defer close(a.done)
 
 	if a.amqpClient == nil {
@@ -116,7 +114,7 @@ func (a App) Start(ctx context.Context, done <-chan struct{}) {
 	log = log.WithField("name", consumerName)
 
 	go func() {
-		<-done
+		<-ctx.Done()
 		if err := a.amqpClient.StopListener(consumerName); err != nil {
 			log.Error("error while stopping listener: %s", err)
 		}

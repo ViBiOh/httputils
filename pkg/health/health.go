@@ -52,12 +52,23 @@ func New(config Config, pingers ...model.Pinger) App {
 	}
 }
 
-func (a App) Context() context.Context {
+func (a App) ContextDone() context.Context {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
 		defer cancel()
 		<-a.done
+	}()
+
+	return ctx
+}
+
+func (a App) ContextEnd() context.Context {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		defer cancel()
+		<-a.end
 	}()
 
 	return ctx

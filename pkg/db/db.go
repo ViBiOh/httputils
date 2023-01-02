@@ -68,7 +68,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, tracer trace.Tracer) (App, error) {
+func New(ctx context.Context, config Config, tracer trace.Tracer) (App, error) {
 	host := strings.TrimSpace(*config.host)
 	if len(host) == 0 {
 		return App{}, ErrNoHost
@@ -79,7 +79,10 @@ func New(config Config, tracer trace.Tracer) (App, error) {
 	name := strings.TrimSpace(*config.name)
 	sslmode := *config.sslmode
 
-	db, err := pgxpool.Connect(context.Background(), fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_min_conns=%d pool_max_conns=%d", host, *config.port, user, pass, name, sslmode, *config.minConn, *config.maxConn))
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+
+	db, err := pgxpool.Connect(ctx, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_min_conns=%d pool_max_conns=%d", host, *config.port, user, pass, name, sslmode, *config.minConn, *config.maxConn))
 	if err != nil {
 		return App{}, fmt.Errorf("connect to postgres: %w", err)
 	}

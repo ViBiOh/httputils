@@ -78,7 +78,7 @@ func (a App) Done() <-chan struct{} {
 	return a.done
 }
 
-func (a App) Start(name string, done <-chan struct{}, handler http.Handler) {
+func (a App) Start(ctx context.Context, name string, handler http.Handler) {
 	defer close(a.done)
 	serverLogger := logger.WithField("server", name)
 
@@ -116,11 +116,11 @@ func (a App) Start(name string, done <-chan struct{}, handler http.Handler) {
 	}()
 
 	select {
-	case <-done:
+	case <-ctx.Done():
 	case <-serverDone:
 	}
 
-	ctx, cancelFn := context.WithTimeout(context.Background(), a.shutdownTimeout)
+	ctx, cancelFn := context.WithTimeout(ctx, a.shutdownTimeout)
 	defer cancelFn()
 
 	serverLogger.Info("Server is shutting down")
