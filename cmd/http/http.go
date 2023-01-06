@@ -39,13 +39,15 @@ func main() {
 		logger.Fatal(fmt.Errorf("adapter: %w", err))
 	}
 
-	defer newBackground(config, client, adapter)
+	stopBackground := startBackground(ctx, config, client, adapter)
+	defer stopBackground()
+
 	handler := newPort(config, client, adapter)
 
 	appServer := server.New(config.appServer)
 	promServer := server.New(config.promServer)
 
-	ctxEnd := client.health.ContextEnd()
+	ctxEnd := client.health.End(ctx)
 
 	go promServer.Start(ctxEnd, "prometheus", client.prometheus.Handler())
 	go appServer.Start(ctxEnd, "http", httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.prometheus.Middleware, client.tracer.Middleware, owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))

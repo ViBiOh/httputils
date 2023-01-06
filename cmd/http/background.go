@@ -12,8 +12,9 @@ import (
 	amqplib "github.com/streadway/amqp"
 )
 
-func newBackground(config configuration, client client, adapter adapter) func() {
-	ctx := client.health.ContextDone()
+func startBackground(ctx context.Context, config configuration, client client, adapter adapter) func() {
+	ctx = client.health.Done(ctx)
+
 	var closers []func()
 
 	go client.redis.Pull(ctx, "httputils:tasks", func(content string, err error) {

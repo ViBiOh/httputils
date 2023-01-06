@@ -52,8 +52,8 @@ func New(config Config, pingers ...model.Pinger) App {
 	}
 }
 
-func (a App) ContextDone() context.Context {
-	ctx, cancel := context.WithCancel(context.Background())
+func (a App) Done(ctx context.Context) context.Context {
+	ctx, cancel := context.WithCancel(ctx)
 
 	go func() {
 		defer cancel()
@@ -63,8 +63,8 @@ func (a App) ContextDone() context.Context {
 	return ctx
 }
 
-func (a App) ContextEnd() context.Context {
-	ctx, cancel := context.WithCancel(context.Background())
+func (a App) End(ctx context.Context) context.Context {
+	ctx, cancel := context.WithCancel(ctx)
 
 	go func() {
 		defer cancel()
@@ -72,14 +72,6 @@ func (a App) ContextEnd() context.Context {
 	}()
 
 	return ctx
-}
-
-func (a App) Done() <-chan struct{} {
-	return a.done
-}
-
-func (a App) End() <-chan struct{} {
-	return a.end
 }
 
 func (a App) HealthHandler() http.Handler {
