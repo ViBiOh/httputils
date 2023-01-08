@@ -92,19 +92,19 @@ func New(ctx context.Context, config Config, tracer trace.Tracer) (App, error) {
 		tracer: tracer,
 	}
 
-	return instance, instance.Ping()
+	return instance, instance.Ping(ctx)
 }
 
 func (a App) Enabled() bool {
 	return a.db != nil
 }
 
-func (a App) Ping() error {
+func (a App) Ping(ctx context.Context) error {
 	if !a.Enabled() {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), SQLTimeout)
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
 	return a.db.Ping(ctx)

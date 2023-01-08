@@ -72,12 +72,12 @@ func (a App) Enabled() bool {
 	return a.redisClient != nil
 }
 
-func (a App) Ping() error {
+func (a App) Ping(ctx context.Context) error {
 	if !a.Enabled() {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
 	return a.redisClient.Ping(ctx).Err()

@@ -120,7 +120,7 @@ func TestPing(t *testing.T) {
 				mockDatabase.EXPECT().Ping(gomock.Any()).Return(errors.New("context deadline exceeded"))
 			}
 
-			if got := instance.Ping(); (got == nil) != testCase.want {
+			if got := instance.Ping(context.TODO()); (got == nil) != testCase.want {
 				t.Errorf("Ping() = %t, want %t", got, testCase.want)
 			}
 		})
