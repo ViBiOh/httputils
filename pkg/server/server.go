@@ -93,7 +93,7 @@ func (a App) Start(ctx context.Context, name string, handler http.Handler) {
 		ReadTimeout:  a.readTimeout,
 		WriteTimeout: a.writeTimeout,
 		IdleTimeout:  a.idleTimeout,
-		Handler:      http.TimeoutHandler(handler, a.writeTimeout, "server timeout"),
+		Handler:      handler,
 	}
 
 	serverDone := make(chan struct{})
