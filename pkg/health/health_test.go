@@ -1,6 +1,7 @@
 package health
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"net/http"
@@ -127,7 +128,7 @@ func TestReadyHandler(t *testing.T) {
 			New(Config{
 				okStatus:      &okStatus,
 				graceDuration: &graceDuration,
-			}, func() error {
+			}, func(_ context.Context) error {
 				return errors.New("boom")
 			}),
 			httptest.NewRequest(http.MethodGet, "/ready", nil),

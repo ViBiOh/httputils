@@ -86,7 +86,7 @@ func (a App) ReadyHandler() http.Handler {
 		case <-a.done:
 			w.WriteHeader(http.StatusServiceUnavailable)
 		default:
-			if a.isReady() {
+			if a.isReady(r.Context()) {
 				w.WriteHeader(a.okStatus)
 			} else {
 				w.WriteHeader(http.StatusServiceUnavailable)
@@ -126,9 +126,9 @@ func (a App) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	}
 }
 
-func (a App) isReady() bool {
+func (a App) isReady(ctx context.Context) bool {
 	for _, pinger := range a.pingers {
-		if err := pinger(); err != nil {
+		if err := pinger(ctx); err != nil {
 			logger.Error("ping: %s", err)
 
 			return false

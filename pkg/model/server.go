@@ -1,12 +1,13 @@
 package model
 
 import (
+	"context"
 	"net/http"
 )
 
 type Middleware func(http.Handler) http.Handler
 
-type Pinger = func() error
+type Pinger = func(context.Context) error
 
 func ChainMiddlewares(handler http.Handler, middlewares ...Middleware) http.Handler {
 	result := handler
