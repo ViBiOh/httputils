@@ -130,8 +130,10 @@ func (a App) Load(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
+	output := make([]string, len(keys))
+
 	if !a.Enabled() {
-		return nil, nil
+		return output, nil
 	}
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "load_many", trace.WithSpanKind(trace.SpanKindClient))
@@ -156,7 +158,6 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	}
 
 	a.increase("load_many")
-	output := make([]string, len(keys))
 
 	for index, result := range commands {
 		if result.Err() == nil {
