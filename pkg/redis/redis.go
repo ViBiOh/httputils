@@ -137,19 +137,27 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "load_many", trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
-	content, err := a.redisClient.MGet(ctx, keys...).Result()
-	if err != nil {
+	pipeline := a.redisClient.Pipeline()
+	commands := make([]*redis.StringCmd, len(keys))
+
+	for index, key := range keys {
+		commands[index] = pipeline.Get(ctx, key)
+	}
+
+	_, err := pipeline.Exec(ctx)
+	if err != nil && err != redis.Nil {
 		a.increase("error")
 
-		return nil, fmt.Errorf("exec mget: %w", err)
+		return nil, fmt.Errorf("exec pipelined get: %w", err)
 	}
 
 	a.increase("load_many")
-	output := make([]string, len(content))
+	output := make([]string, len(keys))
 
-	for index, raw := range content {
-		value, _ := raw.(string)
-		output[index] = value
+	for index, result := range commands {
+		if result.Err() == nil {
+			output[index] = result.Val()
+		}
 	}
 
 	return output, nil
