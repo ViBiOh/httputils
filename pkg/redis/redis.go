@@ -138,6 +138,10 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	defer end()
 
 	pipeline := a.redisClient.Pipeline()
+	defer func() {
+		_ = pipeline.Close()
+	}()
+
 	commands := make([]*redis.StringCmd, len(keys))
 
 	for index, key := range keys {
@@ -172,6 +176,9 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 	defer end()
 
 	pipeline := a.redisClient.Pipeline()
+	defer func() {
+		_ = pipeline.Close()
+	}()
 
 	for _, key := range keys {
 		pipeline.Del(ctx, key)
@@ -196,6 +203,9 @@ func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
 		defer close(done)
 
 		pipeline := a.redisClient.Pipeline()
+		defer func() {
+			_ = pipeline.Close()
+		}()
 
 		for key := range scanOutput {
 			pipeline.Del(ctx, key)
