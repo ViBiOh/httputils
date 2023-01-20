@@ -13,10 +13,6 @@ import (
 )
 
 func (a App) Push(ctx context.Context, key string, value any) error {
-	if !a.Enabled() {
-		return nil
-	}
-
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "push", trace.WithSpanKind(trace.SpanKindProducer))
 	defer end()
 
@@ -32,10 +28,6 @@ func (a App) Push(ctx context.Context, key string, value any) error {
 }
 
 func (a App) Pull(ctx context.Context, key string, handler func(string, error)) {
-	if !a.Enabled() {
-		return
-	}
-
 	for {
 		content, err := a.redisClient.BRPop(ctx, 0, key).Result()
 		if err != nil {

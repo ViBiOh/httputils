@@ -11,10 +11,6 @@ import (
 )
 
 func (a App) Publish(ctx context.Context, channel string, value any) error {
-	if !a.Enabled() {
-		return nil
-	}
-
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
 	defer end()
 
@@ -33,10 +29,6 @@ func (a App) Publish(ctx context.Context, channel string, value any) error {
 }
 
 func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error) {
-	if !a.Enabled() {
-		return nil, func(_ context.Context) error { return nil }
-	}
-
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "subscribe", trace.WithSpanKind(trace.SpanKindConsumer))
 	defer end()
 

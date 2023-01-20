@@ -68,6 +68,20 @@ func (mr *RedisClientMockRecorder) Enabled() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enabled", reflect.TypeOf((*RedisClient)(nil).Enabled))
 }
 
+// Expire mocks base method.
+func (m *RedisClient) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Expire", ctx, key, ttl)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Expire indicates an expected call of Expire.
+func (mr *RedisClientMockRecorder) Expire(ctx, key, ttl interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Expire", reflect.TypeOf((*RedisClient)(nil).Expire), ctx, key, ttl)
+}
+
 // Load mocks base method.
 func (m *RedisClient) Load(ctx context.Context, key string) ([]byte, error) {
 	m.ctrl.T.Helper()

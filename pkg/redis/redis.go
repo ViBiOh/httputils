@@ -50,10 +50,10 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, prometheusRegisterer prometheus.Registerer, tracer trace.Tracer) App {
+func New(config Config, prometheusRegisterer prometheus.Registerer, tracer trace.Tracer) Client {
 	address := strings.TrimSpace(*config.address)
 	if len(address) == 0 {
-		return App{}
+		return noop{}
 	}
 
 	return App{
@@ -69,14 +69,10 @@ func New(config Config, prometheusRegisterer prometheus.Registerer, tracer trace
 }
 
 func (a App) Enabled() bool {
-	return a.redisClient != nil
+	return true
 }
 
 func (a App) Ping(ctx context.Context) error {
-	if !a.Enabled() {
-		return nil
-	}
-
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
@@ -84,10 +80,6 @@ func (a App) Ping(ctx context.Context) error {
 }
 
 func (a App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
-	if !a.Enabled() {
-		return nil
-	}
-
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithAttributes(attribute.String("key", key)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
@@ -103,10 +95,6 @@ func (a App) Store(ctx context.Context, key string, value any, duration time.Dur
 }
 
 func (a App) Load(ctx context.Context, key string) ([]byte, error) {
-	if !a.Enabled() {
-		return nil, nil
-	}
-
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "load", trace.WithAttributes(attribute.String("key", key)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
@@ -130,12 +118,6 @@ func (a App) Load(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
-	output := make([]string, len(keys))
-
-	if !a.Enabled() {
-		return output, nil
-	}
-
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "load_many", trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
@@ -159,6 +141,8 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 
 	a.increase("load_many")
 
+	output := make([]string, len(keys))
+
 	for index, result := range commands {
 		if result.Err() == nil {
 			output[index] = result.Val()
@@ -168,11 +152,14 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	return output, nil
 }
 
-func (a App) Delete(ctx context.Context, keys ...string) error {
-	if !a.Enabled() {
-		return nil
-	}
+func (a App) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "expire", trace.WithSpanKind(trace.SpanKindClient))
+	defer end()
 
+	return a.redisClient.Expire(ctx, key, ttl).Err()
+}
+
+func (a App) Delete(ctx context.Context, keys ...string) error {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete", trace.WithAttributes(attribute.StringSlice("keys", keys)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
@@ -189,10 +176,6 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 }
 
 func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
-	if !a.Enabled() {
-		return nil
-	}
-
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete_pattern", trace.WithAttributes(attribute.String("pattenr", pattern)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
@@ -248,10 +231,6 @@ func (a App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
 func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pageSize int64) error {
 	defer close(output)
 
-	if !a.Enabled() {
-		return nil
-	}
-
 	var keys []string
 	var err error
 	var cursor uint64
@@ -279,10 +258,6 @@ func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pag
 }
 
 func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
-	if !a.Enabled() {
-		return false, fmt.Errorf("redis not enabled")
-	}
-
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "exclusive", trace.WithAttributes(attribute.String("name", name)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 

@@ -27,6 +27,7 @@ type RedisClient interface {
 	LoadMany(ctx context.Context, keys ...string) ([]string, error)
 	Store(ctx context.Context, key string, value any, ttl time.Duration) error
 	Delete(ctx context.Context, keys ...string) error
+	Expire(ctx context.Context, key string, ttl time.Duration) error
 }
 
 type App[K any, V any] struct {
@@ -71,6 +72,8 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	} else if value, ok, err := a.unmarshal(ctx, content); err != nil {
 		logUnmarshallError(ctx, key, err)
 	} else if ok {
+		go a.extendTTL(tracer.CopyToBackground(ctx), key)
+
 		return value, nil
 	}
 
@@ -86,7 +89,7 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
-	values := a.getValues(ctx, items)
+	keys, values := a.getValues(ctx, items)
 
 	if valuesLen := len(values); valuesLen != len(items) {
 		return nil, fmt.Errorf("get returned %d values while expecting %d", valuesLen, len(items))
@@ -103,6 +106,8 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 			value, ok, err := a.unmarshal(ctx, []byte(values[index]))
 			if ok {
 				output[index] = value
+
+				go a.extendTTL(tracer.CopyToBackground(ctx), keys[index])
 
 				return nil
 			}
@@ -150,7 +155,7 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
-	values := a.getValues(ctx, items)
+	keys, values := a.getValues(ctx, items)
 
 	if valuesLen := len(values); valuesLen != len(items) {
 		return nil, fmt.Errorf("get returned %d values while expecting %d", valuesLen, len(items))
@@ -165,6 +170,8 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 
 		if ok {
 			output[index] = value
+
+			go a.extendTTL(tracer.CopyToBackground(ctx), keys[index])
 
 			continue
 		}
@@ -274,7 +281,11 @@ func unmarshal[V any](ctx context.Context, content []byte) (value V, ok bool, er
 	return
 }
 
-func (a App[K, V]) getValues(ctx context.Context, ids []K) []string {
+func (a App[K, V]) extendTTL(ctx context.Context, key string) {
+	extendTTL(ctx, a.client, key, a.ttl)
+}
+
+func (a App[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) {
 	keys := make([]string, len(ids))
 	for index, id := range ids {
 		keys[index] = a.toKey(id)
@@ -292,7 +303,7 @@ func (a App[K, V]) getValues(ctx context.Context, ids []K) []string {
 		}
 	}
 
-	return values
+	return keys, values
 }
 
 func loggerWithTrace(ctx context.Context, key string) logger.Provider {
