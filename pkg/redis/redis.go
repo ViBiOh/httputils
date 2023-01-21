@@ -153,7 +153,7 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 }
 
 func (a App) Expire(ctx context.Context, key string, ttl time.Duration) error {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "expire", trace.WithSpanKind(trace.SpanKindClient))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "expire", trace.WithAttributes(attribute.String("key", key)), trace.WithAttributes(attribute.String("ttl", ttl.String())), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
 	return a.redisClient.Expire(ctx, key, ttl).Err()
