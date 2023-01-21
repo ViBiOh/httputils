@@ -51,7 +51,7 @@ func (a App) Pull(ctx context.Context, key string, handler func(string, error)) 
 	}
 }
 
-func PullFor[T any](ctx context.Context, app App, key string, handler func(T, error)) {
+func PullFor[T any](ctx context.Context, app Client, key string, handler func(T, error)) {
 	app.Pull(ctx, key, func(content string, err error) {
 		var instance T
 

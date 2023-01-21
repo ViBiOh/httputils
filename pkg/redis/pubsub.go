@@ -48,7 +48,7 @@ func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Messa
 	}
 }
 
-func SubscribeFor[T any](ctx context.Context, app App, channel string, handler func(T, error)) func(context.Context) error {
+func SubscribeFor[T any](ctx context.Context, app Client, channel string, handler func(T, error)) func(context.Context) error {
 	subscription, unsubscribe := app.Subscribe(ctx, channel)
 
 	output := make(chan T, len(subscription))
