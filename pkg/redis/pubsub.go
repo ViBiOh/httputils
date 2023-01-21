@@ -10,6 +10,15 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+func (a App) PublishJSON(ctx context.Context, channel string, value any) error {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("marshal: %w", err)
+	}
+
+	return a.Publish(ctx, channel, payload)
+}
+
 func (a App) Publish(ctx context.Context, channel string, value any) error {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
 	defer end()
