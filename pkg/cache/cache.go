@@ -11,6 +11,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -152,7 +153,7 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 		return fetchMany(ctx, items)
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "list_many", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
 	keys, values := a.getValues(ctx, items)
@@ -262,7 +263,7 @@ func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 }
 
 func (a App[K, V]) unmarshal(ctx context.Context, content []byte) (V, bool, error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "unmarshal", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "unmarshal", trace.WithAttributes(attribute.Int("len", len(content))), trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
 	return unmarshal[V](ctx, content)
