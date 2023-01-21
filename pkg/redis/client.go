@@ -21,5 +21,6 @@ type Client interface {
 	Push(ctx context.Context, key string, value any) error
 	Pull(ctx context.Context, key string, handler func(string, error))
 	Publish(ctx context.Context, channel string, value any) error
+	PublishJSON(ctx context.Context, channel string, value any) error
 	Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error)
 }

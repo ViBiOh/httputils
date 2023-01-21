@@ -65,6 +65,10 @@ func (n noop) Publish(_ context.Context, _ string, _ any) error {
 	return nil
 }
 
+func (n noop) PublishJSON(_ context.Context, _ string, _ any) error {
+	return nil
+}
+
 func (n noop) Subscribe(_ context.Context, _ string) (<-chan *redis.Message, func(context.Context) error) {
 	content := make(chan *redis.Message, 1)
 	close(content)
