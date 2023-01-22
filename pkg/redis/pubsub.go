@@ -31,6 +31,8 @@ func (a App) Publish(ctx context.Context, channel string, value any) error {
 		return fmt.Errorf("publish: %w", err)
 	}
 
+	a.increase("publish")
+
 	if count == 0 {
 		return ErrNoSubscriber
 	}
@@ -44,6 +46,8 @@ func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Messa
 
 	pubsub := a.redisClient.Subscribe(ctx, channel)
 
+	a.increase("subscribe")
+
 	return pubsub.Channel(), func(ctx context.Context) (err error) {
 		defer func() {
 			if closeErr := pubsub.Close(); closeErr != nil {
@@ -52,6 +56,11 @@ func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Messa
 		}()
 
 		err = pubsub.Unsubscribe(ctx, channel)
+		if err != nil {
+			a.increase("error")
+		} else {
+			a.increase("unsubscribe")
+		}
 
 		return
 	}

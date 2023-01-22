@@ -24,6 +24,8 @@ func (a App) Push(ctx context.Context, key string, value any) error {
 		return fmt.Errorf("push: %w", err)
 	}
 
+	a.increase("push")
+
 	return nil
 }
 
@@ -44,6 +46,8 @@ func (a App) Pull(ctx context.Context, key string, handler func(string, error)) 
 
 			continue
 		}
+
+		a.increase("pull")
 
 		if len(content) == 2 {
 			handler(content[1], nil)
