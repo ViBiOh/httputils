@@ -28,7 +28,7 @@ type RedisClient interface {
 	LoadMany(ctx context.Context, keys ...string) ([]string, error)
 	Store(ctx context.Context, key string, value any, ttl time.Duration) error
 	Delete(ctx context.Context, keys ...string) error
-	Expire(ctx context.Context, key string, ttl time.Duration) error
+	Expire(ctx context.Context, ttl time.Duration, keys ...string) error
 }
 
 type App[K any, V any] struct {
@@ -100,6 +100,8 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 	wg := concurrent.NewFailFast(a.concurrency)
 	ctx = wg.WithContext(ctx)
 
+	var extendKeys []string
+
 	for index, item := range items {
 		index, item := index, item
 
@@ -107,8 +109,7 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 			value, ok, err := a.unmarshal(ctx, []byte(values[index]))
 			if ok {
 				output[index] = value
-
-				go a.extendTTL(tracer.CopyToBackground(ctx), keys[index])
+				extendKeys = append(extendKeys, keys[index])
 
 				return nil
 			}
@@ -124,6 +125,8 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 			return nil
 		})
 	}
+
+	go a.extendTTL(tracer.CopyToBackground(ctx), extendKeys...)
 
 	return output, wg.Wait()
 }
@@ -164,6 +167,7 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 
 	var missingIds []K
 	var missingIndex []int
+	var extendKeys []string
 
 	output := make([]V, len(items))
 	for index, item := range items {
@@ -171,8 +175,7 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 
 		if ok {
 			output[index] = value
-
-			go a.extendTTL(tracer.CopyToBackground(ctx), keys[index])
+			extendKeys = append(extendKeys, keys[index])
 
 			continue
 		}
@@ -184,6 +187,8 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 		missingIds = append(missingIds, item)
 		missingIndex = append(missingIndex, index)
 	}
+
+	go a.extendTTL(tracer.CopyToBackground(ctx), extendKeys...)
 
 	missingValues, err := fetchMany(ctx, missingIds)
 	if err != nil {
@@ -282,8 +287,8 @@ func unmarshal[V any](ctx context.Context, content []byte) (value V, ok bool, er
 	return
 }
 
-func (a App[K, V]) extendTTL(ctx context.Context, key string) {
-	extendTTL(ctx, a.client, key, a.ttl)
+func (a App[K, V]) extendTTL(ctx context.Context, keys ...string) {
+	extendTTL(ctx, a.client, a.ttl, keys...)
 }
 
 func (a App[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) {

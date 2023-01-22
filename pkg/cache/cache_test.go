@@ -130,7 +130,7 @@ func TestGet(t *testing.T) {
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			case "cached":
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return([]byte(`{"id":8000}`), nil)
-				mockRedisClient.EXPECT().Expire(gomock.Any(), gomock.Any(), testCase.args.duration).Return(nil)
+				mockRedisClient.EXPECT().Expire(gomock.Any(), testCase.args.duration, gomock.Any()).Return(nil)
 			case "store error":
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return(nil, nil)
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("store error"))

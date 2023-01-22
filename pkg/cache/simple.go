@@ -27,7 +27,7 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 	} else if value, ok, err := unmarshal[V](ctx, content); err != nil {
 		logUnmarshallError(ctx, key, err)
 	} else if ok {
-		go extendTTL(tracer.CopyToBackground(ctx), client, key, ttl)
+		go extendTTL(tracer.CopyToBackground(ctx), client, ttl, key)
 
 		return value, nil
 	}
@@ -66,11 +66,11 @@ func EvictOnSucces(ctx context.Context, client RedisClient, key string, err erro
 	return nil
 }
 
-func extendTTL(ctx context.Context, client RedisClient, key string, ttl time.Duration) {
+func extendTTL(ctx context.Context, client RedisClient, ttl time.Duration, keys ...string) {
 	ctx, cancel := context.WithTimeout(ctx, asyncActionTimeout)
 	defer cancel()
 
-	if err := client.Expire(ctx, key, ttl); err != nil {
-		loggerWithTrace(ctx, key).Warn("extend ttl: %s", err)
+	if err := client.Expire(ctx, ttl, keys...); err != nil {
+		loggerWithTrace(ctx, "").Warn("extend ttl: %s", err)
 	}
 }

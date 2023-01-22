@@ -17,7 +17,7 @@ type Client interface {
 	DeletePattern(ctx context.Context, pattern string) error
 	Scan(ctx context.Context, pattern string, output chan<- string, pageSize int64) error
 	Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (bool, error)
-	Expire(ctx context.Context, key string, ttl time.Duration) error
+	Expire(ctx context.Context, ttl time.Duration, keys ...string) error
 	Push(ctx context.Context, key string, value any) error
 	Pull(ctx context.Context, key string, handler func(string, error))
 	Publish(ctx context.Context, channel string, value any) error

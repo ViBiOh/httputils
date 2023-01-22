@@ -50,7 +50,7 @@ func (n noop) Exclusive(_ context.Context, _ string, _ time.Duration, _ func(con
 	return false, ErrDisabled
 }
 
-func (n noop) Expire(_ context.Context, _ string, _ time.Duration) error {
+func (n noop) Expire(_ context.Context, _ time.Duration, _ ...string) error {
 	return nil
 }
 

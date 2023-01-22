@@ -152,11 +152,20 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	return output, nil
 }
 
-func (a App) Expire(ctx context.Context, key string, ttl time.Duration) error {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "expire", trace.WithAttributes(attribute.String("key", key)), trace.WithAttributes(attribute.String("ttl", ttl.String())), trace.WithSpanKind(trace.SpanKindClient))
+func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "expire", trace.WithAttributes(attribute.String("ttl", ttl.String())), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
-	return a.redisClient.Expire(ctx, key, ttl).Err()
+	pipeline := a.redisClient.Pipeline()
+	defer func() {
+		pipeline.Close()
+	}()
+
+	for _, key := range keys {
+		pipeline.Expire(ctx, key, ttl)
+	}
+
+	return a.execPipeline(ctx, pipeline)
 }
 
 func (a App) Delete(ctx context.Context, keys ...string) error {
