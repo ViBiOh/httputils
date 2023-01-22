@@ -48,13 +48,13 @@ func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Messa
 	}
 }
 
-func SubscribeFor[T any](ctx context.Context, app Client, channel string, handler func(T, error)) func(context.Context) error {
+func SubscribeFor[T any](ctx context.Context, app Client, channel string, handler func(T, error)) (<-chan struct{}, func(context.Context) error) {
 	subscription, unsubscribe := app.Subscribe(ctx, channel)
 
-	output := make(chan T, len(subscription))
+	done := make(chan struct{})
 
 	go func() {
-		defer close(output)
+		defer close(done)
 
 		for item := range subscription {
 			var instance T
@@ -62,5 +62,5 @@ func SubscribeFor[T any](ctx context.Context, app Client, channel string, handle
 		}
 	}()
 
-	return unsubscribe
+	return done, unsubscribe
 }
