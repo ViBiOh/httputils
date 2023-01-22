@@ -59,6 +59,7 @@ func (n noop) Push(_ context.Context, _ string, _ any) error {
 }
 
 func (n noop) Pull(_ context.Context, _ string, _ func(string, error)) {
+	// noop
 }
 
 func (n noop) Publish(_ context.Context, _ string, _ any) error {
