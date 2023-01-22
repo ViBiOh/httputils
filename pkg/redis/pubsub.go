@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/go-redis/redis/v8"
 	"go.opentelemetry.io/otel/trace"
@@ -43,8 +44,16 @@ func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Messa
 
 	pubsub := a.redisClient.Subscribe(ctx, channel)
 
-	return pubsub.Channel(), func(ctx context.Context) error {
-		return pubsub.Unsubscribe(ctx, channel)
+	return pubsub.Channel(), func(ctx context.Context) (err error) {
+		defer func() {
+			if closeErr := pubsub.Close(); closeErr != nil {
+				err = model.WrapError(err, closeErr)
+			}
+		}()
+
+		err = pubsub.Unsubscribe(ctx, channel)
+
+		return
 	}
 }
 
