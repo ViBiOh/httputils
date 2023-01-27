@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
@@ -101,7 +102,7 @@ func (a App) Load(ctx context.Context, key string) ([]byte, error) {
 	content, err := a.redisClient.Get(ctx, key).Bytes()
 
 	if err == nil {
-		a.increase("load")
+		a.increase("hit")
 
 		return content, nil
 	}
@@ -123,7 +124,9 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 
 	pipeline := a.redisClient.Pipeline()
 	defer func() {
-		_ = pipeline.Close()
+		if closeErr := pipeline.Close(); closeErr != nil {
+			logger.Error("close pipeline: %s", closeErr)
+		}
 	}()
 
 	commands := make([]*redis.StringCmd, len(keys))
@@ -132,8 +135,7 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 		commands[index] = pipeline.Get(ctx, key)
 	}
 
-	_, err := pipeline.Exec(ctx)
-	if err != nil && err != redis.Nil {
+	if _, err := pipeline.Exec(ctx); err != nil && err != redis.Nil {
 		a.increase("error")
 
 		return nil, fmt.Errorf("exec pipelined get: %w", err)
@@ -145,6 +147,8 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 
 	for index, result := range commands {
 		if result.Err() == nil {
+			a.increase("hit")
+
 			output[index] = result.Val()
 		}
 	}
@@ -157,9 +161,6 @@ func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) erro
 	defer end()
 
 	pipeline := a.redisClient.Pipeline()
-	defer func() {
-		pipeline.Close()
-	}()
 
 	for _, key := range keys {
 		pipeline.Expire(ctx, key, ttl)
@@ -173,9 +174,6 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 	defer end()
 
 	pipeline := a.redisClient.Pipeline()
-	defer func() {
-		_ = pipeline.Close()
-	}()
 
 	for _, key := range keys {
 		pipeline.Del(ctx, key)
@@ -196,9 +194,6 @@ func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
 		defer close(done)
 
 		pipeline := a.redisClient.Pipeline()
-		defer func() {
-			_ = pipeline.Close()
-		}()
 
 		for key := range scanOutput {
 			pipeline.Del(ctx, key)
@@ -217,6 +212,12 @@ func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
 }
 
 func (a App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
+	defer func() {
+		if closeErr := pipeline.Close(); closeErr != nil {
+			logger.Error("close pipeline: %s", closeErr)
+		}
+	}()
+
 	results, err := pipeline.Exec(ctx)
 	if err != nil {
 		a.increase("error")

@@ -31,7 +31,7 @@ type RedisClient interface {
 	Expire(ctx context.Context, ttl time.Duration, keys ...string) error
 }
 
-type App[K any, V any] struct {
+type App[K comparable, V any] struct {
 	tracer      trace.Tracer
 	client      RedisClient
 	toKey       func(K) string
@@ -40,7 +40,7 @@ type App[K any, V any] struct {
 	concurrency uint64
 }
 
-func New[K any, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), ttl time.Duration, concurrency uint64, tracer trace.Tracer) App[K, V] {
+func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), ttl time.Duration, concurrency uint64, tracer trace.Tracer) App[K, V] {
 	return App[K, V]{
 		client:      client,
 		toKey:       toKey,
@@ -199,9 +199,20 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 		return output, fmt.Errorf("fetch returned %d values while expecting %d", valuesLen, len(missingIndex))
 	}
 
+	toStore := make(map[K]V)
+
 	for index, value := range missingValues {
 		output[missingIndex[index]] = value
+		toStore[missingIds[index]] = value
 	}
+
+	go func(ctx context.Context) {
+		for id, value := range toStore {
+			if storeErr := a.store(ctx, id, value); storeErr != nil {
+				loggerWithTrace(ctx, a.toKey(id)).Error("store to cache: %s", storeErr)
+			}
+		}
+	}(tracer.CopyToBackground(ctx))
 
 	return output, nil
 }
