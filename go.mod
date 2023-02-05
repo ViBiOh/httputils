@@ -1,6 +1,6 @@
 module github.com/ViBiOh/httputils/v4
 
-go 1.19
+go 1.20
 
 require (
 	github.com/ViBiOh/flags v1.2.0
