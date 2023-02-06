@@ -8,7 +8,7 @@ import (
 type FailFast struct {
 	err     error
 	done    chan struct{}
-	limiter chan bool
+	limiter chan struct{}
 	cancel  context.CancelFunc
 	once    sync.Once
 	wg      sync.WaitGroup
@@ -17,7 +17,7 @@ type FailFast struct {
 func NewFailFast(limit uint64) *FailFast {
 	return &FailFast{
 		done:    make(chan struct{}),
-		limiter: make(chan bool, limit),
+		limiter: make(chan struct{}, limit),
 	}
 }
 
@@ -35,7 +35,7 @@ func (ff *FailFast) Go(f func() error) {
 	select {
 	case <-ff.done:
 		return
-	case ff.limiter <- true:
+	case ff.limiter <- struct{}{}:
 		ff.wg.Add(1)
 
 		go func() {

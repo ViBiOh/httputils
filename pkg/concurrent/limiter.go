@@ -5,19 +5,19 @@ import (
 )
 
 type Limited struct {
-	limiter chan bool
+	limiter chan struct{}
 	wg      sync.WaitGroup
 }
 
 func NewLimited(limit uint64) *Limited {
 	return &Limited{
-		limiter: make(chan bool, limit),
+		limiter: make(chan struct{}, limit),
 	}
 }
 
 func (l *Limited) Go(f func()) {
 	l.wg.Add(1)
-	l.limiter <- true
+	l.limiter <- struct{}{}
 
 	go func() {
 		defer l.wg.Done()

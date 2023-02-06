@@ -40,3 +40,21 @@ func TestLimitedGo(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkLimited(b *testing.B) {
+	funcs := []func(){
+		func() {},
+		func() {},
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		instance := NewLimited(2)
+
+		for _, f := range funcs {
+			instance.Go(f)
+		}
+
+		instance.Wait()
+	}
+}
