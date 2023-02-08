@@ -199,16 +199,15 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 		return output, fmt.Errorf("fetch returned %d values while expecting %d", valuesLen, len(missingIndex))
 	}
 
-	toStore := make(map[K]V)
-
 	for index, value := range missingValues {
 		output[missingIndex[index]] = value
-		toStore[missingIds[index]] = value
 	}
 
 	go func(ctx context.Context) {
-		for id, value := range toStore {
-			if storeErr := a.store(ctx, id, value); storeErr != nil {
+		for _, index := range missingIndex {
+			id := items[index]
+
+			if storeErr := a.store(ctx, id, output[index]); storeErr != nil {
 				loggerWithTrace(ctx, a.toKey(id)).Error("store to cache: %s", storeErr)
 			}
 		}
