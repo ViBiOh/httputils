@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -26,6 +25,7 @@ type RedisClient interface {
 	Store(ctx context.Context, key string, value any, ttl time.Duration) error
 	Delete(ctx context.Context, keys ...string) error
 	Expire(ctx context.Context, ttl time.Duration, keys ...string) error
+	Pipeline() redis.Pipeliner
 }
 
 type (
@@ -90,141 +90,6 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	return a.fetch(ctx, id)
 }
 
-// If onMissError returns false, List stops by returning an error
-func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
-	if !a.client.Enabled() {
-		return a.listRaw(ctx, onMissError, items...)
-	}
-
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end()
-
-	keys, values := a.getValues(ctx, items)
-
-	if valuesLen := len(values); valuesLen != len(items) {
-		return nil, fmt.Errorf("get returned %d values while expecting %d", valuesLen, len(items))
-	}
-
-	output := make([]V, len(items))
-	wg := concurrent.NewFailFast(a.concurrency)
-	ctx = wg.WithContext(ctx)
-
-	var extendKeys []string
-
-	for index, item := range items {
-		index, item := index, item
-
-		wg.Go(func() error {
-			value, ok, err := a.unmarshal(ctx, []byte(values[index]))
-			if ok {
-				output[index] = value
-				extendKeys = append(extendKeys, keys[index])
-
-				return nil
-			}
-
-			if err != nil {
-				logUnmarshallError(ctx, a.toKey(item), err)
-			}
-
-			if output[index], err = a.fetch(ctx, item); err != nil && !onMissError(item, err) {
-				return err
-			}
-
-			return nil
-		})
-	}
-
-	a.extendTTL(ctx, extendKeys...)
-
-	return output, wg.Wait()
-}
-
-func (a App[K, V]) listRaw(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
-	output := make([]V, len(items))
-
-	for index, item := range items {
-		value, err := a.fetch(ctx, item)
-		if err != nil {
-			if !onMissError(item, err) {
-				return nil, err
-			}
-
-			continue
-		}
-
-		output[index] = value
-	}
-
-	return output, nil
-}
-
-// Param fetchMany has to return the same number of values as requested and in the same order
-func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context, []K) ([]V, error), items ...K) ([]V, error) {
-	if !a.client.Enabled() {
-		return fetchMany(ctx, items)
-	}
-
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "list_many", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end()
-
-	keys, values := a.getValues(ctx, items)
-
-	if valuesLen := len(values); valuesLen != len(items) {
-		return nil, fmt.Errorf("get returned %d values while expecting %d", valuesLen, len(items))
-	}
-
-	var missingIds []K
-	var missingIndex []int
-	var extendKeys []string
-
-	output := make([]V, len(items))
-	for index, item := range items {
-		value, ok, err := a.unmarshal(ctx, []byte(values[index]))
-
-		if ok {
-			output[index] = value
-			extendKeys = append(extendKeys, keys[index])
-
-			continue
-		}
-
-		if err != nil {
-			logUnmarshallError(ctx, a.toKey(item), err)
-		}
-
-		missingIds = append(missingIds, item)
-		missingIndex = append(missingIndex, index)
-	}
-
-	a.extendTTL(ctx, extendKeys...)
-
-	missingValues, err := fetchMany(ctx, missingIds)
-	if err != nil {
-		return output, fmt.Errorf("fetch: %w", err)
-	}
-
-	if valuesLen := len(missingValues); valuesLen != len(missingIndex) {
-		return output, fmt.Errorf("fetch returned %d values while expecting %d", valuesLen, len(missingIndex))
-	}
-
-	for index, value := range missingValues {
-		output[missingIndex[index]] = value
-	}
-
-	go func(ctx context.Context) {
-		for _, index := range missingIndex {
-			id := items[index]
-
-			if storeErr := a.store(ctx, id, output[index]); storeErr != nil {
-				loggerWithTrace(ctx, a.toKey(id)).Error("store to cache: %s", storeErr)
-			}
-		}
-	}(tracer.CopyToBackground(ctx))
-
-	return output, nil
-}
-
 func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
 	if err != nil || !a.client.Enabled() {
 		return err
@@ -281,27 +146,6 @@ func (a App[K, V]) extendTTL(ctx context.Context, keys ...string) {
 	go doInBackground(tracer.CopyToBackground(ctx), "extend ttl", func(ctx context.Context) error {
 		return a.client.Expire(ctx, a.ttl, keys...)
 	})
-}
-
-func (a App[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) {
-	keys := make([]string, len(ids))
-	for index, id := range ids {
-		keys[index] = a.toKey(id)
-	}
-
-	loadCtx, cancel := context.WithTimeout(ctx, syncActionTimeout)
-	defer cancel()
-
-	values, err := a.client.LoadMany(loadCtx, keys...)
-	if err != nil {
-		if errors.Is(err, context.Canceled) {
-			loggerWithTrace(ctx, strconv.Itoa(len(keys))).Warn("load many from cache: %s", err)
-		} else {
-			loggerWithTrace(ctx, strconv.Itoa(len(keys))).Error("load many from cache: %s", err)
-		}
-	}
-
-	return keys, values
 }
 
 func loggerWithTrace(ctx context.Context, key string) logger.Provider {

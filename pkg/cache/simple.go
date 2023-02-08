@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -20,9 +19,9 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 
 	if content, err := client.Load(loadCtx, key); err != nil {
 		if errors.Is(err, context.Canceled) {
-			loggerWithTrace(ctx, key).Warn("load: %s", err)
+			loggerWithTrace(ctx, key).Warn("load from cache: %s", err)
 		} else {
-			loggerWithTrace(ctx, key).Error("load: %s", err)
+			loggerWithTrace(ctx, key).Error("load from cache: %s", err)
 		}
 	} else if value, ok, err := unmarshal[V](ctx, content); err != nil {
 		logUnmarshallError(ctx, key, err)
@@ -37,20 +36,9 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 	value, err := onMiss(ctx)
 
 	if err == nil {
-		go func(ctx context.Context) {
-			payload, err := json.Marshal(value)
-			if err != nil {
-				loggerWithTrace(ctx, key).Error("marshal: %s", err)
-				return
-			}
-
-			storeCtx, cancel := context.WithTimeout(ctx, asyncActionTimeout)
-			defer cancel()
-
-			if err = client.Store(storeCtx, key, payload, ttl); err != nil {
-				loggerWithTrace(ctx, key).Error("store: %s", err)
-			}
-		}(tracer.CopyToBackground(ctx))
+		go doInBackground(tracer.CopyToBackground(ctx), "store", func(ctx context.Context) error {
+			return store(ctx, client, key, value, ttl)
+		})
 	}
 
 	return value, err

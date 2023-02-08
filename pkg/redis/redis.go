@@ -283,6 +283,10 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 	return
 }
 
+func (a App) Pipeline() redis.Pipeliner {
+	return a.redisClient.Pipeline()
+}
+
 func (a App) increase(name string) {
 	if a.metric == nil {
 		return

@@ -10,6 +10,7 @@ import (
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
+	redis "github.com/redis/go-redis/v9"
 )
 
 // RedisClient is a mock of RedisClient interface.
@@ -120,6 +121,20 @@ func (mr *RedisClientMockRecorder) LoadMany(ctx interface{}, keys ...interface{}
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx}, keys...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadMany", reflect.TypeOf((*RedisClient)(nil).LoadMany), varargs...)
+}
+
+// Pipeline mocks base method.
+func (m *RedisClient) Pipeline() redis.Pipeliner {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Pipeline")
+	ret0, _ := ret[0].(redis.Pipeliner)
+	return ret0
+}
+
+// Pipeline indicates an expected call of Pipeline.
+func (mr *RedisClientMockRecorder) Pipeline() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pipeline", reflect.TypeOf((*RedisClient)(nil).Pipeline))
 }
 
 // Store mocks base method.

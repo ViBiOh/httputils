@@ -23,4 +23,5 @@ type Client interface {
 	Publish(ctx context.Context, channel string, value any) error
 	PublishJSON(ctx context.Context, channel string, value any) error
 	Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error)
+	Pipeline() redis.Pipeliner
 }

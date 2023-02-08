@@ -76,3 +76,7 @@ func (n noop) Subscribe(_ context.Context, _ string) (<-chan *redis.Message, fun
 
 	return content, func(_ context.Context) error { return nil }
 }
+
+func (n noop) Pipeline() redis.Pipeliner {
+	return nil
+}
