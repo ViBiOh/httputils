@@ -4,13 +4,13 @@ go 1.20
 
 require (
 	github.com/ViBiOh/flags v1.2.0
-	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgproto3/v2 v2.3.1
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/common v0.39.0
+	github.com/redis/go-redis/v9 v9.0.2
 	github.com/streadway/amqp v1.0.0
 	github.com/tdewolff/minify/v2 v2.12.4
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.38.0

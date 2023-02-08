@@ -10,12 +10,11 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
-	"github.com/go-redis/redis/v8"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -84,7 +83,7 @@ func (a App) Store(ctx context.Context, key string, value any, duration time.Dur
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithAttributes(attribute.String("key", key)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end()
 
-	err := a.redisClient.SetEX(ctx, key, value, duration).Err()
+	err := a.redisClient.SetEx(ctx, key, value, duration).Err()
 
 	if err == nil {
 		a.increase("store")
@@ -123,11 +122,6 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	defer end()
 
 	pipeline := a.redisClient.Pipeline()
-	defer func() {
-		if closeErr := pipeline.Close(); closeErr != nil {
-			logger.Error("close pipeline: %s", closeErr)
-		}
-	}()
 
 	commands := make([]*redis.StringCmd, len(keys))
 
@@ -212,12 +206,6 @@ func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
 }
 
 func (a App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
-	defer func() {
-		if closeErr := pipeline.Close(); closeErr != nil {
-			logger.Error("close pipeline: %s", closeErr)
-		}
-	}()
-
 	results, err := pipeline.Exec(ctx)
 	if err != nil {
 		a.increase("error")

@@ -7,7 +7,7 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
 )
 
