@@ -17,10 +17,7 @@ import (
 
 //go:generate mockgen -source cache.go -destination ../mocks/cache.go -package mocks -mock_names RedisClient=RedisClient
 
-var (
-	syncActionTimeout  = time.Millisecond * 150
-	asyncActionTimeout = time.Second * 5
-)
+var syncActionTimeout = time.Millisecond * 150
 
 type RedisClient interface {
 	Enabled() bool
@@ -31,16 +28,22 @@ type RedisClient interface {
 	Expire(ctx context.Context, ttl time.Duration, keys ...string) error
 }
 
+type (
+	fetch[K comparable, V any]     func(context.Context, K) (V, error)
+	fetchMany[K comparable, V any] func(context.Context, []K) ([]V, error)
+)
+
 type App[K comparable, V any] struct {
 	tracer      trace.Tracer
 	client      RedisClient
 	toKey       func(K) string
-	onMiss      func(context.Context, K) (V, error)
+	onMiss      fetch[K, V]
+	onMissMany  fetchMany[K, V]
 	ttl         time.Duration
 	concurrency uint64
 }
 
-func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss func(context.Context, K) (V, error), ttl time.Duration, concurrency uint64, tracer trace.Tracer) App[K, V] {
+func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], ttl time.Duration, concurrency uint64, tracer trace.Tracer) App[K, V] {
 	return App[K, V]{
 		client:      client,
 		toKey:       toKey,
@@ -49,6 +52,12 @@ func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss f
 		concurrency: concurrency,
 		tracer:      tracer,
 	}
+}
+
+func (a App[K, V]) WithMissMany(cb fetchMany[K, V]) App[K, V] {
+	a.onMissMany = cb
+
+	return a
 }
 
 func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
@@ -73,7 +82,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	} else if value, ok, err := a.unmarshal(ctx, content); err != nil {
 		logUnmarshallError(ctx, key, err)
 	} else if ok {
-		go a.extendTTL(tracer.CopyToBackground(ctx), key)
+		a.extendTTL(ctx, key)
 
 		return value, nil
 	}
@@ -126,7 +135,7 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 		})
 	}
 
-	go a.extendTTL(tracer.CopyToBackground(ctx), extendKeys...)
+	a.extendTTL(ctx, extendKeys...)
 
 	return output, wg.Wait()
 }
@@ -188,7 +197,7 @@ func (a App[K, V]) ListMany(ctx context.Context, fetchMany func(context.Context,
 		missingIndex = append(missingIndex, index)
 	}
 
-	go a.extendTTL(tracer.CopyToBackground(ctx), extendKeys...)
+	a.extendTTL(ctx, extendKeys...)
 
 	missingValues, err := fetchMany(ctx, missingIds)
 	if err != nil {
@@ -233,33 +242,6 @@ func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error 
 	return nil
 }
 
-func (a App[K, V]) Store(ctx context.Context, id K, value V) error {
-	if !a.client.Enabled() {
-		return nil
-	}
-
-	return a.store(ctx, id, value)
-}
-
-func (a App[K, V]) store(ctx context.Context, id K, value V) error {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end()
-
-	payload, err := json.Marshal(value)
-	if err != nil {
-		return fmt.Errorf("marshal: %w", err)
-	}
-
-	storeCtx, cancel := context.WithTimeout(ctx, asyncActionTimeout)
-	defer cancel()
-
-	if err = a.client.Store(storeCtx, a.toKey(id), payload, a.ttl); err != nil {
-		return fmt.Errorf("store: %w", err)
-	}
-
-	return nil
-}
-
 func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "fetch", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
@@ -267,11 +249,9 @@ func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	value, err := a.onMiss(ctx, id)
 
 	if err == nil {
-		go func(ctx context.Context) {
-			if storeErr := a.store(ctx, id, value); storeErr != nil {
-				loggerWithTrace(ctx, a.toKey(id)).Error("store to cache: %s", storeErr)
-			}
-		}(tracer.CopyToBackground(ctx))
+		go doInBackground(tracer.CopyToBackground(ctx), "store to cache", func(ctx context.Context) error {
+			return a.store(ctx, id, value)
+		})
 	}
 
 	return value, err
@@ -298,7 +278,9 @@ func unmarshal[V any](ctx context.Context, content []byte) (value V, ok bool, er
 }
 
 func (a App[K, V]) extendTTL(ctx context.Context, keys ...string) {
-	extendTTL(ctx, a.client, a.ttl, keys...)
+	go doInBackground(tracer.CopyToBackground(ctx), "extend ttl", func(ctx context.Context) error {
+		return a.client.Expire(ctx, a.ttl, keys...)
+	})
 }
 
 func (a App[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) {
