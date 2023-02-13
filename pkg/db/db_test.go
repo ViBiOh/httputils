@@ -9,8 +9,9 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/mocks"
 	"github.com/golang/mock/gomock"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestFlags(t *testing.T) {
@@ -596,12 +597,12 @@ func TestExec(t *testing.T) {
 			case "error":
 				tx := mocks.NewTx(ctrl)
 				ctx = StoreTx(ctx, tx)
-				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return(nil, errors.New("timeout"))
+				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return(pgconn.CommandTag{}, errors.New("timeout"))
 
 			case "valid":
 				tx := mocks.NewTx(ctrl)
 				ctx = StoreTx(ctx, tx)
-				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return(nil, nil)
+				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return(pgconn.CommandTag{}, nil)
 			}
 
 			gotErr := instance.Exec(ctx, "DELETE FROM item WHERE id = $1", 1)
@@ -659,17 +660,17 @@ func TestOne(t *testing.T) {
 			case "error":
 				tx := mocks.NewTx(ctrl)
 				ctx = StoreTx(ctx, tx)
-				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return(nil, errors.New("timeout"))
+				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return(pgconn.CommandTag{}, errors.New("timeout"))
 
 			case "zero":
 				tx := mocks.NewTx(ctrl)
 				ctx = StoreTx(ctx, tx)
-				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return([]byte("0"), nil)
+				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return(pgconn.CommandTag{}, nil)
 
 			case "one":
 				tx := mocks.NewTx(ctrl)
 				ctx = StoreTx(ctx, tx)
-				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return([]byte("1"), nil)
+				tx.EXPECT().Exec(gomock.Any(), "DELETE FROM item WHERE id = $1", 1).Return(pgconn.NewCommandTag("1"), nil)
 			}
 
 			gotErr := instance.One(ctx, "DELETE FROM item WHERE id = $1", 1)

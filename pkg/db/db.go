@@ -11,9 +11,9 @@ import (
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -82,7 +82,7 @@ func New(ctx context.Context, config Config, tracer trace.Tracer) (App, error) {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	db, err := pgxpool.Connect(ctx, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_min_conns=%d pool_max_conns=%d", host, *config.port, user, pass, name, sslmode, *config.minConn, *config.maxConn))
+	db, err := pgxpool.New(ctx, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_min_conns=%d pool_max_conns=%d", host, *config.port, user, pass, name, sslmode, *config.minConn, *config.maxConn))
 	if err != nil {
 		return App{}, fmt.Errorf("connect to postgres: %w", err)
 	}
@@ -249,7 +249,7 @@ func (a App) exec(ctx context.Context, query string, args ...any) (pgconn.Comman
 
 	tx := readTx(ctx)
 	if tx == nil {
-		return nil, ErrNoTransaction
+		return pgconn.CommandTag{}, ErrNoTransaction
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
