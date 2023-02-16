@@ -41,7 +41,7 @@ func store(ctx context.Context, client RedisClient, key string, value any, ttl t
 	return nil
 }
 
-func (a App[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes []int) error {
+func (a App[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes IndexedItems[K]) error {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "store_many", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 

@@ -30,7 +30,7 @@ type RedisClient interface {
 
 type (
 	fetch[K comparable, V any]     func(context.Context, K) (V, error)
-	fetchMany[K comparable, V any] func(context.Context, []K) ([]V, error)
+	fetchMany[K comparable, V any] func(context.Context, []K) (map[K]V, error)
 )
 
 type App[K comparable, V any] struct {

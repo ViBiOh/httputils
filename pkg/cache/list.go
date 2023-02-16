@@ -11,11 +11,35 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+type IndexedItems[K comparable] map[K]int
+
+func (ii IndexedItems[K]) Items() []K {
+	output := make([]K, len(ii))
+	index := 0
+
+	for item := range ii {
+		output[index] = item
+		index++
+	}
+
+	return output
+}
+
 // If onMissError returns false, List stops by returning an error
 func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
 	if !a.client.Enabled() {
 		if a.onMissMany == nil {
-			return a.onMissMany(ctx, items)
+			values, err := a.onMissMany(ctx, items)
+			if err != nil {
+				return nil, err
+			}
+
+			output := make([]V, len(values))
+			for index, item := range items {
+				output[index] = values[item]
+			}
+
+			return output, nil
 		}
 
 		return a.listRaw(ctx, onMissError, items...)
@@ -90,10 +114,9 @@ func (a App[K, V]) handleListSingle(ctx context.Context, onMissError func(K, err
 
 // Param fetchMany has to return the same number of values as requested and in the same order
 func (a App[K, V]) handleListMany(ctx context.Context, items []K, keys, values []string) ([]V, error) {
-	var missingIds []K
-	var missingIndexes []int
 	var extendKeys []string
 
+	missingKeys := make(IndexedItems[K])
 	output := make([]V, len(items))
 
 	for index, item := range items {
@@ -106,27 +129,22 @@ func (a App[K, V]) handleListMany(ctx context.Context, items []K, keys, values [
 			logUnmarshallError(ctx, a.toKey(item), err)
 		}
 
-		missingIds = append(missingIds, item)
-		missingIndexes = append(missingIndexes, index)
+		missingKeys[item] = index
 	}
 
 	a.extendTTL(ctx, extendKeys...)
 
-	missingValues, err := a.onMissMany(ctx, missingIds)
+	missingValues, err := a.onMissMany(ctx, missingKeys.Items())
 	if err != nil {
 		return output, fmt.Errorf("fetch many: %w", err)
 	}
 
-	if valuesLen := len(missingValues); valuesLen != len(missingIndexes) {
-		return output, fmt.Errorf("fetch returned %d values while expecting %d", valuesLen, len(missingIndexes))
-	}
-
-	for index, value := range missingValues {
-		output[missingIndexes[index]] = value
+	for key, value := range missingValues {
+		output[missingKeys[key]] = value
 	}
 
 	go doInBackground(tracer.CopyToBackground(ctx), "store", func(ctx context.Context) error {
-		return a.storeMany(ctx, items, output, missingIndexes)
+		return a.storeMany(ctx, items, output, missingKeys)
 	})
 
 	return output, nil
