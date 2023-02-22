@@ -3,7 +3,7 @@ package breaksync
 import "bytes"
 
 var RuptureIdentity = func(a []byte) []byte {
-	return []byte(a)
+	return a
 }
 
 type Rupture struct {

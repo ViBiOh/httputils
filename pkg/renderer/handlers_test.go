@@ -23,7 +23,7 @@ func TestRedirect(t *testing.T) {
 	}{
 		"simple": {
 			App{},
-			httptest.NewRequest(http.MethodGet, "http://vibioh.fr/", nil),
+			httptest.NewRequest(http.MethodGet, "https://vibioh.fr/", nil),
 			"/",
 			NewSuccessMessage("Created with success"),
 			"<a href=\"/?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",

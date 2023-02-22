@@ -23,7 +23,7 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 		} else {
 			loggerWithTrace(ctx, key).Error("load from cache: %s", err)
 		}
-	} else if value, ok, err := unmarshal[V](ctx, content); err != nil {
+	} else if value, ok, err := unmarshal[V](content); err != nil {
 		logUnmarshallError(ctx, key, err)
 	} else if ok {
 		go doInBackground(tracer.CopyToBackground(ctx), "extend ttl", func(ctx context.Context) error {

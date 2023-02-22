@@ -144,7 +144,7 @@ func TestDo(t *testing.T) {
 		want      error
 	}{
 		"should handle error during call": {
-			"http://",
+			"https://",
 			"TestDo",
 			errors.New("http: no Host in request URL"),
 		},

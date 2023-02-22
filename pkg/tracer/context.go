@@ -5,26 +5,26 @@ import (
 	"time"
 )
 
-var _ context.Context = contextClone{}
+var _ context.Context = Context{}
 
-type contextClone struct {
+type Context struct {
 	context.Context
 }
 
-func CloneContext(ctx context.Context) contextClone {
-	return contextClone{
+func CloneContext(ctx context.Context) Context {
+	return Context{
 		ctx,
 	}
 }
 
-func (cc contextClone) Deadline() (deadline time.Time, ok bool) {
+func (cc Context) Deadline() (deadline time.Time, ok bool) {
 	return
 }
 
-func (cc contextClone) Done() <-chan struct{} {
+func (cc Context) Done() <-chan struct{} {
 	return nil
 }
 
-func (cc contextClone) Err() error {
+func (cc Context) Err() error {
 	return nil
 }

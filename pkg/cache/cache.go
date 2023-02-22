@@ -123,13 +123,13 @@ func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 }
 
 func (a App[K, V]) unmarshal(ctx context.Context, content []byte) (V, bool, error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "unmarshal", trace.WithAttributes(attribute.Int("len", len(content))), trace.WithSpanKind(trace.SpanKindInternal))
+	_, end := tracer.StartSpan(ctx, a.tracer, "unmarshal", trace.WithAttributes(attribute.Int("len", len(content))), trace.WithSpanKind(trace.SpanKindInternal))
 	defer end()
 
-	return unmarshal[V](ctx, content)
+	return unmarshal[V](content)
 }
 
-func unmarshal[V any](ctx context.Context, content []byte) (value V, ok bool, err error) {
+func unmarshal[V any](content []byte) (value V, ok bool, err error) {
 	if len(content) == 0 {
 		return
 	}

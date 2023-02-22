@@ -129,7 +129,7 @@ func (l Logger) Start() {
 		}
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "write log: %s\n", err)
+			_, _ = fmt.Fprintf(os.Stderr, "write log: %s\n", err)
 		}
 	}
 
