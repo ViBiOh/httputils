@@ -29,20 +29,10 @@ func (ii IndexedItems[K]) Items() []K {
 func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
 	if !a.client.Enabled() {
 		if a.onMissMany == nil {
-			values, err := a.onMissMany(ctx, items)
-			if err != nil {
-				return nil, err
-			}
-
-			output := make([]V, len(values))
-			for index, item := range items {
-				output[index] = values[item]
-			}
-
-			return output, nil
+			return a.listRaw(ctx, onMissError, items...)
 		}
 
-		return a.listRaw(ctx, onMissError, items...)
+		return a.listRawMany(ctx, items)
 	}
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
@@ -55,6 +45,20 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 	}
 
 	return a.handleListMany(ctx, items, keys, values)
+}
+
+func (a App[K, V]) listRawMany(ctx context.Context, items []K) ([]V, error) {
+	values, err := a.onMissMany(ctx, items)
+	if err != nil {
+		return nil, err
+	}
+
+	output := make([]V, len(values))
+	for index, item := range items {
+		output[index] = values[item]
+	}
+
+	return output, nil
 }
 
 func (a App[K, V]) listRaw(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
