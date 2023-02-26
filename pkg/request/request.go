@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -346,30 +345,10 @@ func DoWithClient(client *http.Client, req *http.Request) (*http.Response, error
 	}
 
 	if resp.StatusCode >= http.StatusBadRequest {
-		err = errors.New(convertResponseError(resp))
+		err = NewResponseError(resp)
 	}
 
 	return resp, err
-}
-
-func convertResponseError(resp *http.Response) string {
-	builder := strings.Builder{}
-
-	_, _ = fmt.Fprintf(&builder, "HTTP/%d", resp.StatusCode)
-
-	for key, value := range resp.Header {
-		_, _ = fmt.Fprintf(&builder, "\n%s: %s", key, strings.Join(value, ","))
-	}
-
-	if errBody, bodyErr := io.ReadAll(io.LimitReader(resp.Body, maxErrorBody)); bodyErr == nil && len(errBody) > 0 {
-		_, _ = fmt.Fprintf(&builder, "\n\n%s", errBody)
-	}
-
-	if err := DiscardBody(resp.Body); err != nil {
-		_, _ = fmt.Fprintf(&builder, "\ndiscard body response: %s", err)
-	}
-
-	return builder.String()
 }
 
 func DiscardBody(body io.ReadCloser) error {
