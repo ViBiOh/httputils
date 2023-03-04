@@ -288,8 +288,10 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 	}
 
 	run := func() {
+		var err error
+
 		ctx, end := tracer.StartSpan(ctx, c.tracer, "cron")
-		defer end()
+		defer end(&err)
 
 		if c.semaphoreApp == nil {
 			do(ctx)
@@ -297,7 +299,7 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 			return
 		}
 
-		if _, err := c.semaphoreApp.Exclusive(ctx, c.name, c.timeout, func(ctx context.Context) error {
+		if _, err = c.semaphoreApp.Exclusive(ctx, c.name, c.timeout, func(ctx context.Context) error {
 			do(ctx)
 
 			return nil

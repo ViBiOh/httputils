@@ -131,13 +131,13 @@ func readTx(ctx context.Context) pgx.Tx {
 	return nil
 }
 
-func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) error {
+func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) (err error) {
 	if action == nil {
 		return errors.New("no action provided")
 	}
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "transaction", trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	if readTx(ctx) != nil {
 		return action(ctx)
@@ -163,7 +163,7 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) e
 
 func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) (err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
@@ -193,9 +193,9 @@ func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query strin
 	return
 }
 
-func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) error {
+func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) (err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "get", trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
@@ -207,9 +207,9 @@ func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string,
 	return scanner(a.db.QueryRow(ctx, query, args...))
 }
 
-func (a App) Create(ctx context.Context, query string, args ...any) (uint64, error) {
+func (a App) Create(ctx context.Context, query string, args ...any) (id uint64, err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "create", trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	tx := readTx(ctx)
 	if tx == nil {
@@ -243,9 +243,9 @@ func (a App) One(ctx context.Context, query string, args ...any) error {
 	return nil
 }
 
-func (a App) exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error) {
+func (a App) exec(ctx context.Context, query string, args ...any) (command pgconn.CommandTag, err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "exec", trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	tx := readTx(ctx)
 	if tx == nil {
@@ -278,9 +278,9 @@ func (bc *feeder) Err() error {
 	return bc.err
 }
 
-func (a App) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) error {
+func (a App) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) (err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "bulk", trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	tx := readTx(ctx)
 	if tx == nil {
@@ -290,7 +290,7 @@ func (a App) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, ta
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	if _, err := tx.CopyFrom(ctx, pgx.Identifier{schema, table}, columns, &feeder{fetcher: fetcher}); err != nil {
+	if _, err = tx.CopyFrom(ctx, pgx.Identifier{schema, table}, columns, &feeder{fetcher: fetcher}); err != nil {
 		return fmt.Errorf("copy from: %w", err)
 	}
 

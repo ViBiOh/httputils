@@ -129,10 +129,12 @@ func (a App) Start(ctx context.Context) {
 }
 
 func (a App) handleMessage(ctx context.Context, log logger.Provider, message amqp.Delivery) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer))
-	defer end()
+	var err error
 
-	err := a.handler(ctx, message)
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer))
+	defer end(&err)
+
+	err = a.handler(ctx, message)
 
 	if err == nil {
 		if err = message.Ack(false); err != nil {

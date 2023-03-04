@@ -26,7 +26,7 @@ func (ii IndexedItems[K]) Items() []K {
 }
 
 // If onMissError returns false, List stops by returning an error
-func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
+func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) (outputs []V, err error) {
 	if !a.client.Enabled() {
 		if a.onMissMany == nil {
 			return a.listRaw(ctx, onMissError, items...)
@@ -36,7 +36,7 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 	}
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end()
+	defer end(&err)
 
 	keys, values := a.getValues(ctx, items)
 
@@ -147,7 +147,7 @@ func (a App[K, V]) handleListMany(ctx context.Context, items []K, keys, values [
 		output[missingKeys[key]] = value
 	}
 
-	go doInBackground(tracer.CopyToBackground(ctx), "store", func(ctx context.Context) error {
+	go doInBackground(tracer.CloneContext(ctx), "store", func(ctx context.Context) error {
 		return a.storeMany(ctx, items, output, missingKeys)
 	})
 

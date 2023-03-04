@@ -21,9 +21,9 @@ func (a App[K, V]) Store(ctx context.Context, id K, value V) error {
 	return a.store(ctx, id, value)
 }
 
-func (a App[K, V]) store(ctx context.Context, id K, value V) error {
+func (a App[K, V]) store(ctx context.Context, id K, value V) (err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end()
+	defer end(&err)
 
 	return store(ctx, a.client, a.toKey(id), value, a.ttl)
 }
@@ -42,8 +42,10 @@ func store(ctx context.Context, client RedisClient, key string, value any, ttl t
 }
 
 func (a App[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes IndexedItems[K]) error {
+	var err error
+
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "store_many", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end()
+	defer end(&err)
 
 	pipeline := a.client.Pipeline()
 

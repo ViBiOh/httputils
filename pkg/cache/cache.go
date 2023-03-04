@@ -65,8 +65,10 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 		return a.onMiss(ctx, id)
 	}
 
+	var err error
+
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "get", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end()
+	defer end(&err)
 
 	key := a.toKey(id)
 
@@ -96,7 +98,7 @@ func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error 
 	}
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "evict", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end()
+	defer end(&err)
 
 	key := a.toKey(item)
 
@@ -108,13 +110,15 @@ func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error 
 }
 
 func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
+	var err error
+
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "fetch", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end()
+	defer end(&err)
 
 	value, err := a.onMiss(ctx, id)
 
 	if err == nil {
-		go doInBackground(tracer.CopyToBackground(ctx), "store to cache", func(ctx context.Context) error {
+		go doInBackground(tracer.CloneContext(ctx), "store to cache", func(ctx context.Context) error {
 			return a.store(ctx, id, value)
 		})
 	}
@@ -122,9 +126,9 @@ func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	return value, err
 }
 
-func (a App[K, V]) unmarshal(ctx context.Context, content []byte) (V, bool, error) {
+func (a App[K, V]) unmarshal(ctx context.Context, content []byte) (value V, ok bool, err error) {
 	_, end := tracer.StartSpan(ctx, a.tracer, "unmarshal", trace.WithAttributes(attribute.Int("len", len(content))), trace.WithSpanKind(trace.SpanKindInternal))
-	defer end()
+	defer end(&err)
 
 	return unmarshal[V](content)
 }
@@ -143,7 +147,7 @@ func unmarshal[V any](content []byte) (value V, ok bool, err error) {
 }
 
 func (a App[K, V]) extendTTL(ctx context.Context, keys ...string) {
-	go doInBackground(tracer.CopyToBackground(ctx), "extend ttl", func(ctx context.Context) error {
+	go doInBackground(tracer.CloneContext(ctx), "extend ttl", func(ctx context.Context) error {
 		return a.client.Expire(ctx, a.ttl, keys...)
 	})
 }

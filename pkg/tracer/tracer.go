@@ -12,6 +12,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -19,7 +20,7 @@ import (
 	tr "go.opentelemetry.io/otel/trace"
 )
 
-var noopFunc = func(...tr.SpanEndOption) {
+var noopFunc = func(*error, ...tr.SpanEndOption) {
 	// Nothing to do
 }
 
@@ -137,14 +138,20 @@ func (a App) Close(ctx context.Context) {
 	}
 }
 
-func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.SpanStartOption) (context.Context, func(options ...tr.SpanEndOption)) {
+func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.SpanStartOption) (context.Context, func(err *error, options ...tr.SpanEndOption)) {
 	if tracer == nil {
 		return ctx, noopFunc
 	}
 
 	ctx, span := tracer.Start(ctx, name, opts...)
 
-	return ctx, span.End
+	return ctx, func(err *error, options ...tr.SpanEndOption) {
+		if err != nil {
+			span.SetStatus(codes.Error, (*err).Error())
+		}
+
+		span.End(options...)
+	}
 }
 
 func CopyToBackground(ctx context.Context) context.Context {

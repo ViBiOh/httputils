@@ -20,18 +20,14 @@ func (a App) PublishJSON(ctx context.Context, channel string, value any) error {
 	return a.Publish(ctx, channel, payload)
 }
 
-func (a App) Publish(ctx context.Context, channel string, value any) error {
+func (a App) Publish(ctx context.Context, channel string, value any) (err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
-	defer end()
+	defer end(&err)
 
 	count, err := a.redisClient.Publish(ctx, channel, value).Result()
 	if err != nil {
-		a.increase("error")
-
 		return fmt.Errorf("publish: %w", err)
 	}
-
-	a.increase("publish")
 
 	if count == 0 {
 		return ErrNoSubscriber
@@ -42,11 +38,9 @@ func (a App) Publish(ctx context.Context, channel string, value any) error {
 
 func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "subscribe", trace.WithSpanKind(trace.SpanKindConsumer))
-	defer end()
+	defer end(nil)
 
 	pubsub := a.redisClient.Subscribe(ctx, channel)
-
-	a.increase("subscribe")
 
 	return pubsub.Channel(), func(ctx context.Context) (err error) {
 		defer func() {
@@ -56,11 +50,6 @@ func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Messa
 		}()
 
 		err = pubsub.Unsubscribe(ctx, channel)
-		if err != nil {
-			a.increase("error")
-		} else {
-			a.increase("unsubscribe")
-		}
 
 		return
 	}

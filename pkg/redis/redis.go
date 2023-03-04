@@ -11,9 +11,7 @@ import (
 
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
-	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -29,7 +27,6 @@ var ErrNoSubscriber = errors.New("no subscriber for channel")
 type App struct {
 	tracer      trace.Tracer
 	redisClient redis.UniversalClient
-	metric      *prometheus.CounterVec
 }
 
 type Config struct {
@@ -50,7 +47,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, prometheusRegisterer prometheus.Registerer, tracer trace.Tracer) Client {
+func New(config Config, tracer trace.Tracer) Client {
 	address := strings.TrimSpace(*config.address)
 	if len(address) == 0 {
 		return noop{}
@@ -63,7 +60,6 @@ func New(config Config, prometheusRegisterer prometheus.Registerer, tracer trace
 			Password: *config.password,
 			DB:       *config.database,
 		}),
-		metric: prom.CounterVec(prometheusRegisterer, metricsNamespace, strings.TrimSpace(*config.alias), "item", "state"),
 		tracer: tracer,
 	}
 }
@@ -80,46 +76,39 @@ func (a App) Ping(ctx context.Context) error {
 }
 
 func (a App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
+	var err error
+
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithAttributes(attribute.String("key", key)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
-	err := a.redisClient.SetEx(ctx, key, value, duration).Err()
-
-	if err == nil {
-		a.increase("store")
-	} else {
-		a.increase("error")
-	}
+	err = a.redisClient.SetEx(ctx, key, value, duration).Err()
 
 	return err
 }
 
 func (a App) Load(ctx context.Context, key string) ([]byte, error) {
+	var err error
+
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "load", trace.WithAttributes(attribute.String("key", key)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	content, err := a.redisClient.Get(ctx, key).Bytes()
-
 	if err == nil {
-		a.increase("hit")
-
 		return content, nil
 	}
 
 	if err != redis.Nil {
-		a.increase("error")
-
 		return nil, fmt.Errorf("exec get: %w", err)
 	}
-
-	a.increase("miss")
 
 	return nil, nil
 }
 
 func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
+	var err error
+
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "load_many", trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	pipeline := a.redisClient.Pipeline()
 
@@ -129,20 +118,14 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 		commands[index] = pipeline.Get(ctx, key)
 	}
 
-	if _, err := pipeline.Exec(ctx); err != nil && err != redis.Nil {
-		a.increase("error")
-
+	if _, err = pipeline.Exec(ctx); err != nil && err != redis.Nil {
 		return nil, fmt.Errorf("exec pipelined get: %w", err)
 	}
-
-	a.increase("load_many")
 
 	output := make([]string, len(keys))
 
 	for index, result := range commands {
 		if result.Err() == nil {
-			a.increase("hit")
-
 			output[index] = result.Val()
 		}
 	}
@@ -150,9 +133,9 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	return output, nil
 }
 
-func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {
+func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) (err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "expire", trace.WithAttributes(attribute.String("ttl", ttl.String())), trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	pipeline := a.redisClient.Pipeline()
 
@@ -163,9 +146,9 @@ func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) erro
 	return a.execPipeline(ctx, pipeline)
 }
 
-func (a App) Delete(ctx context.Context, keys ...string) error {
+func (a App) Delete(ctx context.Context, keys ...string) (err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete", trace.WithAttributes(attribute.StringSlice("keys", keys)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	pipeline := a.redisClient.Pipeline()
 
@@ -178,7 +161,7 @@ func (a App) Delete(ctx context.Context, keys ...string) error {
 
 func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete_pattern", trace.WithAttributes(attribute.String("pattenr", pattern)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	scanOutput := make(chan string, runtime.NumCPU())
 
@@ -208,19 +191,13 @@ func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
 func (a App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
 	results, err := pipeline.Exec(ctx)
 	if err != nil {
-		a.increase("error")
-
 		return fmt.Errorf("exec pipeline: %w", err)
 	}
 
 	for _, result := range results {
 		if err = result.Err(); err != nil {
-			a.increase("error")
-
 			return fmt.Errorf("pipeline item `%s`: %w", result.Name(), err)
 		}
-
-		a.increase("delete")
 	}
 
 	return nil
@@ -234,12 +211,11 @@ func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pag
 	var cursor uint64
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "scan", trace.WithAttributes(attribute.String("pattern", pattern)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
+	defer end(&err)
 
 	for {
 		keys, cursor, err = a.redisClient.Scan(ctx, cursor, pattern, pageSize).Result()
 		if err != nil {
-			a.increase("error")
 			return fmt.Errorf("exec scan: %w", err)
 		}
 
@@ -257,12 +233,9 @@ func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pag
 
 func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "exclusive", trace.WithAttributes(attribute.String("name", name)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end()
-
-	a.increase("exclusive")
+	defer end(&err)
 
 	if acquired, err = a.redisClient.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
-		a.increase("error")
 		err = fmt.Errorf("exec setnx: %w", err)
 
 		return
@@ -276,7 +249,6 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 	err = action(actionCtx)
 
 	if delErr := a.redisClient.Del(ctx, name).Err(); delErr != nil {
-		a.increase("error")
 		err = model.WrapError(err, delErr)
 	}
 
@@ -285,12 +257,4 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 
 func (a App) Pipeline() redis.Pipeliner {
 	return a.redisClient.Pipeline()
-}
-
-func (a App) increase(name string) {
-	if a.metric == nil {
-		return
-	}
-
-	a.metric.WithLabelValues(name).Inc()
 }

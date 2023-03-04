@@ -149,7 +149,7 @@ func (a App) Handler(templateFunc TemplateFunc) http.Handler {
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, end := tracer.StartSpan(r.Context(), a.tracer, "renderer", trace.WithSpanKind(trace.SpanKindInternal))
-		defer end()
+		defer end(nil)
 
 		r = r.WithContext(ctx)
 

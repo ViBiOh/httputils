@@ -96,7 +96,7 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 
 func (a App) matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
 	_, end := tracer.StartSpan(r.Context(), a.tracer, "match_etag", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end()
+	defer end(nil)
 
 	etag := page.etag()
 

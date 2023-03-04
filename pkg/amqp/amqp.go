@@ -96,17 +96,17 @@ func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Register
 	return client, nil
 }
 
-func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange, routingKey string) error {
+func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange, routingKey string) (err error) {
 	_, end := tracer.StartSpan(ctx, c.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
-	defer end()
+	defer end(&err)
 
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
-	if err := c.channel.Publish(exchange, routingKey, false, false, payload); err != nil {
+	if err = c.channel.Publish(exchange, routingKey, false, false, payload); err != nil {
 		c.increase("error", exchange, routingKey)
 
-		return err
+		return
 	}
 
 	c.increase("published", exchange, routingKey)
@@ -114,9 +114,9 @@ func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange,
 	return nil
 }
 
-func (c *Client) PublishJSON(ctx context.Context, item any, exchange, routingKey string) error {
+func (c *Client) PublishJSON(ctx context.Context, item any, exchange, routingKey string) (err error) {
 	ctx, end := tracer.StartSpan(ctx, c.tracer, "publish_json", trace.WithSpanKind(trace.SpanKindProducer))
-	defer end()
+	defer end(&err)
 
 	payload, err := json.Marshal(item)
 	if err != nil {
