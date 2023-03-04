@@ -201,19 +201,19 @@ func TestHandleError(t *testing.T) {
 			model.WrapInvalid(errors.New("invalid value")),
 			true,
 			http.StatusBadRequest,
-			"invalid value: invalid\n",
+			"invalid value\ninvalid\n",
 		},
 		"invalid auth": {
 			model.WrapUnauthorized(errors.New("invalid auth")),
 			true,
 			http.StatusUnauthorized,
-			"invalid auth: unauthorized\n",
+			"invalid auth\nunauthorized\n",
 		},
 		"invalid creds": {
 			model.WrapForbidden(errors.New("invalid credentials")),
 			true,
 			http.StatusForbidden,
-			"invalid credentials: forbidden\n",
+			"invalid credentials\nforbidden\n",
 		},
 		"not found": {
 			model.WrapNotFound(errors.New("unknown id")),
@@ -225,7 +225,7 @@ func TestHandleError(t *testing.T) {
 			model.WrapMethodNotAllowed(errors.New("unknown method")),
 			true,
 			http.StatusMethodNotAllowed,
-			"unknown method: method not allowed\n",
+			"unknown method\nmethod not allowed\n",
 		},
 		"internal server error": {
 			errors.New("bool"),
@@ -362,42 +362,42 @@ func TestFromStatus(t *testing.T) {
 				status: http.StatusBadRequest,
 				err:    errors.New("failure"),
 			},
-			errors.New("failure: invalid"),
+			errors.New("failure\ninvalid"),
 		},
 		"unauthorized": {
 			args{
 				status: http.StatusUnauthorized,
 				err:    errors.New("failure"),
 			},
-			errors.New("failure: unauthorized"),
+			errors.New("failure\nunauthorized"),
 		},
 		"forbidden": {
 			args{
 				status: http.StatusForbidden,
 				err:    errors.New("failure"),
 			},
-			errors.New("failure: forbidden"),
+			errors.New("failure\nforbidden"),
 		},
 		"not found": {
 			args{
 				status: http.StatusNotFound,
 				err:    errors.New("failure"),
 			},
-			errors.New("failure: not found"),
+			errors.New("failure\nnot found"),
 		},
 		"not allowed": {
 			args{
 				status: http.StatusMethodNotAllowed,
 				err:    errors.New("failure"),
 			},
-			errors.New("failure: method not allowed"),
+			errors.New("failure\nmethod not allowed"),
 		},
 		"internal error": {
 			args{
 				status: http.StatusInternalServerError,
 				err:    errors.New("failure"),
 			},
-			errors.New("failure: internal error"),
+			errors.New("failure\ninternal error"),
 		},
 		"unknown": {
 			args{
@@ -461,7 +461,7 @@ func TestFromResponse(t *testing.T) {
 				err: errors.New("failure"),
 			},
 			false,
-			errors.New("failure: method not allowed"),
+			errors.New("failure\nmethod not allowed"),
 		},
 	}
 

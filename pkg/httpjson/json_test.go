@@ -373,7 +373,7 @@ func TestRead(t *testing.T) {
 				},
 			},
 			nil,
-			errors.New("read JSON: invalid character 'i' looking for beginning of value: close error"),
+			errors.New("read JSON: invalid character 'i' looking for beginning of value\nclose error"),
 		},
 		"valid": {
 			args{

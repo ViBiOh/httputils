@@ -3,9 +3,9 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
@@ -45,7 +45,7 @@ func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Messa
 	return pubsub.Channel(), func(ctx context.Context) (err error) {
 		defer func() {
 			if closeErr := pubsub.Close(); closeErr != nil {
-				err = model.WrapError(err, closeErr)
+				err = errors.Join(err, closeErr)
 			}
 		}()
 

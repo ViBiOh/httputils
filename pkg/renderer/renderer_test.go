@@ -282,7 +282,7 @@ func TestHandler(t *testing.T) {
 					Content:  nil,
 				}, model.WrapInvalid(errors.New("error"))
 			},
-			`messageContent=error%3A+invalid&messageLevel=error`,
+			`messageContent=error%0Ainvalid&messageLevel=error`,
 			http.StatusBadRequest,
 			http.Header{},
 		},

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 var (
@@ -82,7 +81,7 @@ func Read(resp *http.Response, obj any) error {
 	}
 
 	if closeErr := resp.Body.Close(); closeErr != nil {
-		return model.WrapError(err, closeErr)
+		return errors.Join(err, closeErr)
 	}
 
 	return err

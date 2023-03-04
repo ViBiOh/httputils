@@ -1,11 +1,11 @@
 package amqp
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/streadway/amqp"
 )
 
@@ -47,7 +47,7 @@ func (c *Client) StopListener(consumer string) (err error) {
 	}
 
 	if closeErr := listener.close(); closeErr != nil {
-		err = model.WrapError(err, fmt.Errorf("close listener: %w", closeErr))
+		err = errors.Join(err, fmt.Errorf("close listener: %w", closeErr))
 	}
 
 	c.removeListener(consumer)

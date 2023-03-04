@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -15,7 +16,7 @@ func readContent(body io.ReadCloser) ([]byte, error) {
 	content, err := io.ReadAll(body)
 
 	if closeErr := body.Close(); closeErr != nil {
-		err = WrapError(err, closeErr)
+		err = errors.Join(err, closeErr)
 	}
 
 	return content, err

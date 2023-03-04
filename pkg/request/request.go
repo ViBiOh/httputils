@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -11,8 +12,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 const (
@@ -287,7 +286,7 @@ func (r Request) Multipart(ctx context.Context, feed func(mw *multipart.Writer) 
 	go func() {
 		defer func() {
 			if pipeCloseErr := writer.CloseWithError(multipartWriter.Close()); pipeCloseErr != nil {
-				feedErr = model.WrapError(feedErr, fmt.Errorf("close multipart writer: %w", pipeCloseErr))
+				feedErr = errors.Join(feedErr, fmt.Errorf("close multipart writer: %w", pipeCloseErr))
 			}
 		}()
 
@@ -301,7 +300,7 @@ func (r Request) Multipart(ctx context.Context, feed func(mw *multipart.Writer) 
 
 	if feedErr != nil {
 		if discardErr := DiscardBody(resp.Body); discardErr != nil {
-			feedErr = model.WrapError(feedErr, fmt.Errorf("discard body: %w", discardErr))
+			feedErr = errors.Join(feedErr, fmt.Errorf("discard body: %w", discardErr))
 		}
 
 		return resp, feedErr
@@ -332,7 +331,7 @@ func (r Request) StreamJSON(ctx context.Context, body any) (*http.Response, erro
 	resp, err := r.ContentJSON().Send(ctx, reader)
 
 	if closeErr := reader.Close(); closeErr != nil {
-		err = model.WrapError(err, closeErr)
+		err = errors.Join(err, closeErr)
 	}
 
 	return resp, err
@@ -359,7 +358,7 @@ func DiscardBody(body io.ReadCloser) error {
 	}
 
 	if closeErr := body.Close(); closeErr != nil {
-		err = model.WrapError(err, closeErr)
+		err = errors.Join(err, closeErr)
 	}
 
 	return err

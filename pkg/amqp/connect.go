@@ -1,11 +1,11 @@
 package amqp
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/streadway/amqp"
 )
 
@@ -26,7 +26,7 @@ func connect(uri string, prefetch int, onDisconnect func()) (*amqp.Connection, *
 		err := fmt.Errorf("create channel: %w", err)
 
 		if closeErr := connection.Close(); closeErr != nil {
-			err = model.WrapError(err, fmt.Errorf("close connection: %w", closeErr))
+			err = errors.Join(err, fmt.Errorf("close connection: %w", closeErr))
 		}
 
 		return nil, nil, err
@@ -99,7 +99,7 @@ func (c *Client) createChannel() (channel *amqp.Channel, err error) {
 
 func closeChannel(err error, channel *amqp.Channel) error {
 	if closeErr := channel.Close(); closeErr != nil {
-		return model.WrapError(err, fmt.Errorf("close channel: %w", closeErr))
+		return errors.Join(err, fmt.Errorf("close channel: %w", closeErr))
 	}
 
 	return err

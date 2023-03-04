@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/attribute"
@@ -249,7 +248,7 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 	err = action(actionCtx)
 
 	if delErr := a.redisClient.Del(ctx, name).Err(); delErr != nil {
-		err = model.WrapError(err, delErr)
+		err = errors.Join(err, delErr)
 	}
 
 	return

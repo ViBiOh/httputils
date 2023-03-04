@@ -2,7 +2,6 @@ package httperror
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
@@ -100,17 +99,17 @@ func ErrorStatus(err error) (status int, message string) {
 func FromStatus(status int, err error) error {
 	switch status {
 	case http.StatusBadRequest:
-		return wrapError(err, model.ErrInvalid)
+		return errors.Join(err, model.ErrInvalid)
 	case http.StatusUnauthorized:
-		return wrapError(err, model.ErrUnauthorized)
+		return errors.Join(err, model.ErrUnauthorized)
 	case http.StatusForbidden:
-		return wrapError(err, model.ErrForbidden)
+		return errors.Join(err, model.ErrForbidden)
 	case http.StatusNotFound:
-		return wrapError(err, model.ErrNotFound)
+		return errors.Join(err, model.ErrNotFound)
 	case http.StatusMethodNotAllowed:
-		return wrapError(err, model.ErrMethodNotAllowed)
+		return errors.Join(err, model.ErrMethodNotAllowed)
 	case http.StatusInternalServerError:
-		return wrapError(err, model.ErrInternalError)
+		return errors.Join(err, model.ErrInternalError)
 	default:
 		return err
 	}
@@ -122,8 +121,4 @@ func FromResponse(resp *http.Response, err error) error {
 	}
 
 	return FromStatus(resp.StatusCode, err)
-}
-
-func wrapError(err, target error) error {
-	return fmt.Errorf("%s: %w", err, target)
 }

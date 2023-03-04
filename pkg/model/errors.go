@@ -2,7 +2,6 @@ package model
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 )
 
@@ -15,36 +14,28 @@ var (
 	ErrInternalError    = errors.New("internal error")
 )
 
-func WrapError(err, wrapper error) error {
-	if err == nil {
-		return wrapper
-	}
-
-	return fmt.Errorf("%s: %w", err, wrapper)
-}
-
 func WrapInvalid(err error) error {
-	return WrapError(err, ErrInvalid)
+	return errors.Join(err, ErrInvalid)
 }
 
 func WrapUnauthorized(err error) error {
-	return WrapError(err, ErrUnauthorized)
+	return errors.Join(err, ErrUnauthorized)
 }
 
 func WrapForbidden(err error) error {
-	return WrapError(err, ErrForbidden)
+	return errors.Join(err, ErrForbidden)
 }
 
 func WrapNotFound(err error) error {
-	return WrapError(err, ErrNotFound)
+	return errors.Join(err, ErrNotFound)
 }
 
 func WrapMethodNotAllowed(err error) error {
-	return WrapError(err, ErrMethodNotAllowed)
+	return errors.Join(err, ErrMethodNotAllowed)
 }
 
 func WrapInternal(err error) error {
-	return WrapError(err, ErrInternalError)
+	return errors.Join(err, ErrInternalError)
 }
 
 func ConcatError(errs []error) error {

@@ -1,10 +1,9 @@
 package request
 
 import (
+	"errors"
 	"io"
 	"net/http"
-
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 func readContent(body io.ReadCloser) ([]byte, error) {
@@ -15,7 +14,7 @@ func readContent(body io.ReadCloser) ([]byte, error) {
 	content, err := io.ReadAll(body)
 
 	if closeErr := body.Close(); closeErr != nil {
-		err = model.WrapError(err, closeErr)
+		err = errors.Join(err, closeErr)
 	}
 
 	return content, err

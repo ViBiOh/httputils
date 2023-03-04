@@ -1,11 +1,11 @@
 package amqp
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 func (c *Client) Close() {
@@ -53,7 +53,7 @@ func (c *Client) reconnect() error {
 func (c *Client) cancelListeners() (err error) {
 	for _, listener := range c.listeners {
 		if cancelErr := listener.cancel(); cancelErr != nil {
-			err = model.WrapError(err, fmt.Errorf("cancel listener `%s`: %w", listener.name, cancelErr))
+			err = errors.Join(err, fmt.Errorf("cancel listener `%s`: %w", listener.name, cancelErr))
 		}
 	}
 
@@ -63,7 +63,7 @@ func (c *Client) cancelListeners() (err error) {
 func (c *Client) closeListeners() (err error) {
 	for _, listener := range c.listeners {
 		if cancelErr := listener.close(); cancelErr != nil {
-			err = model.WrapError(err, fmt.Errorf("close listener `%s`: %w", listener.name, cancelErr))
+			err = errors.Join(err, fmt.Errorf("close listener `%s`: %w", listener.name, cancelErr))
 		}
 	}
 

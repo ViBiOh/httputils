@@ -2,10 +2,10 @@ package amqp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/streadway/amqp"
 	"go.opentelemetry.io/otel/trace"
@@ -85,7 +85,7 @@ func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Durati
 
 	defer func() {
 		if nackErr := message.Nack(false, true); nackErr != nil {
-			err = model.WrapError(err, fmt.Errorf("nack message: %w", err))
+			err = errors.Join(err, fmt.Errorf("nack message: %w", err))
 		}
 	}()
 
