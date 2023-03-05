@@ -153,7 +153,7 @@ func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.Sp
 	ctx, span := tracer.Start(ctx, name, opts...)
 
 	return ctx, func(err *error, options ...tr.SpanEndOption) {
-		if *err != nil {
+		if err != nil && *err != nil {
 			span.SetStatus(codes.Error, (*err).Error())
 		}
 
