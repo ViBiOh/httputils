@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/redis/go-redis/v9"
@@ -118,7 +119,7 @@ func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	value, err := a.onMiss(ctx, id)
 
 	if err == nil {
-		go doInBackground(tracer.CloneContext(ctx), "store to cache", func(ctx context.Context) error {
+		go doInBackground(cntxt.WithoutDeadline(ctx), "store to cache", func(ctx context.Context) error {
 			return a.store(ctx, id, value)
 		})
 	}
@@ -147,7 +148,7 @@ func unmarshal[V any](content []byte) (value V, ok bool, err error) {
 }
 
 func (a App[K, V]) extendTTL(ctx context.Context, keys ...string) {
-	go doInBackground(tracer.CloneContext(ctx), "extend ttl", func(ctx context.Context) error {
+	go doInBackground(cntxt.WithoutDeadline(ctx), "extend ttl", func(ctx context.Context) error {
 		return a.client.Expire(ctx, a.ttl, keys...)
 	})
 }

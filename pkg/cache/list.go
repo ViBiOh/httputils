@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"go.opentelemetry.io/otel/trace"
@@ -147,7 +148,7 @@ func (a App[K, V]) handleListMany(ctx context.Context, items []K, keys, values [
 		output[missingKeys[key]] = value
 	}
 
-	go doInBackground(tracer.CloneContext(ctx), "store", func(ctx context.Context) error {
+	go doInBackground(cntxt.WithoutDeadline(ctx), "store", func(ctx context.Context) error {
 		return a.storeMany(ctx, items, output, missingKeys)
 	})
 

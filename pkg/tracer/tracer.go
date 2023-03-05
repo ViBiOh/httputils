@@ -163,10 +163,6 @@ func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.Sp
 	}
 }
 
-func CopyToBackground(ctx context.Context) context.Context {
-	return CloneContext(ctx)
-}
-
 func AddTraceToLogger(span tr.Span, logger logger.Provider) logger.Provider {
 	if model.IsNil(span) || !span.IsRecording() {
 		return logger

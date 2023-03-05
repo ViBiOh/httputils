@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 )
 
 func Load[V any](ctx context.Context, client RedisClient, key string, onMiss func(context.Context) (V, error), ttl time.Duration) (V, error) {
@@ -26,7 +26,7 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 	} else if value, ok, err := unmarshal[V](content); err != nil {
 		logUnmarshallError(ctx, key, err)
 	} else if ok {
-		go doInBackground(tracer.CloneContext(ctx), "extend ttl", func(ctx context.Context) error {
+		go doInBackground(cntxt.WithoutDeadline(ctx), "extend ttl", func(ctx context.Context) error {
 			return client.Expire(ctx, ttl, key)
 		})
 
@@ -36,7 +36,7 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 	value, err := onMiss(ctx)
 
 	if err == nil {
-		go doInBackground(tracer.CloneContext(ctx), "store", func(ctx context.Context) error {
+		go doInBackground(cntxt.WithoutDeadline(ctx), "store", func(ctx context.Context) error {
 			return store(ctx, client, key, value, ttl)
 		})
 	}

@@ -1,4 +1,4 @@
-package tracer
+package cntxt
 
 import (
 	"context"
@@ -11,7 +11,7 @@ type Context struct {
 	context.Context
 }
 
-func CloneContext(ctx context.Context) Context {
+func WithoutDeadline(ctx context.Context) Context {
 	return Context{
 		ctx,
 	}
