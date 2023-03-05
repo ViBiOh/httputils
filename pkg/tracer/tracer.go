@@ -49,6 +49,24 @@ func newExporter(url string) (trace.SpanExporter, error) {
 	return exporter, nil
 }
 
+func newSampler(rate string) (trace.Sampler, error) {
+	switch rate {
+	case "always":
+		return trace.AlwaysSample(), nil
+
+	case "never":
+		return trace.NeverSample(), nil
+
+	default:
+		rateRatio, err := strconv.ParseFloat(rate, 64)
+		if err != nil {
+			return nil, fmt.Errorf("parse sample rate `%s`: %w", rate, err)
+		}
+
+		return trace.TraceIDRatioBased(rateRatio), nil
+	}
+}
+
 func newResource(ctx context.Context) (*resource.Resource, error) {
 	newResource, err := resource.New(ctx, resource.WithFromEnv())
 	if err != nil {
@@ -83,18 +101,9 @@ func New(ctx context.Context, config Config) (App, error) {
 		return App{}, err
 	}
 
-	var sampler trace.Sampler
-	switch rate := strings.TrimSpace(*config.rate); rate {
-	case "always":
-		sampler = trace.AlwaysSample()
-	case "never":
-		sampler = trace.AlwaysSample()
-	default:
-		rateRatio, err := strconv.ParseFloat(rate, 64)
-		if err != nil {
-			return App{}, fmt.Errorf("parse sample rate `%s`: %w", rate, err)
-		}
-		sampler = trace.TraceIDRatioBased(rateRatio)
+	sampler, err := newSampler(strings.TrimSpace(*config.rate))
+	if err != nil {
+		return App{}, err
 	}
 
 	provider := trace.NewTracerProvider(
