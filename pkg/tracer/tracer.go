@@ -13,7 +13,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -35,18 +35,16 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		url:  flags.String(fs, prefix, "tracing", "URL", "Jaeger endpoint URL (e.g. http://jaeger:14268/api/traces)", "", overrides),
-		rate: flags.String(fs, prefix, "tracing", "Rate", "Jaeger sample rate, 'always', 'never' or a float value", "always", overrides),
+		url:  flags.String(fs, prefix, "tracing", "URL", "OpenTracing gRPC endpoint (e.g. http://otel-exporter:4317)", "", overrides),
+		rate: flags.String(fs, prefix, "tracing", "Rate", "OpenTracing sample rate, 'always', 'never' or a float value", "always", overrides),
 	}
 }
 
-func newExporter(url string) (trace.SpanExporter, error) {
-	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
-	if err != nil {
-		return nil, fmt.Errorf("create jaeger exporter: %w", err)
-	}
-
-	return exporter, nil
+func newOtelExporter(ctx context.Context, endpoint string) (trace.SpanExporter, error) {
+	return otlptracegrpc.New(ctx,
+		otlptracegrpc.WithInsecure(),
+		otlptracegrpc.WithEndpoint(endpoint),
+	)
 }
 
 func newSampler(rate string) (trace.Sampler, error) {
@@ -91,7 +89,7 @@ func New(ctx context.Context, config Config) (App, error) {
 		return App{}, nil
 	}
 
-	tracerExporter, err := newExporter(url)
+	tracerExporter, err := newOtelExporter(ctx, url)
 	if err != nil {
 		return App{}, err
 	}
