@@ -35,7 +35,7 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		url:  flags.String(fs, prefix, "tracing", "URL", "OpenTracing gRPC endpoint (e.g. http://otel-exporter:4317)", "", overrides),
+		url:  flags.String(fs, prefix, "tracing", "URL", "OpenTracing gRPC endpoint (e.g. otel-exporter:4317)", "", overrides),
 		rate: flags.String(fs, prefix, "tracing", "Rate", "OpenTracing sample rate, 'always', 'never' or a float value", "always", overrides),
 	}
 }
