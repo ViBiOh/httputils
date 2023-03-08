@@ -7,7 +7,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/prometheus/client_golang v1.14.0
-	github.com/prometheus/common v0.41.0
+	github.com/prometheus/common v0.42.0
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/streadway/amqp v1.0.0
 	github.com/tdewolff/minify/v2 v2.12.4
