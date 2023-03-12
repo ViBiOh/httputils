@@ -85,15 +85,13 @@ func (a App) Store(ctx context.Context, key string, value any, duration time.Dur
 	return err
 }
 
-func (a App) Load(ctx context.Context, key string) ([]byte, error) {
-	var err error
-
+func (a App) Load(ctx context.Context, key string) (content []byte, err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "load", trace.WithAttributes(attribute.String("key", key)), trace.WithSpanKind(trace.SpanKindClient))
 	defer end(&err)
 
-	content, err := a.redisClient.Get(ctx, key).Bytes()
+	content, err = a.redisClient.Get(ctx, key).Bytes()
 	if err == nil {
-		return content, nil
+		return
 	}
 
 	if err != redis.Nil {
