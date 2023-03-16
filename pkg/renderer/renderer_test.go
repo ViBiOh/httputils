@@ -268,7 +268,7 @@ func TestHandler(t *testing.T) {
 					Content:  nil,
 				}, nil
 			},
-			`messageContent=Hello+world&messageLevel=success`,
+			`messageContent=Hello+world&amp;messageLevel=success`,
 			http.StatusUnauthorized,
 			http.Header{},
 		},
@@ -282,7 +282,7 @@ func TestHandler(t *testing.T) {
 					Content:  nil,
 				}, model.WrapInvalid(errors.New("error"))
 			},
-			`messageContent=error%0Ainvalid&messageLevel=error`,
+			`messageContent=error%0Ainvalid&amp;messageLevel=error`,
 			http.StatusBadRequest,
 			http.Header{},
 		},
