@@ -119,6 +119,8 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 		return nil, fmt.Errorf("exec pipelined get: %w", err)
 	}
 
+	err = nil
+
 	output := make([]string, len(keys))
 
 	for index, result := range commands {
