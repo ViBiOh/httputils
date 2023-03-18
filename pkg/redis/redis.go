@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
@@ -23,7 +25,7 @@ const (
 var ErrNoSubscriber = errors.New("no subscriber for channel")
 
 type App struct {
-	redisClient redis.UniversalClient
+	client redis.UniversalClient
 }
 
 type Config struct {
@@ -57,12 +59,14 @@ func New(config Config, tracer trace.TracerProvider) (Client, error) {
 		DB:       *config.database,
 	})
 
-	if err := redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(tracer)); err != nil {
-		return noop{}, fmt.Errorf("tracing: %w", err)
+	if !model.IsNil(tracer) {
+		if err := redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(tracer)); err != nil {
+			return noop{}, fmt.Errorf("tracing: %w", err)
+		}
 	}
 
 	return App{
-		redisClient: client,
+		client: client,
 	}, nil
 }
 
@@ -70,19 +74,25 @@ func (a App) Enabled() bool {
 	return true
 }
 
+func (a App) Close() {
+	if err := a.client.Close(); err != nil {
+		logger.Error("redis close: %s", err)
+	}
+}
+
 func (a App) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	return a.redisClient.Ping(ctx).Err()
+	return a.client.Ping(ctx).Err()
 }
 
 func (a App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
-	return a.redisClient.SetEx(ctx, key, value, duration).Err()
+	return a.client.SetEx(ctx, key, value, duration).Err()
 }
 
 func (a App) Load(ctx context.Context, key string) ([]byte, error) {
-	content, err := a.redisClient.Get(ctx, key).Bytes()
+	content, err := a.client.Get(ctx, key).Bytes()
 	if err == nil {
 		return content, err
 	}
@@ -95,7 +105,7 @@ func (a App) Load(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
-	pipeline := a.redisClient.Pipeline()
+	pipeline := a.client.Pipeline()
 
 	commands := make([]*redis.StringCmd, len(keys))
 
@@ -119,7 +129,7 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 }
 
 func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {
-	pipeline := a.redisClient.Pipeline()
+	pipeline := a.client.Pipeline()
 
 	for _, key := range keys {
 		pipeline.Expire(ctx, key, ttl)
@@ -129,7 +139,7 @@ func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) erro
 }
 
 func (a App) Delete(ctx context.Context, keys ...string) (err error) {
-	pipeline := a.redisClient.Pipeline()
+	pipeline := a.client.Pipeline()
 
 	for _, key := range keys {
 		pipeline.Del(ctx, key)
@@ -146,7 +156,7 @@ func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
 	go func() {
 		defer close(done)
 
-		pipeline := a.redisClient.Pipeline()
+		pipeline := a.client.Pipeline()
 
 		for key := range scanOutput {
 			pipeline.Del(ctx, key)
@@ -187,7 +197,7 @@ func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pag
 	var cursor uint64
 
 	for {
-		keys, cursor, err = a.redisClient.Scan(ctx, cursor, pattern, pageSize).Result()
+		keys, cursor, err = a.client.Scan(ctx, cursor, pattern, pageSize).Result()
 		if err != nil {
 			return fmt.Errorf("exec scan: %w", err)
 		}
@@ -205,7 +215,7 @@ func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pag
 }
 
 func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
-	if acquired, err = a.redisClient.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
+	if acquired, err = a.client.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
 		err = fmt.Errorf("exec setnx: %w", err)
 
 		return
@@ -218,7 +228,7 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 
 	err = action(actionCtx)
 
-	if delErr := a.redisClient.Del(ctx, name).Err(); delErr != nil {
+	if delErr := a.client.Del(ctx, name).Err(); delErr != nil {
 		err = errors.Join(err, delErr)
 	}
 
@@ -226,5 +236,5 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 }
 
 func (a App) Pipeline() redis.Pipeliner {
-	return a.redisClient.Pipeline()
+	return a.client.Pipeline()
 }

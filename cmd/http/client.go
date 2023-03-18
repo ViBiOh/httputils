@@ -63,6 +63,7 @@ func (c client) Close(ctx context.Context) {
 	defer cancel()
 
 	c.amqp.Close()
+	c.redis.Close()
 	c.tracer.Close(ctx)
 	c.logger.Close()
 }

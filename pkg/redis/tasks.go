@@ -12,7 +12,7 @@ import (
 func (a App) Push(ctx context.Context, key string, value any) error {
 	if content, err := json.Marshal(value); err != nil {
 		return fmt.Errorf("marshal: %w", err)
-	} else if err := a.redisClient.LPush(ctx, key, content).Err(); err != nil {
+	} else if err := a.client.LPush(ctx, key, content).Err(); err != nil {
 		return fmt.Errorf("push: %w", err)
 	}
 
@@ -21,7 +21,7 @@ func (a App) Push(ctx context.Context, key string, value any) error {
 
 func (a App) Pull(ctx context.Context, key string, handler func(string, error)) {
 	for {
-		content, err := a.redisClient.BRPop(ctx, 0, key).Result()
+		content, err := a.client.BRPop(ctx, 0, key).Result()
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				return

@@ -19,7 +19,7 @@ func (a App) PublishJSON(ctx context.Context, channel string, value any) error {
 }
 
 func (a App) Publish(ctx context.Context, channel string, value any) (err error) {
-	count, err := a.redisClient.Publish(ctx, channel, value).Result()
+	count, err := a.client.Publish(ctx, channel, value).Result()
 	if err != nil {
 		return fmt.Errorf("publish: %w", err)
 	}
@@ -32,7 +32,7 @@ func (a App) Publish(ctx context.Context, channel string, value any) (err error)
 }
 
 func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error) {
-	pubsub := a.redisClient.Subscribe(ctx, channel)
+	pubsub := a.client.Subscribe(ctx, channel)
 
 	return pubsub.Channel(), func(ctx context.Context) (err error) {
 		defer func() {

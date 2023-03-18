@@ -16,6 +16,10 @@ func (n noop) Enabled() bool {
 	return false
 }
 
+func (n noop) Close() {
+	// noop
+}
+
 func (n noop) Ping(_ context.Context) error {
 	return nil
 }
