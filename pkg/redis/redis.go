@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -24,7 +23,6 @@ const (
 var ErrNoSubscriber = errors.New("no subscriber for channel")
 
 type App struct {
-	tracer      trace.Tracer
 	redisClient redis.UniversalClient
 }
 
@@ -38,7 +36,7 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		address:  flags.String(fs, prefix, "redis", "Address", "Redis Address fqdn:port (blank to disable)", "localhost:6379", overrides),
+		address:  flags.String(fs, prefix, "redis", "Address", "Redis Address host:port (blank to disable)", "localhost:6379", overrides),
 		username: flags.String(fs, prefix, "redis", "Username", "Redis Username, if any", "", overrides),
 		password: flags.String(fs, prefix, "redis", "Password", "Redis Password, if any", "", overrides),
 		database: flags.Int(fs, prefix, "redis", "Database", "Redis Database", 0, overrides),
@@ -46,21 +44,26 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, tracer trace.Tracer) Client {
+func New(config Config, tracer trace.TracerProvider) (Client, error) {
 	address := strings.TrimSpace(*config.address)
 	if len(address) == 0 {
-		return noop{}
+		return noop{}, nil
+	}
+
+	client := redis.NewClient(&redis.Options{
+		Addr:     address,
+		Username: *config.username,
+		Password: *config.password,
+		DB:       *config.database,
+	})
+
+	if err := redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(tracer)); err != nil {
+		return noop{}, fmt.Errorf("tracing: %w", err)
 	}
 
 	return App{
-		redisClient: redis.NewClient(&redis.Options{
-			Addr:     address,
-			Username: *config.username,
-			Password: *config.password,
-			DB:       *config.database,
-		}),
-		tracer: tracer,
-	}
+		redisClient: client,
+	}, nil
 }
 
 func (a App) Enabled() bool {
@@ -75,23 +78,13 @@ func (a App) Ping(ctx context.Context) error {
 }
 
 func (a App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
-	var err error
-
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithAttributes(attribute.String("key", key)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end(&err)
-
-	err = a.redisClient.SetEx(ctx, key, value, duration).Err()
-
-	return err
+	return a.redisClient.SetEx(ctx, key, value, duration).Err()
 }
 
-func (a App) Load(ctx context.Context, key string) (content []byte, err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "load", trace.WithAttributes(attribute.String("key", key)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end(&err)
-
-	content, err = a.redisClient.Get(ctx, key).Bytes()
+func (a App) Load(ctx context.Context, key string) ([]byte, error) {
+	content, err := a.redisClient.Get(ctx, key).Bytes()
 	if err == nil {
-		return
+		return content, err
 	}
 
 	if err != redis.Nil {
@@ -102,11 +95,6 @@ func (a App) Load(ctx context.Context, key string) (content []byte, err error) {
 }
 
 func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
-	var err error
-
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "load_many", trace.WithSpanKind(trace.SpanKindClient))
-	defer end(&err)
-
 	pipeline := a.redisClient.Pipeline()
 
 	commands := make([]*redis.StringCmd, len(keys))
@@ -115,11 +103,9 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 		commands[index] = pipeline.Get(ctx, key)
 	}
 
-	if _, err = pipeline.Exec(ctx); err != nil && err != redis.Nil {
+	if _, err := pipeline.Exec(ctx); err != nil && err != redis.Nil {
 		return nil, fmt.Errorf("exec pipelined get: %w", err)
 	}
-
-	err = nil
 
 	output := make([]string, len(keys))
 
@@ -132,10 +118,7 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	return output, nil
 }
 
-func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) (err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "expire", trace.WithAttributes(attribute.String("ttl", ttl.String())), trace.WithSpanKind(trace.SpanKindClient))
-	defer end(&err)
-
+func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {
 	pipeline := a.redisClient.Pipeline()
 
 	for _, key := range keys {
@@ -146,9 +129,6 @@ func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) (err
 }
 
 func (a App) Delete(ctx context.Context, keys ...string) (err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete", trace.WithAttributes(attribute.StringSlice("keys", keys)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end(&err)
-
 	pipeline := a.redisClient.Pipeline()
 
 	for _, key := range keys {
@@ -159,9 +139,6 @@ func (a App) Delete(ctx context.Context, keys ...string) (err error) {
 }
 
 func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "delete_pattern", trace.WithAttributes(attribute.String("pattenr", pattern)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end(&err)
-
 	scanOutput := make(chan string, runtime.NumCPU())
 
 	done := make(chan struct{})
@@ -209,9 +186,6 @@ func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pag
 	var err error
 	var cursor uint64
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "scan", trace.WithAttributes(attribute.String("pattern", pattern)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end(&err)
-
 	for {
 		keys, cursor, err = a.redisClient.Scan(ctx, cursor, pattern, pageSize).Result()
 		if err != nil {
@@ -231,9 +205,6 @@ func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pag
 }
 
 func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "exclusive", trace.WithAttributes(attribute.String("name", name)), trace.WithSpanKind(trace.SpanKindClient))
-	defer end(&err)
-
 	if acquired, err = a.redisClient.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
 		err = fmt.Errorf("exec setnx: %w", err)
 

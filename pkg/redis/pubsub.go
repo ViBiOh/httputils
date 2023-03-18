@@ -6,9 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/redis/go-redis/v9"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func (a App) PublishJSON(ctx context.Context, channel string, value any) error {
@@ -21,9 +19,6 @@ func (a App) PublishJSON(ctx context.Context, channel string, value any) error {
 }
 
 func (a App) Publish(ctx context.Context, channel string, value any) (err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
-	defer end(&err)
-
 	count, err := a.redisClient.Publish(ctx, channel, value).Result()
 	if err != nil {
 		return fmt.Errorf("publish: %w", err)
@@ -37,9 +32,6 @@ func (a App) Publish(ctx context.Context, channel string, value any) (err error)
 }
 
 func (a App) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "subscribe", trace.WithSpanKind(trace.SpanKindConsumer))
-	defer end(nil)
-
 	pubsub := a.redisClient.Subscribe(ctx, channel)
 
 	return pubsub.Channel(), func(ctx context.Context) (err error) {

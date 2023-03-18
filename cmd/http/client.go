@@ -45,7 +45,10 @@ func newClient(ctx context.Context, config configuration) (client, error) {
 
 	prometheusRegisterer := output.prometheus.Registerer()
 
-	output.redis = redis.New(config.redis, output.tracer.GetTracer("redis"))
+	output.redis, err = redis.New(config.redis, output.tracer.GetProvider())
+	if err != nil {
+		return output, fmt.Errorf("redis: %w", err)
+	}
 
 	output.amqp, err = amqp.New(config.amqp, prometheusRegisterer, output.tracer.GetTracer("amqp"))
 	if err != nil && !errors.Is(err, amqp.ErrNoConfig) {

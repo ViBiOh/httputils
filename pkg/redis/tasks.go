@@ -7,17 +7,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func (a App) Push(ctx context.Context, key string, value any) error {
-	var err error
-
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "push", trace.WithSpanKind(trace.SpanKindProducer))
-	defer end(&err)
-
 	if content, err := json.Marshal(value); err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	} else if err := a.redisClient.LPush(ctx, key, content).Err(); err != nil {
