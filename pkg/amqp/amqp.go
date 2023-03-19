@@ -15,7 +15,7 @@ import (
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -103,7 +103,7 @@ func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange,
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
-	if err = c.channel.Publish(exchange, routingKey, false, false, payload); err != nil {
+	if err = c.channel.PublishWithContext(ctx, exchange, routingKey, false, false, payload); err != nil {
 		c.increase("error", exchange, routingKey)
 
 		return

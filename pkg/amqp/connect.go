@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func connect(uri string, prefetch int, onDisconnect func()) (*amqp.Connection, *amqp.Channel, error) {

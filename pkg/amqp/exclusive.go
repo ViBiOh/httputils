@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (c *Client) SetupExclusive(name string) (err error) {
+func (c *Client) SetupExclusive(ctx context.Context, name string) (err error) {
 	create, count := c.shouldCreateExclusiveQueue(name)
 	if !create && count > 0 {
 		return nil
@@ -32,7 +32,7 @@ func (c *Client) SetupExclusive(name string) (err error) {
 		}
 	}
 
-	if err = channel.Publish("", name, false, false, amqp.Publishing{
+	if err = channel.PublishWithContext(ctx, "", name, false, false, amqp.Publishing{
 		ContentType: "text/plain",
 		Body:        []byte("semaphore"),
 	}); err != nil {
@@ -52,7 +52,7 @@ func (c *Client) shouldCreateExclusiveQueue(name string) (bool, int) {
 		err = closeChannel(err, channel)
 	}()
 
-	queue, err := channel.QueueInspect(name)
+	queue, err := channel.QueueDeclarePassive(name, true, false, false, false, nil)
 	if err != nil {
 		return true, 0
 	}

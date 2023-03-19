@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type QueueResolver func() (string, error)

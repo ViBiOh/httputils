@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	amqp "github.com/streadway/amqp"
+	amqp091 "github.com/rabbitmq/amqp091-go"
 )
 
 // AMQPConnection is a mock of Connection interface.
@@ -35,10 +35,10 @@ func (m *AMQPConnection) EXPECT() *AMQPConnectionMockRecorder {
 }
 
 // Channel mocks base method.
-func (m *AMQPConnection) Channel() (*amqp.Channel, error) {
+func (m *AMQPConnection) Channel() (*amqp091.Channel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Channel")
-	ret0, _ := ret[0].(*amqp.Channel)
+	ret0, _ := ret[0].(*amqp091.Channel)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

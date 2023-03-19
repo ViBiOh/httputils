@@ -59,15 +59,19 @@ func New(config Config, tracer trace.TracerProvider) (Client, error) {
 		DB:       *config.database,
 	})
 
+	app := App{
+		client: client,
+	}
+
 	if !model.IsNil(tracer) {
 		if err := redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(tracer)); err != nil {
+			defer app.Close()
+
 			return noop{}, fmt.Errorf("tracing: %w", err)
 		}
 	}
 
-	return App{
-		client: client,
-	}, nil
+	return app, nil
 }
 
 func (a App) Enabled() bool {

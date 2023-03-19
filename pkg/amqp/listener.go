@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/ViBiOh/httputils/v4/pkg/uuid"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type listener struct {
