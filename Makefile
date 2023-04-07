@@ -65,7 +65,7 @@ format:
 ## style: Check lint, code styling rules. e.g. pylint, phpcs, eslint, style (java) etc ...
 .PHONY: style
 style:
-	fieldalignment -test=false $(PACKAGES)
+	fieldalignment -fix -test=false $(PACKAGES)
 	golangci-lint run
 
 ## mocks: Generate mocks

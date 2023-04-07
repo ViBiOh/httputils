@@ -9,11 +9,13 @@ import (
 	"io"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/ViBiOh/httputils/v4/pkg/waitcp"
 	"github.com/prometheus/client_golang/prometheus"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel/trace"
@@ -50,22 +52,35 @@ type Client struct {
 type Config struct {
 	uri      *string
 	prefetch *int
+	wait     *time.Duration
 }
 
-func Flags(fs *flag.FlagSet, prefix string) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		uri:      flags.String(fs, prefix, "amqp", "URI", "Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>", "", nil),
-		prefetch: flags.Int(fs, prefix, "amqp", "Prefetch", "Prefetch count for QoS", 1, nil),
+		uri:      flags.String(fs, prefix, "amqp", "URI", "Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>", "", overrides),
+		prefetch: flags.Int(fs, prefix, "amqp", "Prefetch", "Prefetch count for QoS", 1, overrides),
+		wait:     flags.Duration(fs, prefix, "amqp", "WaitTimeout", "Wait duration for AMQP to be ready", time.Second*5, overrides),
 	}
 }
 
 func New(config Config, prometheusRegister prometheus.Registerer, tracer trace.Tracer) (*Client, error) {
-	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, prometheusRegister, tracer)
+	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, *config.wait, prometheusRegister, tracer)
 }
 
-func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Registerer, tracer trace.Tracer) (*Client, error) {
+func NewFromURI(uri string, prefetch int, wait time.Duration, prometheusRegister prometheus.Registerer, tracer trace.Tracer) (*Client, error) {
 	if len(uri) == 0 {
 		return nil, ErrNoConfig
+	}
+
+	if wait > 0 {
+		amqpURI, err := amqp.ParseURI(uri)
+		if err != nil {
+			return nil, fmt.Errorf("parse uri: %w", err)
+		}
+
+		if !waitcp.Wait("tcp", fmt.Sprintf("%s:%d", amqpURI.Host, amqpURI.Port), wait) {
+			logger.Warn("database on `%s:%d` not ready", amqpURI.Host, amqpURI.Port)
+		}
 	}
 
 	client := &Client{
