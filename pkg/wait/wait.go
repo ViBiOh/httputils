@@ -1,4 +1,4 @@
-package waitcp
+package wait
 
 import (
 	"net"
@@ -7,9 +7,9 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
-func Wait(scheme, addr string, timeout time.Duration) bool {
+func Wait(network, addr string, timeout time.Duration) bool {
 	if timeout == 0 {
-		return dial(scheme, addr)
+		return dial(network, addr)
 	}
 
 	timeoutTimer := time.NewTimer(timeout)
@@ -28,7 +28,7 @@ func Wait(scheme, addr string, timeout time.Duration) bool {
 			return false
 
 		default:
-			if dial(scheme, addr) {
+			if dial(network, addr) {
 				return true
 			}
 
@@ -37,10 +37,10 @@ func Wait(scheme, addr string, timeout time.Duration) bool {
 	}
 }
 
-func dial(scheme, addr string) bool {
-	conn, err := net.DialTimeout(scheme, addr, time.Second)
+func dial(network, addr string) bool {
+	conn, err := net.DialTimeout(network, addr, time.Second)
 	if err != nil {
-		logger.Warn("dial `%s` on `%s`: %s", addr, scheme, err)
+		logger.Warn("dial `%s` on `%s`: %s", addr, network, err)
 		return false
 	}
 

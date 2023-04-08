@@ -9,9 +9,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
-	"github.com/ViBiOh/httputils/v4/pkg/waitcp"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -25,11 +23,9 @@ type key struct{}
 var ctxTxKey key
 
 var (
-	ErrNoHost = errors.New("no host for database connection")
-
+	ErrNoHost        = errors.New("no host for database connection")
 	ErrNoTransaction = errors.New("no transaction in context, please wrap with DoAtomic()")
-
-	SQLTimeout = time.Second * 5
+	SQLTimeout       = time.Second * 5
 )
 
 type Database interface {
@@ -54,7 +50,6 @@ type Config struct {
 	sslmode *string
 	minConn *uint
 	maxConn *uint
-	wait    *time.Duration
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
@@ -67,7 +62,6 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 		minConn: flags.Uint(fs, prefix, "database", "MinConn", "Min Open Connections", 2, overrides),
 		maxConn: flags.Uint(fs, prefix, "database", "MaxConn", "Max Open Connections", 5, overrides),
 		sslmode: flags.String(fs, prefix, "database", "Sslmode", "SSL Mode", "disable", overrides),
-		wait:    flags.Duration(fs, prefix, "database", "WaitTimeout", "Wait duration for database to be ready", SQLTimeout, overrides),
 	}
 }
 
@@ -81,10 +75,6 @@ func New(ctx context.Context, config Config, tracer trace.Tracer) (App, error) {
 	pass := *config.pass
 	name := strings.TrimSpace(*config.name)
 	sslmode := *config.sslmode
-
-	if *config.wait > 0 && !waitcp.Wait("tcp", fmt.Sprintf("%s:%d", host, *config.port), *config.wait) {
-		logger.Warn("database on `%s:%d` not ready", host, *config.port)
-	}
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
