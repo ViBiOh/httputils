@@ -15,37 +15,12 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/wait"
 )
 
-var allSignals = []os.Signal{
-	syscall.SIGABRT,
-	syscall.SIGALRM,
-	syscall.SIGBUS,
-	syscall.SIGCHLD,
-	syscall.SIGCONT,
-	syscall.SIGEMT,
-	syscall.SIGFPE,
-	syscall.SIGHUP,
-	syscall.SIGILL,
-	syscall.SIGINFO,
+var listenedSignals = []os.Signal{
 	syscall.SIGINT,
-	syscall.SIGIO,
-	syscall.SIGIOT,
-	syscall.SIGKILL,
-	syscall.SIGPIPE,
-	syscall.SIGPROF,
-	syscall.SIGQUIT,
-	syscall.SIGSEGV,
-	syscall.SIGSTOP,
-	syscall.SIGSYS,
 	syscall.SIGTERM,
-	syscall.SIGTRAP,
-	syscall.SIGTSTP,
-	syscall.SIGTTIN,
-	syscall.SIGTTOU,
-	syscall.SIGURG,
-	syscall.SIGVTALRM,
-	syscall.SIGWINCH,
-	syscall.SIGXCPU,
-	syscall.SIGXFSZ,
+	syscall.SIGQUIT,
+	syscall.SIGCONT,
+	syscall.SIGHUP,
 }
 
 func main() {
@@ -90,7 +65,7 @@ func main() {
 		signalsChan := make(chan os.Signal, 1)
 		defer close(signalsChan)
 
-		signal.Notify(signalsChan, allSignals...)
+		signal.Notify(signalsChan, listenedSignals...)
 		defer signal.Stop(signalsChan)
 
 		for signal := range signalsChan {
