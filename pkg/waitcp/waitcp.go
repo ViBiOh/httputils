@@ -15,7 +15,11 @@ func Wait(scheme, addr string, timeout time.Duration) bool {
 	timeoutTimer := time.NewTimer(timeout)
 	defer func() {
 		timeoutTimer.Stop()
-		<-timeoutTimer.C
+
+		select {
+		case <-timeoutTimer.C:
+		default:
+		}
 	}()
 
 	for {
@@ -36,6 +40,7 @@ func Wait(scheme, addr string, timeout time.Duration) bool {
 func dial(scheme, addr string) bool {
 	conn, err := net.DialTimeout(scheme, addr, time.Second)
 	if err != nil {
+		logger.Warn("dial `%s` on `%s`: %s", addr, scheme, err)
 		return false
 	}
 
