@@ -19,7 +19,7 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -gzip\n    \t[prometheus] Enable gzip compression of metrics output {SIMPLE_GZIP} (default true)\n  -ignore string\n    \t[prometheus] Ignored path prefixes for metrics, comma separated {SIMPLE_IGNORE}\n",
+			"Usage of simple:\n  -gzip\n    \t[prometheus] Enable gzip compression of metrics output {SIMPLE_GZIP} (default true)\n  -ignore value\n    \t[prometheus] Ignored path prefixe for metrics {SIMPLE_IGNORE}\n",
 		},
 	}
 
@@ -48,8 +48,8 @@ func TestFlags(t *testing.T) {
 func TestMiddleware(t *testing.T) {
 	t.Parallel()
 
-	metricsIgnore := ""
-	metricsIgnoreValue := "/api"
+	var metricsIgnore []string
+	metricsIgnoreValue := []string{"/api"}
 	gzip := true
 
 	cases := map[string]struct {
@@ -210,7 +210,7 @@ func BenchmarkMiddleware(b *testing.B) {
 }
 
 func BenchmarkHandler(b *testing.B) {
-	ignore := ""
+	var ignore []string
 	gzip := false
 
 	app := New(Config{

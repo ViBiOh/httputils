@@ -138,8 +138,8 @@ Usage of http:
         [prometheus] Enable gzip compression of metrics output {HTTP_PROMETHEUS_GZIP} (default true)
   -prometheusIdleTimeout duration
         [prometheus] Idle Timeout {HTTP_PROMETHEUS_IDLE_TIMEOUT} (default 10s)
-  -prometheusIgnore string
-        [prometheus] Ignored path prefixes for metrics, comma separated {HTTP_PROMETHEUS_IGNORE}
+  -prometheusIgnore value
+        [prometheus] Ignored path prefixe for metrics {HTTP_PROMETHEUS_IGNORE}
   -prometheusKey string
         [prometheus] Key file {HTTP_PROMETHEUS_KEY}
   -prometheusPort uint
@@ -152,6 +152,16 @@ Usage of http:
         [prometheus] Write Timeout {HTTP_PROMETHEUS_WRITE_TIMEOUT} (default 10s)
   -readTimeout duration
         [server] Read Timeout {HTTP_READ_TIMEOUT} (default 5s)
+  -redisAddress string
+        [redis] Redis Address host:port (blank to disable) {HTTP_REDIS_ADDRESS} (default "localhost:6379")
+  -redisAlias string
+        [redis] Connection alias, for metric {HTTP_REDIS_ALIAS}
+  -redisDatabase int
+        [redis] Redis Database {HTTP_REDIS_DATABASE}
+  -redisPassword string
+        [redis] Redis Password, if any {HTTP_REDIS_PASSWORD}
+  -redisUsername string
+        [redis] Redis Username, if any {HTTP_REDIS_USERNAME}
   -rendererMinify
         [renderer] Minify HTML {HTTP_RENDERER_MINIFY} (default true)
   -rendererPathPrefix string
@@ -163,9 +173,9 @@ Usage of http:
   -shutdownTimeout duration
         [server] Shutdown Timeout {HTTP_SHUTDOWN_TIMEOUT} (default 10s)
   -tracerRate string
-        [tracer] Jaeger sample rate, 'always', 'never' or a float value {HTTP_TRACER_RATE} (default "always")
+        [tracer] OpenTracing sample rate, 'always', 'never' or a float value {HTTP_TRACER_RATE} (default "always")
   -tracerURL string
-        [tracer] Jaeger endpoint URL (e.g. http://jaeger:14268/api/traces) {HTTP_TRACER_URL}
+        [tracer] OpenTracing gRPC endpoint (e.g. otel-exporter:4317) {HTTP_TRACER_URL}
   -url string
         [alcotest] URL to check {HTTP_URL}
   -userAgent string

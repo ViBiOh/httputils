@@ -35,31 +35,25 @@ type App struct {
 }
 
 type Config struct {
-	ignore *string
+	ignore *[]string
 	gzip   *bool
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		ignore: flags.String(fs, prefix, "prometheus", "Ignore", "Ignored path prefixes for metrics, comma separated", "", overrides),
+		ignore: flags.StringSlice(fs, prefix, "prometheus", "Ignore", "Ignored path prefixe for metrics", nil, overrides),
 		gzip:   flags.Bool(fs, prefix, "prometheus", "Gzip", "Enable gzip compression of metrics output", true, overrides),
 	}
 }
 
 func New(config Config) App {
-	var ignore []string
-
-	if ignoredPaths := *config.ignore; len(ignoredPaths) != 0 {
-		ignore = strings.Split(ignoredPaths, ",")
-	}
-
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(collectors.NewBuildInfoCollector())
 	registry.MustRegister(collectors.NewGoCollector())
 	registry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 
 	return App{
-		ignore:   ignore,
+		ignore:   *config.ignore,
 		gzip:     *config.gzip,
 		registry: registry,
 	}
