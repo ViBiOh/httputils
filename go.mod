@@ -6,7 +6,7 @@ require (
 	github.com/ViBiOh/flags v1.3.0
 	github.com/golang/mock v1.6.0
 	github.com/jackc/pgx/v5 v5.3.1
-	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_golang v1.15.0
 	github.com/prometheus/common v0.42.0
 	github.com/rabbitmq/amqp091-go v1.8.0
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.2
@@ -36,7 +36,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
-	github.com/prometheus/procfs v0.8.0 // indirect
+	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.0.2 // indirect
 	github.com/tdewolff/parse/v2 v2.6.5 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.14.0 // indirect
