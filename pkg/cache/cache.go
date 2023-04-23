@@ -11,7 +11,6 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/redis/go-redis/v9"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -82,7 +81,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 		} else {
 			loggerWithTrace(ctx, key).Error("load from cache: %s", err)
 		}
-	} else if value, ok, err := a.unmarshal(ctx, content); err != nil {
+	} else if value, ok, err := unmarshal[V]([]byte(content)); err != nil {
 		logUnmarshallError(ctx, key, err)
 	} else if ok {
 		a.extendTTL(ctx, key)
@@ -125,13 +124,6 @@ func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	}
 
 	return value, err
-}
-
-func (a App[K, V]) unmarshal(ctx context.Context, content []byte) (value V, ok bool, err error) {
-	_, end := tracer.StartSpan(ctx, a.tracer, "unmarshal", trace.WithAttributes(attribute.Int("len", len(content))), trace.WithSpanKind(trace.SpanKindInternal))
-	defer end(&err)
-
-	return unmarshal[V](content)
 }
 
 func unmarshal[V any](content []byte) (value V, ok bool, err error) {

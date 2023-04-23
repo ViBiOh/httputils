@@ -92,7 +92,7 @@ func (a App[K, V]) handleListSingle(ctx context.Context, onMissError func(K, err
 		index, item := index, item
 
 		wg.Go(func() error {
-			value, ok, err := a.unmarshal(ctx, []byte(values[index]))
+			value, ok, err := unmarshal[V]([]byte(values[index]))
 			if ok {
 				output[index] = value
 				extendKeys = append(extendKeys, keys[index])
@@ -125,7 +125,7 @@ func (a App[K, V]) handleListMany(ctx context.Context, items []K, keys, values [
 	output := make([]V, len(items))
 
 	for index, item := range items {
-		if value, ok, err := a.unmarshal(ctx, []byte(values[index])); ok {
+		if value, ok, err := unmarshal[V]([]byte(values[index])); ok {
 			output[index] = value
 			extendKeys = append(extendKeys, keys[index])
 
