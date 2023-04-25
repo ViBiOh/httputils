@@ -121,7 +121,7 @@ func TestPing(t *testing.T) {
 				mockDatabase.EXPECT().Ping(gomock.Any()).Return(errors.New("context deadline exceeded"))
 			}
 
-			if got := instance.Ping(context.TODO()); (got == nil) != testCase.want {
+			if got := instance.Ping(context.Background()); (got == nil) != testCase.want {
 				t.Errorf("Ping() = %t, want %t", got, testCase.want)
 			}
 		})
@@ -177,19 +177,19 @@ func TestReadTx(t *testing.T) {
 	}{
 		"empty": {
 			args{
-				ctx: context.TODO(),
+				ctx: context.Background(),
 			},
 			nil,
 		},
 		"with tx": {
 			args{
-				ctx: StoreTx(context.TODO(), tx),
+				ctx: StoreTx(context.Background(), tx),
 			},
 			tx,
 		},
 		"not a tx": {
 			args{
-				ctx: context.WithValue(context.TODO(), ctxTxKey, args{}),
+				ctx: context.WithValue(context.Background(), ctxTxKey, args{}),
 			},
 			nil,
 		},
@@ -226,7 +226,7 @@ func TestDoAtomic(t *testing.T) {
 		},
 		"already": {
 			args{
-				ctx: context.TODO(),
+				ctx: context.Background(),
 				action: func(ctx context.Context) error {
 					return nil
 				},
@@ -235,7 +235,7 @@ func TestDoAtomic(t *testing.T) {
 		},
 		"error": {
 			args{
-				ctx: context.TODO(),
+				ctx: context.Background(),
 				action: func(ctx context.Context) error {
 					return nil
 				},
@@ -244,7 +244,7 @@ func TestDoAtomic(t *testing.T) {
 		},
 		"begin": {
 			args{
-				ctx: context.TODO(),
+				ctx: context.Background(),
 				action: func(ctx context.Context) error {
 					return nil
 				},
@@ -253,7 +253,7 @@ func TestDoAtomic(t *testing.T) {
 		},
 		"rollback": {
 			args{
-				ctx: context.TODO(),
+				ctx: context.Background(),
 				action: func(ctx context.Context) error {
 					return errors.New("invalid")
 				},
@@ -262,7 +262,7 @@ func TestDoAtomic(t *testing.T) {
 		},
 		"rollback error": {
 			args{
-				ctx: context.TODO(),
+				ctx: context.Background(),
 				action: func(ctx context.Context) error {
 					return errors.New("invalid")
 				},
@@ -358,7 +358,7 @@ func TestList(t *testing.T) {
 
 			instance := App{db: mockDatabase}
 
-			ctx := context.TODO()
+			ctx := context.Background()
 
 			switch intention {
 			case "simple":
@@ -445,7 +445,7 @@ func TestGet(t *testing.T) {
 
 			instance := App{db: mockDatabase}
 
-			ctx := context.TODO()
+			ctx := context.Background()
 
 			switch intention {
 			case "simple":
@@ -521,7 +521,7 @@ func TestCreate(t *testing.T) {
 
 			instance := App{db: mockDatabase}
 
-			ctx := context.TODO()
+			ctx := context.Background()
 
 			switch intention {
 			case "error":
@@ -591,7 +591,7 @@ func TestExec(t *testing.T) {
 
 			instance := App{db: mockDatabase}
 
-			ctx := context.TODO()
+			ctx := context.Background()
 
 			switch intention {
 			case "error":
@@ -654,7 +654,7 @@ func TestOne(t *testing.T) {
 
 			instance := App{db: mockDatabase}
 
-			ctx := context.TODO()
+			ctx := context.Background()
 
 			switch intention {
 			case "error":
@@ -722,7 +722,7 @@ func TestBulk(t *testing.T) {
 
 			instance := App{db: mockDatabase}
 
-			ctx := context.TODO()
+			ctx := context.Background()
 
 			switch intention {
 			case "error":

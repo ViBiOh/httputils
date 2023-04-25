@@ -256,56 +256,56 @@ func TestSend(t *testing.T) {
 	}{
 		"simple get": {
 			New().Get(testServer.URL + "/simple"),
-			context.TODO(),
+			context.Background(),
 			nil,
 			"it works!",
 			nil,
 		},
 		"simple post": {
 			New().Post(testServer.URL + "/simple"),
-			context.TODO(),
+			context.Background(),
 			io.NopCloser(strings.NewReader("posted")),
 			"it posts!",
 			nil,
 		},
 		"simple put": {
 			New().Put(testServer.URL + "/simple"),
-			context.TODO(),
+			context.Background(),
 			io.NopCloser(strings.NewReader("puted")),
 			"it puts!",
 			nil,
 		},
 		"simple patch": {
 			New().Patch(testServer.URL + "/simple"),
-			context.TODO(),
+			context.Background(),
 			io.NopCloser(strings.NewReader("patched")),
 			"it patches!",
 			nil,
 		},
 		"simple delete": {
 			New().Delete(testServer.URL + "/simple"),
-			context.TODO(),
+			context.Background(),
 			nil,
 			"it deletes!",
 			nil,
 		},
 		"with auth": {
 			New().Get(testServer.URL+"/protected").BasicAuth("admin", "secret"),
-			context.TODO(),
+			context.Background(),
 			nil,
 			"connected!",
 			nil,
 		},
 		"with header": {
 			New().Get(testServer.URL+"/accept").Header("Accept", "text/plain"),
-			context.TODO(),
+			context.Background(),
 			nil,
 			"text me!",
 			nil,
 		},
 		"with client": {
 			New().Get(testServer.URL + "/client").WithClient(&http.Client{}),
-			context.TODO(),
+			context.Background(),
 			nil,
 			"",
 			nil,
@@ -319,42 +319,42 @@ func TestSend(t *testing.T) {
 		},
 		"invalid status code": {
 			New().Get(testServer.URL + "/invalid"),
-			context.TODO(),
+			context.Background(),
 			nil,
 			"",
 			errors.New("HTTP/500"),
 		},
 		"invalid status code with payload": {
 			New().Get(testServer.URL + "/explain"),
-			context.TODO(),
+			context.Background(),
 			nil,
 			"",
 			errors.New("HTTP/400"),
 		},
 		"invalid status code with long payload": {
 			New().Get(testServer.URL + "/long_explain"),
-			context.TODO(),
+			context.Background(),
 			nil,
 			"",
 			errors.New("Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipisicing e"),
 		},
 		"don't redirect": {
 			New().Get(testServer.URL + "/redirect"),
-			context.TODO(),
+			context.Background(),
 			nil,
 			"",
 			nil,
 		},
 		"timeout": {
 			New().Get(testServer.URL + "/timeout"),
-			context.TODO(),
+			context.Background(),
 			nil,
 			"",
 			errors.New("context deadline exceeded (Client.Timeout exceeded while awaiting headers)"),
 		},
 		"signed": {
 			New().Post(testServer.URL+"/signed").WithSignatureAuthorization("httputils", []byte(`secret`)),
-			context.TODO(),
+			context.Background(),
 			io.NopCloser(strings.NewReader(`It works!`)),
 			"",
 			nil,
@@ -410,7 +410,7 @@ func TestForm(t *testing.T) {
 	}{
 		"simple": {
 			New().Post(testServer.URL + "/simple"),
-			context.TODO(),
+			context.Background(),
 			url.Values{
 				"first":  []string{"test"},
 				"second": []string{"param"},
@@ -482,7 +482,7 @@ func TestMultipart(t *testing.T) {
 	}{
 		"simple": {
 			New().Post(testServer.URL),
-			context.TODO(),
+			context.Background(),
 			func(mw *multipart.Writer) error {
 				return mw.WriteField("hello", "world")
 			},
@@ -491,7 +491,7 @@ func TestMultipart(t *testing.T) {
 		},
 		"with file": {
 			New().Post(testServer.URL),
-			context.TODO(),
+			context.Background(),
 			func(mw *multipart.Writer) error {
 				header := textproto.MIMEHeader{}
 				header.Set("Content-Disposition", `form-data; name="hello"`)
@@ -510,7 +510,7 @@ func TestMultipart(t *testing.T) {
 		},
 		"feed error": {
 			New().Post(testServer.URL),
-			context.TODO(),
+			context.Background(),
 			func(mw *multipart.Writer) error {
 				return errors.New("failed")
 			},
@@ -519,7 +519,7 @@ func TestMultipart(t *testing.T) {
 		},
 		"server error": {
 			New().Get(testServer.URL),
-			context.TODO(),
+			context.Background(),
 			func(mw *multipart.Writer) error {
 				return errors.New("failed")
 			},
@@ -579,14 +579,14 @@ func TestJSON(t *testing.T) {
 	}{
 		"simple": {
 			New().Post(testServer.URL + "/simple"),
-			context.TODO(),
+			context.Background(),
 			testStruct{id: "Test", Active: true, Amount: 12.34},
 			"valid",
 			nil,
 		},
 		"invalid": {
 			New().Post(testServer.URL + "/simple"),
-			context.TODO(),
+			context.Background(),
 			func() {},
 			"",
 			errors.New("json: unsupported type: func()"),
@@ -644,14 +644,14 @@ func TestStreamJSON(t *testing.T) {
 	}{
 		"simple": {
 			New().Post(testServer.URL + "/simple"),
-			context.TODO(),
+			context.Background(),
 			testStruct{id: "Test", Active: true, Amount: 12.34},
 			"valid",
 			nil,
 		},
 		"invalid": {
 			New().Post(testServer.URL + "/simple"),
-			context.TODO(),
+			context.Background(),
 			func() {},
 			"",
 			errors.New("json: unsupported type: func()"),
@@ -753,7 +753,7 @@ func BenchmarkJSON(b *testing.B) {
 	}))
 	defer testServer.Close()
 
-	ctx := context.TODO()
+	ctx := context.Background()
 	req := New().Post(testServer.URL + "/simple")
 	payload := testStruct{id: "Test", Active: true, Amount: 12.34}
 

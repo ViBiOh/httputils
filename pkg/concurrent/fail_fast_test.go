@@ -23,7 +23,7 @@ func TestWithContext(t *testing.T) {
 			NewFailFast(1),
 			args{
 				contexts: []context.Context{
-					context.TODO(),
+					context.Background(),
 				},
 			},
 			nil,
@@ -32,8 +32,8 @@ func TestWithContext(t *testing.T) {
 			NewFailFast(1),
 			args{
 				contexts: []context.Context{
-					context.TODO(),
-					context.TODO(),
+					context.Background(),
+					context.Background(),
 				},
 			},
 			errors.New("panic"),
@@ -128,7 +128,7 @@ func TestFailFastGo(t *testing.T) {
 			t.Parallel()
 
 			if intention != "no error" {
-				testCase.instance.WithContext(context.TODO())
+				testCase.instance.WithContext(context.Background())
 			}
 
 			for _, f := range testCase.args.funcs {

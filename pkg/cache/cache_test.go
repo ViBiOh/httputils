@@ -153,7 +153,7 @@ func TestGet(t *testing.T) {
 				ttl:    testCase.args.duration,
 			}
 
-			got, gotErr := instance.Get(context.TODO(), testCase.args.key)
+			got, gotErr := instance.Get(context.Background(), testCase.args.key)
 
 			failed := false
 
@@ -236,7 +236,7 @@ func TestGetError(t *testing.T) {
 				ttl:    testCase.args.duration,
 			}
 
-			got, gotErr := instance.Get(context.TODO(), testCase.args.key)
+			got, gotErr := instance.Get(context.Background(), testCase.args.key)
 
 			failed := false
 
@@ -314,7 +314,7 @@ func TestEvictOnSuccess(t *testing.T) {
 				toKey:  strconv.Itoa,
 			}
 
-			gotErr := instance.EvictOnSuccess(context.TODO(), 8000, testCase.args.err)
+			gotErr := instance.EvictOnSuccess(context.Background(), 8000, testCase.args.err)
 
 			failed := false
 

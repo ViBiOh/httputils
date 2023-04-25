@@ -39,7 +39,7 @@ func TestWriteTemplate(t *testing.T) {
 			t.Parallel()
 
 			writer := bytes.NewBuffer(nil)
-			err := WriteTemplate(context.TODO(), nil, testCase.tpl, writer, nil, "text/css")
+			err := WriteTemplate(context.Background(), nil, testCase.tpl, writer, nil, "text/css")
 
 			result := writer.String()
 
@@ -85,7 +85,7 @@ func TestResponseHTMLTemplate(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			err := ResponseHTMLTemplate(context.TODO(), nil, testCase.tpl, writer, nil, 200)
+			err := ResponseHTMLTemplate(context.Background(), nil, testCase.tpl, writer, nil, 200)
 
 			result, _ := request.ReadBodyResponse(writer.Result())
 
@@ -159,7 +159,7 @@ func TestResponseHTMLTemplateRaw(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			err := ResponseHTMLTemplateRaw(context.TODO(), nil, testCase.tpl, writer, nil, 200)
+			err := ResponseHTMLTemplateRaw(context.Background(), nil, testCase.tpl, writer, nil, 200)
 
 			result, _ := request.ReadBodyResponse(writer.Result())
 
@@ -205,7 +205,7 @@ func TestResponseXMLTemplate(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			err := ResponseXMLTemplate(context.TODO(), nil, testCase.tpl, writer, nil, 200)
+			err := ResponseXMLTemplate(context.Background(), nil, testCase.tpl, writer, nil, 200)
 
 			result, _ := request.ReadBodyResponse(writer.Result())
 
@@ -240,7 +240,7 @@ func BenchmarkWriteTemplate(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if err := WriteTemplate(context.TODO(), nil, tpl, io.Discard, nil, "text/html"); err != nil {
+		if err := WriteTemplate(context.Background(), nil, tpl, io.Discard, nil, "text/html"); err != nil {
 			b.Error(err)
 		}
 	}
