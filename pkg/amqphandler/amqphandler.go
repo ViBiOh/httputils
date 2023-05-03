@@ -44,12 +44,12 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		exchange:      flags.String(fs, prefix, "amqp", "Exchange", "Exchange name", "", overrides),
-		queue:         flags.String(fs, prefix, "amqp", "Queue", "Queue name", "", overrides),
-		exclusive:     flags.Bool(fs, prefix, "amqp", "Exclusive", "Queue exclusive mode (for fanout exchange)", false, overrides),
-		routingKey:    flags.String(fs, prefix, "amqp", "RoutingKey", "RoutingKey name", "", overrides),
-		retryInterval: flags.Duration(fs, prefix, "amqp", "RetryInterval", "Interval duration when send fails", time.Hour, overrides),
-		maxRetry:      flags.Uint(fs, prefix, "amqp", "MaxRetry", "Max send retries", 3, overrides),
+		exchange:      flags.New("Exchange", "Exchange name").Prefix(prefix).DocPrefix("amqp").String(fs, "", overrides),
+		queue:         flags.New("Queue", "Queue name").Prefix(prefix).DocPrefix("amqp").String(fs, "", overrides),
+		exclusive:     flags.New("Exclusive", "Queue exclusive mode (for fanout exchange)").Prefix(prefix).DocPrefix("amqp").Bool(fs, false, overrides),
+		routingKey:    flags.New("RoutingKey", "RoutingKey name").Prefix(prefix).DocPrefix("amqp").String(fs, "", overrides),
+		retryInterval: flags.New("RetryInterval", "Interval duration when send fails").Prefix(prefix).DocPrefix("amqp").Duration(fs, time.Hour, overrides),
+		maxRetry:      flags.New("MaxRetry", "Max send retries").Prefix(prefix).DocPrefix("amqp").Uint(fs, 3, overrides),
 	}
 }
 

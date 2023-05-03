@@ -54,11 +54,11 @@ type Logger struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		level:      flags.String(fs, prefix, "logger", "Level", "Logger level", "INFO", overrides),
-		json:       flags.Bool(fs, prefix, "logger", "Json", "Log format as JSON", false, overrides),
-		timeKey:    flags.String(fs, prefix, "logger", "TimeKey", "Key for timestamp in JSON", "time", overrides),
-		levelKey:   flags.String(fs, prefix, "logger", "LevelKey", "Key for level in JSON", "level", overrides),
-		messageKey: flags.String(fs, prefix, "logger", "MessageKey", "Key for message in JSON", "message", overrides),
+		level:      flags.New("Level", "Logger level").Prefix(prefix).DocPrefix("logger").String(fs, "INFO", overrides),
+		json:       flags.New("Json", "Log format as JSON").Prefix(prefix).DocPrefix("logger").Bool(fs, false, overrides),
+		timeKey:    flags.New("TimeKey", "Key for timestamp in JSON").Prefix(prefix).DocPrefix("logger").String(fs, "time", overrides),
+		levelKey:   flags.New("LevelKey", "Key for level in JSON").Prefix(prefix).DocPrefix("logger").String(fs, "level", overrides),
+		messageKey: flags.New("MessageKey", "Key for message in JSON").Prefix(prefix).DocPrefix("logger").String(fs, "message", overrides),
 	}
 }
 

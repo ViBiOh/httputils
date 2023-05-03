@@ -19,7 +19,7 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -gzip\n    \t[prometheus] Enable gzip compression of metrics output {SIMPLE_GZIP} (default true)\n  -ignore value\n    \t[prometheus] Ignored path prefixe for metrics {SIMPLE_IGNORE}\n",
+			"Usage of simple:\n  -gzip\n    \t[prometheus] Enable gzip compression of metrics output ${SIMPLE_GZIP} (default true)\n  -ignore string slice\n    \t[prometheus] Ignored path prefixe for metrics ${SIMPLE_IGNORE}, as a string slice, environment variable separated by \",\"\n",
 		},
 	}
 

@@ -29,11 +29,11 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		origin:      flags.String(fs, prefix, "cors", "Origin", "Access-Control-Allow-Origin", "*", overrides),
-		headers:     flags.String(fs, prefix, "cors", "Headers", "Access-Control-Allow-Headers", "Content-Type", overrides),
-		methods:     flags.String(fs, prefix, "cors", "Methods", "Access-Control-Allow-Methods", http.MethodGet, overrides),
-		exposes:     flags.String(fs, prefix, "cors", "Expose", "Access-Control-Expose-Headers", "", overrides),
-		credentials: flags.Bool(fs, prefix, "cors", "Credentials", "Access-Control-Allow-Credentials", false, overrides),
+		origin:      flags.New("Origin", "Access-Control-Allow-Origin").Prefix(prefix).DocPrefix("cors").String(fs, "*", overrides),
+		headers:     flags.New("Headers", "Access-Control-Allow-Headers").Prefix(prefix).DocPrefix("cors").String(fs, "Content-Type", overrides),
+		methods:     flags.New("Methods", "Access-Control-Allow-Methods").Prefix(prefix).DocPrefix("cors").String(fs, http.MethodGet, overrides),
+		exposes:     flags.New("Expose", "Access-Control-Expose-Headers").Prefix(prefix).DocPrefix("cors").String(fs, "", overrides),
+		credentials: flags.New("Credentials", "Access-Control-Allow-Credentials").Prefix(prefix).DocPrefix("cors").Bool(fs, false, overrides),
 	}
 }
 

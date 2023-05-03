@@ -33,8 +33,8 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		url:       flags.String(fs, prefix, "alcotest", "Url", "URL to check", "", overrides),
-		userAgent: flags.String(fs, prefix, "alcotest", "UserAgent", "User-Agent for check", defaultUserAgent, overrides),
+		url:       flags.New("Url", "URL to check").Prefix(prefix).DocPrefix("alcotest").String(fs, "", overrides),
+		userAgent: flags.New("UserAgent", "User-Agent for check").Prefix(prefix).DocPrefix("alcotest").String(fs, defaultUserAgent, overrides),
 	}
 }
 

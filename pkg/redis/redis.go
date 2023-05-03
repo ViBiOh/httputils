@@ -38,11 +38,11 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		address:  flags.String(fs, prefix, "redis", "Address", "Redis Address host:port (blank to disable)", "localhost:6379", overrides),
-		username: flags.String(fs, prefix, "redis", "Username", "Redis Username, if any", "", overrides),
-		password: flags.String(fs, prefix, "redis", "Password", "Redis Password, if any", "", overrides),
-		database: flags.Int(fs, prefix, "redis", "Database", "Redis Database", 0, overrides),
-		alias:    flags.String(fs, prefix, "redis", "Alias", "Connection alias, for metric", "", overrides),
+		address:  flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").String(fs, "localhost:6379", overrides),
+		username: flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
+		password: flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
+		database: flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
+		alias:    flags.New("Alias", "Connection alias, for metric").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
 	}
 }
 

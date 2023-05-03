@@ -48,10 +48,10 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		publicURL:  flags.String(fs, prefix, "", "PublicURL", "Public URL", "http://localhost:1080", overrides),
-		pathPrefix: flags.String(fs, prefix, "", "PathPrefix", "Root Path Prefix", "", overrides),
-		title:      flags.String(fs, prefix, "", "Title", "Application title", "App", overrides),
-		minify:     flags.Bool(fs, prefix, "", "Minify", "Minify HTML", true, overrides),
+		publicURL:  flags.New("PublicURL", "Public URL").Prefix(prefix).DocPrefix("").String(fs, "http://localhost:1080", overrides),
+		pathPrefix: flags.New("PathPrefix", "Root Path Prefix").Prefix(prefix).DocPrefix("").String(fs, "", overrides),
+		title:      flags.New("Title", "Application title").Prefix(prefix).DocPrefix("").String(fs, "App", overrides),
+		minify:     flags.New("Minify", "Minify HTML").Prefix(prefix).DocPrefix("").Bool(fs, true, overrides),
 	}
 }
 

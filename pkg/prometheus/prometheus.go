@@ -41,8 +41,8 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		ignore: flags.StringSlice(fs, prefix, "prometheus", "Ignore", "Ignored path prefixe for metrics", nil, overrides),
-		gzip:   flags.Bool(fs, prefix, "prometheus", "Gzip", "Enable gzip compression of metrics output", true, overrides),
+		ignore: flags.New("Ignore", "Ignored path prefixe for metrics").Prefix(prefix).DocPrefix("prometheus").StringSlice(fs, nil, overrides),
+		gzip:   flags.New("Gzip", "Enable gzip compression of metrics output").Prefix(prefix).DocPrefix("prometheus").Bool(fs, true, overrides),
 	}
 }
 

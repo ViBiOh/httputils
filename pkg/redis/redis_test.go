@@ -13,7 +13,7 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -address string\n    \t[redis] Redis Address host:port (blank to disable) {SIMPLE_ADDRESS} (default \"localhost:6379\")\n  -alias string\n    \t[redis] Connection alias, for metric {SIMPLE_ALIAS}\n  -database int\n    \t[redis] Redis Database {SIMPLE_DATABASE}\n  -password string\n    \t[redis] Redis Password, if any {SIMPLE_PASSWORD}\n  -username string\n    \t[redis] Redis Username, if any {SIMPLE_USERNAME}\n",
+			"Usage of simple:\n  -address string\n    \t[redis] Redis Address host:port (blank to disable) ${SIMPLE_ADDRESS} (default \"localhost:6379\")\n  -alias string\n    \t[redis] Connection alias, for metric ${SIMPLE_ALIAS}\n  -database int\n    \t[redis] Redis Database ${SIMPLE_DATABASE}\n  -password string\n    \t[redis] Redis Password, if any ${SIMPLE_PASSWORD}\n  -username string\n    \t[redis] Redis Username, if any ${SIMPLE_USERNAME}\n",
 		},
 	}
 

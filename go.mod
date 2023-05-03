@@ -3,7 +3,7 @@ module github.com/ViBiOh/httputils/v4
 go 1.20
 
 require (
-	github.com/ViBiOh/flags v1.3.0
+	github.com/ViBiOh/flags v1.3.1
 	github.com/golang/mock v1.6.0
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/prometheus/client_golang v1.15.0

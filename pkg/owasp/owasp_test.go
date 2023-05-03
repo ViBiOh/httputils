@@ -16,7 +16,7 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -csp string\n    \t[owasp] Content-Security-Policy {SIMPLE_CSP} (default \"default-src 'self'; base-uri 'self'\")\n  -frameOptions string\n    \t[owasp] X-Frame-Options {SIMPLE_FRAME_OPTIONS} (default \"deny\")\n  -hsts\n    \t[owasp] Indicate Strict Transport Security {SIMPLE_HSTS} (default true)\n",
+			"Usage of simple:\n  -csp string\n    \t[owasp] Content-Security-Policy ${SIMPLE_CSP} (default \"default-src 'self'; base-uri 'self'\")\n  -frameOptions string\n    \t[owasp] X-Frame-Options ${SIMPLE_FRAME_OPTIONS} (default \"deny\")\n  -hsts\n    \t[owasp] Indicate Strict Transport Security ${SIMPLE_HSTS} (default true)\n",
 		},
 	}
 

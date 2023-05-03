@@ -36,8 +36,8 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		okStatus:      flags.Int(fs, prefix, "http", "OkStatus", "Healthy HTTP Status code", http.StatusNoContent, overrides),
-		graceDuration: flags.Duration(fs, prefix, "http", "GraceDuration", "Grace duration when SIGTERM received", 30*time.Second, overrides),
+		okStatus:      flags.New("OkStatus", "Healthy HTTP Status code").Prefix(prefix).DocPrefix("http").Int(fs, http.StatusNoContent, overrides),
+		graceDuration: flags.New("GraceDuration", "Grace duration when SIGTERM received").Prefix(prefix).DocPrefix("http").Duration(fs, 30*time.Second, overrides),
 	}
 }
 

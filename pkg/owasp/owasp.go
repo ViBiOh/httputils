@@ -32,9 +32,9 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		csp:          flags.String(fs, prefix, "owasp", "Csp", cspHeader, "default-src 'self'; base-uri 'self'", overrides),
-		hsts:         flags.Bool(fs, prefix, "owasp", "Hsts", "Indicate Strict Transport Security", true, overrides),
-		frameOptions: flags.String(fs, prefix, "owasp", "FrameOptions", "X-Frame-Options", "deny", overrides),
+		csp:          flags.New("Csp", cspHeader).Prefix(prefix).DocPrefix("owasp").String(fs, "default-src 'self'; base-uri 'self'", overrides),
+		hsts:         flags.New("Hsts", "Indicate Strict Transport Security").Prefix(prefix).DocPrefix("owasp").Bool(fs, true, overrides),
+		frameOptions: flags.New("FrameOptions", "X-Frame-Options").Prefix(prefix).DocPrefix("owasp").String(fs, "deny", overrides),
 	}
 }
 

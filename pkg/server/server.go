@@ -39,14 +39,14 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		address:         flags.String(fs, prefix, "server", "Address", "Listen address", "", overrides),
-		port:            flags.Uint(fs, prefix, "server", "Port", "Listen port (0 to disable)", 1080, overrides),
-		cert:            flags.String(fs, prefix, "server", "Cert", "Certificate file", "", overrides),
-		key:             flags.String(fs, prefix, "server", "Key", "Key file", "", overrides),
-		readTimeout:     flags.Duration(fs, prefix, "server", "ReadTimeout", "Read Timeout", 5*time.Second, overrides),
-		writeTimeout:    flags.Duration(fs, prefix, "server", "WriteTimeout", "Write Timeout", 10*time.Second, overrides),
-		idleTimeout:     flags.Duration(fs, prefix, "server", "IdleTimeout", "Idle Timeout", 2*time.Minute, overrides),
-		shutdownTimeout: flags.Duration(fs, prefix, "server", "ShutdownTimeout", "Shutdown Timeout", 10*time.Second, overrides),
+		address:         flags.New("Address", "Listen address").Prefix(prefix).DocPrefix("server").String(fs, "", overrides),
+		port:            flags.New("Port", "Listen port (0 to disable)").Prefix(prefix).DocPrefix("server").Uint(fs, 1080, overrides),
+		cert:            flags.New("Cert", "Certificate file").Prefix(prefix).DocPrefix("server").String(fs, "", overrides),
+		key:             flags.New("Key", "Key file").Prefix(prefix).DocPrefix("server").String(fs, "", overrides),
+		readTimeout:     flags.New("ReadTimeout", "Read Timeout").Prefix(prefix).DocPrefix("server").Duration(fs, 5*time.Second, overrides),
+		writeTimeout:    flags.New("WriteTimeout", "Write Timeout").Prefix(prefix).DocPrefix("server").Duration(fs, 10*time.Second, overrides),
+		idleTimeout:     flags.New("IdleTimeout", "Idle Timeout").Prefix(prefix).DocPrefix("server").Duration(fs, 2*time.Minute, overrides),
+		shutdownTimeout: flags.New("ShutdownTimeout", "Shutdown Timeout").Prefix(prefix).DocPrefix("server").Duration(fs, 10*time.Second, overrides),
 	}
 }
 

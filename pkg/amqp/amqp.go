@@ -54,8 +54,8 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		uri:      flags.String(fs, prefix, "amqp", "URI", "Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>", "", overrides),
-		prefetch: flags.Int(fs, prefix, "amqp", "Prefetch", "Prefetch count for QoS", 1, overrides),
+		uri:      flags.New("URI", "Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>").Prefix(prefix).DocPrefix("amqp").String(fs, "", overrides),
+		prefetch: flags.New("Prefetch", "Prefetch count for QoS").Prefix(prefix).DocPrefix("amqp").Int(fs, 1, overrides),
 	}
 }
 

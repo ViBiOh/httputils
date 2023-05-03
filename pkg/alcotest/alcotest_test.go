@@ -41,7 +41,7 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -url string\n    \t[alcotest] URL to check {SIMPLE_URL}\n  -userAgent string\n    \t[alcotest] User-Agent for check {SIMPLE_USER_AGENT} (default \"Alcotest\")\n",
+			"Usage of simple:\n  -url string\n    \t[alcotest] URL to check ${SIMPLE_URL}\n  -userAgent string\n    \t[alcotest] User-Agent for check ${SIMPLE_USER_AGENT} (default \"Alcotest\")\n",
 		},
 	}
 

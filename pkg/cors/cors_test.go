@@ -16,7 +16,7 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -credentials\n    \t[cors] Access-Control-Allow-Credentials {SIMPLE_CREDENTIALS}\n  -expose string\n    \t[cors] Access-Control-Expose-Headers {SIMPLE_EXPOSE}\n  -headers string\n    \t[cors] Access-Control-Allow-Headers {SIMPLE_HEADERS} (default \"Content-Type\")\n  -methods string\n    \t[cors] Access-Control-Allow-Methods {SIMPLE_METHODS} (default \"GET\")\n  -origin string\n    \t[cors] Access-Control-Allow-Origin {SIMPLE_ORIGIN} (default \"*\")\n",
+			"Usage of simple:\n  -credentials\n    \t[cors] Access-Control-Allow-Credentials ${SIMPLE_CREDENTIALS}\n  -expose string\n    \t[cors] Access-Control-Expose-Headers ${SIMPLE_EXPOSE}\n  -headers string\n    \t[cors] Access-Control-Allow-Headers ${SIMPLE_HEADERS} (default \"Content-Type\")\n  -methods string\n    \t[cors] Access-Control-Allow-Methods ${SIMPLE_METHODS} (default \"GET\")\n  -origin string\n    \t[cors] Access-Control-Allow-Origin ${SIMPLE_ORIGIN} (default \"*\")\n",
 		},
 	}
 

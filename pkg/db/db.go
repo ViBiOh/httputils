@@ -54,14 +54,14 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		host:    flags.String(fs, prefix, "database", "Host", "Host", "", overrides),
-		port:    flags.Uint(fs, prefix, "database", "Port", "Port", 5432, overrides),
-		user:    flags.String(fs, prefix, "database", "User", "User", "", overrides),
-		pass:    flags.String(fs, prefix, "database", "Pass", "Pass", "", overrides),
-		name:    flags.String(fs, prefix, "database", "Name", "Name", "", overrides),
-		minConn: flags.Uint(fs, prefix, "database", "MinConn", "Min Open Connections", 2, overrides),
-		maxConn: flags.Uint(fs, prefix, "database", "MaxConn", "Max Open Connections", 5, overrides),
-		sslmode: flags.String(fs, prefix, "database", "Sslmode", "SSL Mode", "disable", overrides),
+		host:    flags.New("Host", "Host").Prefix(prefix).DocPrefix("database").String(fs, "", overrides),
+		port:    flags.New("Port", "Port").Prefix(prefix).DocPrefix("database").Uint(fs, 5432, overrides),
+		user:    flags.New("User", "User").Prefix(prefix).DocPrefix("database").String(fs, "", overrides),
+		pass:    flags.New("Pass", "Pass").Prefix(prefix).DocPrefix("database").String(fs, "", overrides),
+		name:    flags.New("Name", "Name").Prefix(prefix).DocPrefix("database").String(fs, "", overrides),
+		minConn: flags.New("MinConn", "Min Open Connections").Prefix(prefix).DocPrefix("database").Uint(fs, 2, overrides),
+		maxConn: flags.New("MaxConn", "Max Open Connections").Prefix(prefix).DocPrefix("database").Uint(fs, 5, overrides),
+		sslmode: flags.New("Sslmode", "SSL Mode").Prefix(prefix).DocPrefix("database").String(fs, "disable", overrides),
 	}
 }
 
