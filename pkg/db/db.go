@@ -158,21 +158,22 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) (
 	return err
 }
 
-func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) (err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindClient))
+func (a App) Query(ctx context.Context, query string, args ...any) (rows pgx.Rows, err error) {
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "query", trace.WithSpanKind(trace.SpanKindClient))
 	defer end(&err)
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	var rows pgx.Rows
-
 	if tx := readTx(ctx); tx != nil {
-		rows, err = tx.Query(ctx, query, args...)
-	} else {
-		rows, err = a.db.Query(ctx, query, args...)
+		return tx.Query(ctx, query, args...)
 	}
 
+	return a.db.Query(ctx, query, args...)
+}
+
+func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) error {
+	rows, err := a.Query(ctx, query, args...)
 	if err != nil {
 		return err
 	}
@@ -187,21 +188,25 @@ func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query strin
 		rows.Close()
 	}
 
-	return
+	return err
 }
 
-func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) (err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "get", trace.WithSpanKind(trace.SpanKindClient))
-	defer end(&err)
+func (a App) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "query_row", trace.WithSpanKind(trace.SpanKindClient))
+	defer end(nil)
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
 	if tx := readTx(ctx); tx != nil {
-		return scanner(tx.QueryRow(ctx, query, args...))
+		return tx.QueryRow(ctx, query, args...)
 	}
 
-	return scanner(a.db.QueryRow(ctx, query, args...))
+	return a.db.QueryRow(ctx, query, args...)
+}
+
+func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) (err error) {
+	return scanner(a.QueryRow(ctx, query, args...))
 }
 
 func (a App) Create(ctx context.Context, query string, args ...any) (id uint64, err error) {
