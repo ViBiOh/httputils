@@ -43,8 +43,8 @@ type App[K comparable, V any] struct {
 	concurrency uint64
 }
 
-func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], ttl time.Duration, concurrency uint64, tracer trace.Tracer) App[K, V] {
-	return App[K, V]{
+func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], ttl time.Duration, concurrency uint64, tracer trace.Tracer) *App[K, V] {
+	return &App[K, V]{
 		client:      client,
 		toKey:       toKey,
 		onMiss:      onMiss,
@@ -54,13 +54,11 @@ func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss f
 	}
 }
 
-func (a App[K, V]) WithMissMany(cb fetchMany[K, V]) App[K, V] {
+func (a *App[K, V]) WithMissMany(cb fetchMany[K, V]) {
 	a.onMissMany = cb
-
-	return a
 }
 
-func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
+func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	if !a.client.Enabled() {
 		return a.onMiss(ctx, id)
 	}
@@ -92,7 +90,7 @@ func (a App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	return a.fetch(ctx, id)
 }
 
-func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
+func (a *App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
 	if err != nil || !a.client.Enabled() {
 		return err
 	}
@@ -109,7 +107,7 @@ func (a App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error 
 	return nil
 }
 
-func (a App[K, V]) fetch(ctx context.Context, id K) (V, error) {
+func (a *App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	var err error
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "fetch", trace.WithSpanKind(trace.SpanKindInternal))
@@ -139,7 +137,7 @@ func unmarshal[V any](content []byte) (value V, ok bool, err error) {
 	return
 }
 
-func (a App[K, V]) extendTTL(ctx context.Context, keys ...string) {
+func (a *App[K, V]) extendTTL(ctx context.Context, keys ...string) {
 	go doInBackground(cntxt.WithoutDeadline(ctx), "extend ttl", func(ctx context.Context) error {
 		return a.client.Expire(ctx, a.ttl, keys...)
 	})

@@ -1,11 +1,11 @@
 package logger
 
-func Global(l Logger) {
+func Global(l *Logger) {
 	defer logger.Close()
 	logger = l
 }
 
-func GetGlobal() Logger {
+func GetGlobal() *Logger {
 	return logger
 }
 

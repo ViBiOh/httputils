@@ -55,10 +55,10 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace.Tracer) (App, error) {
+func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace.Tracer) (*App, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
-		return App{}, fmt.Errorf("get static/ filesystem: %w", err)
+		return nil, fmt.Errorf("get static/ filesystem: %w", err)
 	}
 
 	pathPrefix := strings.TrimSuffix(*config.pathPrefix, "/")
@@ -89,7 +89,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace
 
 	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
 	if err != nil {
-		return App{}, fmt.Errorf("parse templates/*.html templates: %w", err)
+		return nil, fmt.Errorf("parse templates/*.html templates: %w", err)
 	}
 
 	instance.tpl = tpl
@@ -98,14 +98,14 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace
 		logger.Warn("PublicURL has a development/debug value: `%s`. You may need to configure it.", instance.publicURL)
 	}
 
-	return instance, nil
+	return &instance, nil
 }
 
-func (a App) PublicURL(url string) string {
+func (a *App) PublicURL(url string) string {
 	return a.publicURL + a.url(url)
 }
 
-func (a App) url(url string) string {
+func (a *App) url(url string) string {
 	prefixedURL := path.Join(a.pathPrefix, url)
 	if len(prefixedURL) > 1 && strings.HasSuffix(url, "/") {
 		return prefixedURL + "/"
@@ -130,7 +130,7 @@ func isStaticPaths(requestPath string) bool {
 	return false
 }
 
-func (a App) feedContent(content map[string]any) map[string]any {
+func (a *App) feedContent(content map[string]any) map[string]any {
 	if content == nil {
 		content = make(map[string]any)
 	}
@@ -144,7 +144,7 @@ func (a App) feedContent(content map[string]any) map[string]any {
 	return content
 }
 
-func (a App) Handler(templateFunc TemplateFunc) http.Handler {
+func (a *App) Handler(templateFunc TemplateFunc) http.Handler {
 	svgHandler := http.StripPrefix(svgPath, a.svg())
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -179,7 +179,7 @@ func (a App) Handler(templateFunc TemplateFunc) http.Handler {
 	return http.StripPrefix(a.pathPrefix, handler)
 }
 
-func (a App) handleStatic(w http.ResponseWriter, r *http.Request) bool {
+func (a *App) handleStatic(w http.ResponseWriter, r *http.Request) bool {
 	if !isStaticPaths(r.URL.Path) {
 		return false
 	}

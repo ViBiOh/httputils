@@ -9,7 +9,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
-func Handler(handler http.Handler, healthApp health.App, middlewares ...model.Middleware) http.Handler {
+func Handler(handler http.Handler, healthApp *health.App, middlewares ...model.Middleware) http.Handler {
 	versionHandler := versionHandler()
 	HealthHandler := healthApp.HealthHandler()
 	readyHandler := healthApp.ReadyHandler()

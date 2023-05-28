@@ -53,7 +53,7 @@ func TestMiddleware(t *testing.T) {
 	gzip := true
 
 	cases := map[string]struct {
-		instance App
+		instance *App
 		requests []*http.Request
 		want     string
 	}{

@@ -46,10 +46,10 @@ func TestNew(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		want App
+		want *App
 	}{
 		"simple": {
-			App{
+			&App{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         true,
 				frameOptions: "deny",

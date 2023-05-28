@@ -55,7 +55,7 @@ func TestHealthHandler(t *testing.T) {
 	close(closedChan)
 
 	cases := map[string]struct {
-		instance   App
+		instance   *App
 		request    *http.Request
 		want       string
 		wantStatus int
@@ -100,7 +100,7 @@ func TestReadyHandler(t *testing.T) {
 	close(closedChan)
 
 	cases := map[string]struct {
-		instance   App
+		instance   *App
 		request    *http.Request
 		want       string
 		wantStatus int
@@ -115,7 +115,7 @@ func TestReadyHandler(t *testing.T) {
 			okStatus,
 		},
 		"shutdown": {
-			App{
+			&App{
 				okStatus:      okStatus,
 				graceDuration: time.Second,
 				done:          closedChan,

@@ -41,8 +41,8 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, pingers ...model.Pinger) App {
-	return App{
+func New(config Config, pingers ...model.Pinger) *App {
+	return &App{
 		okStatus:      *config.okStatus,
 		graceDuration: *config.graceDuration,
 		pingers:       pingers,
@@ -52,7 +52,7 @@ func New(config Config, pingers ...model.Pinger) App {
 	}
 }
 
-func (a App) Done(ctx context.Context) context.Context {
+func (a *App) Done(ctx context.Context) context.Context {
 	ctx, cancel := context.WithCancel(ctx)
 
 	go func() {
@@ -63,7 +63,7 @@ func (a App) Done(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (a App) End(ctx context.Context) context.Context {
+func (a *App) End(ctx context.Context) context.Context {
 	ctx, cancel := context.WithCancel(ctx)
 
 	go func() {
@@ -74,13 +74,13 @@ func (a App) End(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (a App) HealthHandler() http.Handler {
+func (a *App) HealthHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(a.okStatus)
 	})
 }
 
-func (a App) ReadyHandler() http.Handler {
+func (a *App) ReadyHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		select {
 		case <-a.done:
@@ -95,7 +95,7 @@ func (a App) ReadyHandler() http.Handler {
 	})
 }
 
-func (a App) WaitForTermination(done <-chan struct{}) {
+func (a *App) WaitForTermination(done <-chan struct{}) {
 	defer close(a.end)
 
 	a.waitForDone(done, syscall.SIGTERM)
@@ -110,7 +110,7 @@ func (a App) WaitForTermination(done <-chan struct{}) {
 	}
 }
 
-func (a App) waitForDone(done <-chan struct{}, signals ...os.Signal) {
+func (a *App) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	signalsChan := make(chan os.Signal, 1)
 	defer close(signalsChan)
 
@@ -126,7 +126,7 @@ func (a App) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	}
 }
 
-func (a App) isReady(ctx context.Context) bool {
+func (a *App) isReady(ctx context.Context) bool {
 	for _, pinger := range a.pingers {
 		if err := pinger(ctx); err != nil {
 			logger.Error("ping: %s", err)

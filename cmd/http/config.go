@@ -38,6 +38,7 @@ type configuration struct {
 
 func newConfig() (configuration, error) {
 	fs := flag.NewFlagSet("http", flag.ExitOnError)
+	fs.Usage = flags.Usage(fs)
 
 	return configuration{
 		appServer:  server.Flags(fs, ""),

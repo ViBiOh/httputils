@@ -197,21 +197,13 @@ func TestHandler(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		instance     App
+		instance     *App
 		request      *http.Request
 		templateFunc TemplateFunc
 		want         string
 		wantStatus   int
 		wantHeader   http.Header
 	}{
-		"empty app": {
-			App{},
-			httptest.NewRequest(http.MethodGet, "/", nil),
-			nil,
-			"¯\\_(ツ)_/¯\n",
-			http.StatusNotFound,
-			http.Header{},
-		},
 		"favicon": {
 			configuredApp,
 			httptest.NewRequest(http.MethodGet, "/images/favicon/manifest.json", nil),

@@ -16,7 +16,7 @@ import (
 type GetNow func() time.Time
 
 var (
-	logger   Logger
+	logger   *Logger
 	exitFunc = os.Exit
 
 	colorReset  = []byte("\033[0m")
@@ -67,7 +67,7 @@ func init() {
 	go logger.Start()
 }
 
-func New(config Config) Logger {
+func New(config Config) *Logger {
 	level, err := parseLevel(*config.level)
 
 	logger := newLogger(os.Stdout, os.Stderr, level, *config.json, *config.timeKey, *config.levelKey, *config.messageKey)
@@ -81,8 +81,8 @@ func New(config Config) Logger {
 	return logger
 }
 
-func newLogger(outWriter, errWriter io.Writer, lev level, json bool, timeKey, levelKey, messageKey string) Logger {
-	return Logger{
+func newLogger(outWriter, errWriter io.Writer, lev level, json bool, timeKey, levelKey, messageKey string) *Logger {
+	return &Logger{
 		clock: time.Now,
 
 		done:   make(chan struct{}),
@@ -102,7 +102,7 @@ func newLogger(outWriter, errWriter io.Writer, lev level, json bool, timeKey, le
 	}
 }
 
-func (l Logger) Start() {
+func (l *Logger) Start() {
 	var payload []byte
 	var err error
 
@@ -147,32 +147,52 @@ func getColor(level level) []byte {
 	}
 }
 
-func (l Logger) Close() {
+func (l *Logger) Close() {
 	close(l.events)
 	<-l.done
 }
 
-func (l Logger) Trace(format string, a ...any) {
+func (l *Logger) Trace(format string, a ...any) {
+	if l.isIgnored(levelTrace) {
+		return
+	}
+
 	l.output(levelTrace, nil, format, a...)
 }
 
-func (l Logger) Debug(format string, a ...any) {
+func (l *Logger) Debug(format string, a ...any) {
+	if l.isIgnored(levelDebug) {
+		return
+	}
+
 	l.output(levelDebug, nil, format, a...)
 }
 
-func (l Logger) Info(format string, a ...any) {
+func (l *Logger) Info(format string, a ...any) {
+	if l.isIgnored(levelInfo) {
+		return
+	}
+
 	l.output(levelInfo, nil, format, a...)
 }
 
-func (l Logger) Warn(format string, a ...any) {
+func (l *Logger) Warn(format string, a ...any) {
+	if l.isIgnored(levelWarning) {
+		return
+	}
+
 	l.output(levelWarning, nil, format, a...)
 }
 
-func (l Logger) Error(format string, a ...any) {
+func (l *Logger) Error(format string, a ...any) {
+	if l.isIgnored(levelError) {
+		return
+	}
+
 	l.output(levelError, nil, format, a...)
 }
 
-func (l Logger) Fatal(err error) {
+func (l *Logger) Fatal(err error) {
 	if err == nil {
 		return
 	}
@@ -183,7 +203,7 @@ func (l Logger) Fatal(err error) {
 	exitFunc(1)
 }
 
-func (l Logger) WithField(name string, value any) Provider {
+func (l *Logger) WithField(name string, value any) Provider {
 	return FieldsContext{
 		outputFn: l.output,
 		closeFn:  l.Close,
@@ -194,20 +214,23 @@ func (l Logger) WithField(name string, value any) Provider {
 	}
 }
 
-func (l Logger) output(lev level, fields []field, format string, a ...any) {
-	if l.level < lev {
+func (l *Logger) isIgnored(lev level) bool {
+	return l.level < lev
+}
+
+func (l *Logger) output(lev level, fields []field, format string, a ...any) {
+	if l.isIgnored(lev) {
 		return
 	}
 
-	message := format
 	if len(a) > 0 {
-		message = fmt.Sprintf(format, a...)
+		format = fmt.Sprintf(format, a...)
 	}
 
-	l.events <- event{timestamp: l.clock(), level: lev, message: message, fields: fields}
+	l.events <- event{timestamp: l.clock(), level: lev, message: format, fields: fields}
 }
 
-func (l Logger) json(e event) []byte {
+func (l *Logger) json(e event) []byte {
 	l.outputBuffer.Reset()
 
 	l.outputBuffer.WriteString(`{"`)
@@ -245,7 +268,7 @@ func (l Logger) json(e event) []byte {
 	return l.outputBuffer.Bytes()
 }
 
-func (l Logger) text(e event) []byte {
+func (l *Logger) text(e event) []byte {
 	l.outputBuffer.Reset()
 
 	l.outputBuffer.Write(e.timestamp.AppendFormat(l.dateBuffer[:0], time.RFC3339))
@@ -265,18 +288,18 @@ func (l Logger) text(e event) []byte {
 	return l.outputBuffer.Bytes()
 }
 
-func (l Logger) Errorf(format string, a ...any) {
+func (l *Logger) Errorf(format string, a ...any) {
 	l.Error(format, a...)
 }
 
-func (l Logger) Warningf(format string, a ...any) {
+func (l *Logger) Warningf(format string, a ...any) {
 	l.Warn(format, a...)
 }
 
-func (l Logger) Infof(format string, a ...any) {
+func (l *Logger) Infof(format string, a ...any) {
 	l.Info(format, a...)
 }
 
-func (l Logger) Debugf(format string, a ...any) {
+func (l *Logger) Debugf(format string, a ...any) {
 	l.Debug(format, a...)
 }

@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	_ model.Middleware = App{}.Middleware
+	_ model.Middleware = (&App{}).Middleware
 
 	durationBuckets  = []float64{0.1, 0.3, 1.2, 5}
 	sizeBuckets      = []float64{200, 500, 900, 1500}
@@ -46,20 +46,20 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config) App {
+func New(config Config) *App {
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(collectors.NewBuildInfoCollector())
 	registry.MustRegister(collectors.NewGoCollector())
 	registry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 
-	return App{
+	return &App{
 		ignore:   *config.ignore,
 		gzip:     *config.gzip,
 		registry: registry,
 	}
 }
 
-func (a App) Handler() http.Handler {
+func (a *App) Handler() http.Handler {
 	instrumentHandler := promhttp.HandlerFor(a.registry, promhttp.HandlerOpts{
 		DisableCompression: !a.gzip,
 	})
@@ -75,7 +75,7 @@ func (a App) Handler() http.Handler {
 	})
 }
 
-func (a App) Middleware(next http.Handler) http.Handler {
+func (a *App) Middleware(next http.Handler) http.Handler {
 	if next == nil {
 		return next
 	}
@@ -91,11 +91,11 @@ func (a App) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func (a App) Registerer() prometheus.Registerer {
+func (a *App) Registerer() prometheus.Registerer {
 	return a.registry
 }
 
-func (a App) instrumentHandler(next http.Handler) http.Handler {
+func (a *App) instrumentHandler(next http.Handler) http.Handler {
 	durationVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: metricsNamespace,
 		Subsystem: "request",
@@ -134,7 +134,7 @@ func (a App) instrumentHandler(next http.Handler) http.Handler {
 	})
 }
 
-func (a App) isIgnored(path string) bool {
+func (a *App) isIgnored(path string) bool {
 	for _, prefix := range a.ignore {
 		if strings.HasPrefix(path, prefix) {
 			return true

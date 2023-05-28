@@ -53,8 +53,8 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, amqpClient *amqpclient.Client, tracer trace.Tracer, handler Handler) (App, error) {
-	app := App{
+func New(config Config, amqpClient *amqpclient.Client, tracer trace.Tracer, handler Handler) (*App, error) {
+	app := &App{
 		amqpClient:    amqpClient,
 		tracer:        tracer,
 		exchange:      strings.TrimSpace(*config.exchange),
@@ -85,11 +85,11 @@ func New(config Config, amqpClient *amqpclient.Client, tracer trace.Tracer, hand
 	return app, nil
 }
 
-func (a App) Done() <-chan struct{} {
+func (a *App) Done() <-chan struct{} {
 	return a.done
 }
 
-func (a App) Start(ctx context.Context) {
+func (a *App) Start(ctx context.Context) {
 	defer close(a.done)
 
 	if a.amqpClient == nil {
@@ -128,7 +128,7 @@ func (a App) Start(ctx context.Context) {
 	}
 }
 
-func (a App) handleMessage(ctx context.Context, log logger.Provider, message amqp.Delivery) {
+func (a *App) handleMessage(ctx context.Context, log logger.Provider, message amqp.Delivery) {
 	var err error
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer))
@@ -159,7 +159,7 @@ func (a App) handleMessage(ctx context.Context, log logger.Provider, message amq
 	}
 }
 
-func (a App) configure(init bool) (string, error) {
+func (a *App) configure(init bool) (string, error) {
 	if !a.exclusive && !init {
 		return a.queue, nil
 	}
