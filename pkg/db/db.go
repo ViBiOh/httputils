@@ -162,9 +162,6 @@ func (a App) Query(ctx context.Context, query string, args ...any) (rows pgx.Row
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "query", trace.WithSpanKind(trace.SpanKindClient))
 	defer end(&err)
 
-	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
-	defer cancel()
-
 	if tx := readTx(ctx); tx != nil {
 		return tx.Query(ctx, query, args...)
 	}
@@ -173,6 +170,9 @@ func (a App) Query(ctx context.Context, query string, args ...any) (rows pgx.Row
 }
 
 func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) error {
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+
 	rows, err := a.Query(ctx, query, args...)
 	if err != nil {
 		return err
@@ -195,9 +195,6 @@ func (a App) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "query_row", trace.WithSpanKind(trace.SpanKindClient))
 	defer end(nil)
 
-	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
-	defer cancel()
-
 	if tx := readTx(ctx); tx != nil {
 		return tx.QueryRow(ctx, query, args...)
 	}
@@ -205,7 +202,10 @@ func (a App) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
 	return a.db.QueryRow(ctx, query, args...)
 }
 
-func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) (err error) {
+func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) error {
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+
 	return scanner(a.QueryRow(ctx, query, args...))
 }
 
