@@ -59,7 +59,7 @@ func New(config Config, tracer trace.TracerProvider) (Client, error) {
 		DB:       *config.database,
 	})
 
-	app := App{
+	app := &App{
 		client: client,
 	}
 
@@ -74,28 +74,28 @@ func New(config Config, tracer trace.TracerProvider) (Client, error) {
 	return app, nil
 }
 
-func (a App) Enabled() bool {
+func (a *App) Enabled() bool {
 	return true
 }
 
-func (a App) Close() {
+func (a *App) Close() {
 	if err := a.client.Close(); err != nil {
 		logger.Error("redis close: %s", err)
 	}
 }
 
-func (a App) Ping(ctx context.Context) error {
+func (a *App) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
 	return a.client.Ping(ctx).Err()
 }
 
-func (a App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
+func (a *App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
 	return a.client.SetEx(ctx, key, value, duration).Err()
 }
 
-func (a App) Load(ctx context.Context, key string) ([]byte, error) {
+func (a *App) Load(ctx context.Context, key string) ([]byte, error) {
 	content, err := a.client.Get(ctx, key).Bytes()
 	if err == nil {
 		return content, err
@@ -108,7 +108,7 @@ func (a App) Load(ctx context.Context, key string) ([]byte, error) {
 	return nil, nil
 }
 
-func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
+func (a *App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	pipeline := a.client.Pipeline()
 
 	commands := make([]*redis.StringCmd, len(keys))
@@ -132,7 +132,7 @@ func (a App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	return output, nil
 }
 
-func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {
+func (a *App) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {
 	pipeline := a.client.Pipeline()
 
 	for _, key := range keys {
@@ -142,7 +142,7 @@ func (a App) Expire(ctx context.Context, ttl time.Duration, keys ...string) erro
 	return a.execPipeline(ctx, pipeline)
 }
 
-func (a App) Delete(ctx context.Context, keys ...string) (err error) {
+func (a *App) Delete(ctx context.Context, keys ...string) (err error) {
 	pipeline := a.client.Pipeline()
 
 	for _, key := range keys {
@@ -152,7 +152,7 @@ func (a App) Delete(ctx context.Context, keys ...string) (err error) {
 	return a.execPipeline(ctx, pipeline)
 }
 
-func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
+func (a *App) DeletePattern(ctx context.Context, pattern string) (err error) {
 	scanOutput := make(chan string, runtime.NumCPU())
 
 	done := make(chan struct{})
@@ -178,7 +178,7 @@ func (a App) DeletePattern(ctx context.Context, pattern string) (err error) {
 	return
 }
 
-func (a App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
+func (a *App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
 	results, err := pipeline.Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("exec pipeline: %w", err)
@@ -193,7 +193,7 @@ func (a App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
 	return nil
 }
 
-func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pageSize int64) error {
+func (a *App) Scan(ctx context.Context, pattern string, output chan<- string, pageSize int64) error {
 	defer close(output)
 
 	var keys []string
@@ -218,7 +218,7 @@ func (a App) Scan(ctx context.Context, pattern string, output chan<- string, pag
 	return nil
 }
 
-func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
+func (a *App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
 	if acquired, err = a.client.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
 		err = fmt.Errorf("exec setnx: %w", err)
 
@@ -239,6 +239,6 @@ func (a App) Exclusive(ctx context.Context, name string, timeout time.Duration, 
 	return
 }
 
-func (a App) Pipeline() redis.Pipeliner {
+func (a *App) Pipeline() redis.Pipeliner {
 	return a.client.Pipeline()
 }
