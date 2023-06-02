@@ -59,7 +59,7 @@ func (a *App[K, V]) WithMissMany(cb fetchMany[K, V]) {
 }
 
 func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
-	if !a.client.Enabled() {
+	if !a.client.Enabled() || IsBypassed(ctx) {
 		return a.onMiss(ctx, id)
 	}
 

@@ -28,7 +28,7 @@ func (ii IndexedItems[K]) Items() []K {
 
 // If onMissError returns false, List stops by returning an error
 func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) (outputs []V, err error) {
-	if !a.client.Enabled() {
+	if !a.client.Enabled() || IsBypassed(ctx) {
 		if a.onMissMany == nil {
 			return a.listRaw(ctx, onMissError, items...)
 		}

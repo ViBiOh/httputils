@@ -10,7 +10,7 @@ import (
 )
 
 func Load[V any](ctx context.Context, client RedisClient, key string, onMiss func(context.Context) (V, error), ttl time.Duration) (V, error) {
-	if !client.Enabled() {
+	if !client.Enabled() || IsBypassed(ctx) {
 		return onMiss(ctx)
 	}
 
