@@ -12,6 +12,7 @@ import (
 	"github.com/ViBiOh/flags"
 	amqpclient "github.com/ViBiOh/httputils/v4/pkg/amqp"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel/trace"
@@ -133,6 +134,8 @@ func (a *App) handleMessage(ctx context.Context, log logger.Provider, message am
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer))
 	defer end(&err)
+
+	defer recoverer.Error(&err)
 
 	err = a.handler(ctx, message)
 

@@ -1,9 +1,12 @@
 package recoverer
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -56,7 +59,50 @@ func TestMiddleware(t *testing.T) {
 	}
 }
 
-func TestLoggerRecoverer(t *testing.T) {
+func TestError(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil", func(t *testing.T) {
+		t.Parallel()
+
+		func() {
+			defer Error(nil)
+
+			panic("catch me if you can")
+		}()
+	})
+
+	t.Run("valued", func(t *testing.T) {
+		t.Parallel()
+
+		var err error
+
+		func() {
+			defer Error(&err)
+
+			panic("catch me if you can")
+		}()
+
+		assert.ErrorContains(t, err, "recovered")
+	})
+
+	t.Run("join", func(t *testing.T) {
+		t.Parallel()
+
+		err := fmt.Errorf("invalid")
+
+		func() {
+			defer Error(&err)
+
+			panic("catch me if you can")
+		}()
+
+		assert.ErrorContains(t, err, "invalid")
+		assert.ErrorContains(t, err, "recovered")
+	})
+}
+
+func TestLogger(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct{}{
@@ -66,7 +112,7 @@ func TestLoggerRecoverer(t *testing.T) {
 	for intention := range cases {
 		t.Run(intention, func(t *testing.T) {
 			func() {
-				defer LoggerRecover()
+				defer Logger()
 
 				panic("catch me if you can")
 			}()

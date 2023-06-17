@@ -1,6 +1,7 @@
 package recoverer
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -8,6 +9,8 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
+
+const OutputSize = 2048
 
 func Middleware(next http.Handler) http.Handler {
 	if next == nil {
@@ -17,7 +20,7 @@ func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				output := make([]byte, 1024)
+				output := make([]byte, OutputSize)
 				written := runtime.Stack(output, false)
 
 				httperror.InternalServerError(w, fmt.Errorf("recovered from panic: %s\n%s", r, output[:written]))
@@ -28,7 +31,20 @@ func Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func LoggerRecover() {
+func Error(err *error) {
+	if r := recover(); r != nil {
+		output := make([]byte, 1024)
+		written := runtime.Stack(output, false)
+
+		if err == nil {
+			return
+		}
+
+		*err = errors.Join(*err, fmt.Errorf("recovered from panic: %s\n", output[:written]))
+	}
+}
+
+func Logger() {
 	if r := recover(); r != nil {
 		output := make([]byte, 1024)
 		written := runtime.Stack(output, false)

@@ -109,6 +109,16 @@ func TestFailFastGo(t *testing.T) {
 			},
 			errors.New("failed one"),
 		},
+		"panic": {
+			NewFailFast(2),
+			args{
+				funcs: []func() error{
+					func() error { return nil },
+					func() error { panic("panicking") },
+				},
+			},
+			errors.New("recovered from panic"),
+		},
 		"two errors": {
 			NewFailFast(1),
 			args{

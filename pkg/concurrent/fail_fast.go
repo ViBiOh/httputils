@@ -3,6 +3,8 @@ package concurrent
 import (
 	"context"
 	"sync"
+
+	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 )
 
 type FailFast struct {
@@ -42,9 +44,17 @@ func (ff *FailFast) Go(f func() error) {
 			defer ff.wg.Done()
 			defer func() { <-ff.limiter }()
 
-			if err := f(); err != nil {
-				ff.close(err)
-			}
+			var err error
+
+			defer func() {
+				if err != nil {
+					ff.close(err)
+				}
+			}()
+
+			defer recoverer.Error(&err)
+
+			err = f()
 		}()
 	}
 }
