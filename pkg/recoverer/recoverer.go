@@ -40,7 +40,7 @@ func Error(err *error) {
 			return
 		}
 
-		*err = errors.Join(*err, fmt.Errorf("recovered from panic: %s\n", output[:written]))
+		*err = errors.Join(*err, fmt.Errorf("recovered from panic: %s", output[:written]))
 	}
 }
 
@@ -49,6 +49,6 @@ func Logger() {
 		output := make([]byte, 1024)
 		written := runtime.Stack(output, false)
 
-		logger.Error("recovered from panic: %s\n", output[:written])
+		logger.Error("recovered from panic: %s", output[:written])
 	}
 }
