@@ -108,6 +108,10 @@ func (a App) Ping(ctx context.Context) error {
 }
 
 func (a App) Close() {
+	if !a.Enabled() {
+		return
+	}
+
 	a.db.Close()
 }
 
