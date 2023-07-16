@@ -49,7 +49,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 func New(config Config, tracer trace.TracerProvider) (Client, error) {
 	address := strings.TrimSpace(*config.address)
 	if len(address) == 0 {
-		return noop{}, nil
+		return Noop{}, nil
 	}
 
 	client := redis.NewClient(&redis.Options{
@@ -67,7 +67,7 @@ func New(config Config, tracer trace.TracerProvider) (Client, error) {
 		if err := redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(tracer)); err != nil {
 			defer app.Close()
 
-			return noop{}, fmt.Errorf("tracing: %w", err)
+			return Noop{}, fmt.Errorf("tracing: %w", err)
 		}
 	}
 

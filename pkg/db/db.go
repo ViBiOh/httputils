@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -163,7 +164,7 @@ func (a App) DoAtomic(ctx context.Context, action func(context.Context) error) (
 }
 
 func (a App) Query(ctx context.Context, query string, args ...any) (rows pgx.Rows, err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "query", trace.WithSpanKind(trace.SpanKindClient))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "query", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("query", query)))
 	defer end(&err)
 
 	if tx := readTx(ctx); tx != nil {
@@ -196,7 +197,7 @@ func (a App) List(ctx context.Context, scanner func(pgx.Rows) error, query strin
 }
 
 func (a App) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "query_row", trace.WithSpanKind(trace.SpanKindClient))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "query_row", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("query", query)))
 	defer end(nil)
 
 	if tx := readTx(ctx); tx != nil {
@@ -214,9 +215,6 @@ func (a App) Get(ctx context.Context, scanner func(pgx.Row) error, query string,
 }
 
 func (a App) Create(ctx context.Context, query string, args ...any) (id uint64, err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "create", trace.WithSpanKind(trace.SpanKindClient))
-	defer end(&err)
-
 	tx := readTx(ctx)
 	if tx == nil {
 		return 0, ErrNoTransaction
@@ -250,7 +248,7 @@ func (a App) One(ctx context.Context, query string, args ...any) error {
 }
 
 func (a App) exec(ctx context.Context, query string, args ...any) (command pgconn.CommandTag, err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "exec", trace.WithSpanKind(trace.SpanKindClient))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "exec", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("query", query)))
 	defer end(&err)
 
 	tx := readTx(ctx)
@@ -285,7 +283,7 @@ func (bc *feeder) Err() error {
 }
 
 func (a App) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) (err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "bulk", trace.WithSpanKind(trace.SpanKindClient))
+	ctx, end := tracer.StartSpan(ctx, a.tracer, "bulk", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("schema", schema), attribute.String("table", table)))
 	defer end(&err)
 
 	tx := readTx(ctx)
