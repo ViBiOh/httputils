@@ -35,6 +35,7 @@ type Database interface {
 	Begin(context.Context) (pgx.Tx, error)
 	Query(context.Context, string, ...any) (pgx.Rows, error)
 	QueryRow(context.Context, string, ...any) pgx.Row
+	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
 }
 
 type App struct {
@@ -253,7 +254,7 @@ func (a App) exec(ctx context.Context, query string, args ...any) (command pgcon
 
 	tx := readTx(ctx)
 	if tx == nil {
-		return pgconn.CommandTag{}, ErrNoTransaction
+		return a.db.Exec(ctx, query, args...)
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)

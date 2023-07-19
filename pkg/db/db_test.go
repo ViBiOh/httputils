@@ -567,9 +567,6 @@ func TestExec(t *testing.T) {
 	cases := map[string]struct {
 		wantErr error
 	}{
-		"no tx": {
-			ErrNoTransaction,
-		},
 		"error": {
 			errors.New("timeout"),
 		},
