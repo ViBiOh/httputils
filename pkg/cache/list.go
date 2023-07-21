@@ -171,6 +171,8 @@ func (a App[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) 
 		} else {
 			loggerWithTrace(ctx, strconv.Itoa(len(keys))).Error("load many from cache: %s", err)
 		}
+
+		values = make([]string, len(ids))
 	}
 
 	return keys, values
