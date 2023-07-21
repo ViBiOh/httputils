@@ -10,7 +10,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
-const OutputSize = 4096
+const OutputSize = 8192
 
 func Middleware(next http.Handler) http.Handler {
 	if next == nil {
