@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/redis/go-redis/extra/redisotel/v9"
@@ -25,7 +26,8 @@ const (
 var ErrNoSubscriber = errors.New("no subscriber for channel")
 
 type App struct {
-	client redis.UniversalClient
+	client       redis.UniversalClient
+	pipelineSize int
 }
 
 type Config struct {
@@ -74,6 +76,12 @@ func New(config Config, tracer trace.TracerProvider) (Client, error) {
 	return app, nil
 }
 
+func (a *App) WithPipelineSize(size int) *App {
+	a.pipelineSize = size
+
+	return a
+}
+
 func (a *App) Enabled() bool {
 	return true
 }
@@ -109,16 +117,38 @@ func (a *App) Load(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (a *App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
-	pipeline := a.client.Pipeline()
+	pipelineCount := 1
+
+	if a.pipelineSize > 0 {
+		pipelineCount = len(keys)/a.pipelineSize + 1
+	}
+
+	pipelines := make([]redis.Pipeliner, pipelineCount)
+
+	for i := 0; i < pipelineCount; i++ {
+		pipelines[i] = a.client.Pipeline()
+	}
 
 	commands := make([]*redis.StringCmd, len(keys))
 
 	for index, key := range keys {
-		commands[index] = pipeline.Get(ctx, key)
+		commands[index] = pipelines[index%pipelineCount].Get(ctx, key)
 	}
 
-	if _, err := pipeline.Exec(ctx); err != nil && err != redis.Nil {
-		return nil, fmt.Errorf("exec pipelined get: %w", err)
+	waitGroup := concurrent.NewFailFast(uint64(pipelineCount))
+
+	for i := 0; i < pipelineCount; i++ {
+		waitGroup.Go(func() error {
+			if _, err := pipelines[i].Exec(ctx); err != nil && err != redis.Nil {
+				return fmt.Errorf("exec pipelined get: %w", err)
+			}
+
+			return nil
+		})
+	}
+
+	if err := waitGroup.Wait(); err != nil {
+		return nil, err
 	}
 
 	output := make([]string, len(keys))

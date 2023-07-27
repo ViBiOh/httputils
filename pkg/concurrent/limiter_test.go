@@ -12,7 +12,7 @@ func TestLimitedGo(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		instance *Limited
+		instance Runner
 		args     args
 	}{
 		"simple": {

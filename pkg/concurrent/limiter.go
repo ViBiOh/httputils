@@ -9,7 +9,11 @@ type Limited struct {
 	wg      sync.WaitGroup
 }
 
-func NewLimited(limit uint64) *Limited {
+func NewLimited(limit int) Runner {
+	if limit < 0 {
+		return &Simple{}
+	}
+
 	return &Limited{
 		limiter: make(chan struct{}, limit),
 	}

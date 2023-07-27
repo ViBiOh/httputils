@@ -4,11 +4,16 @@ import (
 	"sync"
 )
 
+type Runner interface {
+	Go(f func())
+	Wait()
+}
+
 type Simple struct {
 	wg sync.WaitGroup
 }
 
-func NewSimple() *Simple {
+func NewSimple() Runner {
 	return &Simple{}
 }
 
