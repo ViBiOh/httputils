@@ -135,6 +135,8 @@ func (a *App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	waitGroup := concurrent.NewFailFast(uint64(pipelineCount))
 
 	for i := 0; i < pipelineCount; i++ {
+		i := i
+
 		waitGroup.Go(func() error {
 			if _, err := pipelines[i].Exec(ctx); err != nil && err != redis.Nil {
 				return fmt.Errorf("exec pipelined get: %w", err)
