@@ -31,20 +31,22 @@ type App struct {
 }
 
 type Config struct {
-	address  *string
-	username *string
-	password *string
-	alias    *string
-	database *int
+	address      *string
+	username     *string
+	password     *string
+	alias        *string
+	database     *int
+	pipelineSize *int
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		address:  flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").String(fs, "localhost:6379", overrides),
-		username: flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
-		password: flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
-		database: flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
-		alias:    flags.New("Alias", "Connection alias, for metric").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
+		address:      flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").String(fs, "localhost:6379", overrides),
+		username:     flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
+		password:     flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
+		database:     flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
+		pipelineSize: flags.New("PipelineSize", "Redis Pipeline Size").Prefix(prefix).DocPrefix("redis").Int(fs, 50, overrides),
+		alias:        flags.New("Alias", "Connection alias, for metric").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
 	}
 }
 
@@ -62,7 +64,8 @@ func New(config Config, tracer trace.TracerProvider) (Client, error) {
 	})
 
 	app := &App{
-		client: client,
+		client:       client,
+		pipelineSize: *config.pipelineSize,
 	}
 
 	if !model.IsNil(tracer) {
@@ -74,12 +77,6 @@ func New(config Config, tracer trace.TracerProvider) (Client, error) {
 	}
 
 	return app, nil
-}
-
-func (a *App) WithPipelineSize(size int) *App {
-	a.pipelineSize = size
-
-	return a
 }
 
 func (a *App) Enabled() bool {
