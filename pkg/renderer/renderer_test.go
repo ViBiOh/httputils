@@ -246,7 +246,8 @@ func TestHandler(t *testing.T) {
 					Content:  nil,
 				}, nil
 			},
-			`<!doctype html><html lang=en><meta charset=utf-8><title>Golang Test</title><h1>Hello !</h1>`,
+			`<!doctype html><html lang=en><meta charset=utf-8><title>Golang Test</title>
+<h1>Hello !</h1>`,
 			http.StatusCreated,
 			http.Header{},
 		},
