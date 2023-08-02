@@ -2,6 +2,8 @@ package concurrent
 
 import (
 	"sync"
+
+	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 )
 
 type Limited struct {
@@ -26,6 +28,7 @@ func (l *Limited) Go(f func()) {
 	go func() {
 		defer l.wg.Done()
 		defer func() { <-l.limiter }()
+		defer recoverer.Logger()
 
 		f()
 	}()

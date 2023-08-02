@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/redis/go-redis/extra/redisotel/v9"
@@ -26,27 +25,24 @@ const (
 var ErrNoSubscriber = errors.New("no subscriber for channel")
 
 type App struct {
-	client       redis.UniversalClient
-	pipelineSize int
+	client redis.UniversalClient
 }
 
 type Config struct {
-	address      *string
-	username     *string
-	password     *string
-	alias        *string
-	database     *int
-	pipelineSize *int
+	address  *string
+	username *string
+	password *string
+	alias    *string
+	database *int
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		address:      flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").String(fs, "localhost:6379", overrides),
-		username:     flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
-		password:     flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
-		database:     flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
-		pipelineSize: flags.New("PipelineSize", "Redis Pipeline Size").Prefix(prefix).DocPrefix("redis").Int(fs, 50, overrides),
-		alias:        flags.New("Alias", "Connection alias, for metric").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
+		address:  flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").String(fs, "localhost:6379", overrides),
+		username: flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
+		password: flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
+		database: flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
+		alias:    flags.New("Alias", "Connection alias, for metric").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
 	}
 }
 
@@ -64,8 +60,7 @@ func New(config Config, tracer trace.TracerProvider) (Client, error) {
 	})
 
 	app := &App{
-		client:       client,
-		pipelineSize: *config.pipelineSize,
+		client: client,
 	}
 
 	if !model.IsNil(tracer) {
@@ -114,40 +109,16 @@ func (a *App) Load(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (a *App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
-	pipelineCount := 1
-
-	if a.pipelineSize > 0 {
-		pipelineCount = len(keys)/a.pipelineSize + 1
-	}
-
-	pipelines := make([]redis.Pipeliner, pipelineCount)
-
-	for i := 0; i < pipelineCount; i++ {
-		pipelines[i] = a.client.Pipeline()
-	}
+	pipeline := a.client.Pipeline()
 
 	commands := make([]*redis.StringCmd, len(keys))
 
 	for index, key := range keys {
-		commands[index] = pipelines[index%pipelineCount].Get(ctx, key)
+		commands[index] = pipeline.Get(ctx, key)
 	}
 
-	waitGroup := concurrent.NewFailFast(uint64(pipelineCount))
-
-	for i := 0; i < pipelineCount; i++ {
-		i := i
-
-		waitGroup.Go(func() error {
-			if _, err := pipelines[i].Exec(ctx); err != nil && err != redis.Nil {
-				return fmt.Errorf("exec pipelined get: %w", err)
-			}
-
-			return nil
-		})
-	}
-
-	if err := waitGroup.Wait(); err != nil {
-		return nil, err
+	if _, err := pipeline.Exec(ctx); err != nil && err != redis.Nil {
+		return nil, fmt.Errorf("exec pipelined get: %w", err)
 	}
 
 	output := make([]string, len(keys))

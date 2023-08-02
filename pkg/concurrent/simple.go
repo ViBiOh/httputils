@@ -2,6 +2,8 @@ package concurrent
 
 import (
 	"sync"
+
+	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 )
 
 type Runner interface {
@@ -22,6 +24,7 @@ func (s *Simple) Go(f func()) {
 
 	go func() {
 		defer s.wg.Done()
+		defer recoverer.Logger()
 
 		f()
 	}()
