@@ -16,10 +16,16 @@ type FailFast struct {
 	wg      sync.WaitGroup
 }
 
-func NewFailFast(limit uint64) *FailFast {
+func NewFailFast(limit int) *FailFast {
+	var limiter chan struct{}
+
+	if limit > 0 {
+		limiter = make(chan struct{}, limit)
+	}
+
 	return &FailFast{
 		done:    make(chan struct{}),
-		limiter: make(chan struct{}, limit),
+		limiter: limiter,
 	}
 }
 
@@ -34,29 +40,42 @@ func (ff *FailFast) WithContext(ctx context.Context) context.Context {
 }
 
 func (ff *FailFast) Go(f func() error) {
+	if ff.limiter == nil {
+		select {
+		case <-ff.done:
+		default:
+			ff.run(f)
+		}
+
+		return
+	}
+
 	select {
 	case <-ff.done:
-		return
 	case ff.limiter <- struct{}{}:
-		ff.wg.Add(1)
-
-		go func() {
-			defer ff.wg.Done()
-			defer func() { <-ff.limiter }()
-
-			var err error
-
-			defer func() {
-				if err != nil {
-					ff.close(err)
-				}
-			}()
-
-			defer recoverer.Error(&err)
-
-			err = f()
-		}()
+		ff.run(f)
 	}
+}
+
+func (ff *FailFast) run(f func() error) {
+	ff.wg.Add(1)
+
+	go func() {
+		defer ff.wg.Done()
+		defer func() { <-ff.limiter }()
+
+		var err error
+
+		defer func() {
+			if err != nil {
+				ff.close(err)
+			}
+		}()
+
+		defer recoverer.Error(&err)
+
+		err = f()
+	}()
 }
 
 func (ff *FailFast) Wait() error {

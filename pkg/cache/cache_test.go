@@ -146,12 +146,7 @@ func TestGet(t *testing.T) {
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			}
 
-			instance := App[int, cacheableItem]{
-				client: mockRedisClient,
-				onMiss: testCase.args.onMiss,
-				toKey:  strconv.Itoa,
-				ttl:    testCase.args.duration,
-			}
+			instance := New(mockRedisClient, strconv.Itoa, testCase.args.onMiss, testCase.args.duration, -1, nil)
 
 			got, gotErr := instance.Get(context.Background(), testCase.args.key)
 
@@ -229,12 +224,7 @@ func TestGetError(t *testing.T) {
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return(nil, nil)
 			}
 
-			instance := App[int, jsonErrorItem]{
-				client: mockRedisClient,
-				onMiss: testCase.args.onMiss,
-				toKey:  strconv.Itoa,
-				ttl:    testCase.args.duration,
-			}
+			instance := New(mockRedisClient, strconv.Itoa, testCase.args.onMiss, testCase.args.duration, -1, nil)
 
 			got, gotErr := instance.Get(context.Background(), testCase.args.key)
 

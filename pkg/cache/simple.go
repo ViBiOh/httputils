@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -42,6 +43,32 @@ func Load[V any](ctx context.Context, client RedisClient, key string, onMiss fun
 	}
 
 	return value, err
+}
+
+func store(ctx context.Context, client RedisClient, key string, value any, ttl time.Duration) error {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("marshal: %w", err)
+	}
+
+	if err = client.Store(ctx, key, payload, ttl); err != nil {
+		return fmt.Errorf("store: %w", err)
+	}
+
+	return nil
+}
+
+func unmarshal[V any](content []byte) (value V, ok bool, err error) {
+	if len(content) == 0 {
+		return
+	}
+
+	err = json.Unmarshal(content, &value)
+	if err == nil {
+		ok = true
+	}
+
+	return
 }
 
 func EvictOnSucces(ctx context.Context, client RedisClient, key string, err error) error {

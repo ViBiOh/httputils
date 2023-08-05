@@ -2,9 +2,7 @@ package cache
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"go.opentelemetry.io/otel/trace"
@@ -25,16 +23,12 @@ func (a App[K, V]) store(ctx context.Context, id K, value V) (err error) {
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
-	return store(ctx, a.client, a.toKey(id), value, a.ttl)
-}
-
-func store(ctx context.Context, client RedisClient, key string, value any, ttl time.Duration) error {
-	payload, err := json.Marshal(value)
+	payload, err := a.serializer.Encode(value)
 	if err != nil {
-		return fmt.Errorf("marshal: %w", err)
+		return fmt.Errorf("encoding: %w", err)
 	}
 
-	if err = client.Store(ctx, key, payload, ttl); err != nil {
+	if err = a.client.Store(ctx, a.toKey(id), payload, a.ttl); err != nil {
 		return fmt.Errorf("store: %w", err)
 	}
 
@@ -53,9 +47,9 @@ func (a App[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes I
 		id := ids[index]
 		key := a.toKey(id)
 
-		payload, err := json.Marshal(values[index])
+		payload, err := a.serializer.Encode(values[index])
 		if err != nil {
-			loggerWithTrace(ctx, key).Error("marshal: %s", err)
+			loggerWithTrace(ctx, key).Error("encoding: %s", err)
 
 			continue
 		}

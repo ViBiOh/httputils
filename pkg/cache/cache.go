@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -37,16 +36,18 @@ type App[K comparable, V any] struct {
 	tracer      trace.Tracer
 	client      RedisClient
 	toKey       func(K) string
+	serializer  Serializer[V]
 	onMiss      fetch[K, V]
 	onMissMany  fetchMany[K, V]
 	ttl         time.Duration
-	concurrency uint64
+	concurrency int
 }
 
-func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], ttl time.Duration, concurrency uint64, tracer trace.Tracer) *App[K, V] {
+func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], ttl time.Duration, concurrency int, tracer trace.Tracer) *App[K, V] {
 	return &App[K, V]{
 		client:      client,
 		toKey:       toKey,
+		serializer:  JSONSerializer[V]{},
 		onMiss:      onMiss,
 		ttl:         ttl,
 		concurrency: concurrency,
@@ -54,8 +55,16 @@ func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss f
 	}
 }
 
-func (a *App[K, V]) WithMissMany(cb fetchMany[K, V]) {
+func (a *App[K, V]) WithMissMany(cb fetchMany[K, V]) *App[K, V] {
 	a.onMissMany = cb
+
+	return a
+}
+
+func (a *App[K, V]) WithSerializer(serializer Serializer[V]) *App[K, V] {
+	a.serializer = serializer
+
+	return a
 }
 
 func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
@@ -79,7 +88,7 @@ func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
 		} else {
 			loggerWithTrace(ctx, key).Error("load from cache: %s", err)
 		}
-	} else if value, ok, err := unmarshal[V]([]byte(content)); err != nil {
+	} else if value, ok, err := a.decode([]byte(content)); err != nil {
 		logUnmarshallError(ctx, key, err)
 	} else if ok {
 		a.extendTTL(ctx, key)
@@ -124,12 +133,12 @@ func (a *App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	return value, err
 }
 
-func unmarshal[V any](content []byte) (value V, ok bool, err error) {
+func (a *App[K, V]) decode(content []byte) (value V, ok bool, err error) {
 	if len(content) == 0 {
 		return
 	}
 
-	err = json.Unmarshal(content, &value)
+	value, err = a.serializer.Decode(content)
 	if err == nil {
 		ok = true
 	}
