@@ -40,42 +40,43 @@ func (ff *FailFast) WithContext(ctx context.Context) context.Context {
 }
 
 func (ff *FailFast) Go(f func() error) {
-	if ff.limiter == nil {
+	ff.wg.Add(1)
+
+	if ff.limiter != nil {
 		select {
 		case <-ff.done:
-		default:
-			ff.run(f)
-		}
+			ff.wg.Done()
+			return
 
-		return
+		case ff.limiter <- struct{}{}:
+		}
 	}
 
 	select {
 	case <-ff.done:
-	case ff.limiter <- struct{}{}:
-		ff.run(f)
+		ff.wg.Done()
+	default:
+		go ff.run(f)
 	}
 }
 
 func (ff *FailFast) run(f func() error) {
-	ff.wg.Add(1)
-
-	go func() {
-		defer ff.wg.Done()
+	defer ff.wg.Done()
+	if ff.limiter != nil {
 		defer func() { <-ff.limiter }()
+	}
 
-		var err error
+	var err error
 
-		defer func() {
-			if err != nil {
-				ff.close(err)
-			}
-		}()
-
-		defer recoverer.Error(&err)
-
-		err = f()
+	defer func() {
+		if err != nil {
+			ff.close(err)
+		}
 	}()
+
+	defer recoverer.Error(&err)
+
+	err = f()
 }
 
 func (ff *FailFast) Wait() error {
@@ -87,7 +88,9 @@ func (ff *FailFast) Wait() error {
 		close(ff.done)
 	}
 
-	close(ff.limiter)
+	if ff.limiter != nil {
+		close(ff.limiter)
+	}
 
 	return ff.err
 }

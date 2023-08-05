@@ -12,11 +12,20 @@ func TestLimitedGo(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		instance Runner
+		instance *Limiter
 		args     args
 	}{
 		"simple": {
-			NewLimited(2),
+			NewLimiter(-1),
+			args{
+				funcs: []func(){
+					func() {},
+					func() {},
+				},
+			},
+		},
+		"two": {
+			NewLimiter(2),
 			args{
 				funcs: []func(){
 					func() {},
@@ -41,7 +50,7 @@ func TestLimitedGo(t *testing.T) {
 	}
 }
 
-func BenchmarkLimited(b *testing.B) {
+func BenchmarkLimiter(b *testing.B) {
 	funcs := []func(){
 		func() {},
 		func() {},
@@ -49,7 +58,7 @@ func BenchmarkLimited(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		instance := NewLimited(2)
+		instance := NewLimiter(2)
 
 		for _, f := range funcs {
 			instance.Go(f)

@@ -6,35 +6,48 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 )
 
-type Limited struct {
+type Limiter struct {
 	limiter chan struct{}
 	wg      sync.WaitGroup
 }
 
-func NewLimited(limit int) Runner {
-	if limit < 0 {
-		return &Simple{}
+func NewLimiter(limit int) *Limiter {
+	var limiter chan struct{}
+
+	if limit > 0 {
+		limiter = make(chan struct{}, limit)
 	}
 
-	return &Limited{
-		limiter: make(chan struct{}, limit),
+	return &Limiter{
+		limiter: limiter,
 	}
 }
 
-func (l *Limited) Go(f func()) {
+func (l *Limiter) Go(f func()) {
 	l.wg.Add(1)
-	l.limiter <- struct{}{}
 
-	go func() {
-		defer l.wg.Done()
-		defer func() { <-l.limiter }()
-		defer recoverer.Logger()
+	if l.limiter != nil {
+		l.limiter <- struct{}{}
+	}
 
-		f()
-	}()
+	go l.run(f)
 }
 
-func (l *Limited) Wait() {
+func (l *Limiter) run(f func()) {
+	defer l.wg.Done()
+	if l.limiter != nil {
+		defer func() { <-l.limiter }()
+	}
+
+	defer recoverer.Logger()
+
+	f()
+}
+
+func (l *Limiter) Wait() {
 	l.wg.Wait()
-	close(l.limiter)
+
+	if l.limiter != nil {
+		close(l.limiter)
+	}
 }
