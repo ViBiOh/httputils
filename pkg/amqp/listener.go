@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ViBiOh/httputils/v4/pkg/uuid"
+	"github.com/ViBiOh/httputils/v4/pkg/id"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -18,34 +18,26 @@ type listener struct {
 }
 
 func (c *Client) getListener() (*listener, error) {
-	listener, err := c.createListener(c.prefetch)
-	if err != nil {
-		return listener, fmt.Errorf("create listener: %w", err)
-	}
+	listener := c.createListener(c.prefetch)
 
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
-	if err = listener.createChannel(c.connection); err != nil {
+	if err := listener.createChannel(c.connection); err != nil {
 		return listener, err
 	}
 
 	return listener, nil
 }
 
-func (c *Client) createListener(prefetch int) (*listener, error) {
+func (c *Client) createListener(prefetch int) *listener {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
 	var output listener
 
 identity:
-	var err error
-	output.name, err = uuid.New()
-	if err != nil {
-		return &output, fmt.Errorf("generate uuid: %w", err)
-	}
-
+	output.name = id.New()
 	if c.listeners[output.name] != nil {
 		goto identity
 	}
@@ -60,7 +52,7 @@ identity:
 		c.listenerMetric.Inc()
 	}
 
-	return &output, nil
+	return &output
 }
 
 func (l *listener) createChannel(connection Connection) (err error) {

@@ -230,12 +230,18 @@ func (a App) Create(ctx context.Context, query string, args ...any) (id uint64, 
 }
 
 func (a App) Exec(ctx context.Context, query string, args ...any) error {
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+
 	_, err := a.exec(ctx, query, args...)
 
 	return err
 }
 
 func (a App) One(ctx context.Context, query string, args ...any) error {
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+
 	output, err := a.exec(ctx, query, args...)
 	if err != nil {
 		return err
@@ -253,12 +259,10 @@ func (a App) exec(ctx context.Context, query string, args ...any) (command pgcon
 	defer end(&err)
 
 	tx := readTx(ctx)
+
 	if tx == nil {
 		return a.db.Exec(ctx, query, args...)
 	}
-
-	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
-	defer cancel()
 
 	return tx.Exec(ctx, query, args...)
 }
