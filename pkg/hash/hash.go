@@ -1,17 +1,22 @@
-package sha
+package hash
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"hash"
+	"strconv"
+
+	"github.com/zeebo/xxh3"
 )
 
-func New(content any) string {
-	hasher := sha256.New()
+func String(value string) string {
+	return strconv.FormatUint(xxh3.HashString(value), 16)
+}
 
-	// no err check https://golang.org/pkg/hash/#Hash
-	_, _ = fmt.Fprintf(hasher, "%v", content)
+func Hash(content any) string {
+	hasher := xxh3.New()
+
+	fmt.Fprintf(hasher, "%v", content)
 
 	return hex.EncodeToString(hasher.Sum(nil))
 }
@@ -22,7 +27,7 @@ type StreamHasher struct {
 
 func Stream() StreamHasher {
 	return StreamHasher{
-		hasher: sha256.New(),
+		hasher: xxh3.New(),
 	}
 }
 

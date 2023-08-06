@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"sort"
 
-	"github.com/ViBiOh/httputils/v4/pkg/sha"
+	"github.com/ViBiOh/httputils/v4/pkg/hash"
 )
 
 type TemplateFunc = func(http.ResponseWriter, *http.Request) (Page, error)
@@ -26,7 +26,7 @@ func NewPage(template string, status int, content map[string]any) Page {
 }
 
 func (p Page) etag() string {
-	streamer := sha.Stream()
+	streamer := hash.Stream()
 
 	streamer.WriteString(p.Template)
 	streamer.Write(p.Status)
