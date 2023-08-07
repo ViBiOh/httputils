@@ -29,20 +29,24 @@ type App struct {
 }
 
 type Config struct {
-	address  *string
-	username *string
-	password *string
-	alias    *string
-	database *int
+	address     *string
+	username    *string
+	password    *string
+	alias       *string
+	database    *int
+	poolSize    *int
+	minIdleConn *int
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		address:  flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").String(fs, "localhost:6379", overrides),
-		username: flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
-		password: flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
-		database: flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
-		alias:    flags.New("Alias", "Connection alias, for metric").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
+		address:     flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").String(fs, "localhost:6379", overrides),
+		username:    flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
+		password:    flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
+		database:    flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
+		poolSize:    flags.New("PoolSize", "Redis Pool Size (default GOMAXPROCS*10)").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
+		minIdleConn: flags.New("MinIdleConn", "Redis Minimum Idle Connections").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
+		alias:       flags.New("Alias", "Connection alias, for metric").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
 	}
 }
 
@@ -52,19 +56,19 @@ func New(config Config, tracer trace.TracerProvider) (Client, error) {
 		return Noop{}, nil
 	}
 
-	client := redis.NewClient(&redis.Options{
-		Addr:     address,
-		Username: *config.username,
-		Password: *config.password,
-		DB:       *config.database,
-	})
-
 	app := &App{
-		client: client,
+		client: redis.NewClient(&redis.Options{
+			Addr:         address,
+			Username:     *config.username,
+			Password:     *config.password,
+			DB:           *config.database,
+			PoolSize:     *config.poolSize,
+			MinIdleConns: *config.minIdleConn,
+		}),
 	}
 
 	if !model.IsNil(tracer) {
-		if err := redisotel.InstrumentTracing(client, redisotel.WithTracerProvider(tracer)); err != nil {
+		if err := redisotel.InstrumentTracing(app.client, redisotel.WithTracerProvider(tracer)); err != nil {
 			defer app.Close()
 
 			return Noop{}, fmt.Errorf("tracing: %w", err)
