@@ -8,6 +8,7 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
@@ -44,18 +45,12 @@ type App[K comparable, V any] struct {
 	concurrency int
 }
 
-func New[K comparable, V any](read, write RedisClient, toKey func(K) string, onMiss fetch[K, V], ttl time.Duration, concurrency int, tracer trace.Tracer) *App[K, V] {
-	if read != nil && !read.Enabled() {
-		read = nil
-	}
-
-	if write != nil && !write.Enabled() {
-		write = nil
-	}
+func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], ttl time.Duration, concurrency int, tracer trace.Tracer) *App[K, V] {
+	client = getClient(client)
 
 	return &App[K, V]{
-		read:        read,
-		write:       write,
+		read:        client,
+		write:       client,
 		toKey:       toKey,
 		serializer:  JSONSerializer[V]{},
 		onMiss:      onMiss,
@@ -75,6 +70,20 @@ func (a *App[K, V]) WithSerializer(serializer Serializer[V]) *App[K, V] {
 	a.serializer = serializer
 
 	return a
+}
+
+func (a *App[K, V]) WithRead(client RedisClient) *App[K, V] {
+	a.read = getClient(client)
+
+	return a
+}
+
+func getClient(client RedisClient) RedisClient {
+	if !model.IsNil(client) && client.Enabled() {
+		return client
+	}
+
+	return nil
 }
 
 func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
