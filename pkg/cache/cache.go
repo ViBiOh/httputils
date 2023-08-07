@@ -34,7 +34,8 @@ type (
 
 type App[K comparable, V any] struct {
 	tracer      trace.Tracer
-	client      RedisClient
+	read        RedisClient
+	write       RedisClient
 	toKey       func(K) string
 	serializer  Serializer[V]
 	onMiss      fetch[K, V]
@@ -43,9 +44,18 @@ type App[K comparable, V any] struct {
 	concurrency int
 }
 
-func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], ttl time.Duration, concurrency int, tracer trace.Tracer) *App[K, V] {
+func New[K comparable, V any](read, write RedisClient, toKey func(K) string, onMiss fetch[K, V], ttl time.Duration, concurrency int, tracer trace.Tracer) *App[K, V] {
+	if read != nil && !read.Enabled() {
+		read = nil
+	}
+
+	if write != nil && !write.Enabled() {
+		write = nil
+	}
+
 	return &App[K, V]{
-		client:      client,
+		read:        read,
+		write:       write,
 		toKey:       toKey,
 		serializer:  JSONSerializer[V]{},
 		onMiss:      onMiss,
@@ -68,7 +78,7 @@ func (a *App[K, V]) WithSerializer(serializer Serializer[V]) *App[K, V] {
 }
 
 func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
-	if !a.client.Enabled() || IsBypassed(ctx) {
+	if a.read == nil || IsBypassed(ctx) {
 		return a.onMiss(ctx, id)
 	}
 
@@ -82,7 +92,7 @@ func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	loadCtx, cancel := context.WithTimeout(ctx, syncActionTimeout)
 	defer cancel()
 
-	if content, err := a.client.Load(loadCtx, key); err != nil {
+	if content, err := a.read.Load(loadCtx, key); err != nil {
 		if errors.Is(err, context.Canceled) {
 			loggerWithTrace(ctx, key).Warn("load from cache: %s", err)
 		} else {
@@ -100,7 +110,7 @@ func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
 }
 
 func (a *App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
-	if err != nil || !a.client.Enabled() {
+	if err != nil || a.write == nil {
 		return err
 	}
 
@@ -109,7 +119,7 @@ func (a *App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error
 
 	key := a.toKey(item)
 
-	if err = a.client.Delete(ctx, key); err != nil {
+	if err = a.write.Delete(ctx, key); err != nil {
 		return fmt.Errorf("evict key `%s` from cache: %w", key, err)
 	}
 
@@ -124,7 +134,7 @@ func (a *App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 
 	value, err := a.onMiss(ctx, id)
 
-	if err == nil {
+	if err == nil && a.write != nil {
 		go doInBackground(cntxt.WithoutDeadline(ctx), "store to cache", func(ctx context.Context) error {
 			return a.store(ctx, id, value)
 		})
@@ -147,8 +157,12 @@ func (a *App[K, V]) decode(content []byte) (value V, ok bool, err error) {
 }
 
 func (a *App[K, V]) extendTTL(ctx context.Context, keys ...string) {
+	if a.write == nil {
+		return
+	}
+
 	go doInBackground(cntxt.WithoutDeadline(ctx), "extend ttl", func(ctx context.Context) error {
-		return a.client.Expire(ctx, a.ttl, keys...)
+		return a.write.Expire(ctx, a.ttl, keys...)
 	})
 }
 

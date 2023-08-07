@@ -120,6 +120,7 @@ func TestGet(t *testing.T) {
 
 			mockRedisClient := mocks.NewRedisClient(ctrl)
 			mockRedisClient.EXPECT().Enabled().Return(true)
+			mockRedisClient.EXPECT().Enabled().Return(true)
 
 			switch intention {
 			case "cache error":
@@ -146,7 +147,7 @@ func TestGet(t *testing.T) {
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			}
 
-			instance := New(mockRedisClient, strconv.Itoa, testCase.args.onMiss, testCase.args.duration, -1, nil)
+			instance := New(mockRedisClient, mockRedisClient, strconv.Itoa, testCase.args.onMiss, testCase.args.duration, -1, nil)
 
 			got, gotErr := instance.Get(context.Background(), testCase.args.key)
 
@@ -218,13 +219,14 @@ func TestGetError(t *testing.T) {
 
 			mockRedisClient := mocks.NewRedisClient(ctrl)
 			mockRedisClient.EXPECT().Enabled().Return(true)
+			mockRedisClient.EXPECT().Enabled().Return(true)
 
 			switch intention {
 			case "marshal error":
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return(nil, nil)
 			}
 
-			instance := New(mockRedisClient, strconv.Itoa, testCase.args.onMiss, testCase.args.duration, -1, nil)
+			instance := New(mockRedisClient, mockRedisClient, strconv.Itoa, testCase.args.onMiss, testCase.args.duration, -1, nil)
 
 			got, gotErr := instance.Get(context.Background(), testCase.args.key)
 
@@ -292,16 +294,14 @@ func TestEvictOnSuccess(t *testing.T) {
 
 			switch intention {
 			case "evict":
-				mockRedisClient.EXPECT().Enabled().Return(true)
 				mockRedisClient.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil)
 			case "evict error":
-				mockRedisClient.EXPECT().Enabled().Return(true)
 				mockRedisClient.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(errors.New("redis failed"))
 			}
 
 			instance := App[int, jsonErrorItem]{
-				client: mockRedisClient,
-				toKey:  strconv.Itoa,
+				write: mockRedisClient,
+				toKey: strconv.Itoa,
 			}
 
 			gotErr := instance.EvictOnSuccess(context.Background(), 8000, testCase.args.err)

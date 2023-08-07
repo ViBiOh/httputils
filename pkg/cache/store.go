@@ -9,7 +9,7 @@ import (
 )
 
 func (a App[K, V]) Store(ctx context.Context, id K, value V) error {
-	if !a.client.Enabled() {
+	if a.write == nil {
 		return nil
 	}
 
@@ -28,7 +28,7 @@ func (a App[K, V]) store(ctx context.Context, id K, value V) (err error) {
 		return fmt.Errorf("encoding: %w", err)
 	}
 
-	if err = a.client.Store(ctx, a.toKey(id), payload, a.ttl); err != nil {
+	if err = a.write.Store(ctx, a.toKey(id), payload, a.ttl); err != nil {
 		return fmt.Errorf("store: %w", err)
 	}
 
@@ -41,7 +41,7 @@ func (a App[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes I
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "store_many", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
-	pipeline := a.client.Pipeline()
+	pipeline := a.write.Pipeline()
 
 	for _, index := range indexes {
 		id := ids[index]

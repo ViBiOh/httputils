@@ -21,7 +21,7 @@ func newPort(config configuration, client client, adapter adapter) port {
 
 	portTracer := client.tracer.GetTracer("port")
 
-	simpleCache := cache.New(client.redis, func(id string) string { return id }, func(ctx context.Context, id string) (string, error) {
+	simpleCache := cache.New(client.redis, client.redis, func(id string) string { return id }, func(ctx context.Context, id string) (string, error) {
 		_, end := tracer.StartSpan(ctx, portTracer, "onMiss", trace.WithSpanKind(trace.SpanKindInternal))
 		defer end(nil)
 

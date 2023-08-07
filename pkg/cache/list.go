@@ -28,7 +28,7 @@ func (ii IndexedItems[K]) Items() []K {
 
 // If onMissError returns false, List stops by returning an error
 func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) (outputs []V, err error) {
-	if !a.client.Enabled() || IsBypassed(ctx) {
+	if a.read == nil || IsBypassed(ctx) {
 		if a.onMissMany == nil {
 			return a.listRaw(ctx, onMissError, items...)
 		}
@@ -164,7 +164,7 @@ func (a App[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) 
 	loadCtx, cancel := context.WithTimeout(ctx, syncActionTimeout)
 	defer cancel()
 
-	values, err := a.client.LoadMany(loadCtx, keys...)
+	values, err := a.read.LoadMany(loadCtx, keys...)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			loggerWithTrace(ctx, strconv.Itoa(len(keys))).Warn("load many from cache: %s", err)
