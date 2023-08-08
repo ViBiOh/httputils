@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/ViBiOh/flags"
@@ -25,11 +24,12 @@ const (
 var ErrNoSubscriber = errors.New("no subscriber for channel")
 
 type App struct {
-	client redis.UniversalClient
+	client    redis.UniversalClient
+	isCluster bool
 }
 
 type Config struct {
-	address     *string
+	address     *[]string
 	username    *string
 	password    *string
 	alias       *string
@@ -40,7 +40,7 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		address:     flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").String(fs, "localhost:6379", overrides),
+		address:     flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").StringSlice(fs, []string{"localhost:6379"}, overrides),
 		username:    flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
 		password:    flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
 		database:    flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
@@ -51,14 +51,14 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 func New(config Config, tracer trace.TracerProvider) (Client, error) {
-	address := strings.TrimSpace(*config.address)
-	if len(address) == 0 {
+	if len(*config.address) == 0 {
 		return Noop{}, nil
 	}
 
 	app := &App{
-		client: redis.NewClient(&redis.Options{
-			Addr:         address,
+		isCluster: len(*config.address) > 1,
+		client: redis.NewUniversalClient(&redis.UniversalOptions{
+			Addrs:        *config.address,
 			Username:     *config.username,
 			Password:     *config.password,
 			DB:           *config.database,
@@ -113,6 +113,31 @@ func (a *App) Load(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (a *App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
+	if !a.isCluster {
+		return a.mget(ctx, keys...)
+	}
+
+	return a.pipelinedGet(ctx, keys...)
+}
+
+func (a *App) mget(ctx context.Context, keys ...string) ([]string, error) {
+	results, err := a.client.MGet(ctx, keys...).Result()
+	if err != nil {
+		return nil, fmt.Errorf("mget: %w", err)
+	}
+
+	output := make([]string, len(results))
+
+	for index, result := range results {
+		if value, ok := result.(string); ok {
+			output[index] = value
+		}
+	}
+
+	return output, nil
+}
+
+func (a *App) pipelinedGet(ctx context.Context, keys ...string) ([]string, error) {
 	pipeline := a.client.Pipeline()
 
 	commands := make([]*redis.StringCmd, len(keys))

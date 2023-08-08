@@ -13,7 +13,7 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -address string\n    \t[redis] Redis Address host:port (blank to disable) ${SIMPLE_ADDRESS} (default \"localhost:6379\")\n  -alias string\n    \t[redis] Connection alias, for metric ${SIMPLE_ALIAS}\n  -database int\n    \t[redis] Redis Database ${SIMPLE_DATABASE}\n  -minIdleConn int\n    \t[redis] Redis Minimum Idle Connections ${SIMPLE_MIN_IDLE_CONN}\n  -password string\n    \t[redis] Redis Password, if any ${SIMPLE_PASSWORD}\n  -poolSize int\n    \t[redis] Redis Pool Size (default GOMAXPROCS*10) ${SIMPLE_POOL_SIZE}\n  -username string\n    \t[redis] Redis Username, if any ${SIMPLE_USERNAME}\n",
+			"Usage of simple:\n  -address string slice\n    \t[redis] Redis Address host:port (blank to disable) ${SIMPLE_ADDRESS}, as a string slice, environment variable separated by \",\" (default [localhost:6379])\n  -alias string\n    \t[redis] Connection alias, for metric ${SIMPLE_ALIAS}\n  -database int\n    \t[redis] Redis Database ${SIMPLE_DATABASE}\n  -minIdleConn int\n    \t[redis] Redis Minimum Idle Connections ${SIMPLE_MIN_IDLE_CONN}\n  -password string\n    \t[redis] Redis Password, if any ${SIMPLE_PASSWORD}\n  -poolSize int\n    \t[redis] Redis Pool Size (default GOMAXPROCS*10) ${SIMPLE_POOL_SIZE}\n  -username string\n    \t[redis] Redis Username, if any ${SIMPLE_USERNAME}\n",
 		},
 	}
 
