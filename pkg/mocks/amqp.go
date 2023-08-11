@@ -7,8 +7,8 @@ package mocks
 import (
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
 	amqp091 "github.com/rabbitmq/amqp091-go"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // AMQPConnection is a mock of Connection interface.

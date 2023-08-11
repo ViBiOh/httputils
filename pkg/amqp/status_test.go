@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/ViBiOh/httputils/v4/pkg/mocks"
-	"github.com/golang/mock/gomock"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.uber.org/mock/gomock"
 )
 
 func TestEnabled(t *testing.T) {

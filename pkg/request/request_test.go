@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/mocks"
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 )
 
 type testStruct struct {

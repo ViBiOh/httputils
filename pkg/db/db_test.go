@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/ViBiOh/httputils/v4/pkg/mocks"
-	"github.com/golang/mock/gomock"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/mock/gomock"
 )
 
 func TestFlags(t *testing.T) {
