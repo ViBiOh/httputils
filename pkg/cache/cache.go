@@ -43,21 +43,18 @@ type App[K comparable, V any] struct {
 	onMissMany  fetchMany[K, V]
 	ttl         time.Duration
 	concurrency int
-	extendOnHit bool
 }
 
-func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], ttl time.Duration, concurrency int, tracer trace.Tracer) *App[K, V] {
+func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], tracer trace.Tracer) *App[K, V] {
 	client = getClient(client)
 
 	return &App[K, V]{
-		read:        client,
-		write:       client,
-		toKey:       toKey,
-		serializer:  JSONSerializer[V]{},
-		onMiss:      onMiss,
-		ttl:         ttl,
-		concurrency: concurrency,
-		tracer:      tracer,
+		read:       client,
+		write:      client,
+		toKey:      toKey,
+		serializer: JSONSerializer[V]{},
+		onMiss:     onMiss,
+		tracer:     tracer,
 	}
 }
 
@@ -79,8 +76,14 @@ func (a *App[K, V]) WithRead(client RedisClient) *App[K, V] {
 	return a
 }
 
-func (a *App[K, V]) WithExtendOnHit() *App[K, V] {
-	a.extendOnHit = true
+func (a *App[K, V]) WithTTL(ttl time.Duration) *App[K, V] {
+	a.ttl = ttl
+
+	return a
+}
+
+func (a *App[K, V]) WithMaxConcurrency(concurrency int) *App[K, V] {
+	a.concurrency = concurrency
 
 	return a
 }
@@ -117,9 +120,7 @@ func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	} else if value, ok, err := a.decode([]byte(content)); err != nil {
 		logUnmarshallError(ctx, key, err)
 	} else if ok {
-		if a.extendOnHit {
-			a.extendTTL(ctx, key)
-		}
+		a.extendTTL(ctx, key)
 
 		return value, nil
 	}
@@ -175,7 +176,7 @@ func (a *App[K, V]) decode(content []byte) (value V, ok bool, err error) {
 }
 
 func (a *App[K, V]) extendTTL(ctx context.Context, keys ...string) {
-	if a.write == nil || len(keys) == 0 {
+	if a.write == nil || len(keys) == 0 || a.ttl == 0 {
 		return
 	}
 

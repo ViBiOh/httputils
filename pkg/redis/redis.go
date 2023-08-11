@@ -96,7 +96,7 @@ func (a *App) Ping(ctx context.Context) error {
 }
 
 func (a *App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
-	return a.client.SetEx(ctx, key, value, duration).Err()
+	return a.client.Set(ctx, key, value, duration).Err()
 }
 
 func (a *App) Load(ctx context.Context, key string) ([]byte, error) {
@@ -162,6 +162,10 @@ func (a *App) pipelinedGet(ctx context.Context, keys ...string) ([]string, error
 }
 
 func (a *App) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {
+	if len(keys) == 0 {
+		return nil
+	}
+
 	pipeline := a.client.Pipeline()
 
 	for _, key := range keys {
@@ -172,6 +176,10 @@ func (a *App) Expire(ctx context.Context, ttl time.Duration, keys ...string) err
 }
 
 func (a *App) Delete(ctx context.Context, keys ...string) (err error) {
+	if len(keys) == 0 {
+		return nil
+	}
+
 	pipeline := a.client.Pipeline()
 
 	for _, key := range keys {

@@ -44,7 +44,6 @@ func TestGet(t *testing.T) {
 						ID: 8000,
 					}, nil
 				},
-				duration: time.Minute,
 			},
 			cacheableItem{
 				ID: 8000,
@@ -59,7 +58,6 @@ func TestGet(t *testing.T) {
 						ID: 8000,
 					}, nil
 				},
-				duration: time.Minute,
 			},
 			cacheableItem{
 				ID: 8000,
@@ -67,6 +65,19 @@ func TestGet(t *testing.T) {
 			nil,
 		},
 		"cached": {
+			args{
+				key: 8000,
+				onMiss: func(_ context.Context, id int) (cacheableItem, error) {
+					return cacheableItem{}, nil
+				},
+				duration: time.Minute,
+			},
+			cacheableItem{
+				ID: 8000,
+			},
+			nil,
+		},
+		"cached no extend": {
 			args{
 				key: 8000,
 				onMiss: func(_ context.Context, id int) (cacheableItem, error) {
@@ -86,7 +97,6 @@ func TestGet(t *testing.T) {
 						ID: 8000,
 					}, nil
 				},
-				duration: time.Minute,
 			},
 			cacheableItem{
 				ID: 8000,
@@ -148,10 +158,7 @@ func TestGet(t *testing.T) {
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			}
 
-			instance := New(mockRedisClient, strconv.Itoa, testCase.args.onMiss, testCase.args.duration, -1, nil)
-			if intention == "cached" {
-				instance = instance.WithExtendOnHit()
-			}
+			instance := New(mockRedisClient, strconv.Itoa, testCase.args.onMiss, nil).WithTTL(testCase.args.duration)
 
 			got, gotErr := instance.Get(context.Background(), testCase.args.key)
 
@@ -229,7 +236,7 @@ func TestGetError(t *testing.T) {
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return(nil, nil)
 			}
 
-			instance := New(mockRedisClient, strconv.Itoa, testCase.args.onMiss, testCase.args.duration, -1, nil)
+			instance := New(mockRedisClient, strconv.Itoa, testCase.args.onMiss, nil).WithTTL(testCase.args.duration)
 
 			got, gotErr := instance.Get(context.Background(), testCase.args.key)
 
