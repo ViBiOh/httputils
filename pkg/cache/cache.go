@@ -43,6 +43,7 @@ type App[K comparable, V any] struct {
 	onMissMany  fetchMany[K, V]
 	ttl         time.Duration
 	concurrency int
+	extendOnHit bool
 }
 
 func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], ttl time.Duration, concurrency int, tracer trace.Tracer) *App[K, V] {
@@ -74,6 +75,12 @@ func (a *App[K, V]) WithSerializer(serializer Serializer[V]) *App[K, V] {
 
 func (a *App[K, V]) WithRead(client RedisClient) *App[K, V] {
 	a.read = getClient(client)
+
+	return a
+}
+
+func (a *App[K, V]) WithExtendOnHit() *App[K, V] {
+	a.extendOnHit = true
 
 	return a
 }
@@ -110,7 +117,9 @@ func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	} else if value, ok, err := a.decode([]byte(content)); err != nil {
 		logUnmarshallError(ctx, key, err)
 	} else if ok {
-		a.extendTTL(ctx, key)
+		if a.extendOnHit {
+			a.extendTTL(ctx, key)
+		}
 
 		return value, nil
 	}
@@ -166,7 +175,7 @@ func (a *App[K, V]) decode(content []byte) (value V, ok bool, err error) {
 }
 
 func (a *App[K, V]) extendTTL(ctx context.Context, keys ...string) {
-	if a.write == nil {
+	if a.write == nil || len(keys) == 0 {
 		return
 	}
 

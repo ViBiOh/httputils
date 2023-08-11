@@ -95,7 +95,10 @@ func (a App[K, V]) handleListSingle(ctx context.Context, onMissError func(K, err
 			value, ok, err := a.decode([]byte(values[index]))
 			if ok {
 				output[index] = value
-				extendKeys = append(extendKeys, keys[index])
+
+				if a.extendOnHit {
+					extendKeys = append(extendKeys, keys[index])
+				}
 
 				return nil
 			}
@@ -127,7 +130,10 @@ func (a App[K, V]) handleListMany(ctx context.Context, items []K, keys, values [
 	for index, item := range items {
 		if value, ok, err := a.decode([]byte(values[index])); ok {
 			output[index] = value
-			extendKeys = append(extendKeys, keys[index])
+
+			if a.extendOnHit {
+				extendKeys = append(extendKeys, keys[index])
+			}
 
 			continue
 		} else if err != nil {

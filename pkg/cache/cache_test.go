@@ -131,6 +131,8 @@ func TestGet(t *testing.T) {
 			case "cached":
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return([]byte(`{"id":8000}`), nil)
 				mockRedisClient.EXPECT().Expire(gomock.Any(), testCase.args.duration, gomock.Any()).Return(nil)
+			case "cached no extend":
+				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return([]byte(`{"id":8000}`), nil)
 			case "store error":
 				mockRedisClient.EXPECT().Load(gomock.Any(), gomock.Any()).Return(nil, nil)
 				mockRedisClient.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("store error"))
@@ -147,6 +149,9 @@ func TestGet(t *testing.T) {
 			}
 
 			instance := New(mockRedisClient, strconv.Itoa, testCase.args.onMiss, testCase.args.duration, -1, nil)
+			if intention == "cached" {
+				instance = instance.WithExtendOnHit()
+			}
 
 			got, gotErr := instance.Get(context.Background(), testCase.args.key)
 
