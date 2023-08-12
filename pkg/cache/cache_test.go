@@ -159,6 +159,9 @@ func TestGet(t *testing.T) {
 			}
 
 			instance := New(mockRedisClient, strconv.Itoa, testCase.args.onMiss, nil).WithTTL(testCase.args.duration)
+			if intention == "cached" {
+				instance = instance.WithExtendOnHit()
+			}
 
 			got, gotErr := instance.Get(context.Background(), testCase.args.key)
 

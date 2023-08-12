@@ -96,7 +96,7 @@ func (a App[K, V]) handleListSingle(ctx context.Context, onMissError func(K, err
 			if ok {
 				output[index] = value
 
-				if a.ttl != 0 {
+				if a.ttl != 0 && a.extendOnHit {
 					extendKeys = append(extendKeys, keys[index])
 				}
 
@@ -131,7 +131,7 @@ func (a App[K, V]) handleListMany(ctx context.Context, items []K, keys, values [
 		if value, ok, err := a.decode([]byte(values[index])); ok {
 			output[index] = value
 
-			if a.ttl != 0 {
+			if a.ttl != 0 && a.extendOnHit {
 				extendKeys = append(extendKeys, keys[index])
 			}
 

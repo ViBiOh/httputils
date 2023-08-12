@@ -43,6 +43,7 @@ type App[K comparable, V any] struct {
 	onMissMany  fetchMany[K, V]
 	ttl         time.Duration
 	concurrency int
+	extendOnHit bool
 }
 
 func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], tracer trace.Tracer) *App[K, V] {
@@ -78,6 +79,12 @@ func (a *App[K, V]) WithRead(client RedisClient) *App[K, V] {
 
 func (a *App[K, V]) WithTTL(ttl time.Duration) *App[K, V] {
 	a.ttl = ttl
+
+	return a
+}
+
+func (a *App[K, V]) WithExtendOnHit() *App[K, V] {
+	a.extendOnHit = true
 
 	return a
 }
@@ -176,7 +183,7 @@ func (a *App[K, V]) decode(content []byte) (value V, ok bool, err error) {
 }
 
 func (a *App[K, V]) extendTTL(ctx context.Context, keys ...string) {
-	if a.write == nil || len(keys) == 0 || a.ttl == 0 {
+	if a.write == nil || !a.extendOnHit || a.ttl == 0 || len(keys) == 0 {
 		return
 	}
 
