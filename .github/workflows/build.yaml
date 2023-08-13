@@ -32,6 +32,14 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -51,6 +59,9 @@ jobs:
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
+    if: env.SONAR_TOKEN
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -66,6 +77,10 @@ jobs:
   package:
     name: Docker
     runs-on: ubuntu-latest
+    if: env.DOCKER_USER && env.DOCKER_PASS
+    env:
+      DOCKER_USER: ${{ secrets.DOCKER_USER }}
+      DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -83,34 +98,26 @@ jobs:
       - name: Setup Docker
         uses: docker/setup-buildx-action@v2
       - name: Setup DockerHub
-        if: env.DOCKER_USER && env.DOCKER_PASS
-        env:
-          DOCKER_USER: ${{ secrets.DOCKER_USER }}
-          DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASS }}
       - name: Docker
-        if: env.DOCKER_USER && env.DOCKER_PASS
-        env:
-          DOCKER_USER: ${{ secrets.DOCKER_USER }}
-          DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
         run: |
           DOCKER_IMAGE="${{ secrets.DOCKER_USER }}/scratch" IMAGE_VERSION="$(make version)" ./scripts/release docker
 
   publish:
     name: Publish
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.DOCKER_USER && env.DOCKER_PASS
+    env:
+      DOCKER_USER: ${{ secrets.DOCKER_USER }}
+      DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
     needs: package
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Publish
-        env:
-          DOCKER_USER: ${{ secrets.DOCKER_USER }}
-          DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
         run: |
           curl --disable --silent --show-error --location --max-time 30 "https://raw.githubusercontent.com/ViBiOh/scripts/main/bootstrap" | bash -s -- "-c" "docker_promote"
           scripts/docker_promote "${{ secrets.DOCKER_USER }}/scratch" "$(make version)"
