@@ -40,7 +40,7 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		address:     flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").StringSlice(fs, []string{"localhost:6379"}, overrides),
+		address:     flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").StringSlice(fs, []string{"127.0.0.1:6379"}, overrides),
 		username:    flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
 		password:    flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
 		database:    flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),

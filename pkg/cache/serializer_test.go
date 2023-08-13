@@ -21,20 +21,6 @@ func BenchmarkJSONDeserializer(b *testing.B) {
 	}
 }
 
-func BenchmarkGobDeserializer(b *testing.B) {
-	content := getRepository(b)
-
-	var instance cache.GobSerializer[Repository]
-
-	payload, err := instance.Encode(content)
-	assert.NoError(b, err)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = instance.Decode(payload)
-	}
-}
-
 func BenchmarkStringDeserializer(b *testing.B) {
 	var instance cache.StringSerializer
 

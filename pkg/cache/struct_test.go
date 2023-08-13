@@ -3,6 +3,7 @@ package cache_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -16,6 +17,10 @@ func fetchRepository(_ context.Context, id int) (Repository, error) {
 	output.ID = id
 
 	return output, err
+}
+
+func noFetch(_ context.Context, _ int) (Repository, error) {
+	return Repository{}, errors.New("not implemented")
 }
 
 func getRepository(t testing.TB) Repository {

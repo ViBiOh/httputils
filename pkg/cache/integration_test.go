@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/cache"
 	"github.com/ViBiOh/httputils/v4/pkg/test"
@@ -41,14 +42,23 @@ func TestSuite(t *testing.T) {
 }
 
 func (s *Suite) TestGet() {
-	s.Run("success", func() {
-		instance := cache.New(s.integration.Client(), func(id int) string { return strconv.Itoa(id) }, fetchRepository, nil)
-
-		got, err := instance.Get(context.Background(), 99679090)
-		assert.NoError(s.T(), err)
-
+	s.Run("fetch and store", func() {
+		id := 99679090
 		expected := getRepository(s.T())
 
+		instance := cache.New(s.integration.Client(), func(id int) string { return strconv.Itoa(id) }, fetchRepository, nil)
+
+		got, err := instance.Get(context.Background(), id)
+		assert.NoError(s.T(), err)
+		assert.Equal(s.T(), expected, got)
+
+		// Wait for async save
+		time.Sleep(time.Second)
+
+		instance = cache.New(s.integration.Client(), func(id int) string { return strconv.Itoa(id) }, noFetch, nil)
+
+		got, err = instance.Get(context.Background(), id)
+		assert.NoError(s.T(), err)
 		assert.Equal(s.T(), expected, got)
 	})
 }
