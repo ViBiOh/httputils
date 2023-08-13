@@ -51,6 +51,7 @@ jobs:
 
       - name: Build
         run: |
+          make config
           make
           git --no-pager diff -- ':(exclude)go.sum' && git diff --quiet -- ':(exclude)go.sum'
       - name: Codecov

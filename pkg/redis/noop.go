@@ -20,6 +20,10 @@ func (n Noop) Close() {
 	// noop
 }
 
+func (n Noop) FlushAll(_ context.Context) error {
+	return nil
+}
+
 func (n Noop) Ping(_ context.Context) error {
 	return nil
 }

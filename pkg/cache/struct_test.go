@@ -1,12 +1,22 @@
 package cache_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func fetchRepository(_ context.Context, id int) (Repository, error) {
+	var output Repository
+
+	err := json.Unmarshal([]byte(githubRepoPayload), &output)
+	output.ID = id
+
+	return output, err
+}
 
 func getRepository(t testing.TB) Repository {
 	t.Helper()

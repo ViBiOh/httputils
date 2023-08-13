@@ -88,6 +88,10 @@ func (a *App) Close() {
 	}
 }
 
+func (a *App) FlushAll(ctx context.Context) error {
+	return a.client.FlushAll(ctx).Err()
+}
+
 func (a *App) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()

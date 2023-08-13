@@ -10,6 +10,7 @@ import (
 type Client interface {
 	Enabled() bool
 	Close()
+	FlushAll(context.Context) error
 	Ping(ctx context.Context) error
 	Load(ctx context.Context, key string) ([]byte, error)
 	LoadMany(ctx context.Context, keys ...string) ([]string, error)
