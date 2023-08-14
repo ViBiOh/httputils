@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"log/slog"
 	"time"
 )
 
@@ -13,11 +14,11 @@ type event struct {
 	timestamp time.Time
 	message   string
 	fields    []field
-	level     level
+	level     slog.Level
 }
 
 type FieldsContext struct {
-	outputFn func(level, []field, string, ...any)
+	outputFn func(slog.Level, []field, string, ...any)
 	closeFn  func()
 	fields   []field
 }
@@ -31,24 +32,20 @@ func (f FieldsContext) WithField(name string, value any) Provider {
 	return f
 }
 
-func (f FieldsContext) Trace(format string, a ...any) {
-	f.outputFn(levelTrace, f.fields, format, a...)
-}
-
 func (f FieldsContext) Debug(format string, a ...any) {
-	f.outputFn(levelDebug, f.fields, format, a...)
+	f.outputFn(slog.LevelDebug, f.fields, format, a...)
 }
 
 func (f FieldsContext) Info(format string, a ...any) {
-	f.outputFn(levelInfo, f.fields, format, a...)
+	f.outputFn(slog.LevelInfo, f.fields, format, a...)
 }
 
 func (f FieldsContext) Warn(format string, a ...any) {
-	f.outputFn(levelWarning, f.fields, format, a...)
+	f.outputFn(slog.LevelWarn, f.fields, format, a...)
 }
 
 func (f FieldsContext) Error(format string, a ...any) {
-	f.outputFn(levelError, f.fields, format, a...)
+	f.outputFn(slog.LevelError, f.fields, format, a...)
 }
 
 func (f FieldsContext) Fatal(err error) {
@@ -56,7 +53,7 @@ func (f FieldsContext) Fatal(err error) {
 		return
 	}
 
-	f.outputFn(levelFatal, f.fields, "%s", err)
+	f.outputFn(slog.LevelError, f.fields, "%s", err)
 	f.closeFn()
 
 	exitFunc(1)

@@ -2,9 +2,11 @@ package logger
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"runtime"
 	"time"
@@ -48,7 +50,7 @@ type Logger struct {
 	outputBuffer *bytes.Buffer
 	dateBuffer   []byte
 
-	level      level
+	level      slog.Level
 	jsonFormat bool
 }
 
@@ -63,12 +65,13 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 }
 
 func init() {
-	logger = newLogger(os.Stdout, os.Stderr, levelInfo, false, "time", "level", "message")
+	logger = newLogger(os.Stdout, os.Stderr, slog.LevelInfo, false, "time", "level", "message")
 	go logger.Start()
 }
 
 func New(config Config) *Logger {
-	level, err := parseLevel(*config.level)
+	var level slog.Level
+	err := level.UnmarshalText([]byte(*config.level))
 
 	logger := newLogger(os.Stdout, os.Stderr, level, *config.json, *config.timeKey, *config.levelKey, *config.messageKey)
 
@@ -81,7 +84,7 @@ func New(config Config) *Logger {
 	return logger
 }
 
-func newLogger(outWriter, errWriter io.Writer, lev level, json bool, timeKey, levelKey, messageKey string) *Logger {
+func newLogger(outWriter, errWriter io.Writer, lev slog.Level, json bool, timeKey, levelKey, messageKey string) *Logger {
 	return &Logger{
 		clock: time.Now,
 
@@ -122,7 +125,7 @@ func (l *Logger) Start() {
 			}
 		}
 
-		if e.level <= levelInfo {
+		if e.level <= slog.LevelInfo {
 			_, err = l.outWriter.Write(payload)
 		} else {
 			_, err = l.errWriter.Write(payload)
@@ -136,15 +139,19 @@ func (l *Logger) Start() {
 	close(l.done)
 }
 
-func getColor(level level) []byte {
+func getColor(level slog.Level) []byte {
 	switch level {
-	case levelWarning:
+	case slog.LevelWarn:
 		return colorYellow
-	case levelError, levelFatal:
+	case slog.LevelError:
 		return colorRed
 	default:
 		return nil
 	}
+}
+
+func (l *Logger) Enabled(ctx context.Context, lev slog.Level) bool {
+	return l.level <= lev
 }
 
 func (l *Logger) Close() {
@@ -152,44 +159,36 @@ func (l *Logger) Close() {
 	<-l.done
 }
 
-func (l *Logger) Trace(format string, a ...any) {
-	if l.isIgnored(levelTrace) {
-		return
-	}
-
-	l.output(levelTrace, nil, format, a...)
-}
-
 func (l *Logger) Debug(format string, a ...any) {
-	if l.isIgnored(levelDebug) {
+	if l.isIgnored(slog.LevelDebug) {
 		return
 	}
 
-	l.output(levelDebug, nil, format, a...)
+	l.output(slog.LevelDebug, nil, format, a...)
 }
 
 func (l *Logger) Info(format string, a ...any) {
-	if l.isIgnored(levelInfo) {
+	if l.isIgnored(slog.LevelInfo) {
 		return
 	}
 
-	l.output(levelInfo, nil, format, a...)
+	l.output(slog.LevelInfo, nil, format, a...)
 }
 
 func (l *Logger) Warn(format string, a ...any) {
-	if l.isIgnored(levelWarning) {
+	if l.isIgnored(slog.LevelWarn) {
 		return
 	}
 
-	l.output(levelWarning, nil, format, a...)
+	l.output(slog.LevelWarn, nil, format, a...)
 }
 
 func (l *Logger) Error(format string, a ...any) {
-	if l.isIgnored(levelError) {
+	if l.isIgnored(slog.LevelError) {
 		return
 	}
 
-	l.output(levelError, nil, format, a...)
+	l.output(slog.LevelError, nil, format, a...)
 }
 
 func (l *Logger) Fatal(err error) {
@@ -197,7 +196,7 @@ func (l *Logger) Fatal(err error) {
 		return
 	}
 
-	l.output(levelFatal, nil, "%s", err)
+	l.output(slog.LevelError, nil, "%s", err)
 	l.Close()
 
 	exitFunc(1)
@@ -214,11 +213,11 @@ func (l *Logger) WithField(name string, value any) Provider {
 	}
 }
 
-func (l *Logger) isIgnored(lev level) bool {
-	return l.level < lev
+func (l *Logger) isIgnored(lev slog.Level) bool {
+	return l.level > lev
 }
 
-func (l *Logger) output(lev level, fields []field, format string, a ...any) {
+func (l *Logger) output(lev slog.Level, fields []field, format string, a ...any) {
 	if l.isIgnored(lev) {
 		return
 	}
@@ -240,7 +239,7 @@ func (l *Logger) json(e event) []byte {
 	l.outputBuffer.WriteString(`","`)
 	l.outputBuffer.WriteString(l.levelKey)
 	l.outputBuffer.WriteString(`":"`)
-	l.outputBuffer.WriteString(levelValues[e.level])
+	l.outputBuffer.WriteString(e.level.String())
 	l.outputBuffer.WriteString(`","`)
 	l.outputBuffer.WriteString(l.messageKey)
 	l.outputBuffer.WriteString(`":"`)
@@ -273,7 +272,7 @@ func (l *Logger) text(e event) []byte {
 
 	l.outputBuffer.Write(e.timestamp.AppendFormat(l.dateBuffer[:0], time.RFC3339))
 	l.outputBuffer.WriteString(` `)
-	l.outputBuffer.WriteString(levelValues[e.level])
+	l.outputBuffer.WriteString(e.level.String())
 	l.outputBuffer.WriteString(` `)
 	l.outputBuffer.WriteString(e.message)
 

@@ -17,10 +17,6 @@ func WithField(name string, value any) Provider {
 	return logger.WithField(name, value)
 }
 
-func Trace(format string, a ...any) {
-	logger.Trace(format, a...)
-}
-
 func Debug(format string, a ...any) {
 	logger.Debug(format, a...)
 }

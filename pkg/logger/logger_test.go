@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"runtime"
 	"strings"
 	"testing"
@@ -77,10 +78,10 @@ func TestStart(t *testing.T) {
 				timeKey:      "ts",
 				levelKey:     "level",
 				messageKey:   "msg",
-				level:        levelInfo,
+				level:        slog.LevelInfo,
 			},
 			args{
-				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: levelInfo, message: "Hello world"},
+				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: slog.LevelInfo, message: "Hello world"},
 			},
 			`{"ts":"2020-09-30T14:59:38Z","level":"INFO","msg":"Hello world"}
 `,
@@ -90,10 +91,10 @@ func TestStart(t *testing.T) {
 				done:         make(chan struct{}),
 				events:       make(chan event, runtime.NumCPU()),
 				outputBuffer: bytes.NewBuffer(nil),
-				level:        levelInfo,
+				level:        slog.LevelInfo,
 			},
 			args{
-				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: levelInfo, message: "Hello world"},
+				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: slog.LevelInfo, message: "Hello world"},
 			},
 			"2020-09-30T14:59:38Z INFO Hello world\n",
 		},
@@ -102,10 +103,10 @@ func TestStart(t *testing.T) {
 				done:         make(chan struct{}),
 				events:       make(chan event, runtime.NumCPU()),
 				outputBuffer: bytes.NewBuffer(nil),
-				level:        levelInfo,
+				level:        slog.LevelInfo,
 			},
 			args{
-				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: levelDebug, message: "Hello world"},
+				e: event{timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC), level: slog.LevelDebug, message: "Hello world"},
 			},
 			"2020-09-30T14:59:38Z DEBUG Hello world\n",
 		},
@@ -147,6 +148,7 @@ func TestClose(t *testing.T) {
 		"simple": {
 			args{
 				out: io.Discard,
+				err: io.Discard,
 			},
 			true,
 		},
@@ -172,12 +174,11 @@ func TestClose(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
-			logger := newLogger(testCase.args.out, testCase.args.err, levelInfo, false, "time", "level", "msg")
+			logger := newLogger(testCase.args.out, testCase.args.err, slog.LevelInfo, false, "time", "level", "msg")
 
 			go logger.Start()
 
 			logger.Debug("Hello World")
-			logger.Trace("Hello World")
 			logger.Info("Hello World")
 			logger.Warn("Hello World")
 			logger.Error("Hello World")
@@ -190,7 +191,7 @@ func TestOutput(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		lev    level
+		lev    slog.Level
 		format string
 		a      []any
 	}
@@ -201,21 +202,21 @@ func TestOutput(t *testing.T) {
 	}{
 		"ignored": {
 			args{
-				lev:    levelDebug,
+				lev:    slog.LevelDebug,
 				format: "Hello World",
 			},
 			"",
 		},
 		"info": {
 			args{
-				lev:    levelInfo,
+				lev:    slog.LevelInfo,
 				format: "Hello World",
 			},
 			"2020-09-21T18:34:57Z INFO Hello World\n",
 		},
 		"format": {
 			args{
-				lev:    levelInfo,
+				lev:    slog.LevelInfo,
 				format: "Hello %s",
 				a:      []any{"World"},
 			},
@@ -230,7 +231,7 @@ func TestOutput(t *testing.T) {
 			t.Parallel()
 
 			writer := bytes.NewBuffer(nil)
-			logger := newLogger(writer, writer, levelInfo, false, "time", "level", "msg")
+			logger := newLogger(writer, writer, slog.LevelInfo, false, "time", "level", "msg")
 			logger.clock = func() time.Time { return time.Date(2020, 9, 21, 18, 34, 57, 0, time.UTC) }
 
 			go logger.Start()
@@ -266,8 +267,28 @@ func BenchmarkStandardSimpleFormattedOutput(b *testing.B) {
 	}
 }
 
+func BenchmarkStructuredNoOutput(b *testing.B) {
+	logger := slog.New(slog.NewJSONHandler(io.Discard, &slog.HandlerOptions{
+		Level: slog.LevelError,
+	}))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		logger.Info("Hello", "name", "Bob")
+	}
+}
+
+func BenchmarkStructuredJSONOutput(b *testing.B) {
+	logger := slog.New(slog.NewJSONHandler(io.Discard, &slog.HandlerOptions{}))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		logger.Info("Hello", "name", "Bob")
+	}
+}
+
 func BenchmarkNoOutput(b *testing.B) {
-	logger := newLogger(io.Discard, io.Discard, levelWarning, false, "time", "level", "msg")
+	logger := newLogger(io.Discard, io.Discard, slog.LevelWarn, false, "time", "level", "msg")
 	logger.clock = time.Now
 
 	go logger.Start()
@@ -280,7 +301,7 @@ func BenchmarkNoOutput(b *testing.B) {
 }
 
 func BenchmarkSimpleOutput(b *testing.B) {
-	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
+	logger := newLogger(io.Discard, io.Discard, slog.LevelInfo, false, "time", "level", "msg")
 	logger.clock = time.Now
 
 	go logger.Start()
@@ -293,7 +314,7 @@ func BenchmarkSimpleOutput(b *testing.B) {
 }
 
 func BenchmarkFormattedOutput(b *testing.B) {
-	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
+	logger := newLogger(io.Discard, io.Discard, slog.LevelInfo, false, "time", "level", "msg")
 	logger.clock = time.Now
 
 	go logger.Start()
@@ -306,7 +327,7 @@ func BenchmarkFormattedOutput(b *testing.B) {
 }
 
 func BenchmarkFormattedOutputFields(b *testing.B) {
-	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
+	logger := newLogger(io.Discard, io.Discard, slog.LevelInfo, false, "time", "level", "msg")
 	logger.clock = time.Now
 
 	go logger.Start()
@@ -333,7 +354,7 @@ func TestJSON(t *testing.T) {
 			args{
 				e: event{
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
-					level:     levelInfo,
+					level:     slog.LevelInfo,
 					message:   "Hello world",
 				},
 			},
@@ -347,7 +368,7 @@ func TestJSON(t *testing.T) {
 			args{
 				e: event{
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
-					level:     levelInfo,
+					level:     slog.LevelInfo,
 					message:   "Hello world",
 					fields: []field{
 						{
@@ -400,11 +421,11 @@ func TestJSON(t *testing.T) {
 }
 
 func BenchmarkJSON(b *testing.B) {
-	logger := newLogger(io.Discard, io.Discard, levelInfo, true, "time", "level", "msg")
+	logger := newLogger(io.Discard, io.Discard, slog.LevelInfo, true, "time", "level", "msg")
 
 	e := event{
 		timestamp: time.Now(),
-		level:     levelInfo,
+		level:     slog.LevelInfo,
 		message:   "Hello world",
 	}
 
@@ -415,11 +436,11 @@ func BenchmarkJSON(b *testing.B) {
 }
 
 func BenchmarkJSONWithFields(b *testing.B) {
-	logger := newLogger(io.Discard, io.Discard, levelInfo, true, "time", "level", "msg")
+	logger := newLogger(io.Discard, io.Discard, slog.LevelInfo, true, "time", "level", "msg")
 
 	e := event{
 		timestamp: time.Now(),
-		level:     levelInfo,
+		level:     slog.LevelInfo,
 		message:   "Hello world",
 		fields: []field{
 			{
@@ -458,7 +479,7 @@ func TestText(t *testing.T) {
 			args{
 				e: event{
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
-					level:     levelInfo,
+					level:     slog.LevelInfo,
 					message:   "Hello world",
 				},
 			},
@@ -468,7 +489,7 @@ func TestText(t *testing.T) {
 			args{
 				e: event{
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
-					level:     levelInfo,
+					level:     slog.LevelInfo,
 					message:   "Hello world",
 					fields: []field{
 						{
@@ -484,7 +505,7 @@ func TestText(t *testing.T) {
 			args{
 				e: event{
 					timestamp: time.Date(2020, 9, 30, 14, 59, 38, 0, time.UTC),
-					level:     levelInfo,
+					level:     slog.LevelInfo,
 					message:   "Hello world",
 					fields: []field{
 						{
@@ -516,11 +537,11 @@ func TestText(t *testing.T) {
 }
 
 func BenchmarkText(b *testing.B) {
-	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
+	logger := newLogger(io.Discard, io.Discard, slog.LevelInfo, false, "time", "level", "msg")
 
 	e := event{
 		timestamp: time.Now(),
-		level:     levelInfo,
+		level:     slog.LevelInfo,
 		message:   "Hello world",
 	}
 
@@ -531,11 +552,11 @@ func BenchmarkText(b *testing.B) {
 }
 
 func BenchmarkTextWithFields(b *testing.B) {
-	logger := newLogger(io.Discard, io.Discard, levelInfo, false, "time", "level", "msg")
+	logger := newLogger(io.Discard, io.Discard, slog.LevelInfo, false, "time", "level", "msg")
 
 	e := event{
 		timestamp: time.Now(),
-		level:     levelInfo,
+		level:     slog.LevelInfo,
 		message:   "Hello world",
 		fields: []field{
 			{
