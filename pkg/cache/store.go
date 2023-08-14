@@ -49,13 +49,13 @@ func (a App[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes I
 
 		payload, err := a.serializer.Encode(values[index])
 		if err != nil {
-			loggerWithTrace(ctx, key).Error("encoding: %s", err)
+			loggerWithTrace(ctx, key).Error("encoding", "err", err)
 
 			continue
 		}
 
 		if err := pipeline.Set(ctx, key, payload, a.ttl).Err(); err != nil {
-			loggerWithTrace(ctx, key).Error("pipeline set: %s", err)
+			loggerWithTrace(ctx, key).Error("pipeline set", "err", err)
 
 			continue
 		}

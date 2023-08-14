@@ -4,8 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"log/slog"
 )
 
 func (c *Client) Close() {
@@ -19,11 +18,11 @@ func (c *Client) Close() {
 	var err error
 
 	if err = c.cancelListeners(); err != nil {
-		logger.Error("cancel listeners: %s", err)
+		slog.Error("cancel listeners", "err", err)
 	}
 
 	if err = c.closeListeners(); err != nil {
-		logger.Error("close listeners: %s", err)
+		slog.Error("close listeners", "err", err)
 	}
 
 	c.closeChannel()
@@ -43,7 +42,7 @@ func (c *Client) reconnect() error {
 	c.channel = newChannel
 	c.vhost = newConnection.Config.Vhost
 
-	logger.Info("Connection reopened.")
+	slog.Info("Connection reopened.")
 
 	go c.reconnectListeners()
 
@@ -77,7 +76,7 @@ func (c *Client) reconnectListeners() {
 			defer c.mutex.Unlock()
 
 			if err := listener.createChannel(c.connection); err != nil {
-				logger.WithField("name", listener.name).Error("recreate channel: %s", err)
+				slog.Error("recreate channel", "err", err, "name", listener.name)
 			}
 
 			listener.reconnect <- true
@@ -90,7 +89,7 @@ func (c *Client) closeChannel() {
 		return
 	}
 
-	logger.Info("Closing AMQP channel")
+	slog.Info("Closing AMQP channel")
 	loggedClose(c.channel)
 
 	c.channel = nil
@@ -107,7 +106,7 @@ func (c *Client) closeConnection() {
 		return
 	}
 
-	logger.WithField("vhost", c.Vhost()).Info("Closing AMQP connection")
+	slog.Info("Closing AMQP connection", "vhost", c.Vhost())
 	loggedClose(c.connection)
 
 	c.connection = nil
@@ -115,6 +114,6 @@ func (c *Client) closeConnection() {
 
 func loggedClose(closer io.Closer) {
 	if err := closer.Close(); err != nil {
-		logger.Error("error while closing: %s", err)
+		slog.Error("close", "err", err)
 	}
 }

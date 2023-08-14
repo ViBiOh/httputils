@@ -7,11 +7,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 	"sync"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/prometheus/client_golang/prometheus"
@@ -87,7 +87,7 @@ func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Register
 	client.channel = channel
 	client.vhost = connection.Config.Vhost
 
-	logger.WithField("vhost", client.vhost).Info("Connected to AMQP!")
+	slog.Info("Connected to AMQP!", "vhost", client.vhost)
 
 	if err = client.Ping(); err != nil {
 		return client, fmt.Errorf("ping amqp: %w", err)

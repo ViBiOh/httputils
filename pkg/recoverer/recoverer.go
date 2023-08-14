@@ -3,11 +3,11 @@ package recoverer
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"runtime"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
 const OutputSize = 8192
@@ -49,6 +49,6 @@ func Logger() {
 		output := make([]byte, 1024)
 		written := runtime.Stack(output, false)
 
-		logger.Error("recovered from panic: %s", output[:written])
+		slog.Error("recovered from panic", "stacktrace", string(output[:written]))
 	}
 }

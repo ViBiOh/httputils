@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"os"
 	"syscall"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/cron"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -19,18 +20,19 @@ func startBackground(ctx context.Context, config configuration, client client, a
 
 	go client.redis.Pull(ctx, "httputils:tasks", func(content string, err error) {
 		if err != nil {
-			logger.Fatal(err)
+			slog.Error(err.Error())
+			os.Exit(1)
 		}
 
-		logger.Info("content=`%s`", content)
+		slog.Info("content=`" + content + "`")
 	})
 
 	speakingClock := cron.New().Each(5 * time.Minute).OnSignal(syscall.SIGUSR1).OnError(func(err error) {
-		logger.Error("error while running cron: %s", err)
+		slog.Error("run cron", "err", err)
 	}).Now()
 
 	go speakingClock.Start(ctx, func(_ context.Context) error {
-		logger.Info("Clock is ticking")
+		slog.Info("Clock is ticking")
 
 		return nil
 	})

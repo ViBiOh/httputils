@@ -3,9 +3,9 @@ package amqp
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -91,14 +91,14 @@ forward:
 	}
 
 reconnect:
-	log := logger.WithField("name", listener.name)
+	log := slog.With("name", listener.name)
 
 	if queueName, err := queueResolver(); err != nil {
-		log.Error("get queue name on reopen: %s", err)
+		log.Error("get queue name on reopen", "err", err)
 	} else if messages, err := c.listen(listener, queueName); err != nil {
-		log.Error("reopen listener: %s", err)
+		log.Error("reopen listener", "err", err)
 	} else {
-		log.Info("Listen restarted.")
+		log.Info("Listen restarted")
 		input = messages
 
 		goto forward

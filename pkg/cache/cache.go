@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"github.com/redis/go-redis/v9"
@@ -120,9 +120,9 @@ func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
 
 	if content, err := a.read.Load(loadCtx, key); err != nil {
 		if errors.Is(err, context.Canceled) {
-			loggerWithTrace(ctx, key).Warn("load from cache: %s", err)
+			loggerWithTrace(ctx, key).Warn("load from cache", "err", err)
 		} else {
-			loggerWithTrace(ctx, key).Error("load from cache: %s", err)
+			loggerWithTrace(ctx, key).Error("load from cache", "err", err)
 		}
 	} else if value, ok, err := a.decode([]byte(content)); err != nil {
 		logUnmarshallError(ctx, key, err)
@@ -192,10 +192,10 @@ func (a *App[K, V]) extendTTL(ctx context.Context, keys ...string) {
 	})
 }
 
-func loggerWithTrace(ctx context.Context, key string) logger.Provider {
-	return tracer.AddTraceToLogger(trace.SpanFromContext(ctx), logger.GetGlobal()).WithField("key", key)
+func loggerWithTrace(ctx context.Context, key string) *slog.Logger {
+	return tracer.AddTraceToLogger(trace.SpanFromContext(ctx), slog.Default()).With("key", key)
 }
 
 func logUnmarshallError(ctx context.Context, key string, err error) {
-	loggerWithTrace(ctx, key).Error("unmarshal from cache: %s", err)
+	loggerWithTrace(ctx, key).Error("unmarshal from cache", "err", err)
 }

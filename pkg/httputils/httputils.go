@@ -1,11 +1,11 @@
 package httputils
 
 import (
+	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/ViBiOh/httputils/v4/pkg/health"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
@@ -47,7 +47,7 @@ func versionHandler() http.Handler {
 		}
 
 		if _, err := w.Write(version); err != nil {
-			logger.Error("%s", err)
+			slog.Error("write", "err", err)
 		}
 	})
 }

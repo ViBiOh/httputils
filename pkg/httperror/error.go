@@ -2,9 +2,9 @@ package httperror
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
@@ -21,9 +21,9 @@ func httpError(w http.ResponseWriter, status int, payload string, err error) {
 	}
 
 	if status >= http.StatusInternalServerError {
-		logger.Error("HTTP/%d: %s", status, err.Error())
+		slog.Error("HTTP", "err", err.Error(), "status", status)
 	} else {
-		logger.Warn("HTTP/%d: %s", status, err.Error())
+		slog.Warn("HTTP", "err", err.Error(), "status", status)
 	}
 }
 

@@ -173,9 +173,9 @@ func (a App[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) 
 	values, err := a.read.LoadMany(loadCtx, keys...)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
-			loggerWithTrace(ctx, strconv.Itoa(len(keys))).Warn("load many from cache: %s", err)
+			loggerWithTrace(ctx, strconv.Itoa(len(keys))).Warn("load many from cache", "err", err)
 		} else {
-			loggerWithTrace(ctx, strconv.Itoa(len(keys))).Error("load many from cache: %s", err)
+			loggerWithTrace(ctx, strconv.Itoa(len(keys))).Error("load many from cache", "err", err)
 		}
 
 		values = make([]string, len(ids))

@@ -5,11 +5,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
 type App struct {
@@ -80,7 +80,7 @@ func (a App) Done() <-chan struct{} {
 
 func (a App) Start(ctx context.Context, name string, handler http.Handler) {
 	defer close(a.done)
-	serverLogger := logger.WithField("server", name)
+	serverLogger := slog.With("server", name)
 
 	if len(a.listenAddress) == 0 {
 		serverLogger.Warn("No listen address")
@@ -103,15 +103,15 @@ func (a App) Start(ctx context.Context, name string, handler http.Handler) {
 
 		var err error
 		if len(a.cert) != 0 && len(a.key) != 0 {
-			serverLogger.Info("Listening on %s with TLS", a.listenAddress)
+			serverLogger.Info("Listening with TLS", "address", a.listenAddress)
 			err = httpServer.ListenAndServeTLS(a.cert, a.key)
 		} else {
-			serverLogger.Warn("Listening on %s without TLS", a.listenAddress)
+			serverLogger.Warn("Listening without TLS", "address", a.listenAddress)
 			err = httpServer.ListenAndServe()
 		}
 
 		if !errors.Is(err, http.ErrServerClosed) {
-			serverLogger.Error("Server error: %s", err)
+			serverLogger.Error("Server error", "err", err)
 		}
 	}()
 
@@ -125,6 +125,6 @@ func (a App) Start(ctx context.Context, name string, handler http.Handler) {
 
 	serverLogger.Info("Server is shutting down")
 	if err := httpServer.Shutdown(ctx); err != nil {
-		serverLogger.Error("shutdown server: %s", err)
+		serverLogger.Error("shutdown server", "err", err)
 	}
 }

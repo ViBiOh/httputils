@@ -3,6 +3,7 @@ package health
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
@@ -104,7 +104,7 @@ func (a *App) WaitForTermination(done <-chan struct{}) {
 	case <-done:
 	default:
 		if a.graceDuration != 0 {
-			logger.Info("Waiting %s for graceful shutdown", a.graceDuration)
+			slog.Info("Waiting for graceful shutdown", "duration", a.graceDuration)
 			time.Sleep(a.graceDuration)
 		}
 	}
@@ -122,14 +122,14 @@ func (a *App) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	select {
 	case <-done:
 	case sig := <-signalsChan:
-		logger.Info("%s received", sig)
+		slog.Info("%s received", sig)
 	}
 }
 
 func (a *App) isReady(ctx context.Context) bool {
 	for _, pinger := range a.pingers {
 		if err := pinger(ctx); err != nil {
-			logger.Error("ping: %s", err)
+			slog.Error("ping", "err", err)
 
 			return false
 		}

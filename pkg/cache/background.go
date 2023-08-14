@@ -2,9 +2,8 @@ package cache
 
 import (
 	"context"
+	"log/slog"
 	"time"
-
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
 var asyncActionTimeout = time.Second * 5
@@ -14,6 +13,6 @@ func doInBackground(ctx context.Context, name string, callback func(ctx context.
 	defer cancel()
 
 	if err := callback(ctx); err != nil {
-		logger.Error("%s: %s", name, err)
+		slog.Error(name, "err", err)
 	}
 }

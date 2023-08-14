@@ -6,12 +6,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/ViBiOh/flags"
 	amqpclient "github.com/ViBiOh/httputils/v4/pkg/amqp"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -98,7 +98,7 @@ func (a *App) Start(ctx context.Context) {
 	}
 
 	init := true
-	log := logger.WithField("exchange", a.exchange).WithField("queue", a.queue).WithField("routingKey", a.routingKey).WithField("vhost", a.amqpClient.Vhost())
+	log := slog.With("exchange", a.exchange).With("queue", a.queue).With("routingKey", a.routingKey).With("vhost", a.amqpClient.Vhost())
 
 	consumerName, messages, err := a.amqpClient.Listen(func() (string, error) {
 		queueName, err := a.configure(init)
@@ -107,17 +107,17 @@ func (a *App) Start(ctx context.Context) {
 		return queueName, err
 	}, a.exchange, a.routingKey)
 	if err != nil {
-		log.Error("listen: %s", err)
+		log.Error("listen", "err", err)
 
 		return
 	}
 
-	log = log.WithField("name", consumerName)
+	log = log.With("name", consumerName)
 
 	go func() {
 		<-ctx.Done()
 		if err := a.amqpClient.StopListener(consumerName); err != nil {
-			log.Error("error while stopping listener: %s", err)
+			log.Error("error while stopping listener", "err", err)
 		}
 	}()
 
@@ -129,7 +129,7 @@ func (a *App) Start(ctx context.Context) {
 	}
 }
 
-func (a *App) handleMessage(ctx context.Context, log logger.Provider, message amqp.Delivery) {
+func (a *App) handleMessage(ctx context.Context, log *slog.Logger, message amqp.Delivery) {
 	var err error
 
 	ctx, end := tracer.StartSpan(ctx, a.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer))
@@ -141,24 +141,24 @@ func (a *App) handleMessage(ctx context.Context, log logger.Provider, message am
 
 	if err == nil {
 		if err = message.Ack(false); err != nil {
-			log.Error("ack message: %s", err)
+			log.Error("ack message", "err", err)
 		}
 
 		return
 	}
 
-	log.Error("handle message `%s`: %s", message.Body, err)
+	log.Error("handle message", "err", err, "body", string(message.Body))
 
 	if a.retryInterval > 0 && a.maxRetry > 0 {
 		if err = a.Retry(message); err == nil {
 			return
 		}
 
-		log.Error("retry message: %s", err)
+		log.Error("retry message", "err", err)
 	}
 
 	if err = message.Ack(false); err != nil {
-		log.Error("ack message to trash it: %s", err)
+		log.Error("ack message to trash it", "err", err)
 	}
 }
 
@@ -182,7 +182,7 @@ func (a *App) configure(init bool) (string, error) {
 func generateIdentityName() string {
 	raw := make([]byte, 4)
 	if _, err := rand.Read(raw); err != nil {
-		logger.Error("generate identity name: %s", err)
+		slog.Error("generate identity name", "err", err)
 
 		return "error"
 	}

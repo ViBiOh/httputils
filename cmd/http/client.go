@@ -20,7 +20,6 @@ type client struct {
 	tracer     tracer.App
 	amqp       *amqp.Client
 	prometheus *prometheus.App
-	logger     *logger.Logger
 	health     *health.App
 }
 
@@ -30,8 +29,7 @@ func newClient(ctx context.Context, config configuration) (client, error) {
 	var output client
 	var err error
 
-	output.logger = logger.New(config.logger)
-	logger.Global(output.logger)
+	logger.Init(config.logger)
 
 	output.tracer, err = tracer.New(ctx, config.tracer)
 	if err != nil {
@@ -65,5 +63,4 @@ func (c client) Close(ctx context.Context) {
 	c.amqp.Close()
 	c.redis.Close()
 	c.tracer.Close(ctx)
-	c.logger.Close()
 }

@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"embed"
-	"fmt"
+	"log/slog"
+	"os"
 
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
 	"github.com/ViBiOh/httputils/v4/pkg/cors"
 	"github.com/ViBiOh/httputils/v4/pkg/httputils"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
@@ -20,7 +20,8 @@ var content embed.FS
 func main() {
 	config, err := newConfig()
 	if err != nil {
-		logger.Fatal(fmt.Errorf("config: %w", err))
+		slog.Error("config", "err", err)
+		os.Exit(1)
 	}
 
 	alcotest.DoAndExit(config.alcotest)
@@ -29,14 +30,16 @@ func main() {
 
 	client, err := newClient(ctx, config)
 	if err != nil {
-		logger.Fatal(fmt.Errorf("client: %w", err))
+		slog.Error("client", "err", err)
+		os.Exit(1)
 	}
 
 	defer client.Close(ctx)
 
 	adapter, err := newAdapter(config, client)
 	if err != nil {
-		logger.Fatal(fmt.Errorf("adapter: %w", err))
+		slog.Error("adapter", "err", err)
+		os.Exit(1)
 	}
 
 	stopBackground := startBackground(ctx, config, client, adapter)

@@ -2,12 +2,12 @@ package renderer
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"runtime"
 	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
@@ -31,7 +31,7 @@ func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 }
 
 func (a App) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error) {
-	logger.Error("%s", err)
+	slog.Error(err.Error())
 
 	content = a.feedContent(content)
 
@@ -54,7 +54,7 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 		if exception := recover(); exception != nil {
 			output := make([]byte, 1024)
 			runtime.Stack(output, false)
-			logger.Error("recovered from panic: %s\n%s", exception, output)
+			slog.Error("recovered from panic", "err", exception, "stacktrace", string(output))
 
 			a.Error(w, r, nil, fmt.Errorf("recovered from panic: %s", exception))
 		}

@@ -3,14 +3,14 @@ package amqp
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func connect(uri string, prefetch int, onDisconnect func()) (*amqp.Connection, *amqp.Channel, error) {
-	logger.Info("Dialing AMQP with 10 seconds timeout...")
+	slog.Info("Dialing AMQP with 10 seconds timeout...")
 
 	connection, err := amqp.DialConfig(uri, amqp.Config{
 		Heartbeat: 10 * time.Second,
@@ -33,7 +33,7 @@ func connect(uri string, prefetch int, onDisconnect func()) (*amqp.Connection, *
 	}
 
 	go func() {
-		log := logger.WithField("addr", connection.LocalAddr().String())
+		log := slog.With("addr", connection.LocalAddr().String())
 		log.Info("Start listening close connection notifications")
 
 		for range connection.NotifyClose(make(chan *amqp.Error)) {
@@ -75,9 +75,9 @@ func (c *Client) onDisconnect() {
 		}
 
 		if err := c.reconnect(); err != nil {
-			logger.Error("reconnect: %s", err)
+			slog.Error("reconnect", "err", err)
 
-			logger.Info("Waiting one minute before attempting to reconnect again...")
+			slog.Info("Waiting one minute before attempting to reconnect again...")
 			time.Sleep(time.Minute)
 		} else {
 			return

@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
+	"log/slog"
 	"os"
 
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 )
 
 func main() {
@@ -15,7 +15,10 @@ func main() {
 
 	alcotestConfig := alcotest.Flags(fs, "")
 
-	logger.Fatal(fs.Parse(os.Args[1:]))
+	if err := fs.Parse(os.Args[1:]); err != nil {
+		slog.Error("parse flag", "err", err)
+		os.Exit(1)
+	}
 
 	alcotest.DoAndExit(alcotestConfig)
 }

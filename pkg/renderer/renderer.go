@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"os"
 	"path"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -95,7 +95,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace
 	instance.tpl = tpl
 
 	if strings.HasPrefix(instance.publicURL, "http://localhost") {
-		logger.Warn("PublicURL has a development/debug value: `%s`. You may need to configure it.", instance.publicURL)
+		slog.Warn("PublicURL has a development/debug value: You may need to configure it.", "url", instance.publicURL)
 	}
 
 	return &instance, nil
@@ -191,7 +191,7 @@ func (a *App) handleStatic(w http.ResponseWriter, r *http.Request) bool {
 
 	defer func() {
 		if closeErr := file.Close(); closeErr != nil {
-			logger.Warn("close static file: %s", err)
+			slog.Warn("close static file", "err", err)
 		}
 	}()
 

@@ -4,12 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/codes"
@@ -141,7 +141,7 @@ func (a App) Close(ctx context.Context) {
 	}
 
 	if err := a.provider.Shutdown(ctx); err != nil {
-		logger.Error("shutdown trace provider: %s", err)
+		slog.Error("shutdown trace provider", "err", err)
 	}
 }
 
@@ -161,7 +161,7 @@ func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.Sp
 	}
 }
 
-func AddTraceToLogger(span tr.Span, logger logger.Provider) logger.Provider {
+func AddTraceToLogger(span tr.Span, logger *slog.Logger) *slog.Logger {
 	if model.IsNil(span) || !span.IsRecording() {
 		return logger
 	}
@@ -169,11 +169,11 @@ func AddTraceToLogger(span tr.Span, logger logger.Provider) logger.Provider {
 	spanCtx := span.SpanContext()
 
 	if spanCtx.HasTraceID() {
-		logger = logger.WithField("traceID", spanCtx.TraceID())
+		logger = logger.With("traceID", spanCtx.TraceID())
 	}
 
 	if spanCtx.HasSpanID() {
-		logger = logger.WithField("spanID", spanCtx.SpanID())
+		logger = logger.With("spanID", spanCtx.SpanID())
 	}
 
 	return logger

@@ -5,11 +5,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log/slog"
 	"runtime"
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
@@ -84,7 +84,7 @@ func (a *App) Enabled() bool {
 
 func (a *App) Close() {
 	if err := a.client.Close(); err != nil {
-		logger.Error("redis close: %s", err)
+		slog.Error("redis close", "err", err)
 	}
 }
 
