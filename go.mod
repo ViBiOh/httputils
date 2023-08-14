@@ -21,7 +21,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.16.0
 	go.uber.org/mock v0.2.0
 	golang.org/x/crypto v0.12.0
-	golang.org/x/term v0.11.0
 )
 
 require (
