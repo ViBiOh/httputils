@@ -117,6 +117,10 @@ func (a *App) Load(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (a *App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
+	if len(keys) == 0 {
+		return nil, nil
+	}
+
 	if !a.isCluster {
 		return a.mget(ctx, keys...)
 	}
