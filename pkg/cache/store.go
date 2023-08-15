@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -20,7 +20,7 @@ func (a App[K, V]) Store(ctx context.Context, id K, value V) error {
 }
 
 func (a App[K, V]) store(ctx context.Context, id K, value V) (err error) {
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "store", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, a.tracer, "store", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
 	payload, err := a.serializer.Encode(value)
@@ -38,7 +38,7 @@ func (a App[K, V]) store(ctx context.Context, id K, value V) (err error) {
 func (a App[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes IndexedItems[K]) error {
 	var err error
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "store_many", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, a.tracer, "store_many", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
 	pipeline := a.write.Pipeline()

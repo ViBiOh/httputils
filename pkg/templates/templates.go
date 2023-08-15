@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"sync"
 
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/html"
@@ -47,14 +47,14 @@ func init() {
 }
 
 func minifyWithTracing(ctx context.Context, tr trace.Tracer, mediatype string, input io.Reader, output io.Writer) (err error) {
-	_, end := tracer.StartSpan(ctx, tr, "minify", trace.WithSpanKind(trace.SpanKindInternal))
+	_, end := telemetry.StartSpan(ctx, tr, "minify", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
 	return minifier.Minify(mediatype, output, input)
 }
 
 func WriteTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template, w io.Writer, content any, mediatype string) (err error) {
-	_, end := tracer.StartSpan(ctx, tr, "template", trace.WithSpanKind(trace.SpanKindInternal))
+	_, end := telemetry.StartSpan(ctx, tr, "template", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
 	buffer := bufferPool.Get().(*bytes.Buffer)
@@ -69,7 +69,7 @@ func WriteTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template,
 }
 
 func ResponseHTMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template, w http.ResponseWriter, content any, status int) (err error) {
-	ctx, end := tracer.StartSpan(ctx, tr, "html_template", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, tr, "html_template", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
 	buffer := bufferPool.Get().(*bytes.Buffer)
@@ -89,7 +89,7 @@ func ResponseHTMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Te
 }
 
 func ResponseHTMLTemplateRaw(ctx context.Context, tr trace.Tracer, tpl *template.Template, w http.ResponseWriter, content any, status int) (err error) {
-	_, end := tracer.StartSpan(ctx, tr, "html_template_raw", trace.WithSpanKind(trace.SpanKindInternal))
+	_, end := telemetry.StartSpan(ctx, tr, "html_template_raw", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
 	for key, value := range htmlHeaders {
@@ -101,7 +101,7 @@ func ResponseHTMLTemplateRaw(ctx context.Context, tr trace.Tracer, tpl *template
 }
 
 func ResponseXMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Template, w http.ResponseWriter, content any, status int) (err error) {
-	ctx, end := tracer.StartSpan(ctx, tr, "xml_template", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, tr, "xml_template", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
 	buffer := bufferPool.Get().(*bytes.Buffer)

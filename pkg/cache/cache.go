@@ -9,7 +9,7 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -110,7 +110,7 @@ func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
 
 	var err error
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "get", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, a.tracer, "get", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
 	key := a.toKey(id)
@@ -140,7 +140,7 @@ func (a *App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error
 		return err
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "evict", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, a.tracer, "evict", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
 	key := a.toKey(item)
@@ -155,7 +155,7 @@ func (a *App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error
 func (a *App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	var err error
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "fetch", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, a.tracer, "fetch", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
 	value, err := a.onMiss(ctx, id)
@@ -193,7 +193,7 @@ func (a *App[K, V]) extendTTL(ctx context.Context, keys ...string) {
 }
 
 func loggerWithTrace(ctx context.Context, key string) *slog.Logger {
-	return tracer.AddTraceToLogger(trace.SpanFromContext(ctx), slog.Default()).With("key", key)
+	return telemetry.AddTraceToLogger(trace.SpanFromContext(ctx), slog.Default()).With("key", key)
 }
 
 func logUnmarshallError(ctx context.Context, key string, err error) {

@@ -53,7 +53,7 @@ func main() {
 	ctxEnd := client.health.End(ctx)
 
 	go promServer.Start(ctxEnd, "prometheus", client.prometheus.Handler())
-	go appServer.Start(ctxEnd, "http", httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.prometheus.Middleware, client.tracer.Middleware, owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
+	go appServer.Start(ctxEnd, "http", httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.prometheus.Middleware, client.telemetry.Middleware, owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
 
 	client.health.WaitForTermination(appServer.Done())
 	server.GracefulWait(appServer.Done(), promServer.Done(), adapter.amqp.Done())

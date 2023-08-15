@@ -14,7 +14,7 @@ import (
 
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -148,7 +148,7 @@ func (a *App) Handler(templateFunc TemplateFunc) http.Handler {
 	svgHandler := http.StripPrefix(svgPath, a.svg())
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, end := tracer.StartSpan(r.Context(), a.tracer, "renderer", trace.WithSpanKind(trace.SpanKindInternal))
+		ctx, end := telemetry.StartSpan(r.Context(), a.tracer, "renderer", trace.WithSpanKind(trace.SpanKindInternal))
 		defer end(nil)
 
 		r = r.WithContext(ctx)

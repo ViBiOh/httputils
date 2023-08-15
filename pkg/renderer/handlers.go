@@ -9,8 +9,8 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
+	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -95,7 +95,7 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 }
 
 func (a App) matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
-	_, end := tracer.StartSpan(r.Context(), a.tracer, "match_etag", trace.WithSpanKind(trace.SpanKindInternal))
+	_, end := telemetry.StartSpan(r.Context(), a.tracer, "match_etag", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(nil)
 
 	etag := page.etag()

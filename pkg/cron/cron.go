@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -290,7 +290,7 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 	run := func() {
 		var err error
 
-		ctx, end := tracer.StartSpan(ctx, c.tracer, "cron")
+		ctx, end := telemetry.StartSpan(ctx, c.tracer, "cron")
 		defer end(&err)
 
 		if c.semaphoreApp == nil {

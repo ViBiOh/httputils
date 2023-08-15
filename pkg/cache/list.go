@@ -8,7 +8,7 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -40,7 +40,7 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 		return a.listRawMany(ctx, items)
 	}
 
-	ctx, end := tracer.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
 	keys, values := a.getValues(ctx, items)

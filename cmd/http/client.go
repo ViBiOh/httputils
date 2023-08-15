@@ -12,12 +12,12 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/redis"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 )
 
 type client struct {
 	redis      redis.Client
-	tracer     tracer.App
+	telemetry  telemetry.App
 	amqp       *amqp.Client
 	prometheus *prometheus.App
 	health     *health.App
@@ -31,24 +31,24 @@ func newClient(ctx context.Context, config configuration) (client, error) {
 
 	logger.Init(config.logger)
 
-	output.tracer, err = tracer.New(ctx, config.tracer)
+	output.telemetry, err = telemetry.New(ctx, config.telemetry)
 	if err != nil {
-		return output, fmt.Errorf("tracer: %w", err)
+		return output, fmt.Errorf("telemetry: %w", err)
 	}
 
-	request.AddTracerToDefaultClient(output.tracer.GetProvider())
+	request.AddTracerToDefaultClient(output.telemetry.GetProvider())
 
 	output.prometheus = prometheus.New(config.prometheus)
 	output.health = health.New(config.health)
 
 	prometheusRegisterer := output.prometheus.Registerer()
 
-	output.redis, err = redis.New(config.redis, output.tracer.GetProvider())
+	output.redis, err = redis.New(config.redis, output.telemetry.GetProvider())
 	if err != nil {
 		return output, fmt.Errorf("redis: %w", err)
 	}
 
-	output.amqp, err = amqp.New(config.amqp, prometheusRegisterer, output.tracer.GetTracer("amqp"))
+	output.amqp, err = amqp.New(config.amqp, prometheusRegisterer, output.telemetry.GetTracer("amqp"))
 	if err != nil && !errors.Is(err, amqp.ErrNoConfig) {
 		return output, fmt.Errorf("amqp: %w", err)
 	}
@@ -62,5 +62,5 @@ func (c client) Close(ctx context.Context) {
 
 	c.amqp.Close()
 	c.redis.Close()
-	c.tracer.Close(ctx)
+	c.telemetry.Close(ctx)
 }

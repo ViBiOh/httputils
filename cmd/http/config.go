@@ -17,7 +17,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/redis"
 	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
-	"github.com/ViBiOh/httputils/v4/pkg/tracer"
+	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 )
 
 type configuration struct {
@@ -27,7 +27,7 @@ type configuration struct {
 	alcotest   alcotest.Config
 	logger     logger.Config
 	prometheus prometheus.Config
-	tracer     tracer.Config
+	telemetry  telemetry.Config
 	owasp      owasp.Config
 	cors       cors.Config
 	amqp       amqp.Config
@@ -47,7 +47,7 @@ func newConfig() (configuration, error) {
 		alcotest:   alcotest.Flags(fs, ""),
 		logger:     logger.Flags(fs, "logger"),
 		prometheus: prometheus.Flags(fs, "prometheus"),
-		tracer:     tracer.Flags(fs, "tracer"),
+		telemetry:  telemetry.Flags(fs, "telemetry"),
 		owasp:      owasp.Flags(fs, "", flags.NewOverride("Csp", "default-src 'self'; base-uri 'self'; script-src 'httputils-nonce'")),
 		cors:       cors.Flags(fs, "cors"),
 		amqp:       amqp.Flags(fs, "amqp"),
