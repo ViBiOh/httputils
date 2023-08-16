@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	ErrCannotMarshal = errors.New("cannot marshall json")
+	ErrCannotMarshal = errors.New("cannot marshal json")
 	headers          = http.Header{}
 )
 

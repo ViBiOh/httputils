@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -38,6 +39,6 @@ func CreateClient(timeout time.Duration, onRedirect func(*http.Request, []*http.
 	}
 }
 
-func AddTracerToDefaultClient(tracerProvider trace.TracerProvider) {
-	defaultHTTPClient = telemetry.AddTracerToClient(defaultHTTPClient, tracerProvider)
+func AddTracerToDefaultClient(meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) {
+	defaultHTTPClient = telemetry.AddOpenTelemetryToClient(defaultHTTPClient, meterProvider, tracerProvider)
 }

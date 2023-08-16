@@ -108,7 +108,7 @@ func (a App[K, V]) handleListSingle(ctx context.Context, onMissError func(K, err
 			}
 
 			if err != nil {
-				logUnmarshallError(ctx, a.toKey(item), err)
+				logUnmarshalError(ctx, a.toKey(item), err)
 			}
 
 			if output[index], err = a.fetch(ctx, item); err != nil && !onMissError(item, err) {
@@ -141,7 +141,7 @@ func (a App[K, V]) handleListMany(ctx context.Context, items []K, keys, values [
 
 			continue
 		} else if err != nil {
-			logUnmarshallError(ctx, a.toKey(item), err)
+			logUnmarshalError(ctx, a.toKey(item), err)
 		}
 
 		missingKeys[item] = index

@@ -8,6 +8,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/codes"
+	meter "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/propagation"
 	tr "go.opentelemetry.io/otel/trace"
 )
@@ -46,12 +47,16 @@ func AddTraceToLogger(span tr.Span, logger *slog.Logger) *slog.Logger {
 	return logger
 }
 
-func AddTracerToClient(httpClient *http.Client, tracerProvider tr.TracerProvider) *http.Client {
+func AddOpenTelemetryToClient(httpClient *http.Client, meterProvider meter.MeterProvider, tracerProvider tr.TracerProvider) *http.Client {
 	if model.IsNil(tracerProvider) {
 		return httpClient
 	}
 
-	httpClient.Transport = otelhttp.NewTransport(httpClient.Transport, otelhttp.WithTracerProvider(tracerProvider), otelhttp.WithPropagators(propagation.TraceContext{}))
+	httpClient.Transport = otelhttp.NewTransport(httpClient.Transport,
+		otelhttp.WithTracerProvider(tracerProvider),
+		otelhttp.WithMeterProvider(meterProvider),
+		otelhttp.WithPropagators(propagation.TraceContext{}),
+	)
 
 	return httpClient
 }

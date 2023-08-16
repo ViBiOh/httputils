@@ -125,7 +125,7 @@ func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
 			loggerWithTrace(ctx, key).Error("load from cache", "err", err)
 		}
 	} else if value, ok, err := a.decode([]byte(content)); err != nil {
-		logUnmarshallError(ctx, key, err)
+		logUnmarshalError(ctx, key, err)
 	} else if ok {
 		a.extendTTL(ctx, key)
 
@@ -196,6 +196,6 @@ func loggerWithTrace(ctx context.Context, key string) *slog.Logger {
 	return telemetry.AddTraceToLogger(trace.SpanFromContext(ctx), slog.Default()).With("key", key)
 }
 
-func logUnmarshallError(ctx context.Context, key string, err error) {
+func logUnmarshalError(ctx context.Context, key string, err error) {
 	loggerWithTrace(ctx, key).Error("unmarshal from cache", "err", err)
 }
