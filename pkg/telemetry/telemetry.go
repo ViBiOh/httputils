@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ViBiOh/flags"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	meter "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -25,8 +27,8 @@ var noopFunc = func(*error, ...tr.SpanEndOption) {
 }
 
 type App struct {
-	provider *trace.TracerProvider
-	metric   metric.Reader
+	traceProvider *trace.TracerProvider
+	meterProvider *metric.MeterProvider
 }
 
 type Config struct {
@@ -36,8 +38,8 @@ type Config struct {
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
 	return Config{
-		url:  flags.New("URL", "OpenTracing gRPC endpoint (e.g. otel-exporter:4317)").Prefix(prefix).DocPrefix("tracing").String(fs, "", overrides),
-		rate: flags.New("Rate", "OpenTracing sample rate, 'always', 'never' or a float value").Prefix(prefix).DocPrefix("tracing").String(fs, "always", overrides),
+		url:  flags.New("URL", "OpenTelemetry gRPC endpoint (e.g. otel-exporter:4317)").Prefix(prefix).DocPrefix("telemetry").String(fs, "", overrides),
+		rate: flags.New("Rate", "OpenTelemetry sample rate, 'always', 'never' or a float value").Prefix(prefix).DocPrefix("telemetry").String(fs, "always", overrides),
 	}
 }
 
@@ -48,14 +50,14 @@ func New(ctx context.Context, config Config) (App, error) {
 		return App{}, nil
 	}
 
+	otelResource, err := newResource(ctx)
+	if err != nil {
+		return App{}, fmt.Errorf("otel resource: %w", err)
+	}
+
 	tracerExporter, err := newTraceExporter(ctx, url)
 	if err != nil {
 		return App{}, fmt.Errorf("trace exporter: %w", err)
-	}
-
-	tracerResource, err := newResource(ctx)
-	if err != nil {
-		return App{}, fmt.Errorf("trace resource: %w", err)
 	}
 
 	sampler, err := newSampler(strings.TrimSpace(*config.rate))
@@ -63,54 +65,73 @@ func New(ctx context.Context, config Config) (App, error) {
 		return App{}, fmt.Errorf("sampler: %w", err)
 	}
 
-	provider := trace.NewTracerProvider(
+	traceProvider := trace.NewTracerProvider(
 		trace.WithBatcher(tracerExporter),
-		trace.WithResource(tracerResource),
+		trace.WithResource(otelResource),
 		trace.WithSampler(sampler),
 	)
 
 	metricExporter, err := newMetricExporter(ctx, url)
 	if err != nil {
-		return App{}, err
+		return App{}, fmt.Errorf("metric exporter: %w", err)
 	}
 
+	metricReader := metric.NewPeriodicReader(metricExporter,
+		metric.WithInterval(time.Second*30),
+	)
+
+	meterProvider := metric.NewMeterProvider(
+		metric.WithResource(otelResource),
+		metric.WithReader(metricReader),
+	)
+
 	return App{
-		provider: provider,
-		metric:   metric.NewPeriodicReader(metricExporter),
+		traceProvider: traceProvider,
+		meterProvider: meterProvider,
 	}, nil
 }
 
-func (a App) GetProvider() tr.TracerProvider {
-	return a.provider
+func (a App) GetTraceProvider() tr.TracerProvider {
+	return a.traceProvider
+}
+
+func (a App) GetMeterProvider() meter.MeterProvider {
+	return a.meterProvider
 }
 
 func (a App) GetTracer(name string) tr.Tracer {
-	if a.provider == nil {
+	if a.traceProvider == nil {
 		return nil
 	}
 
-	return a.provider.Tracer(name)
+	return a.traceProvider.Tracer(name)
 }
 
-func (a App) Middleware(next http.Handler) http.Handler {
-	if next == nil || a.provider == nil {
-		return next
-	}
+func (a App) Middleware(name string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		if next == nil || a.traceProvider == nil || a.meterProvider == nil {
+			return next
+		}
 
-	return otelhttp.NewHandler(next, "http", otelhttp.WithTracerProvider(a.provider), otelhttp.WithPropagators(propagation.TraceContext{}))
+		return otelhttp.NewHandler(next, name,
+			otelhttp.WithTracerProvider(a.traceProvider),
+			otelhttp.WithPropagators(propagation.TraceContext{}),
+			otelhttp.WithMeterProvider(a.meterProvider),
+		)
+	}
 }
 
 func (a App) Close(ctx context.Context) {
-	if a.provider == nil {
-		return
+	if a.traceProvider != nil {
+		if err := a.traceProvider.Shutdown(ctx); err != nil {
+			slog.Error("shutdown trace provider", "err", err)
+		}
 	}
 
-	if err := a.provider.Shutdown(ctx); err != nil {
-		slog.Error("shutdown trace provider", "err", err)
-	}
-
-	if err := a.metric.Shutdown(ctx); err != nil {
-		slog.Error("shutdown metric provider", "err", err)
+	if a.meterProvider != nil {
+		if err := a.meterProvider.Shutdown(ctx); err != nil {
+			slog.Error("shutdown meter provider", "err", err)
+		}
 	}
 }
 
@@ -134,10 +155,7 @@ func newResource(ctx context.Context) (*resource.Resource, error) {
 		return nil, fmt.Errorf("create resource: %w", err)
 	}
 
-	r, err := resource.Merge(
-		resource.Default(),
-		newResource,
-	)
+	r, err := resource.Merge(resource.Default(), newResource)
 	if err != nil {
 		return nil, fmt.Errorf("merge resource with default: %w", err)
 	}

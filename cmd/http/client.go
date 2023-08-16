@@ -36,14 +36,14 @@ func newClient(ctx context.Context, config configuration) (client, error) {
 		return output, fmt.Errorf("telemetry: %w", err)
 	}
 
-	request.AddTracerToDefaultClient(output.telemetry.GetProvider())
+	request.AddTracerToDefaultClient(output.telemetry.GetTraceProvider())
 
 	output.prometheus = prometheus.New(config.prometheus)
 	output.health = health.New(config.health)
 
 	prometheusRegisterer := output.prometheus.Registerer()
 
-	output.redis, err = redis.New(config.redis, output.telemetry.GetProvider())
+	output.redis, err = redis.New(config.redis, output.telemetry.GetTraceProvider())
 	if err != nil {
 		return output, fmt.Errorf("redis: %w", err)
 	}
