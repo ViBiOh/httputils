@@ -12,18 +12,14 @@ import (
 	"sync"
 
 	"github.com/ViBiOh/flags"
-	prom "github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
-	"github.com/prometheus/client_golang/prometheus"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
 //go:generate mockgen -source amqp.go -destination ../mocks/amqp.go -package mocks -mock_names Connection=AMQPConnection
-
-const (
-	metricNamespace = "amqp"
-)
 
 var ErrNoConfig = errors.New("URI is required")
 
@@ -38,9 +34,9 @@ type Client struct {
 	channel         *amqp.Channel
 	connection      Connection
 	listeners       map[string]*listener
-	reconnectMetric prometheus.Counter
-	listenerMetric  prometheus.Gauge
-	messageMetrics  *prometheus.CounterVec
+	reconnectMetric metric.Int64Counter
+	listenerMetric  metric.Int64UpDownCounter
+	messageMetric   metric.Int64Counter
 	vhost           string
 	uri             string
 	prefetch        int
@@ -59,13 +55,18 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, prometheusRegister prometheus.Registerer, tracer trace.Tracer) (*Client, error) {
-	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, prometheusRegister, tracer)
+func New(config Config, meter metric.Meter, tracer trace.Tracer) (*Client, error) {
+	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, meter, tracer)
 }
 
-func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Registerer, tracer trace.Tracer) (*Client, error) {
+func NewFromURI(uri string, prefetch int, meter metric.Meter, tracer trace.Tracer) (*Client, error) {
 	if len(uri) == 0 {
 		return nil, ErrNoConfig
+	}
+
+	reconnectCounter, listenerGauge, messageMetric, err := initMetrics(meter)
+	if err != nil {
+		return nil, fmt.Errorf("init metrics: %w", err)
 	}
 
 	client := &Client{
@@ -73,9 +74,9 @@ func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Register
 		uri:             uri,
 		prefetch:        prefetch,
 		listeners:       make(map[string]*listener),
-		reconnectMetric: prom.Counter(prometheusRegister, metricNamespace, "", "reconnection"),
-		listenerMetric:  prom.Gauge(prometheusRegister, metricNamespace, "", "listener"),
-		messageMetrics:  prom.CounterVec(prometheusRegister, metricNamespace, "", "message", "state", "exchange", "routingKey"),
+		reconnectMetric: reconnectCounter,
+		listenerMetric:  listenerGauge,
+		messageMetric:   messageMetric,
 	}
 
 	connection, channel, err := connect(uri, client.prefetch, client.onDisconnect)
@@ -96,6 +97,29 @@ func NewFromURI(uri string, prefetch int, prometheusRegister prometheus.Register
 	return client, nil
 }
 
+func initMetrics(meter metric.Meter) (metric.Int64Counter, metric.Int64UpDownCounter, metric.Int64Counter, error) {
+	if meter == nil {
+		return nil, nil, nil, nil
+	}
+
+	reconnect, err := meter.Int64Counter("reconnection")
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("create reconnection counter: %w", err)
+	}
+
+	listener, err := meter.Int64UpDownCounter("listener")
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("create listener counter: %w", err)
+	}
+
+	message, err := meter.Int64Counter("message")
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("create message counter: %w", err)
+	}
+
+	return reconnect, listener, message, nil
+}
+
 func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange, routingKey string) (err error) {
 	_, end := telemetry.StartSpan(ctx, c.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
 	defer end(&err)
@@ -104,12 +128,12 @@ func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange,
 	defer c.mutex.RUnlock()
 
 	if err = c.channel.PublishWithContext(ctx, exchange, routingKey, false, false, payload); err != nil {
-		c.increase("error", exchange, routingKey)
+		c.increase(ctx, "error", exchange, routingKey)
 
 		return
 	}
 
-	c.increase("published", exchange, routingKey)
+	c.increase(ctx, "published", exchange, routingKey)
 
 	return nil
 }
@@ -133,10 +157,14 @@ func (c *Client) PublishJSON(ctx context.Context, item any, exchange, routingKey
 	return nil
 }
 
-func (c *Client) increase(name, exchange, routingKey string) {
-	if c.messageMetrics == nil {
+func (c *Client) increase(ctx context.Context, name, exchange, routingKey string) {
+	if c.messageMetric == nil {
 		return
 	}
 
-	c.messageMetrics.WithLabelValues(name, exchange, routingKey).Inc()
+	c.messageMetric.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("exchange", exchange),
+		attribute.String("routingKey", routingKey),
+	))
 }

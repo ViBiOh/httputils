@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -71,7 +72,7 @@ func createChannel(connection Connection, prefetch int) (channel *amqp.Channel, 
 func (c *Client) onDisconnect() {
 	for {
 		if c.reconnectMetric != nil {
-			c.reconnectMetric.Inc()
+			c.reconnectMetric.Add(context.Background(), 1)
 		}
 
 		if err := c.reconnect(); err != nil {

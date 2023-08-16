@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -49,7 +50,7 @@ identity:
 	c.listeners[output.name] = &output
 
 	if c.listenerMetric != nil {
-		c.listenerMetric.Inc()
+		c.listenerMetric.Add(context.Background(), 1)
 	}
 
 	return &output
@@ -93,6 +94,6 @@ func (c *Client) removeListener(name string) {
 	delete(c.listeners, name)
 
 	if c.listenerMetric != nil {
-		c.listenerMetric.Dec()
+		c.listenerMetric.Add(context.Background(), -1)
 	}
 }

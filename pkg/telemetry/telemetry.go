@@ -91,12 +91,20 @@ func New(ctx context.Context, config Config) (App, error) {
 	}, nil
 }
 
+func (a App) GetMeterProvider() meter.MeterProvider {
+	return a.meterProvider
+}
+
 func (a App) GetTraceProvider() tr.TracerProvider {
 	return a.traceProvider
 }
 
-func (a App) GetMeterProvider() meter.MeterProvider {
-	return a.meterProvider
+func (a App) GetMeter(name string) meter.Meter {
+	if a.meterProvider == nil {
+		return nil
+	}
+
+	return a.meterProvider.Meter(name)
 }
 
 func (a App) GetTracer(name string) tr.Tracer {

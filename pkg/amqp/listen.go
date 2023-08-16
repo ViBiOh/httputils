@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -82,7 +83,7 @@ func (c *Client) forward(listener *listener, queueResolver QueueResolver, input 
 
 forward:
 	for delivery := range input {
-		c.increase("consumed", exchange, routingKey)
+		c.increase(context.Background(), "consumed", exchange, routingKey)
 		output <- delivery
 	}
 
