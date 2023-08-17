@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"net/http"
 	"net/http/httptest"
@@ -10,8 +11,8 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/cors"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
-	"github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
+	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 )
 
 var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +54,7 @@ func BenchmarkFullMiddlewares(b *testing.B) {
 	fs.String("test.run", "", "")
 	fs.String("test.paniconexit0", "", "")
 
-	prometheusConfig := prometheus.Flags(fs, "prometheus")
+	telemetryConfig := telemetry.Flags(fs, "telemetry")
 	owaspConfig := owasp.Flags(fs, "")
 	corsConfig := cors.Flags(fs, "cors")
 
@@ -61,6 +62,11 @@ func BenchmarkFullMiddlewares(b *testing.B) {
 		b.Error(err)
 	}
 
-	middlewares := model.ChainMiddlewares(handler, recoverer.Middleware, prometheus.New(prometheusConfig).Middleware, owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware)
+	telemetryApp, err := telemetry.New(context.Background(), telemetryConfig)
+	if err != nil {
+		b.Error(err)
+	}
+
+	middlewares := model.ChainMiddlewares(handler, recoverer.Middleware, telemetryApp.Middleware("http"), owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware)
 	benchmarkHandler(b, middlewares)
 }
