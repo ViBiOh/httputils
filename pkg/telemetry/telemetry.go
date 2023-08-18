@@ -102,14 +102,6 @@ func (a App) GetTraceProvider() tr.TracerProvider {
 	return a.traceProvider
 }
 
-func (a App) GetMeter(name string) meter.Meter {
-	if a.meterProvider == nil {
-		return nil
-	}
-
-	return a.meterProvider.Meter(name)
-}
-
 func (a App) GetTracer(name string) tr.Tracer {
 	if a.traceProvider == nil {
 		return nil

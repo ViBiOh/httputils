@@ -55,11 +55,11 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, meter metric.Meter, tracer trace.Tracer) (*Client, error) {
+func New(config Config, meter metric.MeterProvider, tracer trace.Tracer) (*Client, error) {
 	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, meter, tracer)
 }
 
-func NewFromURI(uri string, prefetch int, meter metric.Meter, tracer trace.Tracer) (*Client, error) {
+func NewFromURI(uri string, prefetch int, meter metric.MeterProvider, tracer trace.Tracer) (*Client, error) {
 	if len(uri) == 0 {
 		return nil, ErrNoConfig
 	}
@@ -97,10 +97,12 @@ func NewFromURI(uri string, prefetch int, meter metric.Meter, tracer trace.Trace
 	return client, nil
 }
 
-func initMetrics(meter metric.Meter) (metric.Int64Counter, metric.Int64UpDownCounter, metric.Int64Counter, error) {
-	if meter == nil {
+func initMetrics(provider metric.MeterProvider) (metric.Int64Counter, metric.Int64UpDownCounter, metric.Int64Counter, error) {
+	if provider == nil {
 		return nil, nil, nil, nil
 	}
+
+	meter := provider.Meter("github.com/ViBiOh/httputils/v4/pkg/amqp")
 
 	reconnect, err := meter.Int64Counter("reconnection")
 	if err != nil {

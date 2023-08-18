@@ -21,7 +21,7 @@ func newAdapter(config configuration, client client) (adapter, error) {
 		return output, fmt.Errorf("amqphandler: %w", err)
 	}
 
-	output.renderer, err = renderer.New(config.renderer, content, nil, client.telemetry.GetMeter("renderer"), client.telemetry.GetTracer("renderer"))
+	output.renderer, err = renderer.New(config.renderer, content, nil, client.telemetry.GetMeterProvider(), client.telemetry.GetTracer("renderer"))
 	if err != nil {
 		return output, fmt.Errorf("renderer: %w", err)
 	}

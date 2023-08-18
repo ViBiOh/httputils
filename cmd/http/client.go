@@ -43,7 +43,7 @@ func newClient(ctx context.Context, config configuration) (client, error) {
 		return output, fmt.Errorf("redis: %w", err)
 	}
 
-	output.amqp, err = amqp.New(config.amqp, output.telemetry.GetMeter("amqp"), output.telemetry.GetTracer("amqp"))
+	output.amqp, err = amqp.New(config.amqp, output.telemetry.GetMeterProvider(), output.telemetry.GetTracer("amqp"))
 	if err != nil && !errors.Is(err, amqp.ErrNoConfig) {
 		return output, fmt.Errorf("amqp: %w", err)
 	}

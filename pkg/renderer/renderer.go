@@ -57,7 +57,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meter metric.Meter, tracer trace.Tracer) (*App, error) {
+func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvider metric.MeterProvider, tracer trace.Tracer) (*App, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
 		return nil, fmt.Errorf("get static/ filesystem: %w", err)
@@ -70,7 +70,9 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meter metric
 	staticHandler := http.FileServer(staticFileSystem)
 
 	var generatedMeter metric.Int64Counter
-	if meter != nil {
+	if meterProvider != nil {
+		meter := meterProvider.Meter("github.com/ViBiOh/httputils/v4/pkg/renderer")
+
 		generatedMeter, err = meter.Int64Counter("templates_generated")
 		if err != nil {
 			return nil, fmt.Errorf("generated meter: %w", err)
