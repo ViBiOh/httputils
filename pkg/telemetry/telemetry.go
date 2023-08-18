@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	meter "go.opentelemetry.io/otel/metric"
+	noop_meter "go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -95,31 +96,35 @@ func New(ctx context.Context, config Config) (App, error) {
 }
 
 func (a App) GetMeterProvider() meter.MeterProvider {
+	if a.meterProvider == nil {
+		return noop_meter.MeterProvider{}
+	}
+
 	return a.meterProvider
 }
 
 func (a App) GetTraceProvider() tr.TracerProvider {
+	if a.meterProvider == nil {
+		return tr.NewNoopTracerProvider()
+	}
+
 	return a.traceProvider
 }
 
 func (a App) GetTracer(name string) tr.Tracer {
-	if a.traceProvider == nil {
-		return nil
-	}
-
-	return a.traceProvider.Tracer(name)
+	return a.GetTraceProvider().Tracer(name)
 }
 
 func (a App) Middleware(name string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		if next == nil || a.traceProvider == nil || a.meterProvider == nil {
+		if next == nil {
 			return next
 		}
 
 		return otelhttp.NewHandler(next, name,
-			otelhttp.WithTracerProvider(a.traceProvider),
+			otelhttp.WithTracerProvider(a.GetTraceProvider()),
 			otelhttp.WithPropagators(propagation.TraceContext{}),
-			otelhttp.WithMeterProvider(a.meterProvider),
+			otelhttp.WithMeterProvider(a.GetMeterProvider()),
 		)
 	}
 }
