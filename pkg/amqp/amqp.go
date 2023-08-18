@@ -104,17 +104,17 @@ func initMetrics(provider metric.MeterProvider) (metric.Int64Counter, metric.Int
 
 	meter := provider.Meter("github.com/ViBiOh/httputils/v4/pkg/amqp")
 
-	reconnect, err := meter.Int64Counter("reconnection")
+	reconnect, err := meter.Int64Counter("amqp_reconnection")
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create reconnection counter: %w", err)
 	}
 
-	listener, err := meter.Int64UpDownCounter("listener")
+	listener, err := meter.Int64UpDownCounter("amqp_listener")
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create listener counter: %w", err)
 	}
 
-	message, err := meter.Int64Counter("message")
+	message, err := meter.Int64Counter("amqp_message")
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create message counter: %w", err)
 	}
@@ -135,7 +135,7 @@ func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange,
 		return
 	}
 
-	c.increase(ctx, "published", exchange, routingKey)
+	c.increase(ctx, "send", exchange, routingKey)
 
 	return nil
 }
@@ -165,7 +165,7 @@ func (c *Client) increase(ctx context.Context, name, exchange, routingKey string
 	}
 
 	c.messageMetric.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("name", name),
+		attribute.String("state", name),
 		attribute.String("exchange", exchange),
 		attribute.String("routingKey", routingKey),
 	))

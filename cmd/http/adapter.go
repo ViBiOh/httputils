@@ -16,7 +16,7 @@ func newAdapter(config configuration, client client) (adapter, error) {
 	var output adapter
 	var err error
 
-	output.amqp, err = amqphandler.New(config.amqHandler, client.amqp, client.telemetry.GetTracer("amqp_handler"), amqpHandler)
+	output.amqp, err = amqphandler.New(config.amqHandler, client.amqp, client.telemetry.GetMeterProvider(), client.telemetry.GetTracer("amqp_handler"), amqpHandler)
 	if err != nil {
 		return output, fmt.Errorf("amqphandler: %w", err)
 	}

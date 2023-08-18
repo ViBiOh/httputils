@@ -15,6 +15,8 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -25,6 +27,7 @@ type App struct {
 	tracer        trace.Tracer
 	done          chan struct{}
 	handler       Handler
+	counter       metric.Int64Counter
 	exchange      string
 	delayExchange string
 	queue         string
@@ -54,7 +57,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, amqpClient *amqpclient.Client, tracer trace.Tracer, handler Handler) (*App, error) {
+func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.MeterProvider, tracer trace.Tracer, handler Handler) (*App, error) {
 	app := &App{
 		amqpClient:    amqpClient,
 		tracer:        tracer,
@@ -80,6 +83,17 @@ func New(config Config, amqpClient *amqpclient.Client, tracer trace.Tracer, hand
 		var err error
 		if app.delayExchange, err = app.amqpClient.DelayedExchange(app.queue, app.exchange, app.routingKey, app.retryInterval); err != nil {
 			return app, fmt.Errorf("configure dead-letter exchange: %w", err)
+		}
+	}
+
+	if metricProvider != nil {
+		meter := metricProvider.Meter("github.com/ViBiOh/httputils/v4/pkg/amqphandler")
+
+		var err error
+
+		app.counter, err = meter.Int64Counter("amqp_message")
+		if err != nil {
+			return app, fmt.Errorf("create counter: %w", err)
 		}
 	}
 
@@ -140,6 +154,11 @@ func (a *App) handleMessage(ctx context.Context, log *slog.Logger, message amqp.
 	err = a.handler(ctx, message)
 
 	if err == nil {
+		a.counter.Add(ctx, 1, metric.WithAttributes(
+			attribute.String("state", "ack"),
+			attribute.String("exchange", a.exchange),
+			attribute.String("routingKey", a.routingKey),
+		))
 		if err = message.Ack(false); err != nil {
 			log.Error("ack message", "err", err)
 		}
@@ -150,6 +169,12 @@ func (a *App) handleMessage(ctx context.Context, log *slog.Logger, message amqp.
 	log.Error("handle message", "err", err, "body", string(message.Body))
 
 	if a.retryInterval > 0 && a.maxRetry > 0 {
+		a.counter.Add(ctx, 1, metric.WithAttributes(
+			attribute.String("state", "retry"),
+			attribute.String("exchange", a.exchange),
+			attribute.String("routingKey", a.routingKey),
+		))
+
 		if err = a.Retry(message); err == nil {
 			return
 		}
@@ -158,6 +183,12 @@ func (a *App) handleMessage(ctx context.Context, log *slog.Logger, message amqp.
 	}
 
 	if err = message.Ack(false); err != nil {
+		a.counter.Add(ctx, 1, metric.WithAttributes(
+			attribute.String("state", "drop"),
+			attribute.String("exchange", a.exchange),
+			attribute.String("routingKey", a.routingKey),
+		))
+
 		log.Error("ack message to trash it", "err", err)
 	}
 }

@@ -83,7 +83,7 @@ func (c *Client) forward(listener *listener, queueResolver QueueResolver, input 
 
 forward:
 	for delivery := range input {
-		c.increase(context.Background(), "consumed", exchange, routingKey)
+		c.increase(context.Background(), "consume", exchange, routingKey)
 		output <- delivery
 	}
 
