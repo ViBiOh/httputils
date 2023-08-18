@@ -11,6 +11,8 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -87,6 +89,10 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 	responder := templates.ResponseHTMLTemplate
 	if !a.minify {
 		responder = templates.ResponseHTMLTemplateRaw
+	}
+
+	if a.generatedMeter != nil {
+		a.generatedMeter.Add(r.Context(), 1, metric.WithAttributes(attribute.String("template", page.Template)))
 	}
 
 	if err = responder(r.Context(), a.tracer, a.tpl.Lookup(page.Template), w, page.Content, page.Status); err != nil {

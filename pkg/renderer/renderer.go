@@ -15,6 +15,7 @@ import (
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -34,6 +35,7 @@ type App struct {
 	content          map[string]any
 	staticFileSystem http.FileSystem
 	staticHandler    http.Handler
+	generatedMeter   metric.Int64Counter
 	pathPrefix       string
 	publicURL        string
 	minify           bool
@@ -55,7 +57,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace.Tracer) (*App, error) {
+func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meter metric.Meter, tracer trace.Tracer) (*App, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
 		return nil, fmt.Errorf("get static/ filesystem: %w", err)
@@ -67,6 +69,14 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace
 	staticFileSystem := http.FS(staticFS)
 	staticHandler := http.FileServer(staticFileSystem)
 
+	var generatedMeter metric.Int64Counter
+	if meter != nil {
+		generatedMeter, err = meter.Int64Counter("templates_generated")
+		if err != nil {
+			return nil, fmt.Errorf("generated meter: %w", err)
+		}
+	}
+
 	instance := App{
 		tracer:           tracer,
 		staticFileSystem: staticFileSystem,
@@ -74,6 +84,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, tracer trace
 		pathPrefix:       pathPrefix,
 		publicURL:        publicURL,
 		minify:           *config.minify,
+		generatedMeter:   generatedMeter,
 		content: map[string]any{
 			"Title":   *config.title,
 			"Version": os.Getenv("VERSION"),

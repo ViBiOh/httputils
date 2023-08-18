@@ -13,6 +13,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -50,7 +51,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, tracer trace.TracerProvider) (Client, error) {
+func New(config Config, meter metric.MeterProvider, tracer trace.TracerProvider) (Client, error) {
 	if len(*config.address) == 0 {
 		return Noop{}, nil
 	}
@@ -72,6 +73,14 @@ func New(config Config, tracer trace.TracerProvider) (Client, error) {
 			defer app.Close()
 
 			return Noop{}, fmt.Errorf("tracing: %w", err)
+		}
+	}
+
+	if !model.IsNil(meter) {
+		if err := redisotel.InstrumentMetrics(app.client, redisotel.WithMeterProvider(meter)); err != nil {
+			defer app.Close()
+
+			return Noop{}, fmt.Errorf("meter: %w", err)
 		}
 	}
 

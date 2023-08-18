@@ -13,7 +13,6 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/health"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
-	"github.com/ViBiOh/httputils/v4/pkg/prometheus"
 	"github.com/ViBiOh/httputils/v4/pkg/redis"
 	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
@@ -22,11 +21,9 @@ import (
 
 type configuration struct {
 	appServer  server.Config
-	promServer server.Config
 	health     health.Config
 	alcotest   alcotest.Config
 	logger     logger.Config
-	prometheus prometheus.Config
 	telemetry  telemetry.Config
 	owasp      owasp.Config
 	cors       cors.Config
@@ -42,11 +39,9 @@ func newConfig() (configuration, error) {
 
 	return configuration{
 		appServer:  server.Flags(fs, ""),
-		promServer: server.Flags(fs, "prometheus", flags.NewOverride("Port", uint(9090)), flags.NewOverride("IdleTimeout", 10*time.Second), flags.NewOverride("ShutdownTimeout", 5*time.Second)),
 		health:     health.Flags(fs, ""),
 		alcotest:   alcotest.Flags(fs, ""),
 		logger:     logger.Flags(fs, "logger"),
-		prometheus: prometheus.Flags(fs, "prometheus"),
 		telemetry:  telemetry.Flags(fs, "telemetry"),
 		owasp:      owasp.Flags(fs, "", flags.NewOverride("Csp", "default-src 'self'; base-uri 'self'; script-src 'httputils-nonce'")),
 		cors:       cors.Flags(fs, "cors"),

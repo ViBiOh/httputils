@@ -12,6 +12,7 @@ import (
 
 	"github.com/ViBiOh/flags"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	meter "go.opentelemetry.io/otel/metric"
@@ -76,14 +77,16 @@ func New(ctx context.Context, config Config) (App, error) {
 		return App{}, fmt.Errorf("metric exporter: %w", err)
 	}
 
-	metricReader := metric.NewPeriodicReader(metricExporter,
-		metric.WithInterval(time.Second*30),
-	)
-
 	meterProvider := metric.NewMeterProvider(
 		metric.WithResource(otelResource),
-		metric.WithReader(metricReader),
+		metric.WithReader(metric.NewPeriodicReader(metricExporter,
+			metric.WithInterval(time.Second*30),
+		)),
 	)
+
+	if err := runtime.Start(runtime.WithMeterProvider(meterProvider)); err != nil {
+		return App{}, fmt.Errorf("runtime: %w", err)
+	}
 
 	return App{
 		traceProvider: traceProvider,

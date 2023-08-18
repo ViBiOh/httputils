@@ -48,12 +48,11 @@ func main() {
 	handler := newPort(config, client, adapter)
 
 	appServer := server.New(config.appServer)
-	promServer := server.New(config.promServer)
 
 	ctxEnd := client.health.End(ctx)
 
 	go appServer.Start(ctxEnd, "http", httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.telemetry.Middleware("http"), owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
 
 	client.health.WaitForTermination(appServer.Done())
-	server.GracefulWait(appServer.Done(), promServer.Done(), adapter.amqp.Done())
+	server.GracefulWait(appServer.Done(), adapter.amqp.Done())
 }

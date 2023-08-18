@@ -33,7 +33,7 @@ func (ri *RedisIntegration) connect(name string) {
 		ri.t.Fatal(err)
 	}
 
-	client, err := redis.New(redisConfig, nil)
+	client, err := redis.New(redisConfig, nil, nil)
 	if err != nil {
 		ri.t.Fatal(err)
 	}

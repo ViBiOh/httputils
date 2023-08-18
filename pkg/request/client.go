@@ -39,6 +39,6 @@ func CreateClient(timeout time.Duration, onRedirect func(*http.Request, []*http.
 	}
 }
 
-func AddTracerToDefaultClient(meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) {
+func AddOpenTelemetryToDefaultClient(meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) {
 	defaultHTTPClient = telemetry.AddOpenTelemetryToClient(defaultHTTPClient, meterProvider, tracerProvider)
 }

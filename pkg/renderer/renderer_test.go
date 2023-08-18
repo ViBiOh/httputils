@@ -181,7 +181,7 @@ func TestHandler(t *testing.T) {
 		pathPrefix: &emptyString,
 		title:      &title,
 		minify:     &minify,
-	}, content, template.FuncMap{}, nil)
+	}, content, template.FuncMap{}, nil, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -191,7 +191,7 @@ func TestHandler(t *testing.T) {
 		pathPrefix: &pathPrefix,
 		title:      &title,
 		minify:     &minify,
-	}, content, template.FuncMap{}, nil)
+	}, content, template.FuncMap{}, nil, nil)
 	if err != nil {
 		t.Error(err)
 	}
