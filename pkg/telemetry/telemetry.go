@@ -29,8 +29,8 @@ var noopFunc = func(*error, ...tr.SpanEndOption) {
 }
 
 type App struct {
-	traceProvider *trace.TracerProvider
-	meterProvider *metric.MeterProvider
+	tracerProvider *trace.TracerProvider
+	meterProvider  *metric.MeterProvider
 }
 
 type Config struct {
@@ -67,7 +67,7 @@ func New(ctx context.Context, config Config) (App, error) {
 		return App{}, fmt.Errorf("sampler: %w", err)
 	}
 
-	traceProvider := trace.NewTracerProvider(
+	tracerProvider := trace.NewTracerProvider(
 		trace.WithBatcher(tracerExporter),
 		trace.WithResource(otelResource),
 		trace.WithSampler(sampler),
@@ -90,12 +90,12 @@ func New(ctx context.Context, config Config) (App, error) {
 	}
 
 	return App{
-		traceProvider: traceProvider,
-		meterProvider: meterProvider,
+		tracerProvider: tracerProvider,
+		meterProvider:  meterProvider,
 	}, nil
 }
 
-func (a App) GetMeterProvider() meter.MeterProvider {
+func (a App) MeterProvider() meter.MeterProvider {
 	if a.meterProvider == nil {
 		return noop_meter.MeterProvider{}
 	}
@@ -103,16 +103,12 @@ func (a App) GetMeterProvider() meter.MeterProvider {
 	return a.meterProvider
 }
 
-func (a App) GetTraceProvider() tr.TracerProvider {
+func (a App) TracerProvider() tr.TracerProvider {
 	if a.meterProvider == nil {
 		return tr.NewNoopTracerProvider()
 	}
 
-	return a.traceProvider
-}
-
-func (a App) GetTracer(name string) tr.Tracer {
-	return a.GetTraceProvider().Tracer(name)
+	return a.tracerProvider
 }
 
 func (a App) Middleware(name string) func(next http.Handler) http.Handler {
@@ -122,16 +118,16 @@ func (a App) Middleware(name string) func(next http.Handler) http.Handler {
 		}
 
 		return otelhttp.NewHandler(next, name,
-			otelhttp.WithTracerProvider(a.GetTraceProvider()),
+			otelhttp.WithTracerProvider(a.TracerProvider()),
 			otelhttp.WithPropagators(propagation.TraceContext{}),
-			otelhttp.WithMeterProvider(a.GetMeterProvider()),
+			otelhttp.WithMeterProvider(a.MeterProvider()),
 		)
 	}
 }
 
 func (a App) Close(ctx context.Context) {
-	if a.traceProvider != nil {
-		if err := a.traceProvider.Shutdown(ctx); err != nil {
+	if a.tracerProvider != nil {
+		if err := a.tracerProvider.Shutdown(ctx); err != nil {
 			slog.Error("shutdown trace provider", "err", err)
 		}
 	}

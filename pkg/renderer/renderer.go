@@ -57,7 +57,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvider metric.MeterProvider, tracer trace.Tracer) (*App, error) {
+func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*App, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
 		return nil, fmt.Errorf("get static/ filesystem: %w", err)
@@ -69,24 +69,12 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvide
 	staticFileSystem := http.FS(staticFS)
 	staticHandler := http.FileServer(staticFileSystem)
 
-	var generatedMeter metric.Int64Counter
-	if meterProvider != nil {
-		meter := meterProvider.Meter("github.com/ViBiOh/httputils/v4/pkg/renderer")
-
-		generatedMeter, err = meter.Int64Counter("templates_generated")
-		if err != nil {
-			return nil, fmt.Errorf("generated meter: %w", err)
-		}
-	}
-
 	instance := App{
-		tracer:           tracer,
 		staticFileSystem: staticFileSystem,
 		staticHandler:    staticHandler,
 		pathPrefix:       pathPrefix,
 		publicURL:        publicURL,
 		minify:           *config.minify,
-		generatedMeter:   generatedMeter,
 		content: map[string]any{
 			"Title":   *config.title,
 			"Version": os.Getenv("VERSION"),
@@ -109,6 +97,19 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvide
 
 	if strings.HasPrefix(instance.publicURL, "http://localhost") {
 		slog.Warn("PublicURL has a development/debug value: You may need to configure it.", "url", instance.publicURL)
+	}
+
+	if meterProvider != nil {
+		meter := meterProvider.Meter("github.com/ViBiOh/httputils/v4/pkg/renderer")
+
+		instance.generatedMeter, err = meter.Int64Counter("templates_generated")
+		if err != nil {
+			return nil, fmt.Errorf("create generated meter: %w", err)
+		}
+	}
+
+	if tracerProvider != nil {
+		instance.tracer = tracerProvider.Tracer("renderer")
 	}
 
 	return &instance, nil

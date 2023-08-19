@@ -55,28 +55,32 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, meter metric.MeterProvider, tracer trace.Tracer) (*Client, error) {
-	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, meter, tracer)
+func New(config Config, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Client, error) {
+	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, meterProvider, tracerProvider)
 }
 
-func NewFromURI(uri string, prefetch int, meter metric.MeterProvider, tracer trace.Tracer) (*Client, error) {
+func NewFromURI(uri string, prefetch int, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Client, error) {
 	if len(uri) == 0 {
 		return nil, ErrNoConfig
 	}
 
-	reconnectCounter, listenerGauge, messageMetric, err := initMetrics(meter)
-	if err != nil {
-		return nil, fmt.Errorf("init metrics: %w", err)
+	client := &Client{
+		uri:       uri,
+		prefetch:  prefetch,
+		listeners: make(map[string]*listener),
 	}
 
-	client := &Client{
-		tracer:          tracer,
-		uri:             uri,
-		prefetch:        prefetch,
-		listeners:       make(map[string]*listener),
-		reconnectMetric: reconnectCounter,
-		listenerMetric:  listenerGauge,
-		messageMetric:   messageMetric,
+	if meterProvider != nil {
+		var err error
+
+		client.reconnectMetric, client.listenerMetric, client.messageMetric, err = initMetrics(meterProvider)
+		if err != nil {
+			return nil, fmt.Errorf("init metrics: %w", err)
+		}
+	}
+
+	if tracerProvider != nil {
+		client.tracer = tracerProvider.Tracer("amqp")
 	}
 
 	connection, channel, err := connect(uri, client.prefetch, client.onDisconnect)
@@ -98,10 +102,6 @@ func NewFromURI(uri string, prefetch int, meter metric.MeterProvider, tracer tra
 }
 
 func initMetrics(provider metric.MeterProvider) (metric.Int64Counter, metric.Int64UpDownCounter, metric.Int64Counter, error) {
-	if provider == nil {
-		return nil, nil, nil, nil
-	}
-
 	meter := provider.Meter("github.com/ViBiOh/httputils/v4/pkg/amqp")
 
 	reconnect, err := meter.Int64Counter("amqp_reconnection")

@@ -16,12 +16,12 @@ func newAdapter(config configuration, client client) (adapter, error) {
 	var output adapter
 	var err error
 
-	output.amqp, err = amqphandler.New(config.amqHandler, client.amqp, client.telemetry.GetMeterProvider(), client.telemetry.GetTracer("amqp_handler"), amqpHandler)
+	output.amqp, err = amqphandler.New(config.amqHandler, client.amqp, client.telemetry.MeterProvider(), client.telemetry.TracerProvider(), amqpHandler)
 	if err != nil {
 		return output, fmt.Errorf("amqphandler: %w", err)
 	}
 
-	output.renderer, err = renderer.New(config.renderer, content, nil, client.telemetry.GetMeterProvider(), client.telemetry.GetTracer("renderer"))
+	output.renderer, err = renderer.New(config.renderer, content, nil, client.telemetry.MeterProvider(), client.telemetry.TracerProvider())
 	if err != nil {
 		return output, fmt.Errorf("renderer: %w", err)
 	}

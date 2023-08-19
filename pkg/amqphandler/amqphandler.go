@@ -57,10 +57,9 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.MeterProvider, tracer trace.Tracer, handler Handler) (*App, error) {
+func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.MeterProvider, tracerProvider trace.TracerProvider, handler Handler) (*App, error) {
 	app := &App{
 		amqpClient:    amqpClient,
-		tracer:        tracer,
 		exchange:      strings.TrimSpace(*config.exchange),
 		queue:         strings.TrimSpace(*config.queue),
 		exclusive:     *config.exclusive,
@@ -95,6 +94,10 @@ func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.Met
 		if err != nil {
 			return app, fmt.Errorf("create counter: %w", err)
 		}
+	}
+
+	if tracerProvider != nil {
+		app.tracer = tracerProvider.Tracer("amqp_handler")
 	}
 
 	return app, nil

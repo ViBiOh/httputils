@@ -19,7 +19,7 @@ type port struct {
 func newPort(config configuration, client client, adapter adapter) port {
 	var output port
 
-	portTracer := client.telemetry.GetTracer("port")
+	portTracer := client.telemetry.TracerProvider().Tracer("port")
 
 	simpleCache := cache.New(client.redis, func(id string) string { return id }, func(ctx context.Context, id string) (string, error) {
 		_, end := telemetry.StartSpan(ctx, portTracer, "onMiss", trace.WithSpanKind(trace.SpanKindInternal))
