@@ -111,10 +111,12 @@ func New(ctx context.Context, config Config) (App, error) {
 }
 
 func allowedHttpAttr(v ...string) attribute.Filter {
-	m := make(map[string]struct{}, len(v))
+	m := make(map[string]any, len(v))
+
 	for _, s := range v {
 		m[s] = struct{}{}
 	}
+
 	return func(kv attribute.KeyValue) bool {
 		_, ok := m[string(kv.Key)]
 		return ok
