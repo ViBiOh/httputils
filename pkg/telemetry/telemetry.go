@@ -13,11 +13,13 @@ import (
 	"github.com/ViBiOh/flags"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	meter "go.opentelemetry.io/otel/metric"
 	noop_meter "go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/instrumentation"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -83,6 +85,19 @@ func New(ctx context.Context, config Config) (App, error) {
 		metric.WithReader(metric.NewPeriodicReader(metricExporter,
 			metric.WithInterval(time.Second*30),
 		)),
+		metric.WithView(
+			metric.NewView(
+				metric.Instrument{Scope: instrumentation.Scope{
+					Name: "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
+				}},
+				metric.Stream{
+					AttributeFilter: allowedHttpAttr(
+						"http.method",
+						"http.status_code",
+					),
+				},
+			),
+		),
 	)
 
 	if err := runtime.Start(runtime.WithMeterProvider(meterProvider)); err != nil {
@@ -93,6 +108,17 @@ func New(ctx context.Context, config Config) (App, error) {
 		tracerProvider: tracerProvider,
 		meterProvider:  meterProvider,
 	}, nil
+}
+
+func allowedHttpAttr(v ...string) attribute.Filter {
+	m := make(map[string]struct{}, len(v))
+	for _, s := range v {
+		m[s] = struct{}{}
+	}
+	return func(kv attribute.KeyValue) bool {
+		_, ok := m[string(kv.Key)]
+		return ok
+	}
 }
 
 func (a App) MeterProvider() meter.MeterProvider {
