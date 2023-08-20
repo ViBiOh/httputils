@@ -90,7 +90,7 @@ func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.Met
 
 		var err error
 
-		app.counter, err = meter.Int64Counter("amqp_message")
+		app.counter, err = meter.Int64Counter("amqp.message")
 		if err != nil {
 			return app, fmt.Errorf("create counter: %w", err)
 		}

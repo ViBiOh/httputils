@@ -104,17 +104,17 @@ func NewFromURI(uri string, prefetch int, meterProvider metric.MeterProvider, tr
 func initMetrics(provider metric.MeterProvider) (metric.Int64Counter, metric.Int64UpDownCounter, metric.Int64Counter, error) {
 	meter := provider.Meter("github.com/ViBiOh/httputils/v4/pkg/amqp")
 
-	reconnect, err := meter.Int64Counter("amqp_reconnection")
+	reconnect, err := meter.Int64Counter("amqp.reconnection")
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create reconnection counter: %w", err)
 	}
 
-	listener, err := meter.Int64UpDownCounter("amqp_listener")
+	listener, err := meter.Int64UpDownCounter("amqp.listener")
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create listener counter: %w", err)
 	}
 
-	message, err := meter.Int64Counter("amqp_message")
+	message, err := meter.Int64Counter("amqp.message")
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create message counter: %w", err)
 	}

@@ -102,7 +102,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvide
 	if meterProvider != nil {
 		meter := meterProvider.Meter("github.com/ViBiOh/httputils/v4/pkg/renderer")
 
-		instance.generatedMeter, err = meter.Int64Counter("templates_generated")
+		instance.generatedMeter, err = meter.Int64Counter("templates.generated")
 		if err != nil {
 			return nil, fmt.Errorf("create generated meter: %w", err)
 		}
