@@ -67,7 +67,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	}
 }
 
-func New(ctx context.Context, config Config, tracer trace.Tracer) (App, error) {
+func New(ctx context.Context, config Config, tracerProvider trace.TracerProvider) (App, error) {
 	host := strings.TrimSpace(*config.host)
 	if len(host) == 0 {
 		return App{}, ErrNoHost
@@ -87,8 +87,11 @@ func New(ctx context.Context, config Config, tracer trace.Tracer) (App, error) {
 	}
 
 	instance := App{
-		db:     db,
-		tracer: tracer,
+		db: db,
+	}
+
+	if tracerProvider != nil {
+		instance.tracer = tracerProvider.Tracer("database")
 	}
 
 	return instance, instance.Ping(ctx)

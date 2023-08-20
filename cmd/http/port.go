@@ -26,7 +26,7 @@ func newPort(config configuration, client client, adapter adapter) port {
 		defer end(nil)
 
 		return id, nil
-	}, portTracer).WithTTL(time.Hour)
+	}, client.telemetry.TracerProvider()).WithTTL(time.Hour)
 
 	output.template = func(w http.ResponseWriter, r *http.Request) (renderer.Page, error) {
 		var err error

@@ -255,8 +255,10 @@ func (c *Cron) hasError() bool {
 	return false
 }
 
-func (c *Cron) WithTracer(tracer trace.Tracer) *Cron {
-	c.tracer = tracer
+func (c *Cron) WithTracerProvider(tracerProvider trace.TracerProvider) *Cron {
+	if tracerProvider != nil {
+		c.tracer = tracerProvider.Tracer("cron")
+	}
 
 	return c
 }

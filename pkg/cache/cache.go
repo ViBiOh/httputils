@@ -46,17 +46,22 @@ type App[K comparable, V any] struct {
 	extendOnHit bool
 }
 
-func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], tracer trace.Tracer) *App[K, V] {
+func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], tracerProvider trace.TracerProvider) *App[K, V] {
 	client = getClient(client)
 
-	return &App[K, V]{
+	app := &App[K, V]{
 		read:       client,
 		write:      client,
 		toKey:      toKey,
 		serializer: JSONSerializer[V]{},
 		onMiss:     onMiss,
-		tracer:     tracer,
 	}
+
+	if tracerProvider != nil {
+		app.tracer = tracerProvider.Tracer("cache")
+	}
+
+	return app
 }
 
 func (a *App[K, V]) WithMissMany(cb fetchMany[K, V]) *App[K, V] {
