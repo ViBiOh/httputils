@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ViBiOh/flags"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -82,9 +81,7 @@ func New(ctx context.Context, config Config) (App, error) {
 
 	meterProvider := metric.NewMeterProvider(
 		metric.WithResource(otelResource),
-		metric.WithReader(metric.NewPeriodicReader(metricExporter,
-			metric.WithInterval(time.Second*30),
-		)),
+		metric.WithReader(metric.NewPeriodicReader(metricExporter)),
 		metric.WithView(
 			metric.NewView(
 				metric.Instrument{Scope: instrumentation.Scope{
