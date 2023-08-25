@@ -13,7 +13,13 @@ import (
 	tr "go.opentelemetry.io/otel/trace"
 )
 
-func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.SpanStartOption) (context.Context, func(err *error, options ...tr.SpanEndOption)) {
+type FinishSpan = func(err *error, options ...tr.SpanEndOption)
+
+var noopFunc FinishSpan = func(*error, ...tr.SpanEndOption) {
+	// Nothing to do
+}
+
+func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.SpanStartOption) (context.Context, FinishSpan) {
 	if tracer == nil {
 		return ctx, noopFunc
 	}

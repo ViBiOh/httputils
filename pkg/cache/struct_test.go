@@ -34,6 +34,11 @@ func getRepository(t testing.TB) Repository {
 	return output
 }
 
+type jsonErrorItem struct {
+	ID    int           `json:"id"`
+	Value func() string `json:"value"`
+}
+
 type Repository struct {
 	ID       int    `json:"id"`
 	NodeID   string `json:"node_id"`

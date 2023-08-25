@@ -158,7 +158,7 @@ func (a App[K, V]) handleListMany(ctx context.Context, items []K, keys, values [
 		output[missingKeys[key]] = value
 	}
 
-	go doInBackground(cntxt.WithoutDeadline(ctx), "store", func(ctx context.Context) error {
+	go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
 		return a.storeMany(ctx, items, output, missingKeys)
 	})
 

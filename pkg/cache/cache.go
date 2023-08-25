@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -140,23 +139,6 @@ func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	return a.fetch(ctx, id)
 }
 
-func (a *App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
-	if err != nil || a.write == nil {
-		return err
-	}
-
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "evict", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end(&err)
-
-	key := a.toKey(item)
-
-	if err = a.write.Delete(ctx, key); err != nil {
-		return fmt.Errorf("evict key `%s` from cache: %w", key, err)
-	}
-
-	return nil
-}
-
 func (a *App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	var err error
 
@@ -166,7 +148,7 @@ func (a *App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	value, err := a.onMiss(ctx, id)
 
 	if err == nil && a.write != nil {
-		go doInBackground(cntxt.WithoutDeadline(ctx), "store to cache", func(ctx context.Context) error {
+		go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
 			return a.store(ctx, id, value)
 		})
 	}
@@ -180,9 +162,7 @@ func (a *App[K, V]) decode(content []byte) (value V, ok bool, err error) {
 	}
 
 	value, err = a.serializer.Decode(content)
-	if err == nil {
-		ok = true
-	}
+	ok = err == nil
 
 	return
 }
@@ -192,15 +172,15 @@ func (a *App[K, V]) extendTTL(ctx context.Context, keys ...string) {
 		return
 	}
 
-	go doInBackground(cntxt.WithoutDeadline(ctx), "extend ttl", func(ctx context.Context) error {
+	go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
 		return a.write.Expire(ctx, a.ttl, keys...)
 	})
 }
 
-func loggerWithTrace(ctx context.Context, key string) *slog.Logger {
-	return telemetry.AddTraceToLogger(trace.SpanFromContext(ctx), slog.Default()).With("key", key)
-}
-
 func logUnmarshalError(ctx context.Context, key string, err error) {
 	loggerWithTrace(ctx, key).Error("unmarshal from cache", "err", err)
+}
+
+func loggerWithTrace(ctx context.Context, key string) *slog.Logger {
+	return telemetry.AddTraceToLogger(trace.SpanFromContext(ctx), slog.Default()).With("key", key)
 }

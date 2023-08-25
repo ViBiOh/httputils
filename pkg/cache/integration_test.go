@@ -101,4 +101,25 @@ func (s *Suite) TestGet() {
 		assert.NoError(s.T(), err)
 		assert.Equal(s.T(), expected, got)
 	})
+
+	s.Run("store error", func() {
+		valueFunc := func() string { return "hello" }
+
+		fetchFuncStruct := func(ctx context.Context, id int) (jsonErrorItem, error) {
+			return jsonErrorItem{
+				ID:    id,
+				Value: valueFunc,
+			}, nil
+		}
+
+		expected, _ := fetchFuncStruct(context.Background(), 1)
+
+		instance := cache.New(s.integration.Client(), func(id int) string { return strconv.Itoa(id) }, fetchFuncStruct, nil)
+
+		got, err := instance.Get(context.Background(), 1)
+
+		assert.NoError(s.T(), err)
+		assert.Equal(s.T(), expected.ID, got.ID)
+		assert.Equal(s.T(), expected.Value(), got.Value())
+	})
 }
