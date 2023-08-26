@@ -49,8 +49,6 @@ func TestFlags(t *testing.T) {
 func TestHealthHandler(t *testing.T) {
 	t.Parallel()
 
-	okStatus := http.StatusNoContent
-	graceDuration := time.Second
 	closedChan := make(chan struct{})
 	close(closedChan)
 
@@ -62,12 +60,12 @@ func TestHealthHandler(t *testing.T) {
 	}{
 		"simple": {
 			New(Config{
-				okStatus:      &okStatus,
-				graceDuration: &graceDuration,
+				OkStatus:      http.StatusNoContent,
+				GraceDuration: time.Second,
 			}),
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			"",
-			okStatus,
+			http.StatusNoContent,
 		},
 	}
 
@@ -94,8 +92,6 @@ func TestHealthHandler(t *testing.T) {
 func TestReadyHandler(t *testing.T) {
 	t.Parallel()
 
-	okStatus := http.StatusNoContent
-	graceDuration := time.Second
 	closedChan := make(chan struct{})
 	close(closedChan)
 
@@ -107,16 +103,16 @@ func TestReadyHandler(t *testing.T) {
 	}{
 		"simple": {
 			New(Config{
-				okStatus:      &okStatus,
-				graceDuration: &graceDuration,
+				OkStatus:      http.StatusNoContent,
+				GraceDuration: time.Second,
 			}),
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			"",
-			okStatus,
+			http.StatusNoContent,
 		},
 		"shutdown": {
 			&App{
-				okStatus:      okStatus,
+				okStatus:      http.StatusNoContent,
 				graceDuration: time.Second,
 				done:          closedChan,
 			},
@@ -126,8 +122,8 @@ func TestReadyHandler(t *testing.T) {
 		},
 		"failing pinger": {
 			New(Config{
-				okStatus:      &okStatus,
-				graceDuration: &graceDuration,
+				OkStatus:      http.StatusNoContent,
+				GraceDuration: time.Second,
 			}, func(_ context.Context) error {
 				return errors.New("boom")
 			}),

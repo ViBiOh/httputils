@@ -44,19 +44,21 @@ type Client struct {
 }
 
 type Config struct {
-	uri      *string
-	prefetch *int
+	URI      string
+	Prefetch int
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		uri:      flags.New("URI", "Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>").Prefix(prefix).DocPrefix("amqp").String(fs, "", overrides),
-		prefetch: flags.New("Prefetch", "Prefetch count for QoS").Prefix(prefix).DocPrefix("amqp").Int(fs, 1, overrides),
-	}
+	var config Config
+
+	flags.New("URI", "Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>").Prefix(prefix).DocPrefix("amqp").StringVar(fs, &config.URI, "", overrides)
+	flags.New("Prefetch", "Prefetch count for QoS").Prefix(prefix).DocPrefix("amqp").IntVar(fs, &config.Prefetch, 1, overrides)
+
+	return config
 }
 
 func New(config Config, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Client, error) {
-	return NewFromURI(strings.TrimSpace(*config.uri), *config.prefetch, meterProvider, tracerProvider)
+	return NewFromURI(strings.TrimSpace(config.URI), config.Prefetch, meterProvider, tracerProvider)
 }
 
 func NewFromURI(uri string, prefetch int, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Client, error) {

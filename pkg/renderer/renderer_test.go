@@ -170,27 +170,20 @@ var content embed.FS
 func TestHandler(t *testing.T) {
 	t.Parallel()
 
-	emptyString := ""
-	publicURL := "http://localhost"
-	pathPrefix := "/app"
-	title := "Golang Test"
-	minify := true
-
 	configuredApp, err := New(Config{
-		publicURL:  &publicURL,
-		pathPrefix: &emptyString,
-		title:      &title,
-		minify:     &minify,
+		PublicURL: "http://localhost",
+		Title:     "Golang Test",
+		Minify:    true,
 	}, content, template.FuncMap{}, nil, nil)
 	if err != nil {
 		t.Error(err)
 	}
 
 	configuredPrefixApp, err := New(Config{
-		publicURL:  &publicURL,
-		pathPrefix: &pathPrefix,
-		title:      &title,
-		minify:     &minify,
+		PublicURL:  "http://localhost",
+		PathPrefix: "/app",
+		Title:      "Golang Test",
+		Minify:     true,
 	}, content, template.FuncMap{}, nil, nil)
 	if err != nil {
 		t.Error(err)

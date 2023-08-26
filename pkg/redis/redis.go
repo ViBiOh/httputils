@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/ViBiOh/flags"
@@ -30,41 +31,41 @@ type App struct {
 }
 
 type Config struct {
-	address     *[]string
-	username    *string
-	password    *string
-	alias       *string
-	database    *int
-	poolSize    *int
-	minIdleConn *int
+	Username    string
+	Password    string
+	Address     []string
+	Database    int
+	PoolSize    int
+	MinIdleConn int
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		address:     flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").StringSlice(fs, []string{"127.0.0.1:6379"}, overrides),
-		username:    flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
-		password:    flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
-		database:    flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
-		poolSize:    flags.New("PoolSize", "Redis Pool Size (default GOMAXPROCS*10)").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
-		minIdleConn: flags.New("MinIdleConn", "Redis Minimum Idle Connections").Prefix(prefix).DocPrefix("redis").Int(fs, 0, overrides),
-		alias:       flags.New("Alias", "Connection alias, for metric").Prefix(prefix).DocPrefix("redis").String(fs, "", overrides),
-	}
+	var config Config
+
+	flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").StringSliceVar(fs, &config.Address, []string{"127.0.0.1:6379"}, overrides)
+	flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").StringVar(fs, &config.Username, "", overrides)
+	flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").StringVar(fs, &config.Password, "", overrides)
+	flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").IntVar(fs, &config.Database, 0, overrides)
+	flags.New("PoolSize", "Redis Pool Size (default GOMAXPROCS*10)").Prefix(prefix).DocPrefix("redis").IntVar(fs, &config.PoolSize, 0, overrides)
+	flags.New("MinIdleConn", "Redis Minimum Idle Connections").Prefix(prefix).DocPrefix("redis").IntVar(fs, &config.MinIdleConn, 0, overrides)
+
+	return config
 }
 
 func New(config Config, meter metric.MeterProvider, tracer trace.TracerProvider) (Client, error) {
-	if len(*config.address) == 0 {
+	if len(config.Address) == 0 {
 		return Noop{}, nil
 	}
 
 	app := &App{
-		isCluster: len(*config.address) > 1,
+		isCluster: len(config.Address) > 1,
 		client: redis.NewUniversalClient(&redis.UniversalOptions{
-			Addrs:        *config.address,
-			Username:     *config.username,
-			Password:     *config.password,
-			DB:           *config.database,
-			PoolSize:     *config.poolSize,
-			MinIdleConns: *config.minIdleConn,
+			Addrs:        config.Address,
+			Username:     strings.TrimSpace(config.Username),
+			Password:     config.Password,
+			DB:           config.Database,
+			PoolSize:     config.PoolSize,
+			MinIdleConns: config.MinIdleConn,
 		}),
 	}
 

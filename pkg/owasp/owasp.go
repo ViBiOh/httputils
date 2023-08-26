@@ -25,24 +25,26 @@ type App struct {
 }
 
 type Config struct {
-	csp          *string
-	hsts         *bool
-	frameOptions *string
+	CSP          string
+	FrameOptions string
+	HSTS         bool
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		csp:          flags.New("Csp", cspHeader).Prefix(prefix).DocPrefix("owasp").String(fs, "default-src 'self'; base-uri 'self'", overrides),
-		hsts:         flags.New("Hsts", "Indicate Strict Transport Security").Prefix(prefix).DocPrefix("owasp").Bool(fs, true, overrides),
-		frameOptions: flags.New("FrameOptions", "X-Frame-Options").Prefix(prefix).DocPrefix("owasp").String(fs, "deny", overrides),
-	}
+	var config Config
+
+	flags.New("Csp", cspHeader).Prefix(prefix).DocPrefix("owasp").StringVar(fs, &config.CSP, "default-src 'self'; base-uri 'self'", overrides)
+	flags.New("Hsts", "Indicate Strict Transport Security").Prefix(prefix).DocPrefix("owasp").BoolVar(fs, &config.HSTS, true, overrides)
+	flags.New("FrameOptions", "X-Frame-Options").Prefix(prefix).DocPrefix("owasp").StringVar(fs, &config.FrameOptions, "deny", overrides)
+
+	return config
 }
 
 func New(config Config) App {
 	return App{
-		csp:          *config.csp,
-		hsts:         *config.hsts,
-		frameOptions: *config.frameOptions,
+		csp:          config.CSP,
+		hsts:         config.HSTS,
+		frameOptions: config.FrameOptions,
 	}
 }
 

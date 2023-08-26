@@ -20,30 +20,32 @@ type App struct {
 }
 
 type Config struct {
-	origin      *string
-	headers     *string
-	methods     *string
-	exposes     *string
-	credentials *bool
+	Origin      string
+	Headers     string
+	Methods     string
+	Exposes     string
+	Credentials bool
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		origin:      flags.New("Origin", "Access-Control-Allow-Origin").Prefix(prefix).DocPrefix("cors").String(fs, "*", overrides),
-		headers:     flags.New("Headers", "Access-Control-Allow-Headers").Prefix(prefix).DocPrefix("cors").String(fs, "Content-Type", overrides),
-		methods:     flags.New("Methods", "Access-Control-Allow-Methods").Prefix(prefix).DocPrefix("cors").String(fs, http.MethodGet, overrides),
-		exposes:     flags.New("Expose", "Access-Control-Expose-Headers").Prefix(prefix).DocPrefix("cors").String(fs, "", overrides),
-		credentials: flags.New("Credentials", "Access-Control-Allow-Credentials").Prefix(prefix).DocPrefix("cors").Bool(fs, false, overrides),
-	}
+	var config Config
+
+	flags.New("Origin", "Access-Control-Allow-Origin").Prefix(prefix).DocPrefix("cors").StringVar(fs, &config.Origin, "*", overrides)
+	flags.New("Headers", "Access-Control-Allow-Headers").Prefix(prefix).DocPrefix("cors").StringVar(fs, &config.Headers, "Content-Type", overrides)
+	flags.New("Methods", "Access-Control-Allow-Methods").Prefix(prefix).DocPrefix("cors").StringVar(fs, &config.Methods, http.MethodGet, overrides)
+	flags.New("Expose", "Access-Control-Expose-Headers").Prefix(prefix).DocPrefix("cors").StringVar(fs, &config.Exposes, "", overrides)
+	flags.New("Credentials", "Access-Control-Allow-Credentials").Prefix(prefix).DocPrefix("cors").BoolVar(fs, &config.Credentials, false, overrides)
+
+	return config
 }
 
 func New(config Config) App {
 	return App{
-		origin:      *config.origin,
-		headers:     *config.headers,
-		methods:     *config.methods,
-		exposes:     *config.exposes,
-		credentials: strconv.FormatBool(*config.credentials),
+		origin:      config.Origin,
+		headers:     config.Headers,
+		methods:     config.Methods,
+		exposes:     config.Exposes,
+		credentials: strconv.FormatBool(config.Credentials),
 	}
 }
 

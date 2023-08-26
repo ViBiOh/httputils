@@ -10,21 +10,23 @@ import (
 )
 
 type Config struct {
-	level      *string
-	json       *bool
-	timeKey    *string
-	levelKey   *string
-	messageKey *string
+	Level      string
+	TimeKey    string
+	LevelKey   string
+	MessageKey string
+	JSON       bool
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		level:      flags.New("Level", "Logger level").Prefix(prefix).DocPrefix("logger").String(fs, "INFO", overrides),
-		json:       flags.New("Json", "Log format as JSON").Prefix(prefix).DocPrefix("logger").Bool(fs, false, overrides),
-		timeKey:    flags.New("TimeKey", "Key for timestamp in JSON").Prefix(prefix).DocPrefix("logger").String(fs, "time", overrides),
-		levelKey:   flags.New("LevelKey", "Key for level in JSON").Prefix(prefix).DocPrefix("logger").String(fs, "level", overrides),
-		messageKey: flags.New("MessageKey", "Key for message in JSON").Prefix(prefix).DocPrefix("logger").String(fs, "msg", overrides),
-	}
+	var config Config
+
+	flags.New("Level", "Logger level").Prefix(prefix).DocPrefix("logger").StringVar(fs, &config.Level, "INFO", overrides)
+	flags.New("Json", "Log format as JSON").Prefix(prefix).DocPrefix("logger").BoolVar(fs, &config.JSON, false, overrides)
+	flags.New("TimeKey", "Key for timestamp in JSON").Prefix(prefix).DocPrefix("logger").StringVar(fs, &config.TimeKey, "time", overrides)
+	flags.New("LevelKey", "Key for level in JSON").Prefix(prefix).DocPrefix("logger").StringVar(fs, &config.LevelKey, "level", overrides)
+	flags.New("MessageKey", "Key for message in JSON").Prefix(prefix).DocPrefix("logger").StringVar(fs, &config.MessageKey, "msg", overrides)
+
+	return config
 }
 
 func init() {
@@ -34,13 +36,13 @@ func init() {
 func Init(config Config) {
 	var level slog.Level
 
-	if err := level.UnmarshalText([]byte(*config.level)); err != nil {
-		slog.Error(err.Error(), "level", *config.level)
+	if err := level.UnmarshalText([]byte(config.Level)); err != nil {
+		slog.Error(err.Error(), "level", config.Level)
 
 		return
 	}
 
-	configureLogger(os.Stdout, level, *config.json, *config.timeKey, *config.levelKey, *config.messageKey)
+	configureLogger(os.Stdout, level, config.JSON, config.TimeKey, config.LevelKey, config.MessageKey)
 }
 
 func configureLogger(writer io.Writer, level slog.Level, json bool, timeKey, levelKey, messageKey string) {

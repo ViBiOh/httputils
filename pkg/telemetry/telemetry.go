@@ -31,19 +31,21 @@ type App struct {
 }
 
 type Config struct {
-	url  *string
-	rate *string
+	URL  string
+	Rate string
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		url:  flags.New("URL", "OpenTelemetry gRPC endpoint (e.g. otel-exporter:4317)").Prefix(prefix).DocPrefix("telemetry").String(fs, "", overrides),
-		rate: flags.New("Rate", "OpenTelemetry sample rate, 'always', 'never' or a float value").Prefix(prefix).DocPrefix("telemetry").String(fs, "always", overrides),
-	}
+	var config Config
+
+	flags.New("URL", "OpenTelemetry gRPC endpoint (e.g. otel-exporter:4317)").Prefix(prefix).DocPrefix("telemetry").StringVar(fs, &config.URL, "", overrides)
+	flags.New("Rate", "OpenTelemetry sample rate, 'always', 'never' or a float value").Prefix(prefix).DocPrefix("telemetry").StringVar(fs, &config.Rate, "always", overrides)
+
+	return config
 }
 
 func New(ctx context.Context, config Config) (App, error) {
-	url := strings.TrimSpace(*config.url)
+	url := strings.TrimSpace(config.URL)
 
 	if len(url) == 0 {
 		return App{}, nil
@@ -59,7 +61,7 @@ func New(ctx context.Context, config Config) (App, error) {
 		return App{}, fmt.Errorf("trace exporter: %w", err)
 	}
 
-	sampler, err := newSampler(strings.TrimSpace(*config.rate))
+	sampler, err := newSampler(strings.TrimSpace(config.Rate))
 	if err != nil {
 		return App{}, fmt.Errorf("sampler: %w", err)
 	}

@@ -3,7 +3,7 @@ module github.com/ViBiOh/httputils/v4
 go 1.21
 
 require (
-	github.com/ViBiOh/flags v1.3.1
+	github.com/ViBiOh/flags v1.4.1
 	github.com/jackc/pgx/v5 v5.4.3
 	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5

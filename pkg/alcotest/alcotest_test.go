@@ -192,33 +192,27 @@ func TestDoAndExit(t *testing.T) {
 	testServer := createTestServer()
 	defer testServer.Close()
 
-	emptyString := ""
-	healthy := testServer.URL + "/ok"
-	unhealthy := testServer.URL + "/ko"
-	userAgent := "TestDoAndExit"
-
 	cases := map[string]struct {
 		input Config
 		want  int
 	}{
 		"nothing to do": {
 			Config{
-				url:       &emptyString,
-				userAgent: &userAgent,
+				UserAgent: "TestDoAndExit",
 			},
 			-1,
 		},
 		"valid": {
 			Config{
-				url:       &healthy,
-				userAgent: &userAgent,
+				URL:       testServer.URL + "/ok",
+				UserAgent: "TestDoAndExit",
 			},
 			0,
 		},
 		"invalid": {
 			Config{
-				url:       &unhealthy,
-				userAgent: &userAgent,
+				URL:       testServer.URL + "/ko",
+				UserAgent: "TestDoAndExit",
 			},
 			1,
 		},
@@ -246,11 +240,9 @@ func BenchmarkDoAndExit(b *testing.B) {
 	testServer := createTestServer()
 	defer testServer.Close()
 
-	defaultURL = testServer.URL + "/health"
-
 	config := Config{
-		url:       &defaultURL,
-		userAgent: &defaultUserAgent,
+		URL:       testServer.URL + "/health",
+		UserAgent: defaultUserAgent,
 	}
 
 	req, _ = http.NewRequest(http.MethodGet, defaultURL, nil)

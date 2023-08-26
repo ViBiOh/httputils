@@ -42,19 +42,21 @@ type App struct {
 }
 
 type Config struct {
-	publicURL  *string
-	pathPrefix *string
-	title      *string
-	minify     *bool
+	PublicURL  string
+	PathPrefix string
+	Title      string
+	Minify     bool
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		publicURL:  flags.New("PublicURL", "Public URL").Prefix(prefix).DocPrefix("").String(fs, "http://localhost:1080", overrides),
-		pathPrefix: flags.New("PathPrefix", "Root Path Prefix").Prefix(prefix).DocPrefix("").String(fs, "", overrides),
-		title:      flags.New("Title", "Application title").Prefix(prefix).DocPrefix("").String(fs, "App", overrides),
-		minify:     flags.New("Minify", "Minify HTML").Prefix(prefix).DocPrefix("").Bool(fs, true, overrides),
-	}
+	var config Config
+
+	flags.New("PublicURL", "Public URL").Prefix(prefix).DocPrefix("").StringVar(fs, &config.PublicURL, "http://localhost:1080", overrides)
+	flags.New("PathPrefix", "Root Path Prefix").Prefix(prefix).DocPrefix("").StringVar(fs, &config.PathPrefix, "", overrides)
+	flags.New("Title", "Application title").Prefix(prefix).DocPrefix("").StringVar(fs, &config.Title, "App", overrides)
+	flags.New("Minify", "Minify HTML").Prefix(prefix).DocPrefix("").BoolVar(fs, &config.Minify, true, overrides)
+
+	return config
 }
 
 func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*App, error) {
@@ -63,8 +65,8 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvide
 		return nil, fmt.Errorf("get static/ filesystem: %w", err)
 	}
 
-	pathPrefix := strings.TrimSuffix(*config.pathPrefix, "/")
-	publicURL := strings.TrimSuffix(*config.publicURL, "/")
+	pathPrefix := strings.TrimSuffix(config.PathPrefix, "/")
+	publicURL := strings.TrimSuffix(config.PublicURL, "/")
 
 	staticFileSystem := http.FS(staticFS)
 	staticHandler := http.FileServer(staticFileSystem)
@@ -74,9 +76,9 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvide
 		staticHandler:    staticHandler,
 		pathPrefix:       pathPrefix,
 		publicURL:        publicURL,
-		minify:           *config.minify,
+		minify:           config.Minify,
 		content: map[string]any{
-			"Title":   *config.title,
+			"Title":   config.Title,
 			"Version": os.Getenv("VERSION"),
 		},
 	}

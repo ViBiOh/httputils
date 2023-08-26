@@ -38,36 +38,38 @@ type App struct {
 }
 
 type Config struct {
-	exchange      *string
-	queue         *string
-	routingKey    *string
-	retryInterval *time.Duration
-	maxRetry      *uint
-	exclusive     *bool
+	Exchange      string
+	Queue         string
+	RoutingKey    string
+	RetryInterval time.Duration
+	MaxRetry      uint
+	Exclusive     bool
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		exchange:      flags.New("Exchange", "Exchange name").Prefix(prefix).DocPrefix("amqp").String(fs, "", overrides),
-		queue:         flags.New("Queue", "Queue name").Prefix(prefix).DocPrefix("amqp").String(fs, "", overrides),
-		exclusive:     flags.New("Exclusive", "Queue exclusive mode (for fanout exchange)").Prefix(prefix).DocPrefix("amqp").Bool(fs, false, overrides),
-		routingKey:    flags.New("RoutingKey", "RoutingKey name").Prefix(prefix).DocPrefix("amqp").String(fs, "", overrides),
-		retryInterval: flags.New("RetryInterval", "Interval duration when send fails").Prefix(prefix).DocPrefix("amqp").Duration(fs, time.Hour, overrides),
-		maxRetry:      flags.New("MaxRetry", "Max send retries").Prefix(prefix).DocPrefix("amqp").Uint(fs, 3, overrides),
-	}
+	var config Config
+
+	flags.New("Exchange", "Exchange name").Prefix(prefix).DocPrefix("amqp").StringVar(fs, &config.Exchange, "", overrides)
+	flags.New("Queue", "Queue name").Prefix(prefix).DocPrefix("amqp").StringVar(fs, &config.Queue, "", overrides)
+	flags.New("Exclusive", "Queue exclusive mode (for fanout exchange)").Prefix(prefix).DocPrefix("amqp").BoolVar(fs, &config.Exclusive, false, overrides)
+	flags.New("RoutingKey", "RoutingKey name").Prefix(prefix).DocPrefix("amqp").StringVar(fs, &config.RoutingKey, "", overrides)
+	flags.New("RetryInterval", "Interval duration when send fails").Prefix(prefix).DocPrefix("amqp").DurationVar(fs, &config.RetryInterval, time.Hour, overrides)
+	flags.New("MaxRetry", "Max send retries").Prefix(prefix).DocPrefix("amqp").UintVar(fs, &config.MaxRetry, 3, overrides)
+
+	return config
 }
 
 func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.MeterProvider, tracerProvider trace.TracerProvider, handler Handler) (*App, error) {
 	app := &App{
 		amqpClient:    amqpClient,
-		exchange:      strings.TrimSpace(*config.exchange),
-		queue:         strings.TrimSpace(*config.queue),
-		exclusive:     *config.exclusive,
-		routingKey:    strings.TrimSpace(*config.routingKey),
-		retryInterval: *config.retryInterval,
+		exchange:      strings.TrimSpace(config.Exchange),
+		queue:         strings.TrimSpace(config.Queue),
+		exclusive:     config.Exclusive,
+		routingKey:    strings.TrimSpace(config.RoutingKey),
+		retryInterval: config.RetryInterval,
 		done:          make(chan struct{}),
 		handler:       handler,
-		maxRetry:      int64(*config.maxRetry),
+		maxRetry:      int64(config.MaxRetry),
 	}
 
 	if app.amqpClient == nil {

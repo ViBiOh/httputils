@@ -44,44 +44,46 @@ type App struct {
 }
 
 type Config struct {
-	host    *string
-	port    *uint
-	user    *string
-	pass    *string
-	name    *string
-	sslmode *string
-	minConn *uint
-	maxConn *uint
+	Host    string
+	User    string
+	Pass    string
+	Name    string
+	SSLMode string
+	Port    uint
+	MinConn uint
+	MaxConn uint
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		host:    flags.New("Host", "Host").Prefix(prefix).DocPrefix("database").String(fs, "", overrides),
-		port:    flags.New("Port", "Port").Prefix(prefix).DocPrefix("database").Uint(fs, 5432, overrides),
-		user:    flags.New("User", "User").Prefix(prefix).DocPrefix("database").String(fs, "", overrides),
-		pass:    flags.New("Pass", "Pass").Prefix(prefix).DocPrefix("database").String(fs, "", overrides),
-		name:    flags.New("Name", "Name").Prefix(prefix).DocPrefix("database").String(fs, "", overrides),
-		minConn: flags.New("MinConn", "Min Open Connections").Prefix(prefix).DocPrefix("database").Uint(fs, 2, overrides),
-		maxConn: flags.New("MaxConn", "Max Open Connections").Prefix(prefix).DocPrefix("database").Uint(fs, 5, overrides),
-		sslmode: flags.New("Sslmode", "SSL Mode").Prefix(prefix).DocPrefix("database").String(fs, "disable", overrides),
-	}
+	var config Config
+
+	flags.New("Host", "Host").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.Host, "", overrides)
+	flags.New("Port", "Port").Prefix(prefix).DocPrefix("database").UintVar(fs, &config.Port, 5432, overrides)
+	flags.New("User", "User").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.User, "", overrides)
+	flags.New("Pass", "Pass").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.Pass, "", overrides)
+	flags.New("Name", "Name").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.Name, "", overrides)
+	flags.New("MinConn", "Min Open Connections").Prefix(prefix).DocPrefix("database").UintVar(fs, &config.MinConn, 2, overrides)
+	flags.New("MaxConn", "Max Open Connections").Prefix(prefix).DocPrefix("database").UintVar(fs, &config.MaxConn, 5, overrides)
+	flags.New("Sslmode", "SSL Mode").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.SSLMode, "disable", overrides)
+
+	return config
 }
 
 func New(ctx context.Context, config Config, tracerProvider trace.TracerProvider) (App, error) {
-	host := strings.TrimSpace(*config.host)
+	host := strings.TrimSpace(config.Host)
 	if len(host) == 0 {
 		return App{}, ErrNoHost
 	}
 
-	user := strings.TrimSpace(*config.user)
-	pass := *config.pass
-	name := strings.TrimSpace(*config.name)
-	sslmode := *config.sslmode
+	user := strings.TrimSpace(config.User)
+	pass := config.Pass
+	name := strings.TrimSpace(config.Name)
+	sslmode := config.SSLMode
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	db, err := pgxpool.New(ctx, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_min_conns=%d pool_max_conns=%d", host, *config.port, user, pass, name, sslmode, *config.minConn, *config.maxConn))
+	db, err := pgxpool.New(ctx, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_min_conns=%d pool_max_conns=%d", host, config.Port, user, pass, name, sslmode, config.MinConn, config.MaxConn))
 	if err != nil {
 		return App{}, fmt.Errorf("connect to postgres: %w", err)
 	}

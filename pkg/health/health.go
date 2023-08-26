@@ -30,21 +30,23 @@ type App struct {
 }
 
 type Config struct {
-	okStatus      *int
-	graceDuration *time.Duration
+	OkStatus      int
+	GraceDuration time.Duration
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		okStatus:      flags.New("OkStatus", "Healthy HTTP Status code").Prefix(prefix).DocPrefix("http").Int(fs, http.StatusNoContent, overrides),
-		graceDuration: flags.New("GraceDuration", "Grace duration when SIGTERM received").Prefix(prefix).DocPrefix("http").Duration(fs, 30*time.Second, overrides),
-	}
+	var config Config
+
+	flags.New("OkStatus", "Healthy HTTP Status code").Prefix(prefix).DocPrefix("http").IntVar(fs, &config.OkStatus, http.StatusNoContent, overrides)
+	flags.New("GraceDuration", "Grace duration when SIGTERM received").Prefix(prefix).DocPrefix("http").DurationVar(fs, &config.GraceDuration, 30*time.Second, overrides)
+
+	return config
 }
 
 func New(config Config, pingers ...model.Pinger) *App {
 	return &App{
-		okStatus:      *config.okStatus,
-		graceDuration: *config.graceDuration,
+		okStatus:      config.OkStatus,
+		graceDuration: config.GraceDuration,
 		pingers:       pingers,
 
 		done: make(chan struct{}),

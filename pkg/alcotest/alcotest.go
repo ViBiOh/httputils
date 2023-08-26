@@ -27,15 +27,17 @@ func init() {
 }
 
 type Config struct {
-	url       *string
-	userAgent *string
+	URL       string
+	UserAgent string
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		url:       flags.New("Url", "URL to check").Prefix(prefix).DocPrefix("alcotest").String(fs, "", overrides),
-		userAgent: flags.New("UserAgent", "User-Agent for check").Prefix(prefix).DocPrefix("alcotest").String(fs, defaultUserAgent, overrides),
-	}
+	var config Config
+
+	flags.New("Url", "URL to check").Prefix(prefix).DocPrefix("alcotest").StringVar(fs, &config.URL, "", overrides)
+	flags.New("UserAgent", "User-Agent for check").Prefix(prefix).DocPrefix("alcotest").StringVar(fs, &config.UserAgent, defaultUserAgent, overrides)
+
+	return config
 }
 
 func GetStatusCode(url, userAgent string) (status int, err error) {
@@ -88,12 +90,11 @@ func Do(url, userAgent string) error {
 }
 
 func DoAndExit(config Config) {
-	url := *config.url
-	if len(url) == 0 {
+	if len(config.URL) == 0 {
 		return
 	}
 
-	if err := Do(url, *config.userAgent); err != nil {
+	if err := Do(config.URL, config.UserAgent); err != nil {
 		fmt.Println(err)
 		exitFunc(1)
 

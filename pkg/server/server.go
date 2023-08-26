@@ -26,32 +26,33 @@ type App struct {
 }
 
 type Config struct {
-	address *string
-	port    *uint
-	cert    *string
-	key     *string
-
-	readTimeout     *time.Duration
-	writeTimeout    *time.Duration
-	idleTimeout     *time.Duration
-	shutdownTimeout *time.Duration
+	Address         string
+	Cert            string
+	Key             string
+	Port            uint
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	IdleTimeout     time.Duration
+	ShutdownTimeout time.Duration
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
-	return Config{
-		address:         flags.New("Address", "Listen address").Prefix(prefix).DocPrefix("server").String(fs, "", overrides),
-		port:            flags.New("Port", "Listen port (0 to disable)").Prefix(prefix).DocPrefix("server").Uint(fs, 1080, overrides),
-		cert:            flags.New("Cert", "Certificate file").Prefix(prefix).DocPrefix("server").String(fs, "", overrides),
-		key:             flags.New("Key", "Key file").Prefix(prefix).DocPrefix("server").String(fs, "", overrides),
-		readTimeout:     flags.New("ReadTimeout", "Read Timeout").Prefix(prefix).DocPrefix("server").Duration(fs, 5*time.Second, overrides),
-		writeTimeout:    flags.New("WriteTimeout", "Write Timeout").Prefix(prefix).DocPrefix("server").Duration(fs, 10*time.Second, overrides),
-		idleTimeout:     flags.New("IdleTimeout", "Idle Timeout").Prefix(prefix).DocPrefix("server").Duration(fs, 2*time.Minute, overrides),
-		shutdownTimeout: flags.New("ShutdownTimeout", "Shutdown Timeout").Prefix(prefix).DocPrefix("server").Duration(fs, 10*time.Second, overrides),
-	}
+	var config Config
+
+	flags.New("Address", "Listen address").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Address, "", overrides)
+	flags.New("Port", "Listen port (0 to disable)").Prefix(prefix).DocPrefix("server").UintVar(fs, &config.Port, 1080, overrides)
+	flags.New("Cert", "Certificate file").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Cert, "", overrides)
+	flags.New("Key", "Key file").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Key, "", overrides)
+	flags.New("ReadTimeout", "Read Timeout").Prefix(prefix).DocPrefix("server").DurationVar(fs, &config.ReadTimeout, 5*time.Second, overrides)
+	flags.New("WriteTimeout", "Write Timeout").Prefix(prefix).DocPrefix("server").DurationVar(fs, &config.WriteTimeout, 10*time.Second, overrides)
+	flags.New("IdleTimeout", "Idle Timeout").Prefix(prefix).DocPrefix("server").DurationVar(fs, &config.IdleTimeout, 2*time.Minute, overrides)
+	flags.New("ShutdownTimeout", "Shutdown Timeout").Prefix(prefix).DocPrefix("server").DurationVar(fs, &config.ShutdownTimeout, 10*time.Second, overrides)
+
+	return config
 }
 
 func New(config Config) App {
-	port := *config.port
+	port := config.Port
 	done := make(chan struct{})
 
 	if port == 0 {
@@ -61,14 +62,14 @@ func New(config Config) App {
 	}
 
 	return App{
-		listenAddress: fmt.Sprintf("%s:%d", *config.address, port),
-		cert:          *config.cert,
-		key:           *config.key,
+		listenAddress: fmt.Sprintf("%s:%d", config.Address, port),
+		cert:          config.Cert,
+		key:           config.Key,
 
-		readTimeout:     *config.readTimeout,
-		writeTimeout:    *config.writeTimeout,
-		idleTimeout:     *config.idleTimeout,
-		shutdownTimeout: *config.shutdownTimeout,
+		readTimeout:     config.ReadTimeout,
+		writeTimeout:    config.WriteTimeout,
+		idleTimeout:     config.IdleTimeout,
+		shutdownTimeout: config.ShutdownTimeout,
 
 		done: done,
 	}
