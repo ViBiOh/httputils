@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (a Service) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
+func (s Service) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
 	joinChar := "?"
 	if strings.Contains(pathname, "?") {
 		joinChar = "&"
@@ -29,13 +29,13 @@ func (a Service) Redirect(w http.ResponseWriter, r *http.Request, pathname strin
 		anchor = "#" + parts[1]
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", a.url(parts[0]), joinChar, message, anchor), http.StatusFound)
+	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", s.url(parts[0]), joinChar, message, anchor), http.StatusFound)
 }
 
-func (a Service) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error) {
+func (s Service) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error) {
 	slog.Error(err.Error())
 
-	content = a.feedContent(content)
+	content = s.feedContent(content)
 
 	status, message := httperror.ErrorStatus(err)
 	if len(message) > 0 {
@@ -46,25 +46,25 @@ func (a Service) Error(w http.ResponseWriter, r *http.Request, content map[strin
 	owasp.WriteNonce(w, nonce)
 	content["nonce"] = nonce
 
-	if err = templates.ResponseHTMLTemplate(r.Context(), a.tracer, a.tpl.Lookup("error"), w, content, status); err != nil {
+	if err = templates.ResponseHTMLTemplate(r.Context(), s.tracer, s.tpl.Lookup("error"), w, content, status); err != nil {
 		httperror.InternalServerError(w, err)
 	}
 }
 
-func (a Service) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
+func (s Service) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
 	defer func() {
 		if exception := recover(); exception != nil {
 			output := make([]byte, 1024)
 			runtime.Stack(output, false)
 			slog.Error("recovered from panic", "err", exception, "stacktrace", string(output))
 
-			a.Error(w, r, nil, fmt.Errorf("recovered from panic: %s", exception))
+			s.Error(w, r, nil, fmt.Errorf("recovered from panic: %s", exception))
 		}
 	}()
 
 	page, err := templateFunc(w, r)
 	if err != nil {
-		a.Error(w, r, page.Content, err)
+		s.Error(w, r, page.Content, err)
 
 		return
 	}
@@ -73,35 +73,35 @@ func (a Service) render(w http.ResponseWriter, r *http.Request, templateFunc Tem
 		return
 	}
 
-	page.Content = a.feedContent(page.Content)
+	page.Content = s.feedContent(page.Content)
 
 	message := ParseMessage(r)
 	if len(message.Content) > 0 {
 		page.Content["Message"] = message
 	}
 
-	if a.matchEtag(w, r, page) {
+	if s.matchEtag(w, r, page) {
 		w.WriteHeader(http.StatusNotModified)
 
 		return
 	}
 
 	responder := templates.ResponseHTMLTemplate
-	if !a.minify {
+	if !s.minify {
 		responder = templates.ResponseHTMLTemplateRaw
 	}
 
-	if a.generatedMeter != nil {
-		a.generatedMeter.Add(r.Context(), 1, metric.WithAttributes(attribute.String("template", page.Template)))
+	if s.generatedMeter != nil {
+		s.generatedMeter.Add(r.Context(), 1, metric.WithAttributes(attribute.String("template", page.Template)))
 	}
 
-	if err = responder(r.Context(), a.tracer, a.tpl.Lookup(page.Template), w, page.Content, page.Status); err != nil {
+	if err = responder(r.Context(), s.tracer, s.tpl.Lookup(page.Template), w, page.Content, page.Status); err != nil {
 		httperror.InternalServerError(w, err)
 	}
 }
 
-func (a Service) matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
-	_, end := telemetry.StartSpan(r.Context(), a.tracer, "match_etag", trace.WithSpanKind(trace.SpanKindInternal))
+func (s Service) matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
+	_, end := telemetry.StartSpan(r.Context(), s.tracer, "match_etag", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(nil)
 
 	etag := page.etag()
@@ -138,9 +138,9 @@ func appendNonceAndEtag(w http.ResponseWriter, content map[string]any, etag stri
 	w.Header().Add("Etag", fmt.Sprintf(`W/"%s-%s"`, etag, nonce))
 }
 
-func (a Service) svg() http.Handler {
+func (s Service) svg() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tpl := a.tpl.Lookup("svg-" + strings.Trim(r.URL.Path, "/"))
+		tpl := s.tpl.Lookup("svg-" + strings.Trim(r.URL.Path, "/"))
 		if tpl == nil {
 			httperror.NotFound(w)
 
@@ -150,7 +150,7 @@ func (a Service) svg() http.Handler {
 		w.Header().Add("Cache-Control", staticCacheDuration)
 		w.Header().Add("Content-Type", "image/svg+xml")
 
-		if err := templates.WriteTemplate(r.Context(), a.tracer, tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {
+		if err := templates.WriteTemplate(r.Context(), s.tracer, tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {
 			httperror.InternalServerError(w, err)
 		}
 	})

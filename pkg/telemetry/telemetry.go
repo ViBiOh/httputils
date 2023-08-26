@@ -118,45 +118,45 @@ func allowedHttpAttr(v ...string) attribute.Filter {
 	}
 }
 
-func (a Service) MeterProvider() meter.MeterProvider {
-	if a.meterProvider == nil {
+func (s Service) MeterProvider() meter.MeterProvider {
+	if s.meterProvider == nil {
 		return noop_meter.MeterProvider{}
 	}
 
-	return a.meterProvider
+	return s.meterProvider
 }
 
-func (a Service) TracerProvider() tr.TracerProvider {
-	if a.meterProvider == nil {
+func (s Service) TracerProvider() tr.TracerProvider {
+	if s.meterProvider == nil {
 		return tr.NewNoopTracerProvider()
 	}
 
-	return a.tracerProvider
+	return s.tracerProvider
 }
 
-func (a Service) Middleware(name string) func(next http.Handler) http.Handler {
+func (s Service) Middleware(name string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		if next == nil {
 			return next
 		}
 
 		return otelhttp.NewHandler(next, name,
-			otelhttp.WithTracerProvider(a.TracerProvider()),
+			otelhttp.WithTracerProvider(s.TracerProvider()),
 			otelhttp.WithPropagators(propagation.TraceContext{}),
-			otelhttp.WithMeterProvider(a.MeterProvider()),
+			otelhttp.WithMeterProvider(s.MeterProvider()),
 		)
 	}
 }
 
-func (a Service) Close(ctx context.Context) {
-	if a.tracerProvider != nil {
-		if err := a.tracerProvider.Shutdown(ctx); err != nil {
+func (s Service) Close(ctx context.Context) {
+	if s.tracerProvider != nil {
+		if err := s.tracerProvider.Shutdown(ctx); err != nil {
 			slog.Error("shutdown trace provider", "err", err)
 		}
 	}
 
-	if a.meterProvider != nil {
-		if err := a.meterProvider.Shutdown(ctx); err != nil {
+	if s.meterProvider != nil {
+		if err := s.meterProvider.Shutdown(ctx); err != nil {
 			slog.Error("shutdown meter provider", "err", err)
 		}
 	}

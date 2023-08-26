@@ -8,53 +8,53 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (a *Cache[K, V]) Store(ctx context.Context, id K, value V) error {
-	if a.write == nil {
+func (c *Cache[K, V]) Store(ctx context.Context, id K, value V) error {
+	if c.write == nil {
 		return nil
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, syncActionTimeout)
 	defer cancel()
 
-	return a.store(ctx, id, value)
+	return c.store(ctx, id, value)
 }
 
-func (a *Cache[K, V]) store(ctx context.Context, id K, value V) (err error) {
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "store", trace.WithSpanKind(trace.SpanKindInternal))
+func (c *Cache[K, V]) store(ctx context.Context, id K, value V) (err error) {
+	ctx, end := telemetry.StartSpan(ctx, c.tracer, "store", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
-	payload, err := a.serializer.Encode(value)
+	payload, err := c.serializer.Encode(value)
 	if err != nil {
 		return fmt.Errorf("encoding: %w", err)
 	}
 
-	if err = a.write.Store(ctx, a.toKey(id), payload, a.ttl); err != nil {
+	if err = c.write.Store(ctx, c.toKey(id), payload, c.ttl); err != nil {
 		return fmt.Errorf("store: %w", err)
 	}
 
 	return nil
 }
 
-func (a *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes IndexedItems[K]) error {
+func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes IndexedItems[K]) error {
 	var err error
 
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "store_many", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, c.tracer, "store_many", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
-	pipeline := a.write.Pipeline()
+	pipeline := c.write.Pipeline()
 
 	for _, index := range indexes {
 		id := ids[index]
-		key := a.toKey(id)
+		key := c.toKey(id)
 
-		payload, err := a.serializer.Encode(values[index])
+		payload, err := c.serializer.Encode(values[index])
 		if err != nil {
 			loggerWithTrace(ctx, key).Error("encoding", "err", err)
 
 			continue
 		}
 
-		if err := pipeline.Set(ctx, key, payload, a.ttl).Err(); err != nil {
+		if err := pipeline.Set(ctx, key, payload, c.ttl).Err(); err != nil {
 			loggerWithTrace(ctx, key).Error("pipeline set", "err", err)
 
 			continue

@@ -99,27 +99,27 @@ func New(ctx context.Context, config Config, tracerProvider trace.TracerProvider
 	return instance, instance.Ping(ctx)
 }
 
-func (a Service) Enabled() bool {
-	return a.db != nil
+func (s Service) Enabled() bool {
+	return s.db != nil
 }
 
-func (a Service) Ping(ctx context.Context) error {
-	if !a.Enabled() {
+func (s Service) Ping(ctx context.Context) error {
+	if !s.Enabled() {
 		return nil
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	return a.db.Ping(ctx)
+	return s.db.Ping(ctx)
 }
 
-func (a Service) Close() {
-	if !a.Enabled() {
+func (s Service) Close() {
+	if !s.Enabled() {
 		return
 	}
 
-	a.db.Close()
+	s.db.Close()
 }
 
 func StoreTx(ctx context.Context, tx pgx.Tx) context.Context {
@@ -139,19 +139,19 @@ func readTx(ctx context.Context) pgx.Tx {
 	return nil
 }
 
-func (a Service) DoAtomic(ctx context.Context, action func(context.Context) error) (err error) {
+func (s Service) DoAtomic(ctx context.Context, action func(context.Context) error) (err error) {
 	if action == nil {
 		return errors.New("no action provided")
 	}
 
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "transaction", trace.WithSpanKind(trace.SpanKindClient))
+	ctx, end := telemetry.StartSpan(ctx, s.tracer, "transaction", trace.WithSpanKind(trace.SpanKindClient))
 	defer end(&err)
 
 	if readTx(ctx) != nil {
 		return action(ctx)
 	}
 
-	tx, err := a.db.Begin(ctx)
+	tx, err := s.db.Begin(ctx)
 	if err != nil {
 		return err
 	}
@@ -169,22 +169,22 @@ func (a Service) DoAtomic(ctx context.Context, action func(context.Context) erro
 	return err
 }
 
-func (a Service) Query(ctx context.Context, query string, args ...any) (rows pgx.Rows, err error) {
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "query", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("query", query)))
+func (s Service) Query(ctx context.Context, query string, args ...any) (rows pgx.Rows, err error) {
+	ctx, end := telemetry.StartSpan(ctx, s.tracer, "query", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("query", query)))
 	defer end(&err)
 
 	if tx := readTx(ctx); tx != nil {
 		return tx.Query(ctx, query, args...)
 	}
 
-	return a.db.Query(ctx, query, args...)
+	return s.db.Query(ctx, query, args...)
 }
 
-func (a Service) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) error {
+func (s Service) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	rows, err := a.Query(ctx, query, args...)
+	rows, err := s.Query(ctx, query, args...)
 	if err != nil {
 		return err
 	}
@@ -202,25 +202,25 @@ func (a Service) List(ctx context.Context, scanner func(pgx.Rows) error, query s
 	return err
 }
 
-func (a Service) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "query_row", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("query", query)))
+func (s Service) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
+	ctx, end := telemetry.StartSpan(ctx, s.tracer, "query_row", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("query", query)))
 	defer end(nil)
 
 	if tx := readTx(ctx); tx != nil {
 		return tx.QueryRow(ctx, query, args...)
 	}
 
-	return a.db.QueryRow(ctx, query, args...)
+	return s.db.QueryRow(ctx, query, args...)
 }
 
-func (a Service) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) error {
+func (s Service) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	return scanner(a.QueryRow(ctx, query, args...))
+	return scanner(s.QueryRow(ctx, query, args...))
 }
 
-func (a Service) Create(ctx context.Context, query string, args ...any) (id uint64, err error) {
+func (s Service) Create(ctx context.Context, query string, args ...any) (id uint64, err error) {
 	tx := readTx(ctx)
 	if tx == nil {
 		return 0, ErrNoTransaction
@@ -234,20 +234,20 @@ func (a Service) Create(ctx context.Context, query string, args ...any) (id uint
 	return newID, tx.QueryRow(ctx, query, args...).Scan(&newID)
 }
 
-func (a Service) Exec(ctx context.Context, query string, args ...any) error {
+func (s Service) Exec(ctx context.Context, query string, args ...any) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	_, err := a.exec(ctx, query, args...)
+	_, err := s.exec(ctx, query, args...)
 
 	return err
 }
 
-func (a Service) One(ctx context.Context, query string, args ...any) error {
+func (s Service) One(ctx context.Context, query string, args ...any) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	output, err := a.exec(ctx, query, args...)
+	output, err := s.exec(ctx, query, args...)
 	if err != nil {
 		return err
 	}
@@ -259,14 +259,14 @@ func (a Service) One(ctx context.Context, query string, args ...any) error {
 	return nil
 }
 
-func (a Service) exec(ctx context.Context, query string, args ...any) (command pgconn.CommandTag, err error) {
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "exec", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("query", query)))
+func (s Service) exec(ctx context.Context, query string, args ...any) (command pgconn.CommandTag, err error) {
+	ctx, end := telemetry.StartSpan(ctx, s.tracer, "exec", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("query", query)))
 	defer end(&err)
 
 	tx := readTx(ctx)
 
 	if tx == nil {
-		return a.db.Exec(ctx, query, args...)
+		return s.db.Exec(ctx, query, args...)
 	}
 
 	return tx.Exec(ctx, query, args...)
@@ -292,8 +292,8 @@ func (bc *feeder) Err() error {
 	return bc.err
 }
 
-func (a Service) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) (err error) {
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "bulk", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("schema", schema), attribute.String("table", table)))
+func (s Service) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) (err error) {
+	ctx, end := telemetry.StartSpan(ctx, s.tracer, "bulk", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("schema", schema), attribute.String("table", table)))
 	defer end(&err)
 
 	tx := readTx(ctx)

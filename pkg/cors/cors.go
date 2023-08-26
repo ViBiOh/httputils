@@ -49,23 +49,23 @@ func New(config Config) Service {
 	}
 }
 
-func (a Service) Middleware(next http.Handler) http.Handler {
+func (s Service) Middleware(next http.Handler) http.Handler {
 	headers := http.Header{}
 
-	if len(a.origin) != 0 {
-		headers.Add("Access-Control-Allow-Origin", a.origin)
+	if len(s.origin) != 0 {
+		headers.Add("Access-Control-Allow-Origin", s.origin)
 	}
-	if len(a.headers) != 0 {
-		headers.Add("Access-Control-Allow-Headers", a.headers)
+	if len(s.headers) != 0 {
+		headers.Add("Access-Control-Allow-Headers", s.headers)
 	}
-	if len(a.methods) != 0 {
-		headers.Add("Access-Control-Allow-Methods", a.methods)
+	if len(s.methods) != 0 {
+		headers.Add("Access-Control-Allow-Methods", s.methods)
 	}
-	if len(a.exposes) != 0 {
-		headers.Add("Access-Control-Expose-Headers", a.exposes)
+	if len(s.exposes) != 0 {
+		headers.Add("Access-Control-Expose-Headers", s.exposes)
 	}
-	if len(a.credentials) != 0 {
-		headers.Add("Access-Control-Allow-Credentials", a.credentials)
+	if len(s.credentials) != 0 {
+		headers.Add("Access-Control-Allow-Credentials", s.credentials)
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -9,13 +9,13 @@ import (
 
 var ErrNoDeathCount = errors.New("no death count")
 
-func (a Service) Retry(message amqp.Delivery) error {
+func (s Service) Retry(message amqp.Delivery) error {
 	count, err := GetDeathCount(message)
 	if err != nil && !errors.Is(err, ErrNoDeathCount) {
 		return fmt.Errorf("get death count from message: %w", err)
 	}
 
-	if count >= a.maxRetry {
+	if count >= s.maxRetry {
 		return message.Ack(false)
 	}
 

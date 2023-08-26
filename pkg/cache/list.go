@@ -27,33 +27,33 @@ func (ii IndexedItems[K]) Items() []K {
 }
 
 // If onMissError returns false, List stops by returning an error
-func (a *Cache[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) (outputs []V, err error) {
+func (c *Cache[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) (outputs []V, err error) {
 	if len(items) == 0 {
 		return nil, nil
 	}
 
-	if a.read == nil || IsBypassed(ctx) {
-		if a.onMissMany == nil {
-			return a.listRaw(ctx, onMissError, items...)
+	if c.read == nil || IsBypassed(ctx) {
+		if c.onMissMany == nil {
+			return c.listRaw(ctx, onMissError, items...)
 		}
 
-		return a.listRawMany(ctx, items)
+		return c.listRawMany(ctx, items)
 	}
 
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, c.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
-	keys, values := a.getValues(ctx, items)
+	keys, values := c.getValues(ctx, items)
 
-	if a.onMissMany == nil {
-		return a.handleListSingle(ctx, onMissError, items, keys, values)
+	if c.onMissMany == nil {
+		return c.handleListSingle(ctx, onMissError, items, keys, values)
 	}
 
-	return a.handleListMany(ctx, items, keys, values)
+	return c.handleListMany(ctx, items, keys, values)
 }
 
-func (a *Cache[K, V]) listRawMany(ctx context.Context, items []K) ([]V, error) {
-	values, err := a.onMissMany(ctx, items)
+func (c *Cache[K, V]) listRawMany(ctx context.Context, items []K) ([]V, error) {
+	values, err := c.onMissMany(ctx, items)
 	if err != nil {
 		return nil, err
 	}
@@ -66,11 +66,11 @@ func (a *Cache[K, V]) listRawMany(ctx context.Context, items []K) ([]V, error) {
 	return output, nil
 }
 
-func (a *Cache[K, V]) listRaw(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
+func (c *Cache[K, V]) listRaw(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
 	output := make([]V, len(items))
 
 	for index, item := range items {
-		value, err := a.fetch(ctx, item)
+		value, err := c.fetch(ctx, item)
 		if err != nil {
 			if !onMissError(item, err) {
 				return nil, err
@@ -85,9 +85,9 @@ func (a *Cache[K, V]) listRaw(ctx context.Context, onMissError func(K, error) bo
 	return output, nil
 }
 
-func (a *Cache[K, V]) handleListSingle(ctx context.Context, onMissError func(K, error) bool, items []K, keys, values []string) ([]V, error) {
+func (c *Cache[K, V]) handleListSingle(ctx context.Context, onMissError func(K, error) bool, items []K, keys, values []string) ([]V, error) {
 	output := make([]V, len(items))
-	wg := concurrent.NewFailFast(a.concurrency)
+	wg := concurrent.NewFailFast(c.concurrency)
 	ctx = wg.WithContext(ctx)
 
 	var extendKeys []string
@@ -96,11 +96,11 @@ func (a *Cache[K, V]) handleListSingle(ctx context.Context, onMissError func(K, 
 		index, item := index, item
 
 		wg.Go(func() error {
-			value, ok, err := a.decode([]byte(values[index]))
+			value, ok, err := c.decode([]byte(values[index]))
 			if ok {
 				output[index] = value
 
-				if a.ttl != 0 && a.extendOnHit {
+				if c.ttl != 0 && c.extendOnHit {
 					extendKeys = append(extendKeys, keys[index])
 				}
 
@@ -108,10 +108,10 @@ func (a *Cache[K, V]) handleListSingle(ctx context.Context, onMissError func(K, 
 			}
 
 			if err != nil {
-				logUnmarshalError(ctx, a.toKey(item), err)
+				logUnmarshalError(ctx, c.toKey(item), err)
 			}
 
-			if output[index], err = a.fetch(ctx, item); err != nil && !onMissError(item, err) {
+			if output[index], err = c.fetch(ctx, item); err != nil && !onMissError(item, err) {
 				return err
 			}
 
@@ -119,37 +119,37 @@ func (a *Cache[K, V]) handleListSingle(ctx context.Context, onMissError func(K, 
 		})
 	}
 
-	a.extendTTL(ctx, extendKeys...)
+	c.extendTTL(ctx, extendKeys...)
 
 	return output, wg.Wait()
 }
 
 // Param fetchMany has to return the same number of values as requested and in the same order
-func (a *Cache[K, V]) handleListMany(ctx context.Context, items []K, keys, values []string) ([]V, error) {
+func (c *Cache[K, V]) handleListMany(ctx context.Context, items []K, keys, values []string) ([]V, error) {
 	var extendKeys []string
 
 	missingKeys := make(IndexedItems[K])
 	output := make([]V, len(items))
 
 	for index, item := range items {
-		if value, ok, err := a.decode([]byte(values[index])); ok {
+		if value, ok, err := c.decode([]byte(values[index])); ok {
 			output[index] = value
 
-			if a.ttl != 0 && a.extendOnHit {
+			if c.ttl != 0 && c.extendOnHit {
 				extendKeys = append(extendKeys, keys[index])
 			}
 
 			continue
 		} else if err != nil {
-			logUnmarshalError(ctx, a.toKey(item), err)
+			logUnmarshalError(ctx, c.toKey(item), err)
 		}
 
 		missingKeys[item] = index
 	}
 
-	a.extendTTL(ctx, extendKeys...)
+	c.extendTTL(ctx, extendKeys...)
 
-	missingValues, err := a.onMissMany(ctx, missingKeys.Items())
+	missingValues, err := c.onMissMany(ctx, missingKeys.Items())
 	if err != nil {
 		return output, fmt.Errorf("fetch many: %w", err)
 	}
@@ -159,22 +159,22 @@ func (a *Cache[K, V]) handleListMany(ctx context.Context, items []K, keys, value
 	}
 
 	go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
-		return a.storeMany(ctx, items, output, missingKeys)
+		return c.storeMany(ctx, items, output, missingKeys)
 	})
 
 	return output, nil
 }
 
-func (a *Cache[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) {
+func (c *Cache[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) {
 	keys := make([]string, len(ids))
 	for index, id := range ids {
-		keys[index] = a.toKey(id)
+		keys[index] = c.toKey(id)
 	}
 
 	loadCtx, cancel := context.WithTimeout(ctx, syncActionTimeout)
 	defer cancel()
 
-	values, err := a.read.LoadMany(loadCtx, keys...)
+	values, err := c.read.LoadMany(loadCtx, keys...)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			loggerWithTrace(ctx, strconv.Itoa(len(keys))).Warn("load many from cache", "err", err)

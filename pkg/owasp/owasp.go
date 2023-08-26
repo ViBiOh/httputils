@@ -48,7 +48,7 @@ func New(config Config) Service {
 	}
 }
 
-func (a Service) Middleware(next http.Handler) http.Handler {
+func (s Service) Middleware(next http.Handler) http.Handler {
 	headers := http.Header{}
 
 	headers.Add("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -56,19 +56,19 @@ func (a Service) Middleware(next http.Handler) http.Handler {
 	headers.Add("X-Xss-Protection", "1; mode=block")
 	headers.Add("X-Permitted-Cross-Domain-Policies", "none")
 
-	if len(a.frameOptions) != 0 {
-		headers.Add("X-Frame-Options", a.frameOptions)
+	if len(s.frameOptions) != 0 {
+		headers.Add("X-Frame-Options", s.frameOptions)
 	}
-	if a.hsts {
+	if s.hsts {
 		headers.Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
 	}
 
 	nonce := false
-	if len(a.csp) != 0 {
-		if strings.Contains(a.csp, nonceKey) {
+	if len(s.csp) != 0 {
+		if strings.Contains(s.csp, nonceKey) {
 			nonce = true
 		} else {
-			headers.Add(cspHeader, a.csp)
+			headers.Add(cspHeader, s.csp)
 		}
 	}
 
@@ -80,7 +80,7 @@ func (a Service) Middleware(next http.Handler) http.Handler {
 		if next != nil {
 			writer := w
 			if nonce {
-				writer = newDelegator(w, a.csp)
+				writer = newDelegator(w, s.csp)
 			}
 
 			next.ServeHTTP(writer, r)

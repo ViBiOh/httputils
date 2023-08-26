@@ -63,40 +63,40 @@ func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss f
 	return cache
 }
 
-func (a *Cache[K, V]) WithMissMany(cb fetchMany[K, V]) *Cache[K, V] {
-	a.onMissMany = cb
+func (c *Cache[K, V]) WithMissMany(cb fetchMany[K, V]) *Cache[K, V] {
+	c.onMissMany = cb
 
-	return a
+	return c
 }
 
-func (a *Cache[K, V]) WithSerializer(serializer Serializer[V]) *Cache[K, V] {
-	a.serializer = serializer
+func (c *Cache[K, V]) WithSerializer(serializer Serializer[V]) *Cache[K, V] {
+	c.serializer = serializer
 
-	return a
+	return c
 }
 
-func (a *Cache[K, V]) WithRead(client RedisClient) *Cache[K, V] {
-	a.read = getClient(client)
+func (c *Cache[K, V]) WithRead(client RedisClient) *Cache[K, V] {
+	c.read = getClient(client)
 
-	return a
+	return c
 }
 
-func (a *Cache[K, V]) WithTTL(ttl time.Duration) *Cache[K, V] {
-	a.ttl = ttl
+func (c *Cache[K, V]) WithTTL(ttl time.Duration) *Cache[K, V] {
+	c.ttl = ttl
 
-	return a
+	return c
 }
 
-func (a *Cache[K, V]) WithExtendOnHit() *Cache[K, V] {
-	a.extendOnHit = true
+func (c *Cache[K, V]) WithExtendOnHit() *Cache[K, V] {
+	c.extendOnHit = true
 
-	return a
+	return c
 }
 
-func (a *Cache[K, V]) WithMaxConcurrency(concurrency int) *Cache[K, V] {
-	a.concurrency = concurrency
+func (c *Cache[K, V]) WithMaxConcurrency(concurrency int) *Cache[K, V] {
+	c.concurrency = concurrency
 
-	return a
+	return c
 }
 
 func getClient(client RedisClient) RedisClient {
@@ -107,73 +107,73 @@ func getClient(client RedisClient) RedisClient {
 	return nil
 }
 
-func (a *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
-	if a.read == nil || IsBypassed(ctx) {
-		return a.onMiss(ctx, id)
+func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
+	if c.read == nil || IsBypassed(ctx) {
+		return c.onMiss(ctx, id)
 	}
 
 	var err error
 
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "get", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, c.tracer, "get", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
-	key := a.toKey(id)
+	key := c.toKey(id)
 
 	loadCtx, cancel := context.WithTimeout(ctx, syncActionTimeout)
 	defer cancel()
 
-	if content, err := a.read.Load(loadCtx, key); err != nil {
+	if content, err := c.read.Load(loadCtx, key); err != nil {
 		if errors.Is(err, context.Canceled) {
 			loggerWithTrace(ctx, key).Warn("load from cache", "err", err)
 		} else {
 			loggerWithTrace(ctx, key).Error("load from cache", "err", err)
 		}
-	} else if value, ok, err := a.decode([]byte(content)); err != nil {
+	} else if value, ok, err := c.decode([]byte(content)); err != nil {
 		logUnmarshalError(ctx, key, err)
 	} else if ok {
-		a.extendTTL(ctx, key)
+		c.extendTTL(ctx, key)
 
 		return value, nil
 	}
 
-	return a.fetch(ctx, id)
+	return c.fetch(ctx, id)
 }
 
-func (a *Cache[K, V]) fetch(ctx context.Context, id K) (V, error) {
+func (c *Cache[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	var err error
 
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "fetch", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx, end := telemetry.StartSpan(ctx, c.tracer, "fetch", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
-	value, err := a.onMiss(ctx, id)
+	value, err := c.onMiss(ctx, id)
 
-	if err == nil && a.write != nil {
+	if err == nil && c.write != nil {
 		go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
-			return a.store(ctx, id, value)
+			return c.store(ctx, id, value)
 		})
 	}
 
 	return value, err
 }
 
-func (a *Cache[K, V]) decode(content []byte) (value V, ok bool, err error) {
+func (c *Cache[K, V]) decode(content []byte) (value V, ok bool, err error) {
 	if len(content) == 0 {
 		return
 	}
 
-	value, err = a.serializer.Decode(content)
+	value, err = c.serializer.Decode(content)
 	ok = err == nil
 
 	return
 }
 
-func (a *Cache[K, V]) extendTTL(ctx context.Context, keys ...string) {
-	if a.write == nil || !a.extendOnHit || a.ttl == 0 || len(keys) == 0 {
+func (c *Cache[K, V]) extendTTL(ctx context.Context, keys ...string) {
+	if c.write == nil || !c.extendOnHit || c.ttl == 0 || len(keys) == 0 {
 		return
 	}
 
 	go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
-		return a.write.Expire(ctx, a.ttl, keys...)
+		return c.write.Expire(ctx, c.ttl, keys...)
 	})
 }
 
