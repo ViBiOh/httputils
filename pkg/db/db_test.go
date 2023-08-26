@@ -51,15 +51,15 @@ func TestEnabled(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		instance App
+		instance Service
 		want     bool
 	}{
 		"empty": {
-			App{},
+			Service{},
 			false,
 		},
 		"provided": {
-			App{},
+			Service{},
 			true,
 		},
 	}
@@ -112,7 +112,7 @@ func TestPing(t *testing.T) {
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
-			instance := App{db: mockDatabase}
+			instance := Service{db: mockDatabase}
 
 			switch intention {
 			case "simple":
@@ -150,7 +150,7 @@ func TestClose(t *testing.T) {
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
-			instance := App{db: mockDatabase}
+			instance := Service{db: mockDatabase}
 
 			switch intention {
 			case "simple":
@@ -282,7 +282,7 @@ func TestDoAtomic(t *testing.T) {
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
-			instance := App{db: mockDatabase}
+			instance := Service{db: mockDatabase}
 
 			ctx := testCase.args.ctx
 
@@ -356,7 +356,7 @@ func TestList(t *testing.T) {
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
-			instance := App{db: mockDatabase}
+			instance := Service{db: mockDatabase}
 
 			ctx := context.Background()
 
@@ -443,7 +443,7 @@ func TestGet(t *testing.T) {
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
-			instance := App{db: mockDatabase}
+			instance := Service{db: mockDatabase}
 
 			ctx := context.Background()
 
@@ -519,7 +519,7 @@ func TestCreate(t *testing.T) {
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
-			instance := App{db: mockDatabase}
+			instance := Service{db: mockDatabase}
 
 			ctx := context.Background()
 
@@ -586,7 +586,7 @@ func TestExec(t *testing.T) {
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
-			instance := App{db: mockDatabase}
+			instance := Service{db: mockDatabase}
 
 			ctx := context.Background()
 
@@ -649,7 +649,7 @@ func TestOne(t *testing.T) {
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
-			instance := App{db: mockDatabase}
+			instance := Service{db: mockDatabase}
 
 			ctx := context.Background()
 
@@ -717,7 +717,7 @@ func TestBulk(t *testing.T) {
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
-			instance := App{db: mockDatabase}
+			instance := Service{db: mockDatabase}
 
 			ctx := context.Background()
 

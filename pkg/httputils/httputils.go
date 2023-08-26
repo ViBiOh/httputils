@@ -9,11 +9,11 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
-func Handler(handler http.Handler, healthApp *health.App, middlewares ...model.Middleware) http.Handler {
+func Handler(handler http.Handler, healthService *health.Service, middlewares ...model.Middleware) http.Handler {
 	versionHandler := versionHandler()
-	HealthHandler := healthApp.HealthHandler()
-	readyHandler := healthApp.ReadyHandler()
-	apphandler := model.ChainMiddlewares(handler, middlewares...)
+	HealthHandler := healthService.HealthHandler()
+	readyHandler := healthService.ReadyHandler()
+	appHandler := model.ChainMiddlewares(handler, middlewares...)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -27,7 +27,7 @@ func Handler(handler http.Handler, healthApp *health.App, middlewares ...model.M
 			versionHandler.ServeHTTP(w, r)
 
 		default:
-			apphandler.ServeHTTP(w, r)
+			appHandler.ServeHTTP(w, r)
 		}
 	})
 }

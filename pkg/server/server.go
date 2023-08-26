@@ -12,7 +12,7 @@ import (
 	"github.com/ViBiOh/flags"
 )
 
-type App struct {
+type Server struct {
 	done chan struct{}
 
 	listenAddress string
@@ -51,17 +51,17 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	return config
 }
 
-func New(config Config) App {
+func New(config Config) Server {
 	port := config.Port
 	done := make(chan struct{})
 
 	if port == 0 {
-		return App{
+		return Server{
 			done: done,
 		}
 	}
 
-	return App{
+	return Server{
 		listenAddress: fmt.Sprintf("%s:%d", config.Address, port),
 		cert:          config.Cert,
 		key:           config.Key,
@@ -75,11 +75,11 @@ func New(config Config) App {
 	}
 }
 
-func (a App) Done() <-chan struct{} {
+func (a Server) Done() <-chan struct{} {
 	return a.done
 }
 
-func (a App) Start(ctx context.Context, name string, handler http.Handler) {
+func (a Server) Start(ctx context.Context, name string, handler http.Handler) {
 	defer close(a.done)
 	serverLogger := slog.With("server", name)
 

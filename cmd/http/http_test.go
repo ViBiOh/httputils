@@ -62,11 +62,11 @@ func BenchmarkFullMiddlewares(b *testing.B) {
 		b.Error(err)
 	}
 
-	telemetryApp, err := telemetry.New(context.Background(), telemetryConfig)
+	telemetryService, err := telemetry.New(context.Background(), telemetryConfig)
 	if err != nil {
 		b.Error(err)
 	}
 
-	middlewares := model.ChainMiddlewares(handler, recoverer.Middleware, telemetryApp.Middleware("http"), owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware)
+	middlewares := model.ChainMiddlewares(handler, recoverer.Middleware, telemetryService.Middleware("http"), owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware)
 	benchmarkHandler(b, middlewares)
 }

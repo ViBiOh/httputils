@@ -107,19 +107,19 @@ func TestFeedContent(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		instance App
+		instance Service
 		args     args
 		want     map[string]any
 	}{
 		"empty": {
-			App{},
+			Service{},
 			args{
 				content: nil,
 			},
 			make(map[string]any),
 		},
 		"merge": {
-			App{
+			Service{
 				content: map[string]any{
 					"Version": "test",
 				},
@@ -135,7 +135,7 @@ func TestFeedContent(t *testing.T) {
 			},
 		},
 		"no overwrite": {
-			App{
+			Service{
 				content: map[string]any{
 					"Title": "test",
 				},
@@ -170,7 +170,7 @@ var content embed.FS
 func TestHandler(t *testing.T) {
 	t.Parallel()
 
-	configuredApp, err := New(Config{
+	configuredService, err := New(Config{
 		PublicURL: "http://localhost",
 		Title:     "Golang Test",
 		Minify:    true,
@@ -179,7 +179,7 @@ func TestHandler(t *testing.T) {
 		t.Error(err)
 	}
 
-	configuredPrefixApp, err := New(Config{
+	configuredPrefixService, err := New(Config{
 		PublicURL:  "http://localhost",
 		PathPrefix: "/app",
 		Title:      "Golang Test",
@@ -190,7 +190,7 @@ func TestHandler(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		instance     *App
+		instance     *Service
 		request      *http.Request
 		templateFunc TemplateFunc
 		want         string
@@ -198,7 +198,7 @@ func TestHandler(t *testing.T) {
 		wantHeader   http.Header
 	}{
 		"favicon": {
-			configuredApp,
+			configuredService,
 			httptest.NewRequest(http.MethodGet, "/images/favicon/manifest.json", nil),
 			nil,
 			"{}\n",
@@ -206,7 +206,7 @@ func TestHandler(t *testing.T) {
 			http.Header{},
 		},
 		"svg": {
-			configuredApp,
+			configuredService,
 			httptest.NewRequest(http.MethodGet, "/svg/test?fill=black", nil),
 			nil,
 			"color=black",
@@ -214,7 +214,7 @@ func TestHandler(t *testing.T) {
 			http.Header{},
 		},
 		"svg with prefix": {
-			configuredPrefixApp,
+			configuredPrefixService,
 			httptest.NewRequest(http.MethodGet, "/app/svg/test?fill=black", nil),
 			nil,
 			"color=black",
@@ -222,7 +222,7 @@ func TestHandler(t *testing.T) {
 			http.Header{},
 		},
 		"svg not found": {
-			configuredApp,
+			configuredService,
 			httptest.NewRequest(http.MethodGet, "/svg/unknown?fill=black", nil),
 			nil,
 			"¯\\_(ツ)_/¯\n",
@@ -230,7 +230,7 @@ func TestHandler(t *testing.T) {
 			http.Header{},
 		},
 		"html": {
-			configuredApp,
+			configuredService,
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			func(_ http.ResponseWriter, _ *http.Request) (Page, error) {
 				return Page{
@@ -245,7 +245,7 @@ func TestHandler(t *testing.T) {
 			http.Header{},
 		},
 		"message": {
-			configuredApp,
+			configuredService,
 			httptest.NewRequest(http.MethodGet, fmt.Sprintf("/?%s", NewSuccessMessage("Hello world")), nil),
 			func(_ http.ResponseWriter, _ *http.Request) (Page, error) {
 				return Page{
@@ -259,7 +259,7 @@ func TestHandler(t *testing.T) {
 			http.Header{},
 		},
 		"error": {
-			configuredApp,
+			configuredService,
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			func(_ http.ResponseWriter, _ *http.Request) (Page, error) {
 				return Page{

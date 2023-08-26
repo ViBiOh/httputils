@@ -16,9 +16,9 @@ const (
 	cspHeader = "Content-Security-Policy"
 )
 
-var _ model.Middleware = App{}.Middleware
+var _ model.Middleware = Service{}.Middleware
 
-type App struct {
+type Service struct {
 	csp          string
 	frameOptions string
 	hsts         bool
@@ -40,15 +40,15 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	return config
 }
 
-func New(config Config) App {
-	return App{
+func New(config Config) Service {
+	return Service{
 		csp:          config.CSP,
 		hsts:         config.HSTS,
 		frameOptions: config.FrameOptions,
 	}
 }
 
-func (a App) Middleware(next http.Handler) http.Handler {
+func (a Service) Middleware(next http.Handler) http.Handler {
 	headers := http.Header{}
 
 	headers.Add("Referrer-Policy", "strict-origin-when-cross-origin")

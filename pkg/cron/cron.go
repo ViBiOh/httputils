@@ -26,9 +26,9 @@ const hourFormat = "15:04"
 var _ fmt.Stringer = New()
 
 type Cron struct {
-	tracer       trace.Tracer
-	clock        GetNow
-	semaphoreApp Semaphore
+	tracer    trace.Tracer
+	clock     GetNow
+	semaphore Semaphore
 
 	signal  os.Signal
 	dayTime time.Time
@@ -68,7 +68,7 @@ func (c *Cron) String() string {
 
 	_, _ = fmt.Fprintf(&buffer, ", retry: %d times every %s", c.maxRetry, c.retryInterval)
 
-	if c.semaphoreApp != nil {
+	if c.semaphore != nil {
 		_, _ = fmt.Fprintf(&buffer, ", in exclusive mode as `%s` with %s timeout", c.name, c.timeout)
 	}
 
@@ -141,8 +141,8 @@ func (c *Cron) At(hour string) *Cron {
 	return c
 }
 
-func (c *Cron) Exclusive(semaphoreApp Semaphore, name string, timeout time.Duration) *Cron {
-	c.semaphoreApp = semaphoreApp
+func (c *Cron) Exclusive(semaphore Semaphore, name string, timeout time.Duration) *Cron {
+	c.semaphore = semaphore
 	c.name = name
 	c.timeout = timeout
 
@@ -295,13 +295,13 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 		ctx, end := telemetry.StartSpan(ctx, c.tracer, "cron")
 		defer end(&err)
 
-		if c.semaphoreApp == nil {
+		if c.semaphore == nil {
 			do(ctx)
 
 			return
 		}
 
-		if _, err = c.semaphoreApp.Exclusive(ctx, c.name, c.timeout, func(ctx context.Context) error {
+		if _, err = c.semaphore.Exclusive(ctx, c.name, c.timeout, func(ctx context.Context) error {
 			do(ctx)
 
 			return nil

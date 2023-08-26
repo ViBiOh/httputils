@@ -11,7 +11,7 @@ import (
 )
 
 func TestHandler(t *testing.T) {
-	healthApp := health.New(health.Flags(flag.NewFlagSet("TestHandler", flag.ContinueOnError), "httputils"))
+	healthService := health.New(health.Flags(flag.NewFlagSet("TestHandler", flag.ContinueOnError), "httputils"))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := w.Write([]byte("It works!")); err != nil {
@@ -55,7 +55,7 @@ func TestHandler(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			Handler(handler, healthApp).ServeHTTP(writer, testCase.request)
+			Handler(handler, healthService).ServeHTTP(writer, testCase.request)
 
 			if got := writer.Code; got != testCase.wantStatus {
 				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)
@@ -117,10 +117,10 @@ func TestVersionHandler(t *testing.T) {
 func BenchmarkMux(b *testing.B) {
 	fs := flag.NewFlagSet("BenchmarkMux", flag.ContinueOnError)
 
-	healthApp := health.New(health.Flags(fs, "BenchmarkMux"))
+	healthService := health.New(health.Flags(fs, "BenchmarkMux"))
 
-	healthHandler := healthApp.HealthHandler()
-	readyHandler := healthApp.ReadyHandler()
+	healthHandler := healthService.HealthHandler()
+	readyHandler := healthService.ReadyHandler()
 	versionHandler := versionHandler()
 	var appHandler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)

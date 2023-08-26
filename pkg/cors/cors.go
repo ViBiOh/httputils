@@ -9,9 +9,9 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
-var _ model.Middleware = App{}.Middleware
+var _ model.Middleware = Service{}.Middleware
 
-type App struct {
+type Service struct {
 	origin      string
 	headers     string
 	methods     string
@@ -39,8 +39,8 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	return config
 }
 
-func New(config Config) App {
-	return App{
+func New(config Config) Service {
+	return Service{
 		origin:      config.Origin,
 		headers:     config.Headers,
 		methods:     config.Methods,
@@ -49,7 +49,7 @@ func New(config Config) App {
 	}
 }
 
-func (a App) Middleware(next http.Handler) http.Handler {
+func (a Service) Middleware(next http.Handler) http.Handler {
 	headers := http.Header{}
 
 	if len(a.origin) != 0 {

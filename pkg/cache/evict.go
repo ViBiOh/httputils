@@ -8,7 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (a *App[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
+func (a *Cache[K, V]) EvictOnSuccess(ctx context.Context, item K, err error) error {
 	if err != nil || a.write == nil {
 		return err
 	}

@@ -8,7 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (a App[K, V]) Store(ctx context.Context, id K, value V) error {
+func (a *Cache[K, V]) Store(ctx context.Context, id K, value V) error {
 	if a.write == nil {
 		return nil
 	}
@@ -19,7 +19,7 @@ func (a App[K, V]) Store(ctx context.Context, id K, value V) error {
 	return a.store(ctx, id, value)
 }
 
-func (a App[K, V]) store(ctx context.Context, id K, value V) (err error) {
+func (a *Cache[K, V]) store(ctx context.Context, id K, value V) (err error) {
 	ctx, end := telemetry.StartSpan(ctx, a.tracer, "store", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
@@ -35,7 +35,7 @@ func (a App[K, V]) store(ctx context.Context, id K, value V) (err error) {
 	return nil
 }
 
-func (a App[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes IndexedItems[K]) error {
+func (a *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes IndexedItems[K]) error {
 	var err error
 
 	ctx, end := telemetry.StartSpan(ctx, a.tracer, "store_many", trace.WithSpanKind(trace.SpanKindInternal))

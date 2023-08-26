@@ -22,7 +22,7 @@ import (
 
 type Handler func(context.Context, amqp.Delivery) error
 
-type App struct {
+type Service struct {
 	amqpClient    *amqpclient.Client
 	tracer        trace.Tracer
 	done          chan struct{}
@@ -59,8 +59,8 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	return config
 }
 
-func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.MeterProvider, tracerProvider trace.TracerProvider, handler Handler) (*App, error) {
-	app := &App{
+func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.MeterProvider, tracerProvider trace.TracerProvider, handler Handler) (*Service, error) {
+	service := &Service{
 		amqpClient:    amqpClient,
 		exchange:      strings.TrimSpace(config.Exchange),
 		queue:         strings.TrimSpace(config.Queue),
@@ -72,18 +72,18 @@ func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.Met
 		maxRetry:      int64(config.MaxRetry),
 	}
 
-	if app.amqpClient == nil {
-		return app, nil
+	if service.amqpClient == nil {
+		return service, nil
 	}
 
-	if app.retryInterval > 0 && app.maxRetry > 0 {
-		if len(app.exchange) == 0 {
-			return app, errors.New("no exchange name for delaying retries")
+	if service.retryInterval > 0 && service.maxRetry > 0 {
+		if len(service.exchange) == 0 {
+			return service, errors.New("no exchange name for delaying retries")
 		}
 
 		var err error
-		if app.delayExchange, err = app.amqpClient.DelayedExchange(app.queue, app.exchange, app.routingKey, app.retryInterval); err != nil {
-			return app, fmt.Errorf("configure dead-letter exchange: %w", err)
+		if service.delayExchange, err = service.amqpClient.DelayedExchange(service.queue, service.exchange, service.routingKey, service.retryInterval); err != nil {
+			return service, fmt.Errorf("configure dead-letter exchange: %w", err)
 		}
 	}
 
@@ -92,24 +92,24 @@ func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.Met
 
 		var err error
 
-		app.counter, err = meter.Int64Counter("amqp.message")
+		service.counter, err = meter.Int64Counter("amqp.message")
 		if err != nil {
-			return app, fmt.Errorf("create counter: %w", err)
+			return service, fmt.Errorf("create counter: %w", err)
 		}
 	}
 
 	if tracerProvider != nil {
-		app.tracer = tracerProvider.Tracer("amqp_handler")
+		service.tracer = tracerProvider.Tracer("amqp_handler")
 	}
 
-	return app, nil
+	return service, nil
 }
 
-func (a *App) Done() <-chan struct{} {
+func (a *Service) Done() <-chan struct{} {
 	return a.done
 }
 
-func (a *App) Start(ctx context.Context) {
+func (a *Service) Start(ctx context.Context) {
 	defer close(a.done)
 
 	if a.amqpClient == nil {
@@ -148,7 +148,7 @@ func (a *App) Start(ctx context.Context) {
 	}
 }
 
-func (a *App) handleMessage(ctx context.Context, log *slog.Logger, message amqp.Delivery) {
+func (a *Service) handleMessage(ctx context.Context, log *slog.Logger, message amqp.Delivery) {
 	var err error
 
 	ctx, end := telemetry.StartSpan(ctx, a.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer))
@@ -198,7 +198,7 @@ func (a *App) handleMessage(ctx context.Context, log *slog.Logger, message amqp.
 	}
 }
 
-func (a *App) configure(init bool) (string, error) {
+func (a *Service) configure(init bool) (string, error) {
 	if !a.exclusive && !init {
 		return a.queue, nil
 	}

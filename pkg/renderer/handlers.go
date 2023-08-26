@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
+func (a Service) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
 	joinChar := "?"
 	if strings.Contains(pathname, "?") {
 		joinChar = "&"
@@ -32,7 +32,7 @@ func (a App) Redirect(w http.ResponseWriter, r *http.Request, pathname string, m
 	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", a.url(parts[0]), joinChar, message, anchor), http.StatusFound)
 }
 
-func (a App) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error) {
+func (a Service) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error) {
 	slog.Error(err.Error())
 
 	content = a.feedContent(content)
@@ -51,7 +51,7 @@ func (a App) Error(w http.ResponseWriter, r *http.Request, content map[string]an
 	}
 }
 
-func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
+func (a Service) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
 	defer func() {
 		if exception := recover(); exception != nil {
 			output := make([]byte, 1024)
@@ -100,7 +100,7 @@ func (a App) render(w http.ResponseWriter, r *http.Request, templateFunc Templat
 	}
 }
 
-func (a App) matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
+func (a Service) matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
 	_, end := telemetry.StartSpan(r.Context(), a.tracer, "match_etag", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(nil)
 
@@ -138,7 +138,7 @@ func appendNonceAndEtag(w http.ResponseWriter, content map[string]any, etag stri
 	w.Header().Add("Etag", fmt.Sprintf(`W/"%s-%s"`, etag, nonce))
 }
 
-func (a App) svg() http.Handler {
+func (a Service) svg() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tpl := a.tpl.Lookup("svg-" + strings.Trim(r.URL.Path, "/"))
 		if tpl == nil {

@@ -13,7 +13,7 @@ func TestRedirect(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		instance   App
+		instance   Service
 		request    *http.Request
 		path       string
 		message    Message
@@ -22,7 +22,7 @@ func TestRedirect(t *testing.T) {
 		wantHeader http.Header
 	}{
 		"simple": {
-			App{},
+			Service{},
 			httptest.NewRequest(http.MethodGet, "https://vibioh.fr/", nil),
 			"/",
 			NewSuccessMessage("Created with success"),
@@ -33,7 +33,7 @@ func TestRedirect(t *testing.T) {
 			},
 		},
 		"relative URL": {
-			App{},
+			Service{},
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success?refresh=true",
 			NewSuccessMessage("Created with success"),
@@ -44,7 +44,7 @@ func TestRedirect(t *testing.T) {
 			},
 		},
 		"path prefix": {
-			App{
+			Service{
 				pathPrefix: "/app",
 			},
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
@@ -57,7 +57,7 @@ func TestRedirect(t *testing.T) {
 			},
 		},
 		"anchor": {
-			App{},
+			Service{},
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success#id",
 			NewSuccessMessage("Created with success"),
@@ -68,7 +68,7 @@ func TestRedirect(t *testing.T) {
 			},
 		},
 		"anchor and query": {
-			App{},
+			Service{},
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success?refresh=true#id",
 			NewSuccessMessage("Created with success"),

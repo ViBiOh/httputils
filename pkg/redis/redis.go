@@ -25,7 +25,7 @@ const (
 
 var ErrNoSubscriber = errors.New("no subscriber for channel")
 
-type App struct {
+type Service struct {
 	client    redis.UniversalClient
 	isCluster bool
 }
@@ -57,7 +57,7 @@ func New(config Config, meter metric.MeterProvider, tracer trace.TracerProvider)
 		return Noop{}, nil
 	}
 
-	app := &App{
+	service := &Service{
 		isCluster: len(config.Address) > 1,
 		client: redis.NewUniversalClient(&redis.UniversalOptions{
 			Addrs:        config.Address,
@@ -70,50 +70,50 @@ func New(config Config, meter metric.MeterProvider, tracer trace.TracerProvider)
 	}
 
 	if !model.IsNil(tracer) {
-		if err := redisotel.InstrumentTracing(app.client, redisotel.WithTracerProvider(tracer)); err != nil {
-			defer app.Close()
+		if err := redisotel.InstrumentTracing(service.client, redisotel.WithTracerProvider(tracer)); err != nil {
+			defer service.Close()
 
 			return Noop{}, fmt.Errorf("tracing: %w", err)
 		}
 	}
 
 	if !model.IsNil(meter) {
-		if err := redisotel.InstrumentMetrics(app.client, redisotel.WithMeterProvider(meter)); err != nil {
-			defer app.Close()
+		if err := redisotel.InstrumentMetrics(service.client, redisotel.WithMeterProvider(meter)); err != nil {
+			defer service.Close()
 
 			return Noop{}, fmt.Errorf("meter: %w", err)
 		}
 	}
 
-	return app, nil
+	return service, nil
 }
 
-func (a *App) Enabled() bool {
+func (a *Service) Enabled() bool {
 	return true
 }
 
-func (a *App) Close() {
+func (a *Service) Close() {
 	if err := a.client.Close(); err != nil {
 		slog.Error("redis close", "err", err)
 	}
 }
 
-func (a *App) FlushAll(ctx context.Context) error {
+func (a *Service) FlushAll(ctx context.Context) error {
 	return a.client.FlushAll(ctx).Err()
 }
 
-func (a *App) Ping(ctx context.Context) error {
+func (a *Service) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
 	return a.client.Ping(ctx).Err()
 }
 
-func (a *App) Store(ctx context.Context, key string, value any, duration time.Duration) error {
+func (a *Service) Store(ctx context.Context, key string, value any, duration time.Duration) error {
 	return a.client.Set(ctx, key, value, duration).Err()
 }
 
-func (a *App) Load(ctx context.Context, key string) ([]byte, error) {
+func (a *Service) Load(ctx context.Context, key string) ([]byte, error) {
 	content, err := a.client.Get(ctx, key).Bytes()
 	if err == nil {
 		return content, err
@@ -126,7 +126,7 @@ func (a *App) Load(ctx context.Context, key string) ([]byte, error) {
 	return nil, nil
 }
 
-func (a *App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
+func (a *Service) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	if len(keys) == 0 {
 		return nil, nil
 	}
@@ -138,7 +138,7 @@ func (a *App) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	return a.pipelinedGet(ctx, keys...)
 }
 
-func (a *App) mget(ctx context.Context, keys ...string) ([]string, error) {
+func (a *Service) mget(ctx context.Context, keys ...string) ([]string, error) {
 	results, err := a.client.MGet(ctx, keys...).Result()
 	if err != nil {
 		return nil, fmt.Errorf("mget: %w", err)
@@ -155,7 +155,7 @@ func (a *App) mget(ctx context.Context, keys ...string) ([]string, error) {
 	return output, nil
 }
 
-func (a *App) pipelinedGet(ctx context.Context, keys ...string) ([]string, error) {
+func (a *Service) pipelinedGet(ctx context.Context, keys ...string) ([]string, error) {
 	pipeline := a.client.Pipeline()
 
 	commands := make([]*redis.StringCmd, len(keys))
@@ -179,7 +179,7 @@ func (a *App) pipelinedGet(ctx context.Context, keys ...string) ([]string, error
 	return output, nil
 }
 
-func (a *App) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {
+func (a *Service) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {
 	if len(keys) == 0 {
 		return nil
 	}
@@ -193,7 +193,7 @@ func (a *App) Expire(ctx context.Context, ttl time.Duration, keys ...string) err
 	return a.execPipeline(ctx, pipeline)
 }
 
-func (a *App) Delete(ctx context.Context, keys ...string) (err error) {
+func (a *Service) Delete(ctx context.Context, keys ...string) (err error) {
 	if len(keys) == 0 {
 		return nil
 	}
@@ -207,7 +207,7 @@ func (a *App) Delete(ctx context.Context, keys ...string) (err error) {
 	return a.execPipeline(ctx, pipeline)
 }
 
-func (a *App) DeletePattern(ctx context.Context, pattern string) (err error) {
+func (a *Service) DeletePattern(ctx context.Context, pattern string) (err error) {
 	scanOutput := make(chan string, runtime.NumCPU())
 
 	done := make(chan struct{})
@@ -233,7 +233,7 @@ func (a *App) DeletePattern(ctx context.Context, pattern string) (err error) {
 	return
 }
 
-func (a *App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
+func (a *Service) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
 	results, err := pipeline.Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("exec pipeline: %w", err)
@@ -248,7 +248,7 @@ func (a *App) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error 
 	return nil
 }
 
-func (a *App) Scan(ctx context.Context, pattern string, output chan<- string, pageSize int64) error {
+func (a *Service) Scan(ctx context.Context, pattern string, output chan<- string, pageSize int64) error {
 	defer close(output)
 
 	var keys []string
@@ -273,7 +273,7 @@ func (a *App) Scan(ctx context.Context, pattern string, output chan<- string, pa
 	return nil
 }
 
-func (a *App) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
+func (a *Service) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
 	if acquired, err = a.client.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
 		err = fmt.Errorf("exec setnx: %w", err)
 
@@ -294,6 +294,6 @@ func (a *App) Exclusive(ctx context.Context, name string, timeout time.Duration,
 	return
 }
 
-func (a *App) Pipeline() redis.Pipeliner {
+func (a *Service) Pipeline() redis.Pipeliner {
 	return a.client.Pipeline()
 }

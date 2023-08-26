@@ -46,10 +46,10 @@ func TestNew(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		want App
+		want Service
 	}{
 		"simple": {
-			App{
+			Service{
 				origin:      "*",
 				headers:     "Content-Type",
 				methods:     http.MethodGet,
@@ -77,14 +77,14 @@ func TestMiddleware(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		app        App
+		service    Service
 		next       http.Handler
 		request    *http.Request
 		want       int
 		wantHeader http.Header
 	}{
 		"default param": {
-			App{
+			Service{
 				origin:      "*",
 				headers:     "Content-Type",
 				methods:     http.MethodGet,
@@ -102,7 +102,7 @@ func TestMiddleware(t *testing.T) {
 			},
 		},
 		"edited param": {
-			App{
+			Service{
 				origin:      "*",
 				headers:     "Content-Type,Authorization",
 				methods:     http.MethodPost,
@@ -132,7 +132,7 @@ func TestMiddleware(t *testing.T) {
 
 			writer := httptest.NewRecorder()
 
-			testCase.app.Middleware(testCase.next).ServeHTTP(writer, testCase.request)
+			testCase.service.Middleware(testCase.next).ServeHTTP(writer, testCase.request)
 
 			if writer.Code != testCase.want {
 				t.Errorf("Middleware() = %d, want %d", writer.Code, testCase.want)
@@ -146,7 +146,7 @@ func TestMiddleware(t *testing.T) {
 }
 
 func BenchmarkMiddleware(b *testing.B) {
-	app := App{
+	service := Service{
 		origin:      "*",
 		headers:     "Content-Type",
 		methods:     http.MethodGet,
@@ -154,7 +154,7 @@ func BenchmarkMiddleware(b *testing.B) {
 		credentials: "true",
 	}
 
-	middleware := app.Middleware(nil)
+	middleware := service.Middleware(nil)
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	writer := httptest.NewRecorder()
 

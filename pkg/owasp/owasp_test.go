@@ -46,10 +46,10 @@ func TestNew(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		want App
+		want Service
 	}{
 		"simple": {
-			App{
+			Service{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         true,
 				frameOptions: "deny",
@@ -76,14 +76,14 @@ func TestMiddleware(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		app        App
+		service    Service
 		next       http.Handler
 		request    *http.Request
 		wantStatus int
 		wantHeader http.Header
 	}{
 		"simple": {
-			App{
+			Service{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
 				frameOptions: "deny",
@@ -101,7 +101,7 @@ func TestMiddleware(t *testing.T) {
 			},
 		},
 		"no value": {
-			App{
+			Service{
 				csp:          "",
 				hsts:         false,
 				frameOptions: "",
@@ -117,7 +117,7 @@ func TestMiddleware(t *testing.T) {
 			},
 		},
 		"hsts": {
-			App{
+			Service{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         true,
 				frameOptions: "deny",
@@ -136,7 +136,7 @@ func TestMiddleware(t *testing.T) {
 			},
 		},
 		"next": {
-			App{
+			Service{
 				csp:          "default-src 'self'; base-uri 'self'",
 				hsts:         false,
 				frameOptions: "deny",
@@ -156,7 +156,7 @@ func TestMiddleware(t *testing.T) {
 			},
 		},
 		"nonce": {
-			App{
+			Service{
 				csp:          "default-src 'self'; base-uri 'self'; script-src 'self' 'httputils-nonce'",
 				hsts:         false,
 				frameOptions: "deny",
@@ -184,7 +184,7 @@ func TestMiddleware(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			testCase.app.Middleware(testCase.next).ServeHTTP(writer, testCase.request)
+			testCase.service.Middleware(testCase.next).ServeHTTP(writer, testCase.request)
 
 			if got := writer.Code; got != testCase.wantStatus {
 				t.Errorf("Middleware = %d, want %d", got, testCase.wantStatus)
@@ -201,13 +201,13 @@ func TestMiddleware(t *testing.T) {
 }
 
 func BenchmarkMiddleware(b *testing.B) {
-	app := App{
+	service := Service{
 		csp:          "default-src 'self'; base-uri 'self'",
 		hsts:         true,
 		frameOptions: "deny",
 	}
 
-	middleware := app.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	middleware := service.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -220,13 +220,13 @@ func BenchmarkMiddleware(b *testing.B) {
 }
 
 func BenchmarkMiddlewareNonce(b *testing.B) {
-	app := App{
+	service := Service{
 		csp:          "default-src 'self'; base-uri 'self'; script-src 'self' 'httputils-nonce'",
 		hsts:         true,
 		frameOptions: "deny",
 	}
 
-	middleware := app.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	middleware := service.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	request := httptest.NewRequest(http.MethodGet, "/", nil)

@@ -32,7 +32,7 @@ type (
 	fetchMany[K comparable, V any] func(context.Context, []K) (map[K]V, error)
 )
 
-type App[K comparable, V any] struct {
+type Cache[K comparable, V any] struct {
 	tracer      trace.Tracer
 	read        RedisClient
 	write       RedisClient
@@ -45,10 +45,10 @@ type App[K comparable, V any] struct {
 	extendOnHit bool
 }
 
-func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], tracerProvider trace.TracerProvider) *App[K, V] {
+func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], tracerProvider trace.TracerProvider) *Cache[K, V] {
 	client = getClient(client)
 
-	app := &App[K, V]{
+	cache := &Cache[K, V]{
 		read:       client,
 		write:      client,
 		toKey:      toKey,
@@ -57,43 +57,43 @@ func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss f
 	}
 
 	if tracerProvider != nil {
-		app.tracer = tracerProvider.Tracer("cache")
+		cache.tracer = tracerProvider.Tracer("cache")
 	}
 
-	return app
+	return cache
 }
 
-func (a *App[K, V]) WithMissMany(cb fetchMany[K, V]) *App[K, V] {
+func (a *Cache[K, V]) WithMissMany(cb fetchMany[K, V]) *Cache[K, V] {
 	a.onMissMany = cb
 
 	return a
 }
 
-func (a *App[K, V]) WithSerializer(serializer Serializer[V]) *App[K, V] {
+func (a *Cache[K, V]) WithSerializer(serializer Serializer[V]) *Cache[K, V] {
 	a.serializer = serializer
 
 	return a
 }
 
-func (a *App[K, V]) WithRead(client RedisClient) *App[K, V] {
+func (a *Cache[K, V]) WithRead(client RedisClient) *Cache[K, V] {
 	a.read = getClient(client)
 
 	return a
 }
 
-func (a *App[K, V]) WithTTL(ttl time.Duration) *App[K, V] {
+func (a *Cache[K, V]) WithTTL(ttl time.Duration) *Cache[K, V] {
 	a.ttl = ttl
 
 	return a
 }
 
-func (a *App[K, V]) WithExtendOnHit() *App[K, V] {
+func (a *Cache[K, V]) WithExtendOnHit() *Cache[K, V] {
 	a.extendOnHit = true
 
 	return a
 }
 
-func (a *App[K, V]) WithMaxConcurrency(concurrency int) *App[K, V] {
+func (a *Cache[K, V]) WithMaxConcurrency(concurrency int) *Cache[K, V] {
 	a.concurrency = concurrency
 
 	return a
@@ -107,7 +107,7 @@ func getClient(client RedisClient) RedisClient {
 	return nil
 }
 
-func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
+func (a *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
 	if a.read == nil || IsBypassed(ctx) {
 		return a.onMiss(ctx, id)
 	}
@@ -139,7 +139,7 @@ func (a *App[K, V]) Get(ctx context.Context, id K) (V, error) {
 	return a.fetch(ctx, id)
 }
 
-func (a *App[K, V]) fetch(ctx context.Context, id K) (V, error) {
+func (a *Cache[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	var err error
 
 	ctx, end := telemetry.StartSpan(ctx, a.tracer, "fetch", trace.WithSpanKind(trace.SpanKindInternal))
@@ -156,7 +156,7 @@ func (a *App[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	return value, err
 }
 
-func (a *App[K, V]) decode(content []byte) (value V, ok bool, err error) {
+func (a *Cache[K, V]) decode(content []byte) (value V, ok bool, err error) {
 	if len(content) == 0 {
 		return
 	}
@@ -167,7 +167,7 @@ func (a *App[K, V]) decode(content []byte) (value V, ok bool, err error) {
 	return
 }
 
-func (a *App[K, V]) extendTTL(ctx context.Context, keys ...string) {
+func (a *Cache[K, V]) extendTTL(ctx context.Context, keys ...string) {
 	if a.write == nil || !a.extendOnHit || a.ttl == 0 || len(keys) == 0 {
 		return
 	}

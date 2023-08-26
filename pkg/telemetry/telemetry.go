@@ -25,7 +25,7 @@ import (
 	tr "go.opentelemetry.io/otel/trace"
 )
 
-type App struct {
+type Service struct {
 	tracerProvider *trace.TracerProvider
 	meterProvider  *metric.MeterProvider
 }
@@ -44,26 +44,26 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	return config
 }
 
-func New(ctx context.Context, config Config) (App, error) {
+func New(ctx context.Context, config Config) (Service, error) {
 	url := strings.TrimSpace(config.URL)
 
 	if len(url) == 0 {
-		return App{}, nil
+		return Service{}, nil
 	}
 
 	otelResource, err := newResource(ctx)
 	if err != nil {
-		return App{}, fmt.Errorf("otel resource: %w", err)
+		return Service{}, fmt.Errorf("otel resource: %w", err)
 	}
 
 	tracerExporter, err := newTraceExporter(ctx, url)
 	if err != nil {
-		return App{}, fmt.Errorf("trace exporter: %w", err)
+		return Service{}, fmt.Errorf("trace exporter: %w", err)
 	}
 
 	sampler, err := newSampler(strings.TrimSpace(config.Rate))
 	if err != nil {
-		return App{}, fmt.Errorf("sampler: %w", err)
+		return Service{}, fmt.Errorf("sampler: %w", err)
 	}
 
 	tracerProvider := trace.NewTracerProvider(
@@ -74,7 +74,7 @@ func New(ctx context.Context, config Config) (App, error) {
 
 	metricExporter, err := newMetricExporter(ctx, url)
 	if err != nil {
-		return App{}, fmt.Errorf("metric exporter: %w", err)
+		return Service{}, fmt.Errorf("metric exporter: %w", err)
 	}
 
 	meterProvider := metric.NewMeterProvider(
@@ -96,10 +96,10 @@ func New(ctx context.Context, config Config) (App, error) {
 	)
 
 	if err := runtime.Start(runtime.WithMeterProvider(meterProvider)); err != nil {
-		return App{}, fmt.Errorf("runtime: %w", err)
+		return Service{}, fmt.Errorf("runtime: %w", err)
 	}
 
-	return App{
+	return Service{
 		tracerProvider: tracerProvider,
 		meterProvider:  meterProvider,
 	}, nil
@@ -118,7 +118,7 @@ func allowedHttpAttr(v ...string) attribute.Filter {
 	}
 }
 
-func (a App) MeterProvider() meter.MeterProvider {
+func (a Service) MeterProvider() meter.MeterProvider {
 	if a.meterProvider == nil {
 		return noop_meter.MeterProvider{}
 	}
@@ -126,7 +126,7 @@ func (a App) MeterProvider() meter.MeterProvider {
 	return a.meterProvider
 }
 
-func (a App) TracerProvider() tr.TracerProvider {
+func (a Service) TracerProvider() tr.TracerProvider {
 	if a.meterProvider == nil {
 		return tr.NewNoopTracerProvider()
 	}
@@ -134,7 +134,7 @@ func (a App) TracerProvider() tr.TracerProvider {
 	return a.tracerProvider
 }
 
-func (a App) Middleware(name string) func(next http.Handler) http.Handler {
+func (a Service) Middleware(name string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		if next == nil {
 			return next
@@ -148,7 +148,7 @@ func (a App) Middleware(name string) func(next http.Handler) http.Handler {
 	}
 }
 
-func (a App) Close(ctx context.Context) {
+func (a Service) Close(ctx context.Context) {
 	if a.tracerProvider != nil {
 		if err := a.tracerProvider.Shutdown(ctx); err != nil {
 			slog.Error("shutdown trace provider", "err", err)

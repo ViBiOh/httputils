@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (a App) Push(ctx context.Context, key string, value any) error {
+func (a Service) Push(ctx context.Context, key string, value any) error {
 	if content, err := json.Marshal(value); err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	} else if err := a.client.LPush(ctx, key, content).Err(); err != nil {
@@ -19,7 +19,7 @@ func (a App) Push(ctx context.Context, key string, value any) error {
 	return nil
 }
 
-func (a App) Pull(ctx context.Context, key string, handler func(string, error)) {
+func (a Service) Pull(ctx context.Context, key string, handler func(string, error)) {
 	for {
 		content, err := a.client.BRPop(ctx, 0, key).Result()
 		if err != nil {
@@ -42,8 +42,8 @@ func (a App) Pull(ctx context.Context, key string, handler func(string, error)) 
 	}
 }
 
-func PullFor[T any](ctx context.Context, app Client, key string, handler func(T, error)) {
-	app.Pull(ctx, key, func(content string, err error) {
+func PullFor[T any](ctx context.Context, client Client, key string, handler func(T, error)) {
+	client.Pull(ctx, key, func(content string, err error) {
 		var instance T
 
 		if err != nil {

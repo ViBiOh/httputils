@@ -29,7 +29,7 @@ var (
 	staticCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Hour * 24 * 180).Seconds())
 )
 
-type App struct {
+type Service struct {
 	tracer           trace.Tracer
 	tpl              *template.Template
 	content          map[string]any
@@ -59,7 +59,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	return config
 }
 
-func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*App, error) {
+func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Service, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
 		return nil, fmt.Errorf("get static/ filesystem: %w", err)
@@ -71,7 +71,7 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvide
 	staticFileSystem := http.FS(staticFS)
 	staticHandler := http.FileServer(staticFileSystem)
 
-	instance := App{
+	instance := Service{
 		staticFileSystem: staticFileSystem,
 		staticHandler:    staticHandler,
 		pathPrefix:       pathPrefix,
@@ -117,11 +117,11 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvide
 	return &instance, nil
 }
 
-func (a *App) PublicURL(url string) string {
+func (a *Service) PublicURL(url string) string {
 	return a.publicURL + a.url(url)
 }
 
-func (a *App) url(url string) string {
+func (a *Service) url(url string) string {
 	prefixedURL := path.Join(a.pathPrefix, url)
 	if len(prefixedURL) > 1 && strings.HasSuffix(url, "/") {
 		return prefixedURL + "/"
@@ -146,7 +146,7 @@ func isStaticPaths(requestPath string) bool {
 	return false
 }
 
-func (a *App) feedContent(content map[string]any) map[string]any {
+func (a *Service) feedContent(content map[string]any) map[string]any {
 	if content == nil {
 		content = make(map[string]any)
 	}
@@ -160,7 +160,7 @@ func (a *App) feedContent(content map[string]any) map[string]any {
 	return content
 }
 
-func (a *App) Handler(templateFunc TemplateFunc) http.Handler {
+func (a *Service) Handler(templateFunc TemplateFunc) http.Handler {
 	svgHandler := http.StripPrefix(svgPath, a.svg())
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -195,7 +195,7 @@ func (a *App) Handler(templateFunc TemplateFunc) http.Handler {
 	return http.StripPrefix(a.pathPrefix, handler)
 }
 
-func (a *App) handleStatic(w http.ResponseWriter, r *http.Request) bool {
+func (a *Service) handleStatic(w http.ResponseWriter, r *http.Request) bool {
 	if !isStaticPaths(r.URL.Path) {
 		return false
 	}

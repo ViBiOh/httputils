@@ -27,7 +27,7 @@ func (ii IndexedItems[K]) Items() []K {
 }
 
 // If onMissError returns false, List stops by returning an error
-func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) (outputs []V, err error) {
+func (a *Cache[K, V]) List(ctx context.Context, onMissError func(K, error) bool, items ...K) (outputs []V, err error) {
 	if len(items) == 0 {
 		return nil, nil
 	}
@@ -52,7 +52,7 @@ func (a App[K, V]) List(ctx context.Context, onMissError func(K, error) bool, it
 	return a.handleListMany(ctx, items, keys, values)
 }
 
-func (a App[K, V]) listRawMany(ctx context.Context, items []K) ([]V, error) {
+func (a *Cache[K, V]) listRawMany(ctx context.Context, items []K) ([]V, error) {
 	values, err := a.onMissMany(ctx, items)
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (a App[K, V]) listRawMany(ctx context.Context, items []K) ([]V, error) {
 	return output, nil
 }
 
-func (a App[K, V]) listRaw(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
+func (a *Cache[K, V]) listRaw(ctx context.Context, onMissError func(K, error) bool, items ...K) ([]V, error) {
 	output := make([]V, len(items))
 
 	for index, item := range items {
@@ -85,7 +85,7 @@ func (a App[K, V]) listRaw(ctx context.Context, onMissError func(K, error) bool,
 	return output, nil
 }
 
-func (a App[K, V]) handleListSingle(ctx context.Context, onMissError func(K, error) bool, items []K, keys, values []string) ([]V, error) {
+func (a *Cache[K, V]) handleListSingle(ctx context.Context, onMissError func(K, error) bool, items []K, keys, values []string) ([]V, error) {
 	output := make([]V, len(items))
 	wg := concurrent.NewFailFast(a.concurrency)
 	ctx = wg.WithContext(ctx)
@@ -125,7 +125,7 @@ func (a App[K, V]) handleListSingle(ctx context.Context, onMissError func(K, err
 }
 
 // Param fetchMany has to return the same number of values as requested and in the same order
-func (a App[K, V]) handleListMany(ctx context.Context, items []K, keys, values []string) ([]V, error) {
+func (a *Cache[K, V]) handleListMany(ctx context.Context, items []K, keys, values []string) ([]V, error) {
 	var extendKeys []string
 
 	missingKeys := make(IndexedItems[K])
@@ -165,7 +165,7 @@ func (a App[K, V]) handleListMany(ctx context.Context, items []K, keys, values [
 	return output, nil
 }
 
-func (a App[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) {
+func (a *Cache[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) {
 	keys := make([]string, len(ids))
 	for index, id := range ids {
 		keys[index] = a.toKey(id)
