@@ -36,7 +36,7 @@ type Config struct {
 	ShutdownTimeout time.Duration
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("Address", "Listen address").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Address, "", overrides)
@@ -48,10 +48,10 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	flags.New("IdleTimeout", "Idle Timeout").Prefix(prefix).DocPrefix("server").DurationVar(fs, &config.IdleTimeout, 2*time.Minute, overrides)
 	flags.New("ShutdownTimeout", "Shutdown Timeout").Prefix(prefix).DocPrefix("server").DurationVar(fs, &config.ShutdownTimeout, 10*time.Second, overrides)
 
-	return config
+	return &config
 }
 
-func New(config Config) Server {
+func New(config *Config) Server {
 	port := config.Port
 	done := make(chan struct{})
 

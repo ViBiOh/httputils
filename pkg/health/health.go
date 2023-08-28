@@ -34,16 +34,16 @@ type Config struct {
 	GraceDuration time.Duration
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("OkStatus", "Healthy HTTP Status code").Prefix(prefix).DocPrefix("http").IntVar(fs, &config.OkStatus, http.StatusNoContent, overrides)
 	flags.New("GraceDuration", "Grace duration when SIGTERM received").Prefix(prefix).DocPrefix("http").DurationVar(fs, &config.GraceDuration, 30*time.Second, overrides)
 
-	return config
+	return &config
 }
 
-func New(config Config, pingers ...model.Pinger) *Service {
+func New(config *Config, pingers ...model.Pinger) *Service {
 	return &Service{
 		okStatus:      config.OkStatus,
 		graceDuration: config.GraceDuration,
@@ -54,42 +54,42 @@ func New(config Config, pingers ...model.Pinger) *Service {
 	}
 }
 
-func (a *Service) Done(ctx context.Context) context.Context {
+func (s *Service) Done(ctx context.Context) context.Context {
 	ctx, cancel := context.WithCancel(ctx)
 
 	go func() {
 		defer cancel()
-		<-a.done
+		<-s.done
 	}()
 
 	return ctx
 }
 
-func (a *Service) End(ctx context.Context) context.Context {
+func (s *Service) End(ctx context.Context) context.Context {
 	ctx, cancel := context.WithCancel(ctx)
 
 	go func() {
 		defer cancel()
-		<-a.end
+		<-s.end
 	}()
 
 	return ctx
 }
 
-func (a *Service) HealthHandler() http.Handler {
+func (s *Service) HealthHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(a.okStatus)
+		w.WriteHeader(s.okStatus)
 	})
 }
 
-func (a *Service) ReadyHandler() http.Handler {
+func (s *Service) ReadyHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		select {
-		case <-a.done:
+		case <-s.done:
 			w.WriteHeader(http.StatusServiceUnavailable)
 		default:
-			if a.isReady(r.Context()) {
-				w.WriteHeader(a.okStatus)
+			if s.isReady(r.Context()) {
+				w.WriteHeader(s.okStatus)
 			} else {
 				w.WriteHeader(http.StatusServiceUnavailable)
 			}
@@ -97,29 +97,29 @@ func (a *Service) ReadyHandler() http.Handler {
 	})
 }
 
-func (a *Service) WaitForTermination(done <-chan struct{}) {
-	defer close(a.end)
+func (s *Service) WaitForTermination(done <-chan struct{}) {
+	defer close(s.end)
 
-	a.waitForDone(done, syscall.SIGTERM)
+	s.waitForDone(done, syscall.SIGTERM)
 
 	select {
 	case <-done:
 	default:
-		if a.graceDuration != 0 {
-			slog.Info("Waiting for graceful shutdown", "duration", a.graceDuration)
-			time.Sleep(a.graceDuration)
+		if s.graceDuration != 0 {
+			slog.Info("Waiting for graceful shutdown", "duration", s.graceDuration)
+			time.Sleep(s.graceDuration)
 		}
 	}
 }
 
-func (a *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
+func (s *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	signalsChan := make(chan os.Signal, 1)
 	defer close(signalsChan)
 
 	signal.Notify(signalsChan, signals...)
 	defer signal.Stop(signalsChan)
 
-	defer close(a.done)
+	defer close(s.done)
 
 	select {
 	case <-done:
@@ -128,8 +128,8 @@ func (a *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	}
 }
 
-func (a *Service) isReady(ctx context.Context) bool {
-	for _, pinger := range a.pingers {
+func (s *Service) isReady(ctx context.Context) bool {
+	for _, pinger := range s.pingers {
 		if err := pinger(ctx); err != nil {
 			slog.Error("ping", "err", err)
 

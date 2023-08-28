@@ -54,7 +54,7 @@ type Config struct {
 	MaxConn uint
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("Host", "Host").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.Host, "", overrides)
@@ -66,10 +66,10 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	flags.New("MaxConn", "Max Open Connections").Prefix(prefix).DocPrefix("database").UintVar(fs, &config.MaxConn, 5, overrides)
 	flags.New("Sslmode", "SSL Mode").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.SSLMode, "disable", overrides)
 
-	return config
+	return &config
 }
 
-func New(ctx context.Context, config Config, tracerProvider trace.TracerProvider) (Service, error) {
+func New(ctx context.Context, config *Config, tracerProvider trace.TracerProvider) (Service, error) {
 	host := strings.TrimSpace(config.Host)
 	if len(host) == 0 {
 		return Service{}, ErrNoHost

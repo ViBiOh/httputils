@@ -31,13 +31,13 @@ type Config struct {
 	UserAgent string
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("Url", "URL to check").Prefix(prefix).DocPrefix("alcotest").StringVar(fs, &config.URL, "", overrides)
 	flags.New("UserAgent", "User-Agent for check").Prefix(prefix).DocPrefix("alcotest").StringVar(fs, &config.UserAgent, defaultUserAgent, overrides)
 
-	return config
+	return &config
 }
 
 func GetStatusCode(url, userAgent string) (status int, err error) {
@@ -89,7 +89,7 @@ func Do(url, userAgent string) error {
 	return nil
 }
 
-func DoAndExit(config Config) {
+func DoAndExit(config *Config) {
 	if len(config.URL) == 0 {
 		return
 	}

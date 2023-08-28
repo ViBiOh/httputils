@@ -20,17 +20,17 @@ import (
 )
 
 type configuration struct {
-	logger     logger.Config
-	owasp      owasp.Config
-	alcotest   alcotest.Config
-	telemetry  telemetry.Config
-	cors       cors.Config
-	renderer   renderer.Config
-	amqp       amqp.Config
-	redis      redis.Config
-	amqHandler amqphandler.Config
-	appServer  server.Config
-	health     health.Config
+	logger     *logger.Config
+	owasp      *owasp.Config
+	alcotest   *alcotest.Config
+	telemetry  *telemetry.Config
+	cors       *cors.Config
+	renderer   *renderer.Config
+	amqp       *amqp.Config
+	redis      *redis.Config
+	amqHandler *amqphandler.Config
+	appServer  *server.Config
+	health     *health.Config
 }
 
 func newConfig() (configuration, error) {

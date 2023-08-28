@@ -27,7 +27,7 @@ type Config struct {
 	Credentials bool
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("Origin", "Access-Control-Allow-Origin").Prefix(prefix).DocPrefix("cors").StringVar(fs, &config.Origin, "*", overrides)
@@ -36,10 +36,10 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	flags.New("Expose", "Access-Control-Expose-Headers").Prefix(prefix).DocPrefix("cors").StringVar(fs, &config.Exposes, "", overrides)
 	flags.New("Credentials", "Access-Control-Allow-Credentials").Prefix(prefix).DocPrefix("cors").BoolVar(fs, &config.Credentials, false, overrides)
 
-	return config
+	return &config
 }
 
-func New(config Config) Service {
+func New(config *Config) Service {
 	return Service{
 		origin:      config.Origin,
 		headers:     config.Headers,

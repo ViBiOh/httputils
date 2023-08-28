@@ -35,16 +35,16 @@ type Config struct {
 	Rate string
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("URL", "OpenTelemetry gRPC endpoint (e.g. otel-exporter:4317)").Prefix(prefix).DocPrefix("telemetry").StringVar(fs, &config.URL, "", overrides)
 	flags.New("Rate", "OpenTelemetry sample rate, 'always', 'never' or a float value").Prefix(prefix).DocPrefix("telemetry").StringVar(fs, &config.Rate, "always", overrides)
 
-	return config
+	return &config
 }
 
-func New(ctx context.Context, config Config) (Service, error) {
+func New(ctx context.Context, config *Config) (Service, error) {
 	url := strings.TrimSpace(config.URL)
 
 	if len(url) == 0 {

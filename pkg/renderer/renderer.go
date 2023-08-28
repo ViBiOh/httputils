@@ -48,7 +48,7 @@ type Config struct {
 	Minify     bool
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("PublicURL", "Public URL").Prefix(prefix).DocPrefix("").StringVar(fs, &config.PublicURL, "http://localhost:1080", overrides)
@@ -56,10 +56,10 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	flags.New("Title", "Application title").Prefix(prefix).DocPrefix("").StringVar(fs, &config.Title, "App", overrides)
 	flags.New("Minify", "Minify HTML").Prefix(prefix).DocPrefix("").BoolVar(fs, &config.Minify, true, overrides)
 
-	return config
+	return &config
 }
 
-func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Service, error) {
+func New(config *Config, filesystem fs.FS, funcMap template.FuncMap, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Service, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
 		return nil, fmt.Errorf("get static/ filesystem: %w", err)
@@ -117,12 +117,12 @@ func New(config Config, filesystem fs.FS, funcMap template.FuncMap, meterProvide
 	return &instance, nil
 }
 
-func (a *Service) PublicURL(url string) string {
-	return a.publicURL + a.url(url)
+func (s *Service) PublicURL(url string) string {
+	return s.publicURL + s.url(url)
 }
 
-func (a *Service) url(url string) string {
-	prefixedURL := path.Join(a.pathPrefix, url)
+func (s *Service) url(url string) string {
+	prefixedURL := path.Join(s.pathPrefix, url)
 	if len(prefixedURL) > 1 && strings.HasSuffix(url, "/") {
 		return prefixedURL + "/"
 	}
@@ -146,12 +146,12 @@ func isStaticPaths(requestPath string) bool {
 	return false
 }
 
-func (a *Service) feedContent(content map[string]any) map[string]any {
+func (s *Service) feedContent(content map[string]any) map[string]any {
 	if content == nil {
 		content = make(map[string]any)
 	}
 
-	for key, value := range a.content {
+	for key, value := range s.content {
 		if _, ok := content[key]; !ok {
 			content[key] = value
 		}
@@ -160,20 +160,20 @@ func (a *Service) feedContent(content map[string]any) map[string]any {
 	return content
 }
 
-func (a *Service) Handler(templateFunc TemplateFunc) http.Handler {
-	svgHandler := http.StripPrefix(svgPath, a.svg())
+func (s *Service) Handler(templateFunc TemplateFunc) http.Handler {
+	svgHandler := http.StripPrefix(svgPath, s.svg())
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, end := telemetry.StartSpan(r.Context(), a.tracer, "renderer", trace.WithSpanKind(trace.SpanKindInternal))
+		ctx, end := telemetry.StartSpan(r.Context(), s.tracer, "renderer", trace.WithSpanKind(trace.SpanKindInternal))
 		defer end(nil)
 
 		r = r.WithContext(ctx)
 
-		if a.handleStatic(w, r) {
+		if s.handleStatic(w, r) {
 			return
 		}
 
-		if a.tpl == nil {
+		if s.tpl == nil {
 			httperror.NotFound(w)
 
 			return
@@ -185,22 +185,22 @@ func (a *Service) Handler(templateFunc TemplateFunc) http.Handler {
 			return
 		}
 
-		a.render(w, r, templateFunc)
+		s.render(w, r, templateFunc)
 	})
 
-	if len(a.pathPrefix) == 0 {
+	if len(s.pathPrefix) == 0 {
 		return handler
 	}
 
-	return http.StripPrefix(a.pathPrefix, handler)
+	return http.StripPrefix(s.pathPrefix, handler)
 }
 
-func (a *Service) handleStatic(w http.ResponseWriter, r *http.Request) bool {
+func (s *Service) handleStatic(w http.ResponseWriter, r *http.Request) bool {
 	if !isStaticPaths(r.URL.Path) {
 		return false
 	}
 
-	file, err := a.staticFileSystem.Open(r.URL.Path)
+	file, err := s.staticFileSystem.Open(r.URL.Path)
 	if err != nil {
 		return false
 	}
@@ -212,7 +212,7 @@ func (a *Service) handleStatic(w http.ResponseWriter, r *http.Request) bool {
 	}()
 
 	w.Header().Add("Cache-Control", staticCacheDuration)
-	a.staticHandler.ServeHTTP(w, r)
+	s.staticHandler.ServeHTTP(w, r)
 
 	return true
 }

@@ -39,7 +39,7 @@ type Config struct {
 	MinIdleConn int
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").StringSliceVar(fs, &config.Address, []string{"127.0.0.1:6379"}, overrides)
@@ -49,10 +49,10 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	flags.New("PoolSize", "Redis Pool Size (default GOMAXPROCS*10)").Prefix(prefix).DocPrefix("redis").IntVar(fs, &config.PoolSize, 0, overrides)
 	flags.New("MinIdleConn", "Redis Minimum Idle Connections").Prefix(prefix).DocPrefix("redis").IntVar(fs, &config.MinIdleConn, 0, overrides)
 
-	return config
+	return &config
 }
 
-func New(config Config, meter metric.MeterProvider, tracer trace.TracerProvider) (Client, error) {
+func New(config *Config, meter metric.MeterProvider, tracer trace.TracerProvider) (Client, error) {
 	if len(config.Address) == 0 {
 		return Noop{}, nil
 	}
@@ -88,33 +88,33 @@ func New(config Config, meter metric.MeterProvider, tracer trace.TracerProvider)
 	return service, nil
 }
 
-func (a *Service) Enabled() bool {
+func (s *Service) Enabled() bool {
 	return true
 }
 
-func (a *Service) Close() {
-	if err := a.client.Close(); err != nil {
+func (s *Service) Close() {
+	if err := s.client.Close(); err != nil {
 		slog.Error("redis close", "err", err)
 	}
 }
 
-func (a *Service) FlushAll(ctx context.Context) error {
-	return a.client.FlushAll(ctx).Err()
+func (s *Service) FlushAll(ctx context.Context) error {
+	return s.client.FlushAll(ctx).Err()
 }
 
-func (a *Service) Ping(ctx context.Context) error {
+func (s *Service) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	return a.client.Ping(ctx).Err()
+	return s.client.Ping(ctx).Err()
 }
 
-func (a *Service) Store(ctx context.Context, key string, value any, duration time.Duration) error {
-	return a.client.Set(ctx, key, value, duration).Err()
+func (s *Service) Store(ctx context.Context, key string, value any, duration time.Duration) error {
+	return s.client.Set(ctx, key, value, duration).Err()
 }
 
-func (a *Service) Load(ctx context.Context, key string) ([]byte, error) {
-	content, err := a.client.Get(ctx, key).Bytes()
+func (s *Service) Load(ctx context.Context, key string) ([]byte, error) {
+	content, err := s.client.Get(ctx, key).Bytes()
 	if err == nil {
 		return content, err
 	}
@@ -126,20 +126,20 @@ func (a *Service) Load(ctx context.Context, key string) ([]byte, error) {
 	return nil, nil
 }
 
-func (a *Service) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
+func (s *Service) LoadMany(ctx context.Context, keys ...string) ([]string, error) {
 	if len(keys) == 0 {
 		return nil, nil
 	}
 
-	if !a.isCluster {
-		return a.mget(ctx, keys...)
+	if !s.isCluster {
+		return s.mget(ctx, keys...)
 	}
 
-	return a.pipelinedGet(ctx, keys...)
+	return s.pipelinedGet(ctx, keys...)
 }
 
-func (a *Service) mget(ctx context.Context, keys ...string) ([]string, error) {
-	results, err := a.client.MGet(ctx, keys...).Result()
+func (s *Service) mget(ctx context.Context, keys ...string) ([]string, error) {
+	results, err := s.client.MGet(ctx, keys...).Result()
 	if err != nil {
 		return nil, fmt.Errorf("mget: %w", err)
 	}
@@ -155,8 +155,8 @@ func (a *Service) mget(ctx context.Context, keys ...string) ([]string, error) {
 	return output, nil
 }
 
-func (a *Service) pipelinedGet(ctx context.Context, keys ...string) ([]string, error) {
-	pipeline := a.client.Pipeline()
+func (s *Service) pipelinedGet(ctx context.Context, keys ...string) ([]string, error) {
+	pipeline := s.client.Pipeline()
 
 	commands := make([]*redis.StringCmd, len(keys))
 
@@ -179,35 +179,35 @@ func (a *Service) pipelinedGet(ctx context.Context, keys ...string) ([]string, e
 	return output, nil
 }
 
-func (a *Service) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {
+func (s *Service) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {
 	if len(keys) == 0 {
 		return nil
 	}
 
-	pipeline := a.client.Pipeline()
+	pipeline := s.client.Pipeline()
 
 	for _, key := range keys {
 		pipeline.Expire(ctx, key, ttl)
 	}
 
-	return a.execPipeline(ctx, pipeline)
+	return s.execPipeline(ctx, pipeline)
 }
 
-func (a *Service) Delete(ctx context.Context, keys ...string) (err error) {
+func (s *Service) Delete(ctx context.Context, keys ...string) (err error) {
 	if len(keys) == 0 {
 		return nil
 	}
 
-	pipeline := a.client.Pipeline()
+	pipeline := s.client.Pipeline()
 
 	for _, key := range keys {
 		pipeline.Del(ctx, key)
 	}
 
-	return a.execPipeline(ctx, pipeline)
+	return s.execPipeline(ctx, pipeline)
 }
 
-func (a *Service) DeletePattern(ctx context.Context, pattern string) (err error) {
+func (s *Service) DeletePattern(ctx context.Context, pattern string) (err error) {
 	scanOutput := make(chan string, runtime.NumCPU())
 
 	done := make(chan struct{})
@@ -215,16 +215,16 @@ func (a *Service) DeletePattern(ctx context.Context, pattern string) (err error)
 	go func() {
 		defer close(done)
 
-		pipeline := a.client.Pipeline()
+		pipeline := s.client.Pipeline()
 
 		for key := range scanOutput {
 			pipeline.Del(ctx, key)
 		}
 
-		err = a.execPipeline(ctx, pipeline)
+		err = s.execPipeline(ctx, pipeline)
 	}()
 
-	if err := a.Scan(ctx, pattern, scanOutput, defaultPageSize); err != nil {
+	if err := s.Scan(ctx, pattern, scanOutput, defaultPageSize); err != nil {
 		return fmt.Errorf("exec scan: %w", err)
 	}
 
@@ -233,7 +233,7 @@ func (a *Service) DeletePattern(ctx context.Context, pattern string) (err error)
 	return
 }
 
-func (a *Service) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
+func (s *Service) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
 	results, err := pipeline.Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("exec pipeline: %w", err)
@@ -248,7 +248,7 @@ func (a *Service) execPipeline(ctx context.Context, pipeline redis.Pipeliner) er
 	return nil
 }
 
-func (a *Service) Scan(ctx context.Context, pattern string, output chan<- string, pageSize int64) error {
+func (s *Service) Scan(ctx context.Context, pattern string, output chan<- string, pageSize int64) error {
 	defer close(output)
 
 	var keys []string
@@ -256,7 +256,7 @@ func (a *Service) Scan(ctx context.Context, pattern string, output chan<- string
 	var cursor uint64
 
 	for {
-		keys, cursor, err = a.client.Scan(ctx, cursor, pattern, pageSize).Result()
+		keys, cursor, err = s.client.Scan(ctx, cursor, pattern, pageSize).Result()
 		if err != nil {
 			return fmt.Errorf("exec scan: %w", err)
 		}
@@ -273,8 +273,8 @@ func (a *Service) Scan(ctx context.Context, pattern string, output chan<- string
 	return nil
 }
 
-func (a *Service) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
-	if acquired, err = a.client.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
+func (s *Service) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
+	if acquired, err = s.client.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
 		err = fmt.Errorf("exec setnx: %w", err)
 
 		return
@@ -287,13 +287,13 @@ func (a *Service) Exclusive(ctx context.Context, name string, timeout time.Durat
 
 	err = action(actionCtx)
 
-	if delErr := a.client.Del(ctx, name).Err(); delErr != nil {
+	if delErr := s.client.Del(ctx, name).Err(); delErr != nil {
 		err = errors.Join(err, delErr)
 	}
 
 	return
 }
 
-func (a *Service) Pipeline() redis.Pipeliner {
-	return a.client.Pipeline()
+func (s *Service) Pipeline() redis.Pipeliner {
+	return s.client.Pipeline()
 }

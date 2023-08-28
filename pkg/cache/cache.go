@@ -109,7 +109,7 @@ func getClient(client RedisClient) RedisClient {
 
 func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
 	if c.read == nil || IsBypassed(ctx) {
-		return c.onMiss(ctx, id)
+		return c.fetch(ctx, id)
 	}
 
 	var err error

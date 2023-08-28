@@ -30,17 +30,17 @@ type Config struct {
 	HSTS         bool
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("Csp", cspHeader).Prefix(prefix).DocPrefix("owasp").StringVar(fs, &config.CSP, "default-src 'self'; base-uri 'self'", overrides)
 	flags.New("Hsts", "Indicate Strict Transport Security").Prefix(prefix).DocPrefix("owasp").BoolVar(fs, &config.HSTS, true, overrides)
 	flags.New("FrameOptions", "X-Frame-Options").Prefix(prefix).DocPrefix("owasp").StringVar(fs, &config.FrameOptions, "deny", overrides)
 
-	return config
+	return &config
 }
 
-func New(config Config) Service {
+func New(config *Config) Service {
 	return Service{
 		csp:          config.CSP,
 		hsts:         config.HSTS,

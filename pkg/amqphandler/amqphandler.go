@@ -46,7 +46,7 @@ type Config struct {
 	Exclusive     bool
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("Exchange", "Exchange name").Prefix(prefix).DocPrefix("amqp").StringVar(fs, &config.Exchange, "", overrides)
@@ -56,10 +56,10 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	flags.New("RetryInterval", "Interval duration when send fails").Prefix(prefix).DocPrefix("amqp").DurationVar(fs, &config.RetryInterval, time.Hour, overrides)
 	flags.New("MaxRetry", "Max send retries").Prefix(prefix).DocPrefix("amqp").UintVar(fs, &config.MaxRetry, 3, overrides)
 
-	return config
+	return &config
 }
 
-func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.MeterProvider, tracerProvider trace.TracerProvider, handler Handler) (*Service, error) {
+func New(config *Config, amqpClient *amqpclient.Client, metricProvider metric.MeterProvider, tracerProvider trace.TracerProvider, handler Handler) (*Service, error) {
 	service := &Service{
 		amqpClient:    amqpClient,
 		exchange:      strings.TrimSpace(config.Exchange),
@@ -105,26 +105,26 @@ func New(config Config, amqpClient *amqpclient.Client, metricProvider metric.Met
 	return service, nil
 }
 
-func (a *Service) Done() <-chan struct{} {
-	return a.done
+func (s *Service) Done() <-chan struct{} {
+	return s.done
 }
 
-func (a *Service) Start(ctx context.Context) {
-	defer close(a.done)
+func (s *Service) Start(ctx context.Context) {
+	defer close(s.done)
 
-	if a.amqpClient == nil {
+	if s.amqpClient == nil {
 		return
 	}
 
 	init := true
-	log := slog.With("exchange", a.exchange).With("queue", a.queue).With("routingKey", a.routingKey).With("vhost", a.amqpClient.Vhost())
+	log := slog.With("exchange", s.exchange).With("queue", s.queue).With("routingKey", s.routingKey).With("vhost", s.amqpClient.Vhost())
 
-	consumerName, messages, err := a.amqpClient.Listen(func() (string, error) {
-		queueName, err := a.configure(init)
+	consumerName, messages, err := s.amqpClient.Listen(func() (string, error) {
+		queueName, err := s.configure(init)
 		init = false
 
 		return queueName, err
-	}, a.exchange, a.routingKey)
+	}, s.exchange, s.routingKey)
 	if err != nil {
 		log.Error("listen", "err", err)
 
@@ -135,7 +135,7 @@ func (a *Service) Start(ctx context.Context) {
 
 	go func() {
 		<-ctx.Done()
-		if err := a.amqpClient.StopListener(consumerName); err != nil {
+		if err := s.amqpClient.StopListener(consumerName); err != nil {
 			log.Error("error while stopping listener", "err", err)
 		}
 	}()
@@ -144,25 +144,25 @@ func (a *Service) Start(ctx context.Context) {
 	defer log.Info("End listening messages")
 
 	for message := range messages {
-		a.handleMessage(ctx, log, message)
+		s.handleMessage(ctx, log, message)
 	}
 }
 
-func (a *Service) handleMessage(ctx context.Context, log *slog.Logger, message amqp.Delivery) {
+func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message amqp.Delivery) {
 	var err error
 
-	ctx, end := telemetry.StartSpan(ctx, a.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer))
+	ctx, end := telemetry.StartSpan(ctx, s.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer))
 	defer end(&err)
 
 	defer recoverer.Error(&err)
 
-	err = a.handler(ctx, message)
+	err = s.handler(ctx, message)
 
 	if err == nil {
-		a.counter.Add(ctx, 1, metric.WithAttributes(
+		s.counter.Add(ctx, 1, metric.WithAttributes(
 			attribute.String("state", "ack"),
-			attribute.String("exchange", a.exchange),
-			attribute.String("routingKey", a.routingKey),
+			attribute.String("exchange", s.exchange),
+			attribute.String("routingKey", s.routingKey),
 		))
 		if err = message.Ack(false); err != nil {
 			log.Error("ack message", "err", err)
@@ -173,14 +173,14 @@ func (a *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 
 	log.Error("handle message", "err", err, "body", string(message.Body))
 
-	if a.retryInterval > 0 && a.maxRetry > 0 {
-		a.counter.Add(ctx, 1, metric.WithAttributes(
+	if s.retryInterval > 0 && s.maxRetry > 0 {
+		s.counter.Add(ctx, 1, metric.WithAttributes(
 			attribute.String("state", "retry"),
-			attribute.String("exchange", a.exchange),
-			attribute.String("routingKey", a.routingKey),
+			attribute.String("exchange", s.exchange),
+			attribute.String("routingKey", s.routingKey),
 		))
 
-		if err = a.Retry(message); err == nil {
+		if err = s.Retry(message); err == nil {
 			return
 		}
 
@@ -188,28 +188,28 @@ func (a *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 	}
 
 	if err = message.Ack(false); err != nil {
-		a.counter.Add(ctx, 1, metric.WithAttributes(
+		s.counter.Add(ctx, 1, metric.WithAttributes(
 			attribute.String("state", "drop"),
-			attribute.String("exchange", a.exchange),
-			attribute.String("routingKey", a.routingKey),
+			attribute.String("exchange", s.exchange),
+			attribute.String("routingKey", s.routingKey),
 		))
 
 		log.Error("ack message to trash it", "err", err)
 	}
 }
 
-func (a *Service) configure(init bool) (string, error) {
-	if !a.exclusive && !init {
-		return a.queue, nil
+func (s *Service) configure(init bool) (string, error) {
+	if !s.exclusive && !init {
+		return s.queue, nil
 	}
 
-	queue := a.queue
-	if a.exclusive {
-		queue = fmt.Sprintf("%s-%s", a.queue, generateIdentityName())
+	queue := s.queue
+	if s.exclusive {
+		queue = fmt.Sprintf("%s-%s", s.queue, generateIdentityName())
 	}
 
-	if err := a.amqpClient.Consumer(queue, a.routingKey, a.exchange, a.exclusive, a.delayExchange); err != nil {
-		return "", fmt.Errorf("configure amqp consumer for routingKey `%s` and exchange `%s`: %w", a.routingKey, a.exchange, err)
+	if err := s.amqpClient.Consumer(queue, s.routingKey, s.exchange, s.exclusive, s.delayExchange); err != nil {
+		return "", fmt.Errorf("configure amqp consumer for routingKey `%s` and exchange `%s`: %w", s.routingKey, s.exchange, err)
 	}
 
 	return queue, nil

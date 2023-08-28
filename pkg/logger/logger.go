@@ -17,7 +17,7 @@ type Config struct {
 	JSON       bool
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config {
+func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("Level", "Logger level").Prefix(prefix).DocPrefix("logger").StringVar(fs, &config.Level, "INFO", overrides)
@@ -26,14 +26,14 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) Config 
 	flags.New("LevelKey", "Key for level in JSON").Prefix(prefix).DocPrefix("logger").StringVar(fs, &config.LevelKey, "level", overrides)
 	flags.New("MessageKey", "Key for message in JSON").Prefix(prefix).DocPrefix("logger").StringVar(fs, &config.MessageKey, "msg", overrides)
 
-	return config
+	return &config
 }
 
 func init() {
 	configureLogger(os.Stdout, slog.LevelInfo, false, "time", "level", "msg")
 }
 
-func Init(config Config) {
+func Init(config *Config) {
 	var level slog.Level
 
 	if err := level.UnmarshalText([]byte(config.Level)); err != nil {

@@ -227,7 +227,7 @@ func TestDoAndExit(t *testing.T) {
 				result = code
 			}
 
-			DoAndExit(testCase.input)
+			DoAndExit(&testCase.input)
 
 			if result != testCase.want {
 				t.Errorf("DoAndExit() = %d, want %d", result, testCase.want)
@@ -251,6 +251,6 @@ func BenchmarkDoAndExit(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		DoAndExit(config)
+		DoAndExit(&config)
 	}
 }

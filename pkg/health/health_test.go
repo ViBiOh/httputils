@@ -59,7 +59,7 @@ func TestHealthHandler(t *testing.T) {
 		wantStatus int
 	}{
 		"simple": {
-			New(Config{
+			New(&Config{
 				OkStatus:      http.StatusNoContent,
 				GraceDuration: time.Second,
 			}),
@@ -102,7 +102,7 @@ func TestReadyHandler(t *testing.T) {
 		wantStatus int
 	}{
 		"simple": {
-			New(Config{
+			New(&Config{
 				OkStatus:      http.StatusNoContent,
 				GraceDuration: time.Second,
 			}),
@@ -121,7 +121,7 @@ func TestReadyHandler(t *testing.T) {
 			http.StatusServiceUnavailable,
 		},
 		"failing pinger": {
-			New(Config{
+			New(&Config{
 				OkStatus:      http.StatusNoContent,
 				GraceDuration: time.Second,
 			}, func(_ context.Context) error {
