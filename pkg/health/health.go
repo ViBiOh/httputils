@@ -124,7 +124,7 @@ func (s *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	select {
 	case <-done:
 	case sig := <-signalsChan:
-		slog.Info("%s received", sig)
+		slog.Info("Signal received", "signal", sig)
 	}
 }
 
