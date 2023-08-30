@@ -5,6 +5,7 @@ import (
 	"embed"
 	"log/slog"
 	"os"
+	"syscall"
 
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
 	"github.com/ViBiOh/httputils/v4/pkg/cors"
@@ -53,6 +54,6 @@ func main() {
 
 	go appServer.Start(ctxEnd, "http", httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.telemetry.Middleware("http"), owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
 
-	client.health.WaitForTermination(appServer.Done())
+	client.health.WaitForTermination(appServer.Done(), syscall.SIGTERM, syscall.SIGINT)
 	server.GracefulWait(appServer.Done(), adapter.amqp.Done())
 }

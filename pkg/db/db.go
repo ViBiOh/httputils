@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/ViBiOh/flags"
@@ -70,20 +69,14 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 }
 
 func New(ctx context.Context, config *Config, tracerProvider trace.TracerProvider) (Service, error) {
-	host := strings.TrimSpace(config.Host)
-	if len(host) == 0 {
+	if len(config.Host) == 0 {
 		return Service{}, ErrNoHost
 	}
-
-	user := strings.TrimSpace(config.User)
-	pass := config.Pass
-	name := strings.TrimSpace(config.Name)
-	sslmode := config.SSLMode
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	db, err := pgxpool.New(ctx, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_min_conns=%d pool_max_conns=%d", host, config.Port, user, pass, name, sslmode, config.MinConn, config.MaxConn))
+	db, err := pgxpool.New(ctx, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_min_conns=%d pool_max_conns=%d", config.Host, config.Port, config.User, config.Pass, config.Name, config.SSLMode, config.MinConn, config.MaxConn))
 	if err != nil {
 		return Service{}, fmt.Errorf("connect to postgres: %w", err)
 	}

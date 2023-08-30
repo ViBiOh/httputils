@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"strings"
 	"sync"
 
 	"github.com/ViBiOh/flags"
@@ -58,7 +57,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 }
 
 func New(config *Config, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Client, error) {
-	return NewFromURI(strings.TrimSpace(config.URI), config.Prefetch, meterProvider, tracerProvider)
+	return NewFromURI(config.URI, config.Prefetch, meterProvider, tracerProvider)
 }
 
 func NewFromURI(uri string, prefetch int, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Client, error) {

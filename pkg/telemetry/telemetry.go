@@ -45,9 +45,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 }
 
 func New(ctx context.Context, config *Config) (Service, error) {
-	url := strings.TrimSpace(config.URL)
-
-	if len(url) == 0 {
+	if len(config.URL) == 0 {
 		return Service{}, nil
 	}
 
@@ -56,7 +54,7 @@ func New(ctx context.Context, config *Config) (Service, error) {
 		return Service{}, fmt.Errorf("otel resource: %w", err)
 	}
 
-	tracerExporter, err := newTraceExporter(ctx, url)
+	tracerExporter, err := newTraceExporter(ctx, config.URL)
 	if err != nil {
 		return Service{}, fmt.Errorf("trace exporter: %w", err)
 	}
@@ -72,7 +70,7 @@ func New(ctx context.Context, config *Config) (Service, error) {
 		trace.WithSampler(sampler),
 	)
 
-	metricExporter, err := newMetricExporter(ctx, url)
+	metricExporter, err := newMetricExporter(ctx, config.URL)
 	if err != nil {
 		return Service{}, fmt.Errorf("metric exporter: %w", err)
 	}

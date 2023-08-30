@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/ViBiOh/flags"
@@ -62,10 +61,10 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 func New(config *Config, amqpClient *amqpclient.Client, metricProvider metric.MeterProvider, tracerProvider trace.TracerProvider, handler Handler) (*Service, error) {
 	service := &Service{
 		amqpClient:    amqpClient,
-		exchange:      strings.TrimSpace(config.Exchange),
-		queue:         strings.TrimSpace(config.Queue),
+		exchange:      config.Exchange,
+		queue:         config.Queue,
 		exclusive:     config.Exclusive,
-		routingKey:    strings.TrimSpace(config.RoutingKey),
+		routingKey:    config.RoutingKey,
 		retryInterval: config.RetryInterval,
 		done:          make(chan struct{}),
 		handler:       handler,

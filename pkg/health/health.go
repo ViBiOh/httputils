@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/ViBiOh/flags"
@@ -38,7 +37,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	var config Config
 
 	flags.New("OkStatus", "Healthy HTTP Status code").Prefix(prefix).DocPrefix("http").IntVar(fs, &config.OkStatus, http.StatusNoContent, overrides)
-	flags.New("GraceDuration", "Grace duration when SIGTERM received").Prefix(prefix).DocPrefix("http").DurationVar(fs, &config.GraceDuration, 30*time.Second, overrides)
+	flags.New("GraceDuration", "Grace duration when signal received").Prefix(prefix).DocPrefix("http").DurationVar(fs, &config.GraceDuration, 30*time.Second, overrides)
 
 	return &config
 }
@@ -97,10 +96,10 @@ func (s *Service) ReadyHandler() http.Handler {
 	})
 }
 
-func (s *Service) WaitForTermination(done <-chan struct{}) {
+func (s *Service) WaitForTermination(done <-chan struct{}, signals ...os.Signal) {
 	defer close(s.end)
 
-	s.waitForDone(done, syscall.SIGTERM)
+	s.waitForDone(done, signals...)
 
 	select {
 	case <-done:
@@ -124,7 +123,7 @@ func (s *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	select {
 	case <-done:
 	case sig := <-signalsChan:
-		slog.Info("Signal received", "signal", sig)
+		slog.Info("Signal received", "signal", sig.String())
 	}
 }
 

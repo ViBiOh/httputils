@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/ViBiOh/flags"
@@ -61,7 +60,7 @@ func New(config *Config, meter metric.MeterProvider, tracer trace.TracerProvider
 		isCluster: len(config.Address) > 1,
 		client: redis.NewUniversalClient(&redis.UniversalOptions{
 			Addrs:        config.Address,
-			Username:     strings.TrimSpace(config.Username),
+			Username:     config.Username,
 			Password:     config.Password,
 			DB:           config.Database,
 			PoolSize:     config.PoolSize,
