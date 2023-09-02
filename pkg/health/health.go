@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/ViBiOh/flags"
@@ -99,13 +100,17 @@ func (s *Service) ReadyHandler() http.Handler {
 func (s *Service) WaitForTermination(done <-chan struct{}, signals ...os.Signal) {
 	defer close(s.end)
 
+	if len(signals) == 0 {
+		signals = []os.Signal{syscall.SIGTERM}
+	}
+
 	s.waitForDone(done, signals...)
 
 	select {
 	case <-done:
 	default:
 		if s.graceDuration != 0 {
-			slog.Info("Waiting for graceful shutdown", "duration", s.graceDuration)
+			slog.Info("Waiting for graceful shutdown", "duration", s.graceDuration.String())
 			time.Sleep(s.graceDuration)
 		}
 	}
