@@ -58,7 +58,7 @@ Enforce security best practices for serving web content.
 ### Endpoints
 
 - `GET /health`: healthcheck of server, always respond [`okStatus (default 204)`](#Usage)
-- `GET /ready`: checks external dependencies availability and then respond [`okStatus (default 204)`](#Usage) or `503` during [`graceDuration`](#usage) when `SIGTERM` is received
+- `GET /ready`: checks external dependencies availability and then respond [`okStatus (default 204)`](#usage) or `503` during [`graceDuration`](#usage) when close signal is received
 - `GET /version`: value of `VERSION` environment variable
 
 ### Usage
@@ -86,7 +86,7 @@ Usage of http:
   --corsOrigin          string        [cors] Access-Control-Allow-Origin ${HTTP_CORS_ORIGIN} (default "*")
   --csp                 string        [owasp] Content-Security-Policy ${HTTP_CSP} (default "default-src 'self'; base-uri 'self'; script-src 'httputils-nonce'")
   --frameOptions        string        [owasp] X-Frame-Options ${HTTP_FRAME_OPTIONS} (default "deny")
-  --graceDuration       duration      [http] Grace duration when SIGTERM received ${HTTP_GRACE_DURATION} (default 30s)
+  --graceDuration       duration      [http] Grace duration when close signal received ${HTTP_GRACE_DURATION} (default 30s)
   --hsts                              [owasp] Indicate Strict Transport Security ${HTTP_HSTS} (default true)
   --idleTimeout         duration      [server] Idle Timeout ${HTTP_IDLE_TIMEOUT} (default 2m0s)
   --key                 string        [server] Key file ${HTTP_KEY}
