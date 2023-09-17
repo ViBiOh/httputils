@@ -86,7 +86,7 @@ Usage of http:
   --corsOrigin          string        [cors] Access-Control-Allow-Origin ${HTTP_CORS_ORIGIN} (default "*")
   --csp                 string        [owasp] Content-Security-Policy ${HTTP_CSP} (default "default-src 'self'; base-uri 'self'; script-src 'httputils-nonce'")
   --frameOptions        string        [owasp] X-Frame-Options ${HTTP_FRAME_OPTIONS} (default "deny")
-  --graceDuration       duration      [http] Grace duration when close signal received ${HTTP_GRACE_DURATION} (default 30s)
+  --graceDuration       duration      [http] Grace duration when signal received ${HTTP_GRACE_DURATION} (default 30s)
   --hsts                              [owasp] Indicate Strict Transport Security ${HTTP_HSTS} (default true)
   --idleTimeout         duration      [server] Idle Timeout ${HTTP_IDLE_TIMEOUT} (default 2m0s)
   --key                 string        [server] Key file ${HTTP_KEY}
@@ -99,7 +99,6 @@ Usage of http:
   --port                uint          [server] Listen port (0 to disable) ${HTTP_PORT} (default 1080)
   --readTimeout         duration      [server] Read Timeout ${HTTP_READ_TIMEOUT} (default 5s)
   --redisAddress        string slice  [redis] Redis Address host:port (blank to disable) ${HTTP_REDIS_ADDRESS}, as a string slice, environment variable separated by "," (default [127.0.0.1:6379])
-  --redisAlias          string        [redis] Connection alias, for metric ${HTTP_REDIS_ALIAS}
   --redisDatabase       int           [redis] Redis Database ${HTTP_REDIS_DATABASE} (default 0)
   --redisMinIdleConn    int           [redis] Redis Minimum Idle Connections ${HTTP_REDIS_MIN_IDLE_CONN} (default 0)
   --redisPassword       string        [redis] Redis Password, if any ${HTTP_REDIS_PASSWORD}
