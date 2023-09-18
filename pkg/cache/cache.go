@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
+	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"github.com/redis/go-redis/v9"
@@ -154,6 +155,33 @@ func (c *Cache[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	}
 
 	return value, err
+}
+
+func (c *Cache[K, V]) fetchAll(ctx context.Context, items []K) (map[K]V, error) {
+	if c.onMissMany != nil {
+		return c.onMissMany(ctx, items)
+	}
+
+	output := make(map[K]V, len(items))
+
+	wg := concurrent.NewLimiter(c.concurrency)
+
+	for _, item := range items {
+		item := item
+
+		wg.Go(func() {
+			value, err := c.fetch(ctx, item)
+			if err != nil {
+				slog.Error("fetch item", "err", err, "item", item)
+			}
+
+			output[item] = value
+		})
+	}
+
+	wg.Wait()
+
+	return output, nil
 }
 
 func (c *Cache[K, V]) decode(content []byte) (value V, ok bool, err error) {
