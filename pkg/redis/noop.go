@@ -40,6 +40,10 @@ func (n Noop) Store(_ context.Context, _ string, _ any, _ time.Duration) error {
 	return nil
 }
 
+func (n Noop) StoreMany(_ context.Context, _ map[string]any, _ time.Duration) error {
+	return nil
+}
+
 func (n Noop) Delete(_ context.Context, _ ...string) error {
 	return nil
 }

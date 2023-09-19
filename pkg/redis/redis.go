@@ -108,10 +108,6 @@ func (s *Service) Ping(ctx context.Context) error {
 	return s.client.Ping(ctx).Err()
 }
 
-func (s *Service) Store(ctx context.Context, key string, value any, duration time.Duration) error {
-	return s.client.Set(ctx, key, value, duration).Err()
-}
-
 func (s *Service) Load(ctx context.Context, key string) ([]byte, error) {
 	content, err := s.client.Get(ctx, key).Bytes()
 	if err == nil {
@@ -176,6 +172,40 @@ func (s *Service) pipelinedGet(ctx context.Context, keys ...string) ([]string, e
 	}
 
 	return output, nil
+}
+
+func (s *Service) Store(ctx context.Context, key string, value any, ttl time.Duration) error {
+	return s.client.Set(ctx, key, value, ttl).Err()
+}
+
+func (s *Service) StoreMany(ctx context.Context, values map[string]any, ttl time.Duration) error {
+	if len(values) == 0 {
+		return nil
+	}
+
+	if !s.isCluster && ttl == 0 {
+		return s.mset(ctx, values)
+	}
+
+	return s.pipelinedSet(ctx, values, ttl)
+}
+
+func (s *Service) mset(ctx context.Context, values map[string]any) error {
+	if err := s.client.MSet(ctx, values).Err(); err != nil {
+		return fmt.Errorf("mset: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) pipelinedSet(ctx context.Context, values map[string]any, ttl time.Duration) error {
+	pipeline := s.client.Pipeline()
+
+	for key, value := range values {
+		pipeline.Set(ctx, key, value, ttl)
+	}
+
+	return s.execPipeline(ctx, pipeline)
 }
 
 func (s *Service) Expire(ctx context.Context, ttl time.Duration, keys ...string) error {

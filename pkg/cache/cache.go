@@ -23,6 +23,7 @@ type RedisClient interface {
 	Load(ctx context.Context, key string) ([]byte, error)
 	LoadMany(ctx context.Context, keys ...string) ([]string, error)
 	Store(ctx context.Context, key string, value any, ttl time.Duration) error
+	StoreMany(ctx context.Context, values map[string]any, ttl time.Duration) error
 	Delete(ctx context.Context, keys ...string) error
 	Expire(ctx context.Context, ttl time.Duration, keys ...string) error
 	Pipeline() redis.Pipeliner

@@ -41,7 +41,7 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 	ctx, end := telemetry.StartSpan(ctx, c.tracer, "store_many", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
-	pipeline := c.write.Pipeline()
+	toSet := make(map[string]any)
 
 	for _, index := range indexes {
 		id := ids[index]
@@ -54,16 +54,8 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 			continue
 		}
 
-		if err := pipeline.Set(ctx, key, payload, c.ttl).Err(); err != nil {
-			loggerWithTrace(ctx, key).Error("pipeline set", "err", err)
-
-			continue
-		}
+		toSet[key] = payload
 	}
 
-	if _, err := pipeline.Exec(ctx); err != nil {
-		return fmt.Errorf("pipeline exec: %s", err)
-	}
-
-	return nil
+	return c.write.StoreMany(ctx, toSet, c.ttl)
 }

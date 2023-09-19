@@ -15,6 +15,7 @@ type Client interface {
 	Load(ctx context.Context, key string) ([]byte, error)
 	LoadMany(ctx context.Context, keys ...string) ([]string, error)
 	Store(ctx context.Context, key string, value any, ttl time.Duration) error
+	StoreMany(ctx context.Context, values map[string]any, ttl time.Duration) error
 	Delete(ctx context.Context, keys ...string) error
 	DeletePattern(ctx context.Context, pattern string) error
 	Scan(ctx context.Context, pattern string, output chan<- string, pageSize int64) error
