@@ -80,7 +80,7 @@ func (c *Cache[K, V]) handleList(ctx context.Context, items []K, keys, values []
 
 	c.extendTTL(ctx, extendKeys...)
 
-	missingValues, err := c.onMissMany(ctx, missingKeys.Items())
+	missingValues, err := c.fetchAll(ctx, missingKeys.Items())
 	if err != nil {
 		return output, fmt.Errorf("fetch many: %w", err)
 	}
