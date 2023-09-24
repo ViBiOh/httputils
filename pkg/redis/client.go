@@ -8,6 +8,8 @@ import (
 )
 
 type Client interface {
+	Subscriber
+
 	Enabled() bool
 	Close()
 	FlushAll(context.Context) error
@@ -25,6 +27,9 @@ type Client interface {
 	Pull(ctx context.Context, key string, handler func(string, error))
 	Publish(ctx context.Context, channel string, value any) error
 	PublishJSON(ctx context.Context, channel string, value any) error
-	Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error)
 	Pipeline() redis.Pipeliner
+}
+
+type Subscriber interface {
+	Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error)
 }

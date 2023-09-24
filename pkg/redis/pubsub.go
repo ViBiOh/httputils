@@ -47,7 +47,7 @@ func (s Service) Subscribe(ctx context.Context, channel string) (<-chan *redis.M
 	}
 }
 
-func SubscribeFor[T any](ctx context.Context, client Client, channel string, handler func(T, error)) (<-chan struct{}, func(context.Context) error) {
+func SubscribeFor[T any](ctx context.Context, client Subscriber, channel string, handler func(T, error)) (<-chan struct{}, func(context.Context) error) {
 	subscription, unsubscribe := client.Subscribe(ctx, channel)
 
 	done := make(chan struct{})

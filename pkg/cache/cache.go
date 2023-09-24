@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
@@ -27,6 +28,9 @@ type RedisClient interface {
 	Delete(ctx context.Context, keys ...string) error
 	Expire(ctx context.Context, ttl time.Duration, keys ...string) error
 	Pipeline() redis.Pipeliner
+
+	PublishJSON(ctx context.Context, channel string, value any) error
+	Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error)
 }
 
 type (
@@ -35,15 +39,18 @@ type (
 )
 
 type Cache[K comparable, V any] struct {
-	tracer      trace.Tracer
+	serializer  Serializer[V]
 	read        RedisClient
 	write       RedisClient
-	toKey       func(K) string
-	serializer  Serializer[V]
-	onMiss      fetch[K, V]
+	tracer      trace.Tracer
 	onMissMany  fetchMany[K, V]
+	onMiss      fetch[K, V]
+	toKey       func(K) string
+	memory      map[K]entry[V]
+	channel     string
 	ttl         time.Duration
 	concurrency int
+	mutex       sync.RWMutex
 	extendOnHit bool
 }
 
@@ -101,6 +108,15 @@ func (c *Cache[K, V]) WithMaxConcurrency(concurrency int) *Cache[K, V] {
 	return c
 }
 
+func (c *Cache[K, V]) WithClientSide(ctx context.Context, channelName string) *Cache[K, V] {
+	c.memory = make(map[K]entry[V])
+	c.channel = channelName
+
+	go c.subscribe(ctx)
+
+	return c
+}
+
 func getClient(client RedisClient) RedisClient {
 	if !model.IsNil(client) && client.Enabled() {
 		return client
@@ -112,6 +128,12 @@ func getClient(client RedisClient) RedisClient {
 func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
 	if c.read == nil || IsBypassed(ctx) {
 		return c.fetch(ctx, id)
+	}
+
+	if cached, ok := c.memoryRead(ctx, id, time.Now()); ok {
+		c.extendTTL(ctx, c.toKey(id))
+
+		return cached, nil
 	}
 
 	var err error

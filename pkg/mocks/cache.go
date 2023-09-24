@@ -141,6 +141,20 @@ func (mr *RedisClientMockRecorder) Pipeline() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pipeline", reflect.TypeOf((*RedisClient)(nil).Pipeline))
 }
 
+// PublishJSON mocks base method.
+func (m *RedisClient) PublishJSON(ctx context.Context, channel string, value any) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PublishJSON", ctx, channel, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PublishJSON indicates an expected call of PublishJSON.
+func (mr *RedisClientMockRecorder) PublishJSON(ctx, channel, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishJSON", reflect.TypeOf((*RedisClient)(nil).PublishJSON), ctx, channel, value)
+}
+
 // Store mocks base method.
 func (m *RedisClient) Store(ctx context.Context, key string, value any, ttl time.Duration) error {
 	m.ctrl.T.Helper()
@@ -167,4 +181,19 @@ func (m *RedisClient) StoreMany(ctx context.Context, values map[string]any, ttl 
 func (mr *RedisClientMockRecorder) StoreMany(ctx, values, ttl any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreMany", reflect.TypeOf((*RedisClient)(nil).StoreMany), ctx, values, ttl)
+}
+
+// Subscribe mocks base method.
+func (m *RedisClient) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Subscribe", ctx, channel)
+	ret0, _ := ret[0].(<-chan *redis.Message)
+	ret1, _ := ret[1].(func(context.Context) error)
+	return ret0, ret1
+}
+
+// Subscribe indicates an expected call of Subscribe.
+func (mr *RedisClientMockRecorder) Subscribe(ctx, channel any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*RedisClient)(nil).Subscribe), ctx, channel)
 }

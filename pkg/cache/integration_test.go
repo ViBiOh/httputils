@@ -78,6 +78,33 @@ func (s *Suite) TestGet() {
 		assert.Equal(s.T(), expected, got)
 	})
 
+	s.Run("fetch and store with memory", func() {
+		id := 99679090
+		expected := getRepository(s.T())
+
+		instance := cache.New(s.integration.Client(), func(id int) string { return strconv.Itoa(id) }, fetchRepository, nil)
+
+		got, err := instance.Get(context.Background(), id)
+		assert.NoError(s.T(), err)
+		assert.Equal(s.T(), expected, got)
+
+		// Wait for async save
+		time.Sleep(time.Second)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		instance = cache.New(s.integration.Client(), func(id int) string { return strconv.Itoa(id) }, noFetch, nil).WithClientSide(ctx, "fetch and store")
+
+		got, err = instance.Get(context.Background(), id)
+		assert.NoError(s.T(), err)
+		assert.Equal(s.T(), expected, got)
+
+		got, err = instance.Get(context.Background(), id)
+		assert.NoError(s.T(), err)
+		assert.Equal(s.T(), expected, got)
+	})
+
 	s.Run("fetch not found", func() {
 		instance := cache.New(s.integration.Client(), func(id int) string { return strconv.Itoa(id) }, noFetch, nil)
 
