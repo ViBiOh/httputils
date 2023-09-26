@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
@@ -33,7 +32,7 @@ func (c *Cache[K, V]) store(ctx context.Context, id K, value V) (err error) {
 		return fmt.Errorf("store: %w", err)
 	}
 
-	c.memorySet(ctx, id, value, time.Now().Add(c.ttl))
+	c.memoryWrite(ctx, id, value, c.ttl)
 
 	return nil
 }
@@ -45,7 +44,6 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 	defer end(&err)
 
 	toSet := make(map[string]any)
-	expiration := time.Now().Add(c.ttl)
 
 	for _, index := range indexes {
 		id := ids[index]
@@ -58,7 +56,7 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 			continue
 		}
 
-		c.memorySet(ctx, id, values[index], expiration)
+		c.memoryWrite(ctx, id, values[index], c.ttl)
 
 		toSet[key] = payload
 	}

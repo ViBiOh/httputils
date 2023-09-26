@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"sync"
 	"time"
 
+	"github.com/ViBiOh/httputils/v4/pkg/cache/memory"
 	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
@@ -46,11 +46,10 @@ type Cache[K comparable, V any] struct {
 	onMissMany  fetchMany[K, V]
 	onMiss      fetch[K, V]
 	toKey       func(K) string
-	memory      map[K]entry[V]
+	memory      *memory.Cache[K, V]
 	channel     string
 	ttl         time.Duration
 	concurrency int
-	mutex       sync.RWMutex
 	extendOnHit bool
 }
 
@@ -108,11 +107,9 @@ func (c *Cache[K, V]) WithMaxConcurrency(concurrency int) *Cache[K, V] {
 	return c
 }
 
-func (c *Cache[K, V]) WithClientSide(ctx context.Context, channelName string) *Cache[K, V] {
-	c.memory = make(map[K]entry[V])
-	c.channel = channelName
-
-	go c.subscribe(ctx)
+func (c *Cache[K, V]) WithClientSide(ctx context.Context, channel string) *Cache[K, V] {
+	c.memory = memory.New[K, V]()
+	c.channel = channel
 
 	return c
 }
@@ -130,7 +127,7 @@ func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
 		return c.fetch(ctx, id)
 	}
 
-	if cached, ok := c.memoryRead(ctx, id, time.Now()); ok {
+	if cached, ok := c.memoryRead(ctx, id); ok {
 		c.extendTTL(ctx, c.toKey(id))
 
 		return cached, nil
