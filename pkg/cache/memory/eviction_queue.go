@@ -21,6 +21,16 @@ func (eq ExpirationQueue[K]) Swap(i, j int) {
 	eq[i], eq[j] = eq[j], eq[i]
 }
 
+func (eq ExpirationQueue[K]) Index(id K) int {
+	for index, item := range eq {
+		if item.id == id {
+			return index
+		}
+	}
+
+	return -1
+}
+
 func (eq *ExpirationQueue[K]) Push(x any) {
 	*eq = append(*eq, x.(Item[K]))
 }

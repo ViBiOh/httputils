@@ -107,9 +107,12 @@ func (c *Cache[K, V]) WithMaxConcurrency(concurrency int) *Cache[K, V] {
 	return c
 }
 
-func (c *Cache[K, V]) WithClientSide(ctx context.Context, channel string) *Cache[K, V] {
+func (c *Cache[K, V]) WithClientSideCaching(ctx context.Context, channel string) *Cache[K, V] {
 	c.memory = memory.New[K, V]()
 	c.channel = channel
+
+	go c.subscribe(ctx)
+	go c.memory.Start(ctx)
 
 	return c
 }
@@ -127,7 +130,7 @@ func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
 		return c.fetch(ctx, id)
 	}
 
-	if cached, ok := c.memoryRead(ctx, id); ok {
+	if cached, ok := c.memoryRead(id); ok {
 		c.extendTTL(ctx, c.toKey(id))
 
 		return cached, nil

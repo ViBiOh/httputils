@@ -22,11 +22,7 @@ func (c *Cache[K, V]) EvictOnSuccess(ctx context.Context, id K, err error) error
 		return fmt.Errorf("evict key `%s` from cache: %w", key, err)
 	}
 
-	if c.memory != nil {
-		if err = c.write.PublishJSON(ctx, c.channel, id); err != nil {
-			return fmt.Errorf("pubsub publish for `%v`: %w", id, err)
-		}
-	}
+	c.notify(ctx, id)
 
 	return nil
 }

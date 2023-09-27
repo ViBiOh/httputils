@@ -32,7 +32,7 @@ func (c *Cache[K, V]) store(ctx context.Context, id K, value V) (err error) {
 		return fmt.Errorf("store: %w", err)
 	}
 
-	c.memoryWrite(ctx, id, value, c.ttl)
+	c.memoryWrite(id, value, c.ttl)
 
 	return nil
 }
@@ -56,7 +56,7 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 			continue
 		}
 
-		c.memoryWrite(ctx, id, values[index], c.ttl)
+		c.memoryWrite(id, values[index], c.ttl)
 
 		toSet[key] = payload
 	}
