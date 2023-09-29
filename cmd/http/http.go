@@ -46,11 +46,11 @@ func main() {
 	stopBackground := startBackground(ctx, config, client, adapter)
 	defer stopBackground()
 
-	handler := newPort(config, client, adapter)
+	ctxEnd := client.health.End(ctx)
+
+	handler := newPort(ctxEnd, config, client, adapter)
 
 	appServer := server.New(config.appServer)
-
-	ctxEnd := client.health.End(ctx)
 
 	go appServer.Start(ctxEnd, "http", httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.telemetry.Middleware("http"), owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
 

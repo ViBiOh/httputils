@@ -126,7 +126,7 @@ func getClient(client RedisClient) RedisClient {
 }
 
 func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
-	if c.read == nil || IsBypassed(ctx) {
+	if IsBypassed(ctx) {
 		return c.fetch(ctx, id)
 	}
 
@@ -134,6 +134,10 @@ func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
 		c.extendTTL(ctx, c.toKey(id))
 
 		return cached, nil
+	}
+
+	if c.read == nil {
+		return c.fetch(ctx, id)
 	}
 
 	var err error
@@ -171,7 +175,7 @@ func (c *Cache[K, V]) fetch(ctx context.Context, id K) (V, error) {
 
 	value, err := c.onMiss(ctx, id)
 
-	if err == nil && c.write != nil {
+	if err == nil {
 		go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
 			return c.store(ctx, id, value)
 		})

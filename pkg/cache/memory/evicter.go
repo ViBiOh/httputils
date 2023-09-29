@@ -31,7 +31,7 @@ func (c *Cache[K, V]) Start(ctx context.Context) {
 			firstItem := c.expiration.Pop().(Item[K])
 			toExpire = &firstItem
 
-			timer.Reset(time.Since(toExpire.expiration))
+			timer.Reset(time.Until(toExpire.expiration))
 		} else {
 			timer.Reset(defaultTimer)
 		}

@@ -32,10 +32,6 @@ func (c *Cache[K, V]) Get(id K) (V, bool) {
 }
 
 func (c *Cache[K, V]) Set(id K, value V, ttl time.Duration) {
-	if c.content == nil {
-		return
-	}
-
 	c.mutex.Lock()
 
 	c.content[id] = value
@@ -48,10 +44,6 @@ func (c *Cache[K, V]) Set(id K, value V, ttl time.Duration) {
 }
 
 func (c *Cache[K, V]) Delete(id K) {
-	if c.content == nil {
-		return
-	}
-
 	c.mutex.Lock()
 
 	delete(c.content, id)
