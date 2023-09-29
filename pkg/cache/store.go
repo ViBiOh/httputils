@@ -17,11 +17,11 @@ func (c *Cache[K, V]) Store(ctx context.Context, id K, value V) error {
 }
 
 func (c *Cache[K, V]) store(ctx context.Context, id K, value V) error {
+	c.memoryWrite(id, value, c.ttl)
+
 	if err := c.redisWrite(ctx, id, value, c.ttl); err != nil {
 		return err
 	}
-
-	c.memoryWrite(id, value, c.ttl)
 
 	return nil
 }
