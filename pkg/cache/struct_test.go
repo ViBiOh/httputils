@@ -32,6 +32,40 @@ func fetchRepository(_ context.Context, id int) (Repository, error) {
 	return output, err
 }
 
+func fetchRepositoriesOnce() func(ctx context.Context, ids []int) ([]Repository, error) {
+	fetcher := fetchOnce()
+
+	return func(ctx context.Context, ids []int) ([]Repository, error) {
+		output := make([]Repository, len(ids))
+
+		for index, id := range ids {
+			item, err := fetcher(ctx, id)
+			if err != nil {
+				return output, err
+			}
+
+			output[index] = item
+		}
+
+		return output, nil
+	}
+}
+
+func fetchRepositories(ctx context.Context, ids []int) ([]Repository, error) {
+	output := make([]Repository, len(ids))
+
+	for index, id := range ids {
+		item, err := fetchRepository(ctx, id)
+		if err != nil {
+			return output, err
+		}
+
+		output[index] = item
+	}
+
+	return output, nil
+}
+
 func noFetch(_ context.Context, _ int) (Repository, error) {
 	return Repository{}, errors.New("not implemented")
 }
