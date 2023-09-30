@@ -31,6 +31,24 @@ func (c *Cache[K, V]) Get(id K) (V, bool) {
 	return output, ok
 }
 
+func (c *Cache[K, V]) GetAll(ids []K, output []V) []K {
+	var missingIDs []K
+
+	c.mutex.RLock()
+
+	for index, id := range ids {
+		if value, ok := c.content[id]; ok {
+			output[index] = value
+		} else {
+			missingIDs = append(missingIDs, id)
+		}
+	}
+
+	c.mutex.RUnlock()
+
+	return missingIDs
+}
+
 func (c *Cache[K, V]) Set(id K, value V, ttl time.Duration) {
 	c.mutex.Lock()
 

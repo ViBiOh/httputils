@@ -8,7 +8,6 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/cache/memory"
 	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
-	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"github.com/redis/go-redis/v9"
@@ -34,8 +33,9 @@ type RedisClient interface {
 }
 
 type (
+	keyer[K comparable]            func(K) string
 	fetch[K comparable, V any]     func(context.Context, K) (V, error)
-	fetchMany[K comparable, V any] func(context.Context, []K) (map[K]V, error)
+	fetchMany[K comparable, V any] func(context.Context, []K) ([]V, error)
 )
 
 type Cache[K comparable, V any] struct {
@@ -45,7 +45,7 @@ type Cache[K comparable, V any] struct {
 	tracer      trace.Tracer
 	onMissMany  fetchMany[K, V]
 	onMiss      fetch[K, V]
-	toKey       func(K) string
+	toKey       keyer[K]
 	memory      *memory.Cache[K, V]
 	channel     string
 	ttl         time.Duration
@@ -53,7 +53,7 @@ type Cache[K comparable, V any] struct {
 	extendOnHit bool
 }
 
-func New[K comparable, V any](client RedisClient, toKey func(K) string, onMiss fetch[K, V], tracerProvider trace.TracerProvider) *Cache[K, V] {
+func New[K comparable, V any](client RedisClient, toKey keyer[K], onMiss fetch[K, V], tracerProvider trace.TracerProvider) *Cache[K, V] {
 	client = getClient(client)
 
 	cache := &Cache[K, V]{
@@ -182,33 +182,6 @@ func (c *Cache[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	}
 
 	return value, err
-}
-
-func (c *Cache[K, V]) fetchAll(ctx context.Context, items []K) (map[K]V, error) {
-	if c.onMissMany != nil {
-		return c.onMissMany(ctx, items)
-	}
-
-	output := make(map[K]V, len(items))
-
-	wg := concurrent.NewLimiter(c.concurrency)
-
-	for _, item := range items {
-		item := item
-
-		wg.Go(func() {
-			value, err := c.fetch(ctx, item)
-			if err != nil {
-				slog.Error("fetch item", "err", err, "item", item)
-			}
-
-			output[item] = value
-		})
-	}
-
-	wg.Wait()
-
-	return output, nil
 }
 
 func (c *Cache[K, V]) decode(content []byte) (value V, ok bool, err error) {

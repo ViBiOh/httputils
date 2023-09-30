@@ -26,7 +26,7 @@ func (c *Cache[K, V]) store(ctx context.Context, id K, value V) error {
 	return nil
 }
 
-func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexes IndexedItems[K]) error {
+func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexedIDs IndexedIDs[K]) error {
 	if c.write == nil && c.memory == nil {
 		return nil
 	}
@@ -38,8 +38,9 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 
 	toSet := make(map[string]any)
 
-	for _, index := range indexes {
-		id := ids[index]
+	for _, indexed := range indexedIDs {
+		id := indexed.id
+		index := indexed.index
 
 		c.memoryWrite(id, values[index], c.ttl)
 

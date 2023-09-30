@@ -4,102 +4,152 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strconv"
 
 	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
+	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
 )
 
-type IndexedItems[K comparable] map[K]int
+type IndexedID[K comparable] struct {
+	id    K
+	index int
+}
 
-func (ii IndexedItems[K]) Items() []K {
+type IndexedIDs[K comparable] []IndexedID[K]
+
+func (ii IndexedIDs[K]) IDs() []K {
 	output := make([]K, len(ii))
-	index := 0
 
-	for item := range ii {
-		output[index] = item
-		index++
+	for index, indexed := range ii {
+		output[index] = indexed.id
 	}
 
 	return output
 }
 
-func (c *Cache[K, V]) List(ctx context.Context, items ...K) (outputs []V, err error) {
-	if len(items) == 0 {
+func (c *Cache[K, V]) List(ctx context.Context, ids ...K) (outputs []V, err error) {
+	if len(ids) == 0 {
 		return nil, nil
 	}
 
-	if c.read == nil || IsBypassed(ctx) {
-		return c.listRaw(ctx, items)
+	if IsBypassed(ctx) {
+		return c.fetchAll(ctx, ids)
 	}
 
 	ctx, end := telemetry.StartSpan(ctx, c.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
-	keys, values := c.getValues(ctx, items)
+	output, remainingIDs := c.memoryValues(ids)
+	keys, values := c.redisValues(ctx, remainingIDs)
 
-	return c.handleList(ctx, items, keys, values)
+	return c.handleList(ctx, ids, output, remainingIDs, keys, values)
 }
 
-func (c *Cache[K, V]) listRaw(ctx context.Context, items []K) ([]V, error) {
-	values, err := c.fetchAll(ctx, items)
-	if err != nil {
-		return nil, err
+func (c *Cache[K, V]) fetchAll(ctx context.Context, ids []K) ([]V, error) {
+	if c.onMissMany != nil {
+		return c.onMissMany(ctx, ids)
 	}
 
-	output := make([]V, len(values))
-	for index, item := range items {
-		output[index] = values[item]
+	wg := concurrent.NewLimiter(c.concurrency)
+
+	output := make([]V, len(ids))
+
+	for index, id := range ids {
+		index := index
+		id := id
+
+		wg.Go(func() {
+			value, err := c.fetch(ctx, id)
+			if err != nil {
+				slog.Error("fetch id", "err", err, "id", id)
+			}
+
+			output[index] = value
+		})
 	}
+
+	wg.Wait()
 
 	return output, nil
 }
 
-func (c *Cache[K, V]) handleList(ctx context.Context, items []K, keys, values []string) ([]V, error) {
+func (c *Cache[K, V]) handleList(ctx context.Context, ids []K, output []V, remainings []K, keys, values []string) ([]V, error) {
 	var extendKeys []string
+	var missingIDs IndexedIDs[K]
 
-	missingKeys := make(IndexedItems[K])
-	output := make([]V, len(items))
+	remainingsLength, remainingsPos := len(remainings), 0
 
-	for index, item := range items {
-		if value, ok, err := c.decode([]byte(values[index])); ok {
-			output[index] = value
-
+	for index, id := range ids {
+		if remainingsPos >= remainingsLength || remainings[remainingsPos] != id {
 			if c.ttl != 0 && c.extendOnHit {
-				extendKeys = append(extendKeys, keys[index])
+				extendKeys = append(extendKeys, c.toKey(id))
 			}
 
 			continue
-		} else if err != nil {
-			logUnmarshalError(ctx, c.toKey(item), err)
 		}
 
-		missingKeys[item] = index
+		if value, ok, err := c.decode([]byte(values[remainingsPos])); ok {
+			output[index] = value
+
+			if c.ttl != 0 && c.extendOnHit {
+				extendKeys = append(extendKeys, keys[remainingsPos])
+			}
+
+			remainingsPos++
+
+			continue
+		} else if err != nil {
+			logUnmarshalError(ctx, c.toKey(id), err)
+		}
+
+		remainingsPos++
+
+		missingIDs = append(missingIDs, IndexedID[K]{id: id, index: index})
 	}
 
 	c.extendTTL(ctx, extendKeys...)
 
-	missingValues, err := c.fetchAll(ctx, missingKeys.Items())
+	if len(missingIDs) == 0 {
+		return output, nil
+	}
+
+	missingValues, err := c.fetchAll(ctx, missingIDs.IDs())
 	if err != nil {
 		return output, fmt.Errorf("fetch many: %w", err)
 	}
 
-	for key, value := range missingValues {
-		output[missingKeys[key]] = value
+	for index, missing := range missingIDs {
+		output[missing.index] = missingValues[index]
 	}
 
 	go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
-		return c.storeMany(ctx, items, output, missingKeys)
+		return c.storeMany(ctx, ids, output, missingIDs)
 	})
 
 	return output, nil
 }
 
-func (c *Cache[K, V]) getValues(ctx context.Context, ids []K) ([]string, []string) {
+func (c *Cache[K, V]) memoryValues(ids []K) ([]V, []K) {
+	output := make([]V, len(ids))
+
+	if c.memory == nil {
+		return output, ids
+	}
+
+	return output, c.memory.GetAll(ids, output)
+}
+
+func (c *Cache[K, V]) redisValues(ctx context.Context, ids []K) ([]string, []string) {
 	keys := make([]string, len(ids))
 	for index, id := range ids {
 		keys[index] = c.toKey(id)
+	}
+
+	if c.read == nil {
+		return keys, make([]string, len(ids))
 	}
 
 	loadCtx, cancel := context.WithTimeout(ctx, syncActionTimeout)

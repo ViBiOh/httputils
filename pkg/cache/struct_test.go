@@ -4,11 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func fetchOnce() func(context.Context, int) (Repository, error) {
+	var count sync.Map
+
+	return func(ctx context.Context, id int) (Repository, error) {
+		if _, loaded := count.LoadOrStore(id, true); !loaded {
+			return fetchRepository(ctx, id)
+		}
+
+		return Repository{}, errors.New("already called")
+	}
+}
 
 func fetchRepository(_ context.Context, id int) (Repository, error) {
 	var output Repository

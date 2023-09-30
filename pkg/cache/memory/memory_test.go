@@ -69,6 +69,67 @@ func TestGet(t *testing.T) {
 	})
 }
 
+func TestGetAll(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nothing found", func(t *testing.T) {
+		t.Parallel()
+
+		instance := New[string, string]()
+
+		output := make([]string, 5)
+
+		got := instance.GetAll([]string{"1", "2", "3", "4", "5"}, output)
+
+		expected := make([]string, 5)
+		expectedMissings := []string{"1", "2", "3", "4", "5"}
+
+		assert.Equal(t, expected, output)
+		assert.Equal(t, expectedMissings, got)
+	})
+
+	t.Run("part found", func(t *testing.T) {
+		t.Parallel()
+
+		instance := New[string, string]()
+
+		instance.Set("2", "two", 0)
+		instance.Set("5", "five", 0)
+
+		output := make([]string, 5)
+
+		got := instance.GetAll([]string{"1", "2", "3", "4", "5"}, output)
+
+		expected := []string{"", "two", "", "", "five"}
+		expectedMissings := []string{"1", "3", "4"}
+
+		assert.Equal(t, expected, output)
+		assert.Equal(t, expectedMissings, got)
+	})
+
+	t.Run("all found", func(t *testing.T) {
+		t.Parallel()
+
+		instance := New[string, string]()
+
+		instance.Set("1", "one", 0)
+		instance.Set("2", "two", 0)
+		instance.Set("3", "three", 0)
+		instance.Set("4", "four", 0)
+		instance.Set("5", "five", 0)
+
+		output := make([]string, 5)
+
+		got := instance.GetAll([]string{"1", "2", "3", "4", "5"}, output)
+
+		expected := []string{"one", "two", "three", "four", "five"}
+		expectedMissings := []string(nil)
+
+		assert.Equal(t, expected, output)
+		assert.Equal(t, expectedMissings, got)
+	})
+}
+
 func TestDelete(t *testing.T) {
 	t.Parallel()
 
