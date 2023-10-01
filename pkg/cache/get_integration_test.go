@@ -87,7 +87,7 @@ func (gs *GetSuite) TestGet() {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		instance := cache.New(gs.integration.Client(), func(id int) string { return strconv.Itoa(id) }, fetchRepository, nil).WithClientSideCaching(ctx, "fetch_and_store")
+		instance := cache.New(gs.integration.Client(), func(id int) string { return strconv.Itoa(id) }, fetchRepository, nil).WithClientSideCaching(ctx, "fetch_and_store", 10)
 
 		got, err := instance.Get(context.Background(), id)
 		assert.NoError(gs.T(), err)

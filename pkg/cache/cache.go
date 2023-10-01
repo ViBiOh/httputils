@@ -107,8 +107,8 @@ func (c *Cache[K, V]) WithMaxConcurrency(concurrency int) *Cache[K, V] {
 	return c
 }
 
-func (c *Cache[K, V]) WithClientSideCaching(ctx context.Context, channel string) *Cache[K, V] {
-	c.memory = memory.New[K, V]()
+func (c *Cache[K, V]) WithClientSideCaching(ctx context.Context, channel string, size int) *Cache[K, V] {
+	c.memory = memory.New[K, V](size)
 	c.channel = channel
 
 	go c.subscribe(ctx)

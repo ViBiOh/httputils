@@ -26,7 +26,7 @@ func newPort(ctx context.Context, config configuration, client client, adapter a
 
 	simpleCache := cache.New(client.redis, func(id string) string { return id }, func(ctx context.Context, id string) (string, error) { return hash.String(id), nil }, client.telemetry.TracerProvider()).
 		WithTTL(time.Hour).
-		WithClientSideCaching(ctx, "httputils_hello")
+		WithClientSideCaching(ctx, "httputils_hello", 10)
 
 	output.template = func(w http.ResponseWriter, r *http.Request) (renderer.Page, error) {
 		var err error

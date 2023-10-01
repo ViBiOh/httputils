@@ -17,7 +17,7 @@ func TestGet(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		instance := New[string, string]()
+		instance := New[string, string](0)
 		go instance.Start(ctx)
 
 		instance.Set("hello", "world", time.Second)
@@ -36,7 +36,7 @@ func TestGet(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		instance := New[string, string]()
+		instance := New[string, string](0)
 		go instance.Start(ctx)
 
 		instance.Set("hello", "world", time.Millisecond*50)
@@ -57,7 +57,7 @@ func TestGet(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		instance := New[string, string]()
+		instance := New[string, string](0)
 		go instance.Start(ctx)
 
 		got, found := instance.Get("hello")
@@ -75,7 +75,7 @@ func TestGetAll(t *testing.T) {
 	t.Run("nothing found", func(t *testing.T) {
 		t.Parallel()
 
-		instance := New[string, string]()
+		instance := New[string, string](0)
 
 		output := make([]string, 5)
 
@@ -91,7 +91,7 @@ func TestGetAll(t *testing.T) {
 	t.Run("part found", func(t *testing.T) {
 		t.Parallel()
 
-		instance := New[string, string]()
+		instance := New[string, string](0)
 
 		instance.Set("2", "two", 0)
 		instance.Set("5", "five", 0)
@@ -110,7 +110,7 @@ func TestGetAll(t *testing.T) {
 	t.Run("all found", func(t *testing.T) {
 		t.Parallel()
 
-		instance := New[string, string]()
+		instance := New[string, string](0)
 
 		instance.Set("1", "one", 0)
 		instance.Set("2", "two", 0)
@@ -128,6 +128,28 @@ func TestGetAll(t *testing.T) {
 		assert.Equal(t, expected, output)
 		assert.Equal(t, expectedMissings, got)
 	})
+
+	t.Run("lru", func(t *testing.T) {
+		t.Parallel()
+
+		instance := New[string, string](3)
+
+		instance.Set("1", "one", 0)
+		instance.Set("2", "two", 0)
+		instance.Set("3", "three", 0)
+		instance.Set("4", "four", 0)
+		instance.Set("5", "five", 0)
+
+		output := make([]string, 5)
+
+		got := instance.GetAll([]string{"1", "2", "3", "4", "5"}, output)
+
+		expected := []string{"", "", "three", "four", "five"}
+		expectedMissings := []string{"1", "2"}
+
+		assert.Equal(t, expected, output)
+		assert.Equal(t, expectedMissings, got)
+	})
 }
 
 func TestDelete(t *testing.T) {
@@ -139,7 +161,7 @@ func TestDelete(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		instance := New[string, string]()
+		instance := New[string, string](0)
 		go instance.Start(ctx)
 
 		instance.Delete("hello")
@@ -158,7 +180,7 @@ func TestDelete(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		instance := New[string, string]()
+		instance := New[string, string](0)
 		go instance.Start(ctx)
 
 		instance.Set("hello", "world", time.Second)

@@ -101,7 +101,7 @@ func (s *ListSuite) TestList() {
 		defer cancel()
 
 		instance := cache.New(nil, func(id int) string { return strconv.Itoa(id) }, fetchOnce(), nil).
-			WithClientSideCaching(ctx, "memory_no_redis")
+			WithClientSideCaching(ctx, "memory_no_redis", 10)
 
 		first := getRepository(s.T())
 		first.ID = 10
@@ -157,7 +157,7 @@ func (s *ListSuite) TestList() {
 		defer cancel()
 
 		instance := cache.New(s.integration.Client(), func(id int) string { return strconv.Itoa(id) }, fetchOnce(), nil).
-			WithClientSideCaching(ctx, "memory_redis")
+			WithClientSideCaching(ctx, "memory_redis", 10)
 
 		first := getRepository(s.T())
 		first.ID = 1000
@@ -207,7 +207,7 @@ func (s *ListSuite) TestList() {
 		defer cancel()
 
 		instance := cache.New(s.integration.Client(), func(id int) string { return strconv.Itoa(id) }, fetchOnce(), nil).
-			WithClientSideCaching(ctx, "memory_redis_may_extend").
+			WithClientSideCaching(ctx, "memory_redis_may_extend", 10).
 			WithExtendOnHit().
 			WithTTL(time.Hour).
 			WithMissMany(fetchRepositoriesOnce())
