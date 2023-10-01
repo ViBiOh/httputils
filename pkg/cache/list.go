@@ -98,6 +98,8 @@ func (c *Cache[K, V]) handleList(ctx context.Context, ids []K, output []V, remai
 				extendKeys = append(extendKeys, keys[remainingsPos])
 			}
 
+			c.memoryWrite(id, value, c.ttl)
+
 			remainingsPos++
 
 			continue
