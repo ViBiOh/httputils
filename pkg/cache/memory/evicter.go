@@ -2,7 +2,6 @@ package memory
 
 import (
 	"container/heap"
-	"context"
 	"time"
 )
 
@@ -21,7 +20,7 @@ type ExpirationQueueAction[K comparable] struct {
 	action ExpirationAction
 }
 
-func (c *Cache[K, V]) Start(ctx context.Context) {
+func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 	timer := time.NewTimer(defaultTimer)
 
 	var toExpire *Item[K]
@@ -37,7 +36,7 @@ func (c *Cache[K, V]) Start(ctx context.Context) {
 		}
 
 		select {
-		case <-ctx.Done():
+		case <-done:
 			goto exit
 
 		case update, ok := <-c.expirationUpdates:

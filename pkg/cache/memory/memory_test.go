@@ -132,13 +132,19 @@ func TestGetAll(t *testing.T) {
 	t.Run("lru", func(t *testing.T) {
 		t.Parallel()
 
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
 		instance := New[string, string](3)
+		go instance.Start(ctx)
 
 		instance.Set("1", "one", 0)
 		instance.Set("2", "two", 0)
 		instance.Set("3", "three", 0)
 		instance.Set("4", "four", 0)
 		instance.Set("5", "five", 0)
+
+		time.Sleep(time.Second)
 
 		output := make([]string, 5)
 
