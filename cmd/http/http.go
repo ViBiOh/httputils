@@ -43,10 +43,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	stopBackground := startBackground(ctx, config, client, adapter)
-	defer stopBackground()
-
 	ctxEnd := client.health.End(ctx)
+
+	stopBackground := startBackground(ctxEnd, config, client, adapter)
+	defer stopBackground()
 
 	handler := newPort(ctxEnd, config, client, adapter)
 

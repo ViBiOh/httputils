@@ -32,7 +32,7 @@ func (c *Cache[K, V]) subscribe(ctx context.Context) {
 		return
 	}
 
-	done, close := redis.SubscribeFor(ctx, c.read, c.channel, func(id K, err error) {
+	close := redis.SubscribeFor(ctx, c.read, c.channel, func(id K, err error) {
 		slog.Info("evicting from memory cache", "id", id, "channel", c.channel)
 		c.memory.Delete(id)
 	})
@@ -42,6 +42,4 @@ func (c *Cache[K, V]) subscribe(ctx context.Context) {
 	if err := close(cntxt.WithoutDeadline(ctx)); err != nil {
 		slog.Error("close subscriber", "err", err)
 	}
-
-	<-done
 }

@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"os"
 	"syscall"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/cron"
+	"github.com/ViBiOh/httputils/v4/pkg/redis"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -18,21 +18,32 @@ func startBackground(ctx context.Context, config configuration, client client, a
 
 	var closers []func()
 
-	go client.redis.Pull(ctx, "httputils:tasks", func(content string, err error) {
+	closePubSub := redis.SubscribeFor(ctx, client.redis, "httputils:tasks", func(content time.Time, err error) {
 		if err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
+			slog.Error("consume on pubsub", "err", err)
+
+			return
 		}
 
-		slog.Info("content=`" + content + "`")
+		slog.Info("time from pubsub", "content", content)
 	})
 
-	speakingClock := cron.New().Each(5 * time.Minute).OnSignal(syscall.SIGUSR1).OnError(func(err error) {
+	closers = append(closers, func() {
+		if err := closePubSub(context.Background()); err != nil {
+			slog.Error("close pubsub", "err", err)
+		}
+	})
+
+	speakingClock := cron.New().Each(15 * time.Second).OnSignal(syscall.SIGUSR1).OnError(func(err error) {
 		slog.Error("run cron", "err", err)
 	}).Now()
 
 	go speakingClock.Start(ctx, func(_ context.Context) error {
 		slog.Info("Clock is ticking")
+
+		if err := client.redis.PublishJSON(ctx, "httputils:tasks", time.Now()); err != nil {
+			slog.Error("publish on pubsub", "err", err)
+		}
 
 		return nil
 	})
