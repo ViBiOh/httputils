@@ -1,18 +1,23 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/amqphandler"
+	"github.com/ViBiOh/httputils/v4/pkg/cache"
+	"github.com/ViBiOh/httputils/v4/pkg/hash"
 	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 )
 
 type adapter struct {
 	renderer *renderer.Service
 	amqp     *amqphandler.Service
+	hello    *cache.Cache[string, string]
 }
 
-func newAdapter(config configuration, client client) (adapter, error) {
+func newAdapter(ctx context.Context, config configuration, client client) (adapter, error) {
 	var output adapter
 	var err error
 
@@ -25,6 +30,10 @@ func newAdapter(config configuration, client client) (adapter, error) {
 	if err != nil {
 		return output, fmt.Errorf("renderer: %w", err)
 	}
+
+	output.hello = cache.New(client.redis, func(id string) string { return id }, func(ctx context.Context, id string) (string, error) { return hash.String(id), nil }, client.telemetry.TracerProvider()).
+		WithTTL(time.Hour).
+		WithClientSideCaching(ctx, "httputils_hello", 10)
 
 	return output, nil
 }

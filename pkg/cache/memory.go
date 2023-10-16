@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/redis"
 )
 
@@ -32,14 +31,8 @@ func (c *Cache[K, V]) subscribe(ctx context.Context) {
 		return
 	}
 
-	close := redis.SubscribeFor(ctx, c.read, c.channel, func(id K, err error) {
+	c.close = redis.SubscribeFor(ctx, c.read, c.channel, func(id K, err error) {
 		slog.Info("evicting from memory cache", "id", id, "channel", c.channel)
 		c.memory.Delete(id)
 	})
-
-	<-ctx.Done()
-
-	if err := close(cntxt.WithoutDeadline(ctx)); err != nil {
-		slog.Error("close subscriber", "err", err)
-	}
 }

@@ -37,13 +37,14 @@ func main() {
 
 	defer client.Close(ctx)
 
-	adapter, err := newAdapter(config, client)
+	ctxEnd := client.health.End(ctx)
+
+	adapter, err := newAdapter(ctxEnd, config, client)
 	if err != nil {
 		slog.Error("adapter", "err", err)
 		os.Exit(1)
 	}
-
-	ctxEnd := client.health.End(ctx)
+	defer adapter.hello.Close(ctx)
 
 	stopBackground := startBackground(ctxEnd, config, client, adapter)
 	defer stopBackground()
