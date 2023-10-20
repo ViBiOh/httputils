@@ -1,5 +1,11 @@
 package memory
 
+import (
+	"context"
+
+	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
+)
+
 type LRUAction int
 
 const (
@@ -12,31 +18,21 @@ type LeastRecentlyUsedAction[K comparable] struct {
 	action LRUAction
 }
 
-func (c *Cache[K, V]) startLRU(done <-chan struct{}) {
+func (c *Cache[K, V]) startLRU(ctx context.Context) {
 	if c.maxSize == 0 {
 		return
 	}
 
-	for {
-		select {
-		case <-done:
-			goto exit
-
-		case update := <-c.lruUpdates:
-			switch update.action {
-			case Touch:
-				c.refreshEntryLRU(update.id)
-			case Add:
-				c.addEntryLRU(update.id)
-			}
+	concurrent.ChanUntilDone(ctx, c.lruUpdates, func(update LeastRecentlyUsedAction[K]) {
+		switch update.action {
+		case Touch:
+			c.refreshEntryLRU(update.id)
+		case Add:
+			c.addEntryLRU(update.id)
 		}
-	}
-
-exit:
-	close(c.lruUpdates)
-	for range c.lruUpdates {
-		// drain the channel
-	}
+	}, func() {
+		close(c.lruUpdates)
+	})
 }
 
 func (c *Cache[K, V]) touchLRU(id K) {

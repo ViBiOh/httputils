@@ -11,6 +11,7 @@ import (
 
 	"github.com/ViBiOh/flags"
 	amqpclient "github.com/ViBiOh/httputils/v4/pkg/amqp"
+	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -132,19 +133,16 @@ func (s *Service) Start(ctx context.Context) {
 
 	log = log.With("name", consumerName)
 
-	go func() {
-		<-ctx.Done()
-		if err := s.amqpClient.StopListener(consumerName); err != nil {
-			log.Error("error while stopping listener", "err", err)
-		}
-	}()
-
 	log.Info("Start listening messages")
 	defer log.Info("End listening messages")
 
-	for message := range messages {
+	concurrent.ChanUntilDone(ctx, messages, func(message amqp.Delivery) {
 		s.handleMessage(ctx, log, message)
-	}
+	}, func() {
+		if err := s.amqpClient.StopListener(consumerName); err != nil {
+			log.Error("stopping listener", "err", err)
+		}
+	})
 }
 
 func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message amqp.Delivery) {

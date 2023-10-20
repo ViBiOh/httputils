@@ -30,7 +30,7 @@ func New[K comparable, V any](maxSize int) *Cache[K, V] {
 }
 
 func (c *Cache[K, V]) Start(ctx context.Context) {
-	go c.startLRU(ctx.Done())
+	go c.startLRU(ctx)
 
 	c.startEvicter(ctx.Done())
 }
