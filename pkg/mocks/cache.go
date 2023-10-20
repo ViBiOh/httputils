@@ -184,11 +184,11 @@ func (mr *RedisClientMockRecorder) StoreMany(ctx, values, ttl any) *gomock.Call 
 }
 
 // Subscribe mocks base method.
-func (m *RedisClient) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error) {
+func (m *RedisClient) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context)) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Subscribe", ctx, channel)
 	ret0, _ := ret[0].(<-chan *redis.Message)
-	ret1, _ := ret[1].(func(context.Context) error)
+	ret1, _ := ret[1].(func(context.Context))
 	return ret0, ret1
 }
 

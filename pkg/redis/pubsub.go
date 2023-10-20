@@ -3,9 +3,10 @@ package redis
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"log/slog"
 
+	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -31,31 +32,43 @@ func (s Service) Publish(ctx context.Context, channel string, value any) (err er
 	return nil
 }
 
-func (s Service) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error) {
+func (s Service) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context)) {
 	pubsub := s.client.Subscribe(ctx, channel)
 
-	return pubsub.Channel(), func(ctx context.Context) (err error) {
-		defer func() {
-			if closeErr := pubsub.Close(); closeErr != nil {
-				err = errors.Join(err, closeErr)
-			}
-		}()
+	return pubsub.Channel(), func(ctx context.Context) {
+		if err := pubsub.Unsubscribe(ctx, channel); err != nil {
+			slog.Error("unsubscribe pubsub", "err", err, "channel", channel)
+		}
 
-		err = pubsub.Unsubscribe(ctx, channel)
-
-		return
+		if err := pubsub.Close(); err != nil {
+			slog.Error("close pubsub", "err", err, "channel", channel)
+		}
 	}
 }
 
-func SubscribeFor[T any](ctx context.Context, client Subscriber, channel string, handler func(T, error)) func(context.Context) error {
+func SubscribeFor[T any](ctx context.Context, client Subscriber, channel string, handler func(T, error)) {
 	subscription, unsubscribe := client.Subscribe(ctx, channel)
 
-	go func() {
-		for item := range subscription {
-			var instance T
-			handler(instance, json.Unmarshal([]byte(item.Payload), &instance))
-		}
-	}()
+	var closedCount uint
 
-	return unsubscribe
+	done := ctx.Done()
+
+	for closedCount < 2 {
+		select {
+		case <-done:
+			unsubscribe(cntxt.WithoutDeadline(ctx))
+			done = nil
+			closedCount++
+
+		case item, ok := <-subscription:
+			if ok {
+				var instance T
+				handler(instance, json.Unmarshal([]byte(item.Payload), &instance))
+			} else {
+				closedCount++
+			}
+		}
+	}
+
+	fmt.Println("leaving")
 }

@@ -82,11 +82,11 @@ func (n Noop) PublishJSON(_ context.Context, _ string, _ any) error {
 	return nil
 }
 
-func (n Noop) Subscribe(_ context.Context, _ string) (<-chan *redis.Message, func(context.Context) error) {
+func (n Noop) Subscribe(_ context.Context, _ string) (<-chan *redis.Message, func(context.Context)) {
 	content := make(chan *redis.Message, 1)
 	close(content)
 
-	return content, func(_ context.Context) error { return nil }
+	return content, func(_ context.Context) {}
 }
 
 func (n Noop) Pipeline() redis.Pipeliner {

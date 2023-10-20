@@ -29,7 +29,7 @@ type RedisClient interface {
 	Pipeline() redis.Pipeliner
 
 	PublishJSON(ctx context.Context, channel string, value any) error
-	Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error)
+	Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context))
 }
 
 type (
@@ -47,7 +47,6 @@ type Cache[K comparable, V any] struct {
 	onMiss      fetch[K, V]
 	onMissMany  fetchMany[K, V]
 	memory      *memory.Cache[K, V]
-	close       func(context.Context) error
 	channel     string
 	ttl         time.Duration
 	concurrency int
@@ -112,7 +111,7 @@ func (c *Cache[K, V]) WithClientSideCaching(ctx context.Context, channel string,
 	c.memory = memory.New[K, V](size)
 	c.channel = channel
 
-	c.subscribe(ctx)
+	go c.subscribe(ctx)
 	go c.memory.Start(ctx)
 
 	return c
@@ -124,14 +123,6 @@ func getClient(client RedisClient) RedisClient {
 	}
 
 	return nil
-}
-
-func (c *Cache[K, V]) Close(ctx context.Context) error {
-	if c.close != nil {
-		return nil
-	}
-
-	return c.close(ctx)
 }
 
 func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {

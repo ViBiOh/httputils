@@ -18,7 +18,7 @@ func startBackground(ctx context.Context, config configuration, client client, a
 
 	var closers []func()
 
-	closePubSub := redis.SubscribeFor(ctx, client.redis, "httputils:tasks", func(content time.Time, err error) {
+	go redis.SubscribeFor(ctx, client.redis, "httputils:tasks", func(content time.Time, err error) {
 		if err != nil {
 			slog.Error("consume on pubsub", "err", err)
 
@@ -26,12 +26,6 @@ func startBackground(ctx context.Context, config configuration, client client, a
 		}
 
 		slog.Info("time from pubsub", "content", content)
-	})
-
-	closers = append(closers, func() {
-		if err := closePubSub(context.Background()); err != nil {
-			slog.Error("close pubsub", "err", err)
-		}
 	})
 
 	speakingClock := cron.New().Each(15 * time.Second).OnSignal(syscall.SIGUSR1).OnError(func(err error) {

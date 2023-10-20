@@ -31,5 +31,5 @@ type Client interface {
 }
 
 type Subscriber interface {
-	Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context) error)
+	Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context))
 }
