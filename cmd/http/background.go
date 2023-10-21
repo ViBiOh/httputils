@@ -14,8 +14,6 @@ import (
 )
 
 func startBackground(ctx context.Context, config configuration, client client, adapter adapter) func() {
-	ctx = client.health.Done(ctx)
-
 	var closers []func()
 
 	go redis.SubscribeFor(ctx, client.redis, "httputils:tasks", func(content time.Time, err error) {

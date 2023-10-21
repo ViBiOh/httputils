@@ -1,6 +1,7 @@
 package httputils
 
 import (
+	"context"
 	"flag"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestHandler(t *testing.T) {
-	healthService := health.New(health.Flags(flag.NewFlagSet("TestHandler", flag.ContinueOnError), "httputils"))
+	healthService := health.New(context.Background(), health.Flags(flag.NewFlagSet("TestHandler", flag.ContinueOnError), "httputils"))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := w.Write([]byte("It works!")); err != nil {
@@ -117,7 +118,7 @@ func TestVersionHandler(t *testing.T) {
 func BenchmarkMux(b *testing.B) {
 	fs := flag.NewFlagSet("BenchmarkMux", flag.ContinueOnError)
 
-	healthService := health.New(health.Flags(fs, "BenchmarkMux"))
+	healthService := health.New(context.Background(), health.Flags(fs, "BenchmarkMux"))
 
 	healthHandler := healthService.HealthHandler()
 	readyHandler := healthService.ReadyHandler()
@@ -150,7 +151,7 @@ func BenchmarkHandler(b *testing.B) {
 		w.WriteHeader(http.StatusNoContent)
 	}
 
-	handler := Handler(appHandler, health.New(healthConfig))
+	handler := Handler(appHandler, health.New(context.Background(), healthConfig))
 
 	testRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 	recorder := httptest.NewRecorder()

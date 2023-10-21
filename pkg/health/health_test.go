@@ -59,7 +59,7 @@ func TestHealthHandler(t *testing.T) {
 		wantStatus int
 	}{
 		"simple": {
-			New(&Config{
+			New(context.Background(), &Config{
 				OkStatus:      http.StatusNoContent,
 				GraceDuration: time.Second,
 			}),
@@ -92,8 +92,8 @@ func TestHealthHandler(t *testing.T) {
 func TestReadyHandler(t *testing.T) {
 	t.Parallel()
 
-	closedChan := make(chan struct{})
-	close(closedChan)
+	doneCtx, doneCancel := context.WithCancel(context.Background())
+	doneCancel()
 
 	cases := map[string]struct {
 		instance   *Service
@@ -102,7 +102,7 @@ func TestReadyHandler(t *testing.T) {
 		wantStatus int
 	}{
 		"simple": {
-			New(&Config{
+			New(context.Background(), &Config{
 				OkStatus:      http.StatusNoContent,
 				GraceDuration: time.Second,
 			}),
@@ -114,14 +114,15 @@ func TestReadyHandler(t *testing.T) {
 			&Service{
 				okStatus:      http.StatusNoContent,
 				graceDuration: time.Second,
-				done:          closedChan,
+				doneCtx:       doneCtx,
+				doneCancel:    doneCancel,
 			},
 			httptest.NewRequest(http.MethodGet, "/", nil),
 			"",
 			http.StatusServiceUnavailable,
 		},
 		"failing pinger": {
-			New(&Config{
+			New(context.Background(), &Config{
 				OkStatus:      http.StatusNoContent,
 				GraceDuration: time.Second,
 			}, func(_ context.Context) error {

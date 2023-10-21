@@ -20,8 +20,11 @@ const (
 )
 
 type Service struct {
-	done chan struct{}
-	end  chan struct{}
+	doneCtx    context.Context
+	doneCancel func()
+
+	endCtx    context.Context
+	endCancel func()
 
 	pingers []model.Pinger
 
@@ -43,37 +46,28 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	return &config
 }
 
-func New(config *Config, pingers ...model.Pinger) *Service {
+func New(ctx context.Context, config *Config, pingers ...model.Pinger) *Service {
+	doneCtx, doneCancel := context.WithCancel(ctx)
+	endCtx, endCancel := context.WithCancel(ctx)
+
 	return &Service{
 		okStatus:      config.OkStatus,
 		graceDuration: config.GraceDuration,
 		pingers:       pingers,
 
-		done: make(chan struct{}),
-		end:  make(chan struct{}),
+		doneCtx:    doneCtx,
+		doneCancel: doneCancel,
+		endCtx:     endCtx,
+		endCancel:  endCancel,
 	}
 }
 
-func (s *Service) Done(ctx context.Context) context.Context {
-	ctx, cancel := context.WithCancel(ctx)
-
-	go func() {
-		defer cancel()
-		<-s.done
-	}()
-
-	return ctx
+func (s *Service) DoneCtx() context.Context {
+	return s.doneCtx
 }
 
-func (s *Service) End(ctx context.Context) context.Context {
-	ctx, cancel := context.WithCancel(ctx)
-
-	go func() {
-		defer cancel()
-		<-s.end
-	}()
-
-	return ctx
+func (s *Service) EndCtx() context.Context {
+	return s.endCtx
 }
 
 func (s *Service) HealthHandler() http.Handler {
@@ -85,7 +79,7 @@ func (s *Service) HealthHandler() http.Handler {
 func (s *Service) ReadyHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		select {
-		case <-s.done:
+		case <-s.doneCtx.Done():
 			w.WriteHeader(http.StatusServiceUnavailable)
 		default:
 			if s.isReady(r.Context()) {
@@ -98,7 +92,7 @@ func (s *Service) ReadyHandler() http.Handler {
 }
 
 func (s *Service) WaitForTermination(done <-chan struct{}, signals ...os.Signal) {
-	defer close(s.end)
+	defer s.endCancel()
 
 	if len(signals) == 0 {
 		signals = []os.Signal{syscall.SIGTERM}
@@ -123,7 +117,7 @@ func (s *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	signal.Notify(signalsChan, signals...)
 	defer signal.Stop(signalsChan)
 
-	defer close(s.done)
+	defer s.doneCancel()
 
 	select {
 	case <-done:

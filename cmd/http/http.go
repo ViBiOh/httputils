@@ -3,9 +3,13 @@ package main
 import (
 	"context"
 	"embed"
+	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"syscall"
+
+	_ "net/http/pprof"
 
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
 	"github.com/ViBiOh/httputils/v4/pkg/cors"
@@ -27,6 +31,10 @@ func main() {
 
 	alcotest.DoAndExit(config.alcotest)
 
+	go func() {
+		fmt.Println(http.ListenAndServe("localhost:9999", http.DefaultServeMux))
+	}()
+
 	ctx := context.Background()
 
 	client, err := newClient(ctx, config)
@@ -37,15 +45,13 @@ func main() {
 
 	defer client.Close(ctx)
 
-	ctxDone := client.health.Done(ctx)
-
-	adapter, err := newAdapter(ctxDone, config, client)
+	adapter, err := newAdapter(client.health.DoneCtx(), config, client)
 	if err != nil {
 		slog.Error("adapter", "err", err)
 		os.Exit(1)
 	}
 
-	ctxEnd := client.health.End(ctx)
+	ctxEnd := client.health.EndCtx()
 
 	stopBackground := startBackground(ctxEnd, config, client, adapter)
 	defer stopBackground()
@@ -57,5 +63,8 @@ func main() {
 	go appServer.Start(ctxEnd, "http", httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.telemetry.Middleware("http"), owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
 
 	client.health.WaitForTermination(appServer.Done(), syscall.SIGTERM, syscall.SIGINT)
-	server.GracefulWait(appServer.Done(), adapter.amqp.Done())
+
+	appServer.Stop(context.Background())
+
+	server.GracefulWait(adapter.amqp.Done())
 }

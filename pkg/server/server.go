@@ -13,20 +13,17 @@ import (
 )
 
 type Server struct {
-	done chan struct{}
-
-	listenAddress string
-	cert          string
-	key           string
-
-	readTimeout     time.Duration
-	writeTimeout    time.Duration
-	idleTimeout     time.Duration
+	done            chan struct{}
+	logger          *slog.Logger
+	cert            string
+	key             string
+	server          http.Server
 	shutdownTimeout time.Duration
 }
 
 type Config struct {
 	Address         string
+	Name            string
 	Cert            string
 	Key             string
 	Port            uint
@@ -40,6 +37,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	var config Config
 
 	flags.New("Address", "Listen address").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Address, "", overrides)
+	flags.New("Name", "Name").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Name, "http", overrides)
 	flags.New("Port", "Listen port (0 to disable)").Prefix(prefix).DocPrefix("server").UintVar(fs, &config.Port, 1080, overrides)
 	flags.New("Cert", "Certificate file").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Cert, "", overrides)
 	flags.New("Key", "Key file").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Key, "", overrides)
@@ -62,70 +60,55 @@ func New(config *Config) Server {
 	}
 
 	return Server{
-		listenAddress: fmt.Sprintf("%s:%d", config.Address, port),
-		cert:          config.Cert,
-		key:           config.Key,
+		done: done,
 
-		readTimeout:     config.ReadTimeout,
-		writeTimeout:    config.WriteTimeout,
-		idleTimeout:     config.IdleTimeout,
+		cert:            config.Cert,
+		key:             config.Key,
 		shutdownTimeout: config.ShutdownTimeout,
 
-		done: done,
+		logger: slog.With("name", config.Name),
+		server: http.Server{
+			Addr:         fmt.Sprintf("%s:%d", config.Address, port),
+			ReadTimeout:  config.ReadTimeout,
+			WriteTimeout: config.WriteTimeout,
+			IdleTimeout:  config.IdleTimeout,
+		},
 	}
 }
 
-func (a Server) Done() <-chan struct{} {
+func (a *Server) Done() <-chan struct{} {
 	return a.done
 }
 
-func (a Server) Start(ctx context.Context, name string, handler http.Handler) {
+func (a *Server) Start(ctx context.Context, name string, handler http.Handler) {
 	defer close(a.done)
-	serverLogger := slog.With("server", name)
 
-	if len(a.listenAddress) == 0 {
-		serverLogger.Warn("No listen address")
+	if len(a.server.Addr) == 0 {
+		a.logger.Warn("No listen address")
 
 		return
 	}
 
-	httpServer := http.Server{
-		Addr:         a.listenAddress,
-		ReadTimeout:  a.readTimeout,
-		WriteTimeout: a.writeTimeout,
-		IdleTimeout:  a.idleTimeout,
-		Handler:      handler,
+	var err error
+	if len(a.cert) != 0 && len(a.key) != 0 {
+		a.logger.Info("Listening with TLS", "address", a.server.Addr)
+		err = a.server.ListenAndServeTLS(a.cert, a.key)
+	} else {
+		a.logger.Warn("Listening without TLS", "address", a.server.Addr)
+		err = a.server.ListenAndServe()
 	}
 
-	serverDone := make(chan struct{})
-
-	go func() {
-		defer close(serverDone)
-
-		var err error
-		if len(a.cert) != 0 && len(a.key) != 0 {
-			serverLogger.Info("Listening with TLS", "address", a.listenAddress)
-			err = httpServer.ListenAndServeTLS(a.cert, a.key)
-		} else {
-			serverLogger.Warn("Listening without TLS", "address", a.listenAddress)
-			err = httpServer.ListenAndServe()
-		}
-
-		if !errors.Is(err, http.ErrServerClosed) {
-			serverLogger.Error("Server error", "err", err)
-		}
-	}()
-
-	select {
-	case <-ctx.Done():
-	case <-serverDone:
+	if !errors.Is(err, http.ErrServerClosed) {
+		a.logger.Error("Server error", "err", err)
 	}
+}
 
+func (a *Server) Stop(ctx context.Context) {
 	ctx, cancelFn := context.WithTimeout(ctx, a.shutdownTimeout)
 	defer cancelFn()
 
-	serverLogger.Info("Server is shutting down")
-	if err := httpServer.Shutdown(ctx); err != nil {
-		serverLogger.Error("shutdown server", "err", err)
+	a.logger.Info("Server is shutting down")
+	if err := a.server.Shutdown(ctx); err != nil {
+		a.logger.Error("shutdown server", "err", err)
 	}
 }
