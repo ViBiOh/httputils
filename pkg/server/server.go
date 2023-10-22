@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 )
 
 type Server struct {
@@ -80,7 +81,7 @@ func (s *Server) Done() <-chan struct{} {
 	return s.done
 }
 
-func (s *Server) Start(ctx context.Context, name string, handler http.Handler) {
+func (s *Server) Start(ctx context.Context, handler http.Handler) {
 	defer close(s.done)
 
 	if len(s.server.Addr) == 0 {
@@ -90,6 +91,11 @@ func (s *Server) Start(ctx context.Context, name string, handler http.Handler) {
 	}
 
 	s.server.Handler = handler
+
+	go func() {
+		<-ctx.Done()
+		s.Stop(cntxt.WithoutDeadline(ctx))
+	}()
 
 	var err error
 	if len(s.cert) != 0 && len(s.key) != 0 {

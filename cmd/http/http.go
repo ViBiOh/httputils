@@ -60,11 +60,9 @@ func main() {
 
 	appServer := server.New(config.appServer)
 
-	go appServer.Start(ctxEnd, "http", httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.telemetry.Middleware("http"), owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
+	go appServer.Start(ctxEnd, httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.telemetry.Middleware("http"), owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
 
 	client.health.WaitForTermination(appServer.Done(), syscall.SIGTERM, syscall.SIGINT)
 
-	appServer.Stop(context.Background())
-
-	server.GracefulWait(adapter.amqp.Done())
+	server.GracefulWait(appServer.Done(), adapter.amqp.Done())
 }
