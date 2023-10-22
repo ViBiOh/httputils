@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"strings"
@@ -52,7 +53,7 @@ func New() *Cron {
 		now:     make(chan time.Time, 1),
 		clock:   time.Now,
 		onError: func(err error) {
-			fmt.Println(err)
+			slog.Error("cron error", "err", err)
 		},
 	}
 }
