@@ -76,39 +76,41 @@ func New(config *Config) Server {
 	}
 }
 
-func (a *Server) Done() <-chan struct{} {
-	return a.done
+func (s *Server) Done() <-chan struct{} {
+	return s.done
 }
 
-func (a *Server) Start(ctx context.Context, name string, handler http.Handler) {
-	defer close(a.done)
+func (s *Server) Start(ctx context.Context, name string, handler http.Handler) {
+	defer close(s.done)
 
-	if len(a.server.Addr) == 0 {
-		a.logger.Warn("No listen address")
+	if len(s.server.Addr) == 0 {
+		s.logger.Warn("No listen address")
 
 		return
 	}
 
+	s.server.Handler = handler
+
 	var err error
-	if len(a.cert) != 0 && len(a.key) != 0 {
-		a.logger.Info("Listening with TLS", "address", a.server.Addr)
-		err = a.server.ListenAndServeTLS(a.cert, a.key)
+	if len(s.cert) != 0 && len(s.key) != 0 {
+		s.logger.Info("Listening with TLS", "address", s.server.Addr)
+		err = s.server.ListenAndServeTLS(s.cert, s.key)
 	} else {
-		a.logger.Warn("Listening without TLS", "address", a.server.Addr)
-		err = a.server.ListenAndServe()
+		s.logger.Warn("Listening without TLS", "address", s.server.Addr)
+		err = s.server.ListenAndServe()
 	}
 
 	if !errors.Is(err, http.ErrServerClosed) {
-		a.logger.Error("Server error", "err", err)
+		s.logger.Error("Server error", "err", err)
 	}
 }
 
-func (a *Server) Stop(ctx context.Context) {
-	ctx, cancelFn := context.WithTimeout(ctx, a.shutdownTimeout)
+func (s *Server) Stop(ctx context.Context) {
+	ctx, cancelFn := context.WithTimeout(ctx, s.shutdownTimeout)
 	defer cancelFn()
 
-	a.logger.Info("Server is shutting down")
-	if err := a.server.Shutdown(ctx); err != nil {
-		a.logger.Error("shutdown server", "err", err)
+	s.logger.Info("Server is shutting down")
+	if err := s.server.Shutdown(ctx); err != nil {
+		s.logger.Error("shutdown server", "err", err)
 	}
 }
