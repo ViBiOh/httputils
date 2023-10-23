@@ -271,6 +271,8 @@ func (c *Cron) Now() *Cron {
 }
 
 func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
+	defer close(c.now)
+
 	if c.hasError() {
 		return
 	}
@@ -311,12 +313,13 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 		}
 	}
 
-	signals := make(chan os.Signal, 1)
-	defer close(signals)
+	var signals chan os.Signal
 
 	if c.signal != nil {
-		signal.Notify(signals, c.signal)
+		signals = make(chan os.Signal, 1)
+		defer close(signals)
 
+		signal.Notify(signals, c.signal)
 		defer signal.Stop(signals)
 	}
 
@@ -330,7 +333,7 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 }
 
 func (c *Cron) iterate(done <-chan struct{}, signals <-chan os.Signal, shouldRetry bool, run func()) bool {
-	var output bool
+	var stop bool
 
 	timer := time.After(c.getTickerDuration(shouldRetry))
 	doneTimer := make(chan struct{})
@@ -341,20 +344,19 @@ func (c *Cron) iterate(done <-chan struct{}, signals <-chan os.Signal, shouldRet
 
 	select {
 	case <-done:
-		output = true
+		stop = true
+
 	case <-signals:
 		run()
+
 	case <-doneTimer:
 		run()
+
 	case _, ok := <-c.now:
 		if ok {
 			run()
 		}
 	}
 
-	return output
-}
-
-func (c *Cron) Shutdown() {
-	close(c.now)
+	return stop
 }

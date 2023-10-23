@@ -13,9 +13,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func startBackground(ctx context.Context, config configuration, client client, adapter adapter) func() {
-	var closers []func()
-
+func startBackground(ctx context.Context, config configuration, client client, adapter adapter) {
 	go redis.SubscribeFor(ctx, client.redis, "httputils:tasks", func(content time.Time, err error) {
 		if err != nil {
 			slog.Error("consume on pubsub", "err", err)
@@ -40,15 +38,7 @@ func startBackground(ctx context.Context, config configuration, client client, a
 		return nil
 	})
 
-	closers = append(closers, speakingClock.Shutdown)
-
 	go adapter.amqp.Start(ctx)
-
-	return func() {
-		for _, closer := range closers {
-			closer()
-		}
-	}
 }
 
 func amqpHandler(_ context.Context, message amqp.Delivery) error {

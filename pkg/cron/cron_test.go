@@ -517,7 +517,10 @@ func TestStart(t *testing.T) {
 			wg.Add(1)
 			testCase.cron.clock = testCase.clock
 
-			go testCase.cron.OnError(testCase.onError(&wg, testCase.cron)).Start(context.Background(), testCase.action(&wg, testCase.cron))
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			go testCase.cron.OnError(testCase.onError(&wg, testCase.cron)).Start(ctx, testCase.action(&wg, testCase.cron))
 
 			actionDone := make(chan struct{})
 			go func() {
@@ -527,10 +530,8 @@ func TestStart(t *testing.T) {
 
 			select {
 			case <-time.After(time.Second * 5):
-				testCase.cron.Shutdown()
 				t.Errorf("Start() did not complete within 5 seconds")
 			case <-actionDone:
-				testCase.cron.Shutdown()
 			}
 		})
 	}

@@ -53,8 +53,7 @@ func main() {
 
 	ctxEnd := client.health.EndCtx()
 
-	stopBackground := startBackground(ctxEnd, config, client, adapter)
-	defer stopBackground()
+	startBackground(ctxEnd, config, client, adapter)
 
 	handler := newPort(ctxEnd, config, client, adapter)
 
