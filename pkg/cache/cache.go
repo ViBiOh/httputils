@@ -159,7 +159,7 @@ func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
 	} else if value, ok, err := c.decode([]byte(content)); err != nil {
 		logUnmarshalError(ctx, key, err)
 	} else if ok {
-		go c.memoryWrite(id, value, c.ttl)
+		c.memoryWrite(id, value, c.ttl)
 		c.extendTTL(ctx, key)
 
 		return value, nil

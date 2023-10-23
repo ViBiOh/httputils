@@ -145,6 +145,10 @@ func (c *Cache[K, V]) memoryValues(ids []K) ([]V, []K) {
 }
 
 func (c *Cache[K, V]) redisValues(ctx context.Context, ids []K) ([]string, []string) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
 	keys := make([]string, len(ids))
 	for index, id := range ids {
 		keys[index] = c.toKey(id)
