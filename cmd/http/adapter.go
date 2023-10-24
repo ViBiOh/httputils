@@ -33,6 +33,7 @@ func newAdapter(ctx context.Context, config configuration, client client) (adapt
 
 	output.hello = cache.New(client.redis, func(id string) string { return id }, func(ctx context.Context, id string) (string, error) { return hash.String(id), nil }, client.telemetry.TracerProvider()).
 		WithTTL(time.Hour).
+		WithExtendOnHit(ctx, 10*time.Second).
 		WithClientSideCaching(ctx, "httputils_hello", 10)
 
 	return output, nil

@@ -72,10 +72,7 @@ func (c *Cache[K, V]) Set(id K, value V, ttl time.Duration) {
 
 	c.content[id] = value
 
-	if ttl != 0 {
-		c.expirationUpdates <- ExpirationQueueAction[K]{id: id, ttl: ttl, action: AddItem}
-	}
-
+	c.sendExpirationAction(id, ttl)
 	c.addLRU(id)
 
 	c.mutex.Unlock()

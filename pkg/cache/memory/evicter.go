@@ -25,7 +25,12 @@ func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 
 	var toExpire *Item[K]
 
-	for {
+	var closedCount int
+
+	timerCh := timer.C
+	expirationCh := c.expirationUpdates
+
+	for closedCount < 3 {
 		if len(*c.expiration) > 0 {
 			firstItem := c.expiration.Pop().(Item[K])
 			toExpire = &firstItem
@@ -37,10 +42,16 @@ func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 
 		select {
 		case <-done:
-			goto exit
+			timer.Stop()
+			c.expirationUpdates = nil
+			close(expirationCh)
 
-		case update, ok := <-c.expirationUpdates:
+			done = nil
+			closedCount++
+
+		case update, ok := <-expirationCh:
 			if !ok {
+				closedCount++
 				continue
 			}
 
@@ -54,32 +65,38 @@ func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 					id:         update.id,
 					expiration: time.Now().Add(update.ttl),
 				})
+
 			case RemoveItem:
 				if index := c.expiration.Index(update.id); index != -1 {
 					heap.Remove(c.expiration, index)
 				}
 			}
 
-		case <-timer.C:
+		case _, ok := <-timerCh:
+			if !ok {
+				timerCh = nil
+				closedCount++
+				continue
+			}
+
 			if toExpire == nil {
 				continue
 			}
 
 			c.mutex.Lock()
-
 			delete(c.content, toExpire.id)
-
 			c.mutex.Unlock()
 		}
 	}
+}
 
-exit:
-	if !timer.Stop() {
-		<-timer.C
+func (c *Cache[K, V]) sendExpirationAction(id K, ttl time.Duration) {
+	if ttl == 0 {
+		return
 	}
 
-	close(c.expirationUpdates)
-	for range c.expirationUpdates {
-		// drain the channel
+	select {
+	case c.expirationUpdates <- ExpirationQueueAction[K]{id: id, ttl: ttl, action: AddItem}:
+	default:
 	}
 }

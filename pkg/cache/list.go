@@ -84,7 +84,7 @@ func (c *Cache[K, V]) handleList(ctx context.Context, ids []K, output []V, remai
 
 	for index, id := range ids {
 		if remainingsPos >= remainingsLength || remainings[remainingsPos] != id {
-			if c.ttl != 0 && c.extendOnHit {
+			if c.ttl != 0 && c.extender != nil {
 				extendKeys = append(extendKeys, c.toKey(id))
 			}
 
@@ -94,7 +94,7 @@ func (c *Cache[K, V]) handleList(ctx context.Context, ids []K, output []V, remai
 		if value, ok, err := c.decode([]byte(values[remainingsPos])); ok {
 			output[index] = value
 
-			if c.ttl != 0 && c.extendOnHit {
+			if c.ttl != 0 && c.extender != nil {
 				extendKeys = append(extendKeys, keys[remainingsPos])
 			}
 

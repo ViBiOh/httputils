@@ -208,8 +208,8 @@ func (s *ListSuite) TestList() {
 
 		instance := cache.New(s.integration.Client(), func(id int) string { return strconv.Itoa(id) }, fetchOnce(), nil).
 			WithClientSideCaching(ctx, "memory_redis_may_extend", 10).
-			WithExtendOnHit().
 			WithTTL(time.Hour).
+			WithExtendOnHit(ctx, time.Hour/4).
 			WithMissMany(fetchRepositoriesOnce())
 
 		first := getRepository(s.T())

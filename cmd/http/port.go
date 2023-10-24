@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
+	"github.com/ViBiOh/httputils/v4/pkg/hash"
 	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
@@ -37,7 +38,7 @@ func newPort(ctx context.Context, config configuration, client client, adapter a
 			return renderer.Page{}, err
 		}
 
-		if _, err = adapter.hello.Get(r.Context(), r.URL.Path); err != nil {
+		if _, err = adapter.hello.Get(r.Context(), hash.String(r.URL.Path)); err != nil {
 			return renderer.Page{}, err
 		}
 

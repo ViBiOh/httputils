@@ -47,10 +47,10 @@ type Cache[K comparable, V any] struct {
 	onMiss      fetch[K, V]
 	onMissMany  fetchMany[K, V]
 	memory      *memory.Cache[K, V]
+	extender    *TTLExtender
 	channel     string
 	ttl         time.Duration
 	concurrency int
-	extendOnHit bool
 }
 
 func New[K comparable, V any](client RedisClient, toKey keyer[K], onMiss fetch[K, V], tracerProvider trace.TracerProvider) *Cache[K, V] {
@@ -95,8 +95,10 @@ func (c *Cache[K, V]) WithTTL(ttl time.Duration) *Cache[K, V] {
 	return c
 }
 
-func (c *Cache[K, V]) WithExtendOnHit() *Cache[K, V] {
-	c.extendOnHit = true
+func (c *Cache[K, V]) WithExtendOnHit(ctx context.Context, interval time.Duration) *Cache[K, V] {
+	c.extender = NewExtender(c.ttl, interval, c.write)
+
+	go c.extender.Start(ctx)
 
 	return c
 }
@@ -197,12 +199,12 @@ func (c *Cache[K, V]) decode(content []byte) (value V, ok bool, err error) {
 }
 
 func (c *Cache[K, V]) extendTTL(ctx context.Context, keys ...string) {
-	if c.write == nil || !c.extendOnHit || c.ttl == 0 || len(keys) == 0 {
+	if c.write == nil || c.extender == nil || c.ttl == 0 || len(keys) == 0 {
 		return
 	}
 
 	go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
-		return c.write.Expire(ctx, c.ttl, keys...)
+		return c.extender.Extend(ctx, keys...)
 	})
 }
 
