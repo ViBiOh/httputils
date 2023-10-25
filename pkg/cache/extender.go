@@ -15,9 +15,10 @@ type TTLExtender struct {
 	interval time.Duration
 	ttl      time.Duration
 	mutex    sync.Mutex
+	maxSize  int
 }
 
-func NewExtender(ttl, interval time.Duration, redis RedisClient) *TTLExtender {
+func NewExtender(ttl, interval time.Duration, maxSize int, redis RedisClient) *TTLExtender {
 	extender := &TTLExtender{
 		ttl:      ttl,
 		interval: interval,
@@ -29,45 +30,58 @@ func NewExtender(ttl, interval time.Duration, redis RedisClient) *TTLExtender {
 	}
 
 	extender.batch = make(map[string]struct{})
+	extender.maxSize = maxSize
 
 	return extender
 }
 
-func (be *TTLExtender) Extend(ctx context.Context, keys ...string) error {
-	if be.interval == 0 {
-		return be.redis.Expire(ctx, be.ttl, keys...)
+func (te *TTLExtender) Extend(ctx context.Context, keys ...string) error {
+	if te.interval == 0 {
+		return te.redis.Expire(ctx, te.ttl, keys...)
 	}
 
-	be.mutex.Lock()
+	te.mutex.Lock()
+
 	for _, key := range keys {
-		be.batch[key] = struct{}{}
+		te.batch[key] = struct{}{}
 	}
-	be.mutex.Unlock()
+
+	if te.maxSize != 0 && len(te.batch) > te.maxSize {
+		te.flush(ctx)
+	}
+
+	te.mutex.Unlock()
 
 	return nil
 }
 
-func (be *TTLExtender) Start(ctx context.Context) {
-	if be.interval == 0 {
+func (te *TTLExtender) Start(ctx context.Context) {
+	if te.interval == 0 {
 		return
 	}
 
-	ticker := time.NewTicker(be.interval)
+	ticker := time.NewTicker(te.interval)
 
-	concurrent.ChanUntilDone(ctx, ticker.C, func(_ time.Time) {
-		be.mutex.Lock()
+	concurrent.ChanUntilDone(ctx, ticker.C, func(_ time.Time) { te.flush(ctx) }, ticker.Stop)
+}
 
-		keys := make([]string, 0, len(be.batch))
+func (te *TTLExtender) flush(ctx context.Context) {
+	te.mutex.Lock()
 
-		for key := range be.batch {
-			keys = append(keys, key)
-			delete(be.batch, key)
-		}
+	if len(te.batch) == 0 {
+		return
+	}
 
-		be.mutex.Unlock()
+	keys := make([]string, 0, len(te.batch))
 
-		if err := be.redis.Expire(ctx, be.ttl, keys...); err != nil {
-			slog.Error("extend keys", "err", err)
-		}
-	}, ticker.Stop)
+	for key := range te.batch {
+		keys = append(keys, key)
+		delete(te.batch, key)
+	}
+
+	te.mutex.Unlock()
+
+	if err := te.redis.Expire(ctx, te.ttl, keys...); err != nil {
+		slog.Error("extend keys", "err", err)
+	}
 }

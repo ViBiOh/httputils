@@ -95,8 +95,8 @@ func (c *Cache[K, V]) WithTTL(ttl time.Duration) *Cache[K, V] {
 	return c
 }
 
-func (c *Cache[K, V]) WithExtendOnHit(ctx context.Context, interval time.Duration) *Cache[K, V] {
-	c.extender = NewExtender(c.ttl, interval, c.write)
+func (c *Cache[K, V]) WithExtendOnHit(ctx context.Context, interval time.Duration, maxSize int) *Cache[K, V] {
+	c.extender = NewExtender(c.ttl, interval, maxSize, c.write)
 
 	go c.extender.Start(ctx)
 

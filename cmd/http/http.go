@@ -45,13 +45,13 @@ func main() {
 
 	defer client.Close(ctx)
 
-	adapter, err := newAdapter(client.health.DoneCtx(), config, client)
+	ctxEnd := client.health.EndCtx()
+
+	adapter, err := newAdapter(ctxEnd, config, client)
 	if err != nil {
 		slog.Error("adapter", "err", err)
 		os.Exit(1)
 	}
-
-	ctxEnd := client.health.EndCtx()
 
 	startBackground(ctxEnd, config, client, adapter)
 
@@ -62,6 +62,5 @@ func main() {
 	go appServer.Start(ctxEnd, httputils.Handler(adapter.renderer.Handler(handler.template), client.health, recoverer.Middleware, client.telemetry.Middleware("http"), owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
 
 	client.health.WaitForTermination(appServer.Done(), syscall.SIGTERM, syscall.SIGINT)
-
 	server.GracefulWait(appServer.Done(), adapter.amqp.Done())
 }
