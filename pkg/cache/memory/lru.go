@@ -23,19 +23,16 @@ func (c *Cache[K, V]) startLRU(ctx context.Context) {
 		return
 	}
 
-	lruCh := c.lruUpdates
-
-	concurrent.ChanUntilDone(ctx, lruCh, func(update LeastRecentlyUsedAction[K]) {
+	concurrent.ChanUntilDone(ctx, c.lruUpdates, func(update LeastRecentlyUsedAction[K]) {
 		switch update.action {
 		case Touch:
 			c.refreshEntryLRU(update.id)
 		case Add:
 			c.addEntryLRU(update.id)
 		}
-	}, func() {
-		c.lruUpdates = nil
-		close(lruCh)
-	})
+	}, func() {})
+
+	close(c.lruUpdates)
 }
 
 func (c *Cache[K, V]) touchLRU(id K) {

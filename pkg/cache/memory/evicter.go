@@ -25,12 +25,7 @@ func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 
 	var toExpire *Item[K]
 
-	var closedCount int
-
-	timerCh := timer.C
-	expirationCh := c.expirationUpdates
-
-	for closedCount < 3 {
+	for {
 		if len(*c.expiration) > 0 {
 			firstItem := c.expiration.Pop().(Item[K])
 			toExpire = &firstItem
@@ -43,40 +38,11 @@ func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 		select {
 		case <-done:
 			timer.Stop()
-			c.expirationUpdates = nil
-			close(expirationCh)
-
 			done = nil
-			closedCount++
 
-		case update, ok := <-expirationCh:
+		case _, ok := <-timer.C:
 			if !ok {
-				closedCount++
-				continue
-			}
-
-			switch update.action {
-			case AddItem:
-				if toExpire != nil {
-					heap.Push(c.expiration, *toExpire)
-				}
-
-				heap.Push(c.expiration, Item[K]{
-					id:         update.id,
-					expiration: time.Now().Add(update.ttl),
-				})
-
-			case RemoveItem:
-				if index := c.expiration.Index(update.id); index != -1 {
-					heap.Remove(c.expiration, index)
-				}
-			}
-
-		case _, ok := <-timerCh:
-			if !ok {
-				timerCh = nil
-				closedCount++
-				continue
+				goto done
 			}
 
 			if toExpire == nil {
@@ -86,17 +52,45 @@ func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 			c.mutex.Lock()
 			delete(c.content, toExpire.id)
 			c.mutex.Unlock()
+
+		case update, ok := <-c.expirationUpdates:
+			if !ok {
+				continue
+			}
+
+			c.handleExpirationUpdate(update, toExpire)
+		}
+	}
+
+done:
+	for update := range c.expirationUpdates {
+		c.handleExpirationUpdate(update, toExpire)
+	}
+}
+
+func (c *Cache[K, V]) handleExpirationUpdate(update ExpirationQueueAction[K], toExpire *Item[K]) {
+	switch update.action {
+	case AddItem:
+		if toExpire != nil {
+			heap.Push(c.expiration, *toExpire)
+		}
+
+		heap.Push(c.expiration, Item[K]{
+			id:         update.id,
+			expiration: time.Now().Add(update.ttl),
+		})
+
+	case RemoveItem:
+		if index := c.expiration.Index(update.id); index != -1 {
+			heap.Remove(c.expiration, index)
 		}
 	}
 }
 
-func (c *Cache[K, V]) sendExpirationAction(id K, ttl time.Duration) {
+func (c *Cache[K, V]) addExpiration(id K, ttl time.Duration) {
 	if ttl == 0 {
 		return
 	}
 
-	select {
-	case c.expirationUpdates <- ExpirationQueueAction[K]{id: id, ttl: ttl, action: AddItem}:
-	default:
-	}
+	c.expirationUpdates <- ExpirationQueueAction[K]{id: id, ttl: ttl, action: AddItem}
 }

@@ -72,7 +72,7 @@ func (c *Cache[K, V]) Set(id K, value V, ttl time.Duration) {
 
 	c.content[id] = value
 
-	c.sendExpirationAction(id, ttl)
+	c.addExpiration(id, ttl)
 	c.addLRU(id)
 
 	c.mutex.Unlock()
