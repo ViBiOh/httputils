@@ -4,24 +4,27 @@ import (
 	"context"
 )
 
-func ChanUntilDone[T any](ctx context.Context, sourceCh <-chan T, onSource func(T), onDone func()) {
-	var closedCount uint
+func ChanUntilDone[T any](ctx context.Context, source <-chan T, onSource func(T), onDone func()) {
 	done := ctx.Done()
 
-	for closedCount < 2 {
+	for {
 		select {
 		case <-done:
-			onDone()
+			goto done
 
-			done = nil
-			closedCount++
-
-		case item, ok := <-sourceCh:
-			if ok {
-				onSource(item)
-			} else {
-				closedCount++
+		case item, ok := <-source:
+			if !ok {
+				goto done
 			}
+
+			onSource(item)
 		}
+	}
+
+done:
+	onDone()
+
+	for item := range source {
+		onSource(item)
 	}
 }
