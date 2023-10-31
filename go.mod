@@ -9,7 +9,7 @@ require (
 	github.com/jackc/pgx/v5 v5.4.3
 	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5
-	github.com/redis/go-redis/v9 v9.2.1
+	github.com/redis/go-redis/v9 v9.3.0
 	github.com/rs/xid v1.5.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tdewolff/minify/v2 v2.20.1
