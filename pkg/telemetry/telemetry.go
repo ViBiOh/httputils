@@ -23,6 +23,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	tr "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 type Service struct {
@@ -126,7 +127,7 @@ func (s Service) MeterProvider() meter.MeterProvider {
 
 func (s Service) TracerProvider() tr.TracerProvider {
 	if s.meterProvider == nil {
-		return tr.NewNoopTracerProvider()
+		return noop.NewTracerProvider()
 	}
 
 	return s.tracerProvider

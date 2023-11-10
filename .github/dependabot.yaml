@@ -15,3 +15,7 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    groups:
+      opentelemetry:
+        patterns:
+          - "go.opentelemetry.io/*"
