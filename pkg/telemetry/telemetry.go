@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel/attribute"
@@ -176,7 +177,12 @@ func newMetricExporter(ctx context.Context, endpoint string) (metric.Exporter, e
 }
 
 func newResource(ctx context.Context) (*resource.Resource, error) {
-	newResource, err := resource.New(ctx, resource.WithFromEnv())
+	newResource, err := resource.New(ctx,
+		resource.WithFromEnv(),
+		resource.WithHost(),
+		resource.WithOS(),
+		resource.WithAttributes(attribute.String("version", model.Version())),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("create resource: %w", err)
 	}

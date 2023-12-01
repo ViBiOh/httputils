@@ -1,6 +1,9 @@
 package model
 
-import "reflect"
+import (
+	"os"
+	"reflect"
+)
 
 func IsNil(i any) bool {
 	if i == nil {
@@ -13,4 +16,12 @@ func IsNil(i any) bool {
 	}
 
 	return false
+}
+
+func Version() string {
+	if version := os.Getenv("VERSION"); len(version) != 0 {
+		return version
+	}
+
+	return "development"
 }

@@ -3,7 +3,6 @@ package httputils
 import (
 	"log/slog"
 	"net/http"
-	"os"
 
 	"github.com/ViBiOh/httputils/v4/pkg/health"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
@@ -33,11 +32,7 @@ func Handler(handler http.Handler, healthService *health.Service, middlewares ..
 }
 
 func versionHandler() http.Handler {
-	versionValue := os.Getenv("VERSION")
-	if len(versionValue) == 0 {
-		versionValue = "development"
-	}
-	version := []byte(versionValue)
+	version := []byte(model.Version())
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
