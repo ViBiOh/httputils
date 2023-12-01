@@ -1,6 +1,7 @@
 package httpjson
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -41,28 +42,28 @@ func RawWrite(w io.Writer, obj any) error {
 	return nil
 }
 
-func Write(w http.ResponseWriter, status int, obj any) {
+func Write(ctx context.Context, w http.ResponseWriter, status int, obj any) {
 	for key, value := range headers {
 		w.Header()[key] = value
 	}
 	w.WriteHeader(status)
 
 	if err := RawWrite(w, obj); err != nil {
-		httperror.InternalServerError(w, err)
+		httperror.InternalServerError(ctx, w, err)
 	}
 }
 
-func WriteArray(w http.ResponseWriter, status int, array any) {
-	Write(w, status, items{array})
+func WriteArray(ctx context.Context, w http.ResponseWriter, status int, array any) {
+	Write(ctx, w, status, items{array})
 }
 
-func WritePagination(w http.ResponseWriter, status int, pageSize, total uint, last string, array any) {
+func WritePagination(ctx context.Context, w http.ResponseWriter, status int, pageSize, total uint, last string, array any) {
 	pageCount := total / pageSize
 	if total%pageSize != 0 {
 		pageCount++
 	}
 
-	Write(w, status, pagination{Items: array, PageSize: pageSize, PageCount: pageCount, Total: total, Last: last})
+	Write(ctx, w, status, pagination{Items: array, PageSize: pageSize, PageCount: pageCount, Total: total, Last: last})
 }
 
 func Parse(req *http.Request, obj any) error {

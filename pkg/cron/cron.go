@@ -36,7 +36,7 @@ type Cron struct {
 	now     chan time.Time
 	name    string
 
-	onError func(error)
+	onError func(context.Context, error)
 	errors  []error
 
 	retryInterval time.Duration
@@ -52,8 +52,8 @@ func New() *Cron {
 		dayTime: time.Date(0, 1, 1, 8, 0, 0, 0, time.UTC),
 		now:     make(chan time.Time, 1),
 		clock:   time.Now,
-		onError: func(err error) {
-			slog.Error("cron error", "err", err)
+		onError: func(ctx context.Context, err error) {
+			slog.ErrorContext(ctx, "cron error", "err", err)
 		},
 	}
 }
@@ -198,7 +198,7 @@ func (c *Cron) OnSignal(signal os.Signal) *Cron {
 	return c
 }
 
-func (c *Cron) OnError(onError func(error)) *Cron {
+func (c *Cron) OnError(onError func(context.Context, error)) *Cron {
 	c.onError = onError
 
 	return c
@@ -232,23 +232,23 @@ func (c *Cron) getTickerDuration(shouldRetry bool) time.Duration {
 	return nextTime.Sub(now)
 }
 
-func (c *Cron) hasError() bool {
+func (c *Cron) hasError(ctx context.Context) bool {
 	if len(c.errors) > 0 {
 		for _, err := range c.errors {
-			c.onError(err)
+			c.onError(ctx, err)
 		}
 
 		return true
 	}
 
 	if c.day == 0 && c.interval == 0 {
-		c.onError(errors.New("no schedule configuration"))
+		c.onError(ctx, errors.New("no schedule configuration"))
 
 		return true
 	}
 
 	if c.maxRetry != 0 && c.retryInterval == 0 {
-		c.onError(errors.New("no retry interval for max retry"))
+		c.onError(ctx, errors.New("no retry interval for max retry"))
 
 		return true
 	}
@@ -273,7 +273,7 @@ func (c *Cron) Now() *Cron {
 func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 	defer close(c.now)
 
-	if c.hasError() {
+	if c.hasError(ctx) {
 		return
 	}
 
@@ -282,7 +282,7 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 
 	do := func(ctx context.Context) {
 		if err := action(ctx); err != nil {
-			c.onError(err)
+			c.onError(ctx, err)
 
 			retryCount++
 			shouldRetry = retryCount <= c.maxRetry
@@ -309,7 +309,7 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 
 			return nil
 		}); err != nil {
-			c.onError(err)
+			c.onError(ctx, err)
 		}
 	}
 

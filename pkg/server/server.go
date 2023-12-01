@@ -85,7 +85,7 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 	defer close(s.done)
 
 	if len(s.server.Addr) == 0 {
-		s.logger.Warn("No listen address")
+		s.logger.WarnContext(ctx, "No listen address")
 
 		return
 	}
@@ -99,15 +99,15 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 
 	var err error
 	if len(s.cert) != 0 && len(s.key) != 0 {
-		s.logger.Info("Listening with TLS", "address", s.server.Addr)
+		s.logger.InfoContext(ctx, "Listening with TLS", "address", s.server.Addr)
 		err = s.server.ListenAndServeTLS(s.cert, s.key)
 	} else {
-		s.logger.Warn("Listening without TLS", "address", s.server.Addr)
+		s.logger.WarnContext(ctx, "Listening without TLS", "address", s.server.Addr)
 		err = s.server.ListenAndServe()
 	}
 
 	if !errors.Is(err, http.ErrServerClosed) {
-		s.logger.Error("Server error", "err", err)
+		s.logger.ErrorContext(ctx, "Server error", "err", err)
 	}
 }
 
@@ -115,8 +115,8 @@ func (s *Server) Stop(ctx context.Context) {
 	ctx, cancelFn := context.WithTimeout(ctx, s.shutdownTimeout)
 	defer cancelFn()
 
-	s.logger.Info("Server is shutting down")
+	s.logger.InfoContext(ctx, "Server is shutting down")
 	if err := s.server.Shutdown(ctx); err != nil {
-		s.logger.Error("shutdown server", "err", err)
+		s.logger.ErrorContext(ctx, "shutdown server", "err", err)
 	}
 }

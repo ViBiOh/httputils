@@ -13,6 +13,6 @@ func doInBackground(ctx context.Context, callback func(ctx context.Context) erro
 	defer cancel()
 
 	if err := callback(ctx); err != nil {
-		slog.Error("background callback", "err", err)
+		slog.ErrorContext(ctx, "background callback", "err", err)
 	}
 }

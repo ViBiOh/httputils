@@ -2,6 +2,7 @@ package httpjson
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -117,7 +118,7 @@ func TestWrite(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			Write(writer, http.StatusOK, testCase.obj)
+			Write(context.Background(), writer, http.StatusOK, testCase.obj)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
 				t.Errorf("Write() = `%s`, want `%s`", string(result), testCase.want)
@@ -158,7 +159,7 @@ func BenchmarkWrite(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		Write(writer, http.StatusOK, &testCase.obj)
+		Write(context.Background(), writer, http.StatusOK, &testCase.obj)
 	}
 }
 
@@ -189,7 +190,7 @@ func TestWriteArray(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			WriteArray(writer, http.StatusOK, testCase.obj)
+			WriteArray(context.Background(), writer, http.StatusOK, testCase.obj)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
 				t.Errorf("TestWriteArray() = `%s`, want `%s`", string(result), testCase.want)
@@ -248,7 +249,7 @@ func TestWritePagination(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			WritePagination(writer, http.StatusOK, testCase.pageSize, testCase.total, testCase.last, testCase.obj)
+			WritePagination(context.Background(), writer, http.StatusOK, testCase.pageSize, testCase.total, testCase.last, testCase.obj)
 
 			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
 				t.Errorf("WritePagination() = `%s`, want `%s`", string(result), testCase.want)

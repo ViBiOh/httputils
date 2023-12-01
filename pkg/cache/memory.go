@@ -32,7 +32,7 @@ func (c *Cache[K, V]) subscribe(ctx context.Context) {
 	}
 
 	redis.SubscribeFor(ctx, c.read, c.channel, func(id K, err error) {
-		slog.Info("evicting from memory cache", "id", id, "channel", c.channel)
+		slog.InfoContext(ctx, "evicting from memory cache", "id", id, "channel", c.channel)
 		c.memory.Delete(id)
 	})
 }

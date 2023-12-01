@@ -1,6 +1,7 @@
 package httperror
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -12,7 +13,7 @@ const (
 	internalError = "Oops! Something went wrong. Server's logs contain more details."
 )
 
-func httpError(w http.ResponseWriter, status int, payload string, err error) {
+func httpError(ctx context.Context, w http.ResponseWriter, status int, payload string, err error) {
 	w.Header().Add("Cache-Control", "no-cache")
 	http.Error(w, payload, status)
 
@@ -21,50 +22,50 @@ func httpError(w http.ResponseWriter, status int, payload string, err error) {
 	}
 
 	if status >= http.StatusInternalServerError {
-		slog.Error("HTTP", "err", err.Error(), "status", status)
+		slog.ErrorContext(ctx, "HTTP", "err", err.Error(), "status", status)
 	} else {
-		slog.Warn("HTTP", "err", err.Error(), "status", status)
+		slog.WarnContext(ctx, "HTTP", "err", err.Error(), "status", status)
 	}
 }
 
-func BadRequest(w http.ResponseWriter, err error) {
-	httpError(w, http.StatusBadRequest, err.Error(), err)
+func BadRequest(ctx context.Context, w http.ResponseWriter, err error) {
+	httpError(ctx, w, http.StatusBadRequest, err.Error(), err)
 }
 
-func Unauthorized(w http.ResponseWriter, err error) {
-	httpError(w, http.StatusUnauthorized, err.Error(), err)
+func Unauthorized(ctx context.Context, w http.ResponseWriter, err error) {
+	httpError(ctx, w, http.StatusUnauthorized, err.Error(), err)
 }
 
-func Forbidden(w http.ResponseWriter) {
-	httpError(w, http.StatusForbidden, "⛔️", nil)
+func Forbidden(ctx context.Context, w http.ResponseWriter) {
+	httpError(ctx, w, http.StatusForbidden, "⛔️", nil)
 }
 
-func NotFound(w http.ResponseWriter) {
-	httpError(w, http.StatusNotFound, "¯\\_(ツ)_/¯", nil)
+func NotFound(ctx context.Context, w http.ResponseWriter) {
+	httpError(ctx, w, http.StatusNotFound, "¯\\_(ツ)_/¯", nil)
 }
 
-func InternalServerError(w http.ResponseWriter, err error) {
-	httpError(w, http.StatusInternalServerError, internalError, err)
+func InternalServerError(ctx context.Context, w http.ResponseWriter, err error) {
+	httpError(ctx, w, http.StatusInternalServerError, internalError, err)
 }
 
-func HandleError(w http.ResponseWriter, err error) bool {
+func HandleError(ctx context.Context, w http.ResponseWriter, err error) bool {
 	if err == nil {
 		return false
 	}
 
 	switch {
 	case errors.Is(err, model.ErrInvalid):
-		BadRequest(w, err)
+		BadRequest(ctx, w, err)
 	case errors.Is(err, model.ErrUnauthorized):
-		Unauthorized(w, err)
+		Unauthorized(ctx, w, err)
 	case errors.Is(err, model.ErrForbidden):
-		httpError(w, http.StatusForbidden, err.Error(), err)
+		httpError(ctx, w, http.StatusForbidden, err.Error(), err)
 	case errors.Is(err, model.ErrNotFound):
-		NotFound(w)
+		NotFound(ctx, w)
 	case errors.Is(err, model.ErrMethodNotAllowed):
-		httpError(w, http.StatusMethodNotAllowed, err.Error(), err)
+		httpError(ctx, w, http.StatusMethodNotAllowed, err.Error(), err)
 	default:
-		InternalServerError(w, err)
+		InternalServerError(ctx, w, err)
 	}
 
 	return true

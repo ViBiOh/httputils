@@ -129,7 +129,7 @@ func (s *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 func (s *Service) isReady(ctx context.Context) bool {
 	for _, pinger := range s.pingers {
 		if err := pinger(ctx); err != nil {
-			slog.Error("ping", "err", err)
+			slog.ErrorContext(ctx, "ping", "err", err)
 
 			return false
 		}

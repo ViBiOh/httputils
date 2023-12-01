@@ -33,7 +33,7 @@ func (s Service) Redirect(w http.ResponseWriter, r *http.Request, pathname strin
 }
 
 func (s Service) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error) {
-	slog.Error(err.Error())
+	slog.ErrorContext(r.Context(), err.Error())
 
 	content = s.feedContent(content)
 
@@ -47,7 +47,7 @@ func (s Service) Error(w http.ResponseWriter, r *http.Request, content map[strin
 	content["nonce"] = nonce
 
 	if err = templates.ResponseHTMLTemplate(r.Context(), s.tracer, s.tpl.Lookup("error"), w, content, status); err != nil {
-		httperror.InternalServerError(w, err)
+		httperror.InternalServerError(r.Context(), w, err)
 	}
 }
 
@@ -56,7 +56,7 @@ func (s Service) render(w http.ResponseWriter, r *http.Request, templateFunc Tem
 		if exception := recover(); exception != nil {
 			output := make([]byte, 1024)
 			runtime.Stack(output, false)
-			slog.Error("recovered from panic", "err", exception, "stacktrace", string(output))
+			slog.ErrorContext(r.Context(), "recovered from panic", "err", exception, "stacktrace", string(output))
 
 			s.Error(w, r, nil, fmt.Errorf("recovered from panic: %s", exception))
 		}
@@ -96,7 +96,7 @@ func (s Service) render(w http.ResponseWriter, r *http.Request, templateFunc Tem
 	}
 
 	if err = responder(r.Context(), s.tracer, s.tpl.Lookup(page.Template), w, page.Content, page.Status); err != nil {
-		httperror.InternalServerError(w, err)
+		httperror.InternalServerError(r.Context(), w, err)
 	}
 }
 
@@ -142,7 +142,7 @@ func (s Service) svg() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tpl := s.tpl.Lookup("svg-" + strings.Trim(r.URL.Path, "/"))
 		if tpl == nil {
-			httperror.NotFound(w)
+			httperror.NotFound(r.Context(), w)
 
 			return
 		}
@@ -151,7 +151,7 @@ func (s Service) svg() http.Handler {
 		w.Header().Add("Content-Type", "image/svg+xml")
 
 		if err := templates.WriteTemplate(r.Context(), s.tracer, tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {
-			httperror.InternalServerError(w, err)
+			httperror.InternalServerError(r.Context(), w, err)
 		}
 	})
 }

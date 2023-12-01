@@ -154,9 +154,9 @@ func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
 
 	if content, err := c.read.Load(loadCtx, key); err != nil {
 		if errors.Is(err, context.Canceled) {
-			loggerWithTrace(ctx, key).Warn("load from cache", "err", err)
+			slog.WarnContext(ctx, "load from cache", "err", err, "key", key)
 		} else {
-			loggerWithTrace(ctx, key).Error("load from cache", "err", err)
+			slog.ErrorContext(ctx, "load from cache", "err", err, "key", key)
 		}
 	} else if value, ok, err := c.decode([]byte(content)); err != nil {
 		logUnmarshalError(ctx, key, err)
@@ -209,9 +209,5 @@ func (c *Cache[K, V]) extendTTL(ctx context.Context, keys ...string) {
 }
 
 func logUnmarshalError(ctx context.Context, key string, err error) {
-	loggerWithTrace(ctx, key).Error("unmarshal from cache", "err", err)
-}
-
-func loggerWithTrace(ctx context.Context, key string) *slog.Logger {
-	return telemetry.AddTraceToLogger(trace.SpanFromContext(ctx), slog.Default()).With("key", key)
+	slog.ErrorContext(ctx, "unmarshal from cache", "err", err, "key", key)
 }

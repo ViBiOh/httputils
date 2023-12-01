@@ -174,7 +174,7 @@ func (s *Service) Handler(templateFunc TemplateFunc) http.Handler {
 		}
 
 		if s.tpl == nil {
-			httperror.NotFound(w)
+			httperror.NotFound(r.Context(), w)
 
 			return
 		}
@@ -207,7 +207,7 @@ func (s *Service) handleStatic(w http.ResponseWriter, r *http.Request) bool {
 
 	defer func() {
 		if closeErr := file.Close(); closeErr != nil {
-			slog.Warn("close static file", "err", err)
+			slog.WarnContext(r.Context(), "close static file", "err", err)
 		}
 	}()
 

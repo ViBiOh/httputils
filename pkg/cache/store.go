@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
@@ -52,7 +53,7 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 
 		payload, err := c.serializer.Encode(values[index])
 		if err != nil {
-			loggerWithTrace(ctx, key).Error("encoding", "err", err)
+			slog.ErrorContext(ctx, "encoding", "err", err, "key", key)
 
 			continue
 		}

@@ -23,9 +23,11 @@ import (
 var content embed.FS
 
 func main() {
+	ctx := context.Background()
+
 	config, err := newConfig()
 	if err != nil {
-		slog.Error("config", "err", err)
+		slog.ErrorContext(ctx, "config", "err", err)
 		os.Exit(1)
 	}
 
@@ -35,11 +37,9 @@ func main() {
 		fmt.Println(http.ListenAndServe("localhost:9999", http.DefaultServeMux))
 	}()
 
-	ctx := context.Background()
-
 	client, err := newClient(ctx, config)
 	if err != nil {
-		slog.Error("client", "err", err)
+		slog.ErrorContext(ctx, "client", "err", err)
 		os.Exit(1)
 	}
 
@@ -49,7 +49,7 @@ func main() {
 
 	adapter, err := newAdapter(ctxEnd, config, client)
 	if err != nil {
-		slog.Error("adapter", "err", err)
+		slog.ErrorContext(ctx, "adapter", "err", err)
 		os.Exit(1)
 	}
 

@@ -17,17 +17,17 @@ func Middleware(next http.Handler) http.Handler {
 		return next
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
 				output := make([]byte, OutputSize)
 				written := runtime.Stack(output, false)
 
-				httperror.InternalServerError(w, fmt.Errorf("recovered from panic: %s\n%s", r, output[:written]))
+				httperror.InternalServerError(req.Context(), w, fmt.Errorf("recovered from panic: %s\n%s", r, output[:written]))
 			}
 		}()
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, req)
 	})
 }
 

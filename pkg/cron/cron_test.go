@@ -362,7 +362,7 @@ func TestHasError(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
-			if result := testCase.cron.hasError(); result != testCase.want {
+			if result := testCase.cron.hasError(context.Background()); result != testCase.want {
 				t.Errorf("hasError() = %t, want %t", result, testCase.want)
 			}
 		})
@@ -376,7 +376,7 @@ func TestStart(t *testing.T) {
 		cron    *Cron
 		clock   GetNow
 		action  func(*sync.WaitGroup, *Cron) func(context.Context) error
-		onError func(*sync.WaitGroup, *Cron) func(error)
+		onError func(*sync.WaitGroup, *Cron) func(context.Context, error)
 	}{
 		"run once": {
 			New().Days().At("12:00"),
@@ -388,8 +388,8 @@ func TestStart(t *testing.T) {
 					return nil
 				}
 			},
-			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
-				return func(err error) {
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context, err error) {
+				return func(_ context.Context, err error) {
 					t.Error(errors.New("should not be there"))
 				}
 			},
@@ -411,8 +411,8 @@ func TestStart(t *testing.T) {
 					return nil
 				}
 			},
-			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
-				return func(err error) {}
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context, err error) {
+				return func(_ context.Context, err error) {}
 			},
 		},
 		"run on demand": {
@@ -427,8 +427,8 @@ func TestStart(t *testing.T) {
 					return nil
 				}
 			},
-			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
-				return func(err error) {
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context, err error) {
+				return func(_ context.Context, err error) {
 					t.Error(fmt.Errorf("should not be there: %w", err))
 				}
 			},
@@ -455,8 +455,8 @@ func TestStart(t *testing.T) {
 					return nil
 				}
 			},
-			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
-				return func(err error) {
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context, err error) {
+				return func(_ context.Context, err error) {
 					t.Error(fmt.Errorf("should not be there: %w", err))
 				}
 			},
@@ -471,8 +471,8 @@ func TestStart(t *testing.T) {
 					return nil
 				}
 			},
-			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
-				return func(err error) {
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context, err error) {
+				return func(_ context.Context, err error) {
 					wg.Done()
 				}
 			},
@@ -489,8 +489,8 @@ func TestStart(t *testing.T) {
 					return nil
 				}
 			},
-			func(wg *sync.WaitGroup, cron *Cron) func(err error) {
-				return func(err error) {
+			func(wg *sync.WaitGroup, cron *Cron) func(_ context.Context, err error) {
+				return func(_ context.Context, err error) {
 					wg.Done()
 				}
 			},

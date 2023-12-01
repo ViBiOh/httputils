@@ -151,13 +151,13 @@ func (s Service) Middleware(name string) func(next http.Handler) http.Handler {
 func (s Service) Close(ctx context.Context) {
 	if s.tracerProvider != nil {
 		if err := s.tracerProvider.Shutdown(ctx); err != nil {
-			slog.Error("shutdown trace provider", "err", err)
+			slog.ErrorContext(ctx, "shutdown trace provider", "err", err)
 		}
 	}
 
 	if s.meterProvider != nil {
 		if err := s.meterProvider.Shutdown(ctx); err != nil {
-			slog.Error("shutdown meter provider", "err", err)
+			slog.ErrorContext(ctx, "shutdown meter provider", "err", err)
 		}
 	}
 }

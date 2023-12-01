@@ -126,21 +126,21 @@ func (s *Service) Start(ctx context.Context) {
 		return queueName, err
 	}, s.exchange, s.routingKey)
 	if err != nil {
-		log.Error("listen", "err", err)
+		log.ErrorContext(ctx, "listen", "err", err)
 
 		return
 	}
 
 	log = log.With("name", consumerName)
 
-	log.Info("Start listening messages")
-	defer log.Info("End listening messages")
+	log.InfoContext(ctx, "Start listening messages")
+	defer log.InfoContext(ctx, "End listening messages")
 
 	concurrent.ChanUntilDone(ctx, messages, func(message amqp.Delivery) {
 		s.handleMessage(ctx, log, message)
 	}, func() {
 		if err := s.amqpClient.StopListener(consumerName); err != nil {
-			log.Error("stopping listener", "err", err)
+			log.ErrorContext(ctx, "stopping listener", "err", err)
 		}
 	})
 }
@@ -162,13 +162,13 @@ func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 			attribute.String("routingKey", s.routingKey),
 		))
 		if err = message.Ack(false); err != nil {
-			log.Error("ack message", "err", err)
+			log.ErrorContext(ctx, "ack message", "err", err)
 		}
 
 		return
 	}
 
-	log.Error("handle message", "err", err, "body", string(message.Body))
+	log.ErrorContext(ctx, "handle message", "err", err, "body", string(message.Body))
 
 	if s.retryInterval > 0 && s.maxRetry > 0 {
 		s.counter.Add(ctx, 1, metric.WithAttributes(
@@ -181,7 +181,7 @@ func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 			return
 		}
 
-		log.Error("retry message", "err", err)
+		log.ErrorContext(ctx, "retry message", "err", err)
 	}
 
 	if err = message.Ack(false); err != nil {
@@ -191,7 +191,7 @@ func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 			attribute.String("routingKey", s.routingKey),
 		))
 
-		log.Error("ack message to trash it", "err", err)
+		log.ErrorContext(ctx, "ack message to trash it", "err", err)
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 )
 
 type Config struct {
@@ -70,4 +71,8 @@ func configureLogger(writer io.Writer, level slog.Level, json bool, timeKey, lev
 	}
 
 	slog.SetDefault(slog.New(handler))
+}
+
+func AddOpenTelemetryToDefaultLogger() {
+	slog.SetDefault(slog.New(telemetry.AddOpenTelemetryToLogHandler(slog.Default().Handler())))
 }

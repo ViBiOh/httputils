@@ -1,6 +1,7 @@
 package httperror
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -33,7 +34,7 @@ func TestBadRequest(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			BadRequest(writer, testCase.err)
+			BadRequest(context.Background(), writer, testCase.err)
 
 			if result := writer.Code; result != testCase.wantStatus {
 				t.Errorf("BadRequest() = %d, want status %d", result, testCase.wantStatus)
@@ -68,7 +69,7 @@ func TestUnauthorized(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			Unauthorized(writer, testCase.err)
+			Unauthorized(context.Background(), writer, testCase.err)
 
 			if result := writer.Code; result != testCase.wantStatus {
 				t.Errorf("Unauthorized() = %d, want status %d", result, testCase.wantStatus)
@@ -101,7 +102,7 @@ func TestForbidden(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			Forbidden(writer)
+			Forbidden(context.Background(), writer)
 
 			if result := writer.Code; result != testCase.wantStatus {
 				t.Errorf("Forbidden() = %d, want status %d", result, testCase.wantStatus)
@@ -134,7 +135,7 @@ func TestNotFound(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			NotFound(writer)
+			NotFound(context.Background(), writer)
 
 			if result := writer.Code; result != testCase.wantStatus {
 				t.Errorf("NotFound() = %d, want status %d", result, testCase.wantStatus)
@@ -169,7 +170,7 @@ func TestInternalServerError(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			InternalServerError(writer, testCase.err)
+			InternalServerError(context.Background(), writer, testCase.err)
 
 			if result := writer.Code; result != testCase.wantStatus {
 				t.Errorf("InternalServerError() = %d, want status %d", result, testCase.wantStatus)
@@ -243,7 +244,7 @@ func TestHandleError(t *testing.T) {
 
 			writer := httptest.NewRecorder()
 
-			if got := HandleError(writer, testCase.err); got != testCase.want {
+			if got := HandleError(context.Background(), writer, testCase.err); got != testCase.want {
 				t.Errorf("HandleError = %t, want %t", got, testCase.want)
 			}
 

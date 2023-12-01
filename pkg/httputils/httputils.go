@@ -42,7 +42,7 @@ func versionHandler() http.Handler {
 		}
 
 		if _, err := w.Write(version); err != nil {
-			slog.Error("write", "err", err)
+			slog.ErrorContext(r.Context(), "write", "err", err)
 		}
 	})
 }
