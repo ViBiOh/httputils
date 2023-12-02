@@ -179,8 +179,6 @@ func newMetricExporter(ctx context.Context, endpoint string) (metric.Exporter, e
 func newResource(ctx context.Context) (*resource.Resource, error) {
 	newResource, err := resource.New(ctx,
 		resource.WithFromEnv(),
-		resource.WithHost(),
-		resource.WithOS(),
 		resource.WithAttributes(attribute.String("version", model.Version())),
 	)
 	if err != nil {
