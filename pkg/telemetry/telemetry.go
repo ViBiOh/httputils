@@ -182,7 +182,10 @@ func newMetricExporter(ctx context.Context, endpoint string) (metric.Exporter, e
 func newResource(ctx context.Context) (*resource.Resource, error) {
 	newResource, err := resource.New(ctx,
 		resource.WithFromEnv(),
-		resource.WithAttributes(attribute.String("version", model.Version())),
+		resource.WithAttributes(
+			attribute.String("version", model.Version()),
+			attribute.String("language", "golang"),
+		),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create resource: %w", err)
