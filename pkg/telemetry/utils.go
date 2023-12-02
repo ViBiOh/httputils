@@ -2,7 +2,6 @@ package telemetry
 
 import (
 	"context"
-	"log/slog"
 	"net/http"
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
@@ -10,7 +9,6 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	meter "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/trace"
 	tr "go.opentelemetry.io/otel/trace"
 )
 
@@ -34,28 +32,6 @@ func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.Sp
 
 		span.End(options...)
 	}
-}
-
-type OtlpLogger struct {
-	slog.Handler
-}
-
-func AddOpenTelemetryToLogHandler(handler slog.Handler) slog.Handler {
-	return OtlpLogger{handler}
-}
-
-func (tl OtlpLogger) Handle(ctx context.Context, r slog.Record) error {
-	spanCtx := trace.SpanContextFromContext(ctx)
-
-	if spanCtx.HasTraceID() {
-		r.AddAttrs(slog.String("trace_id", spanCtx.TraceID().String()))
-	}
-
-	if spanCtx.HasSpanID() {
-		r.AddAttrs(slog.String("span_id", spanCtx.SpanID().String()))
-	}
-
-	return tl.Handler.Handle(ctx, r)
 }
 
 func AddOpenTelemetryToClient(httpClient *http.Client, meterProvider meter.MeterProvider, tracerProvider tr.TracerProvider) *http.Client {

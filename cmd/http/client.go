@@ -16,9 +16,9 @@ import (
 
 type client struct {
 	redis     redis.Client
-	telemetry telemetry.Service
 	amqp      *amqp.Client
 	health    *health.Service
+	telemetry telemetry.Service
 }
 
 const closeTimeout = time.Second * 10
@@ -34,7 +34,7 @@ func newClient(ctx context.Context, config configuration) (client, error) {
 		return output, fmt.Errorf("telemetry: %w", err)
 	}
 
-	logger.AddOpenTelemetryToDefaultLogger()
+	logger.AddOpenTelemetryToDefaultLogger(output.telemetry)
 	request.AddOpenTelemetryToDefaultClient(output.telemetry.MeterProvider(), output.telemetry.TracerProvider())
 
 	output.health = health.New(ctx, config.health)

@@ -73,6 +73,6 @@ func configureLogger(writer io.Writer, level slog.Level, json bool, timeKey, lev
 	slog.SetDefault(slog.New(handler))
 }
 
-func AddOpenTelemetryToDefaultLogger() {
-	slog.SetDefault(slog.New(telemetry.AddOpenTelemetryToLogHandler(slog.Default().Handler())))
+func AddOpenTelemetryToDefaultLogger(telemetryApp telemetry.Service) {
+	slog.SetDefault(slog.New(telemetryApp.AddTraceToLogHandler(slog.Default().Handler())))
 }

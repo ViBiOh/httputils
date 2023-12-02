@@ -51,6 +51,8 @@ func newPort(ctx context.Context, config configuration, client client, adapter a
 			}()
 		}
 
+		slog.InfoContext(r.Context(), "coucou")
+
 		return renderer.NewPage("public", http.StatusOK, nil), nil
 	}
 
