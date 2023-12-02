@@ -184,7 +184,7 @@ func newResource(ctx context.Context) (*resource.Resource, error) {
 		resource.WithFromEnv(),
 		resource.WithAttributes(
 			attribute.String("version", model.Version()),
-			attribute.String("language", "golang"),
+			attribute.String("language", "go"),
 		),
 	)
 	if err != nil {
