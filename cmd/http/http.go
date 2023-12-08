@@ -27,7 +27,7 @@ func main() {
 
 	config, err := newConfig()
 	if err != nil {
-		slog.ErrorContext(ctx, "config", "err", err)
+		slog.ErrorContext(ctx, "config", "error", err)
 		os.Exit(1)
 	}
 
@@ -39,7 +39,7 @@ func main() {
 
 	client, err := newClient(ctx, config)
 	if err != nil {
-		slog.ErrorContext(ctx, "client", "err", err)
+		slog.ErrorContext(ctx, "client", "error", err)
 		os.Exit(1)
 	}
 
@@ -49,7 +49,7 @@ func main() {
 
 	adapter, err := newAdapter(ctxEnd, config, client)
 	if err != nil {
-		slog.ErrorContext(ctx, "adapter", "err", err)
+		slog.ErrorContext(ctx, "adapter", "error", err)
 		os.Exit(1)
 	}
 

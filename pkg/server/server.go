@@ -107,7 +107,7 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 	}
 
 	if !errors.Is(err, http.ErrServerClosed) {
-		s.logger.ErrorContext(ctx, "Server error", "err", err)
+		s.logger.ErrorContext(ctx, "Server error", "error", err)
 	}
 }
 
@@ -117,6 +117,6 @@ func (s *Server) Stop(ctx context.Context) {
 
 	s.logger.InfoContext(ctx, "Server is shutting down")
 	if err := s.server.Shutdown(ctx); err != nil {
-		s.logger.ErrorContext(ctx, "shutdown server", "err", err)
+		s.logger.ErrorContext(ctx, "shutdown server", "error", err)
 	}
 }

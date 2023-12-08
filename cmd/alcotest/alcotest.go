@@ -16,7 +16,7 @@ func main() {
 	alcotestConfig := alcotest.Flags(fs, "")
 
 	if err := fs.Parse(os.Args[1:]); err != nil {
-		slog.Error("parse flag", "err", err)
+		slog.Error("parse flag", "error", err)
 		os.Exit(1)
 	}
 

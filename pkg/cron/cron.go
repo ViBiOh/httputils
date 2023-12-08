@@ -53,7 +53,7 @@ func New() *Cron {
 		now:     make(chan time.Time, 1),
 		clock:   time.Now,
 		onError: func(ctx context.Context, err error) {
-			slog.ErrorContext(ctx, "cron error", "err", err)
+			slog.ErrorContext(ctx, "cron error", "error", err)
 		},
 	}
 }

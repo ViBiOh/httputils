@@ -56,7 +56,7 @@ func (s Service) render(w http.ResponseWriter, r *http.Request, templateFunc Tem
 		if exception := recover(); exception != nil {
 			output := make([]byte, 1024)
 			runtime.Stack(output, false)
-			slog.ErrorContext(r.Context(), "recovered from panic", "err", exception, "stacktrace", string(output))
+			slog.ErrorContext(r.Context(), "recovered from panic", "error", exception, "stacktrace", string(output))
 
 			s.Error(w, r, nil, fmt.Errorf("recovered from panic: %s", exception))
 		}

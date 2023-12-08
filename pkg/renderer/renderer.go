@@ -207,7 +207,7 @@ func (s *Service) handleStatic(w http.ResponseWriter, r *http.Request) bool {
 
 	defer func() {
 		if closeErr := file.Close(); closeErr != nil {
-			slog.WarnContext(r.Context(), "close static file", "err", err)
+			slog.WarnContext(r.Context(), "close static file", "error", err)
 		}
 	}()
 

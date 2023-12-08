@@ -95,9 +95,9 @@ reconnect:
 	log := slog.With("name", listener.name)
 
 	if queueName, err := queueResolver(); err != nil {
-		log.Error("get queue name on reopen", "err", err)
+		log.Error("get queue name on reopen", "error", err)
 	} else if messages, err := c.listen(listener, queueName); err != nil {
-		log.Error("reopen listener", "err", err)
+		log.Error("reopen listener", "error", err)
 	} else {
 		log.Info("Listen restarted")
 		input = messages

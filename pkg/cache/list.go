@@ -64,7 +64,7 @@ func (c *Cache[K, V]) fetchAll(ctx context.Context, ids []K) ([]V, error) {
 		wg.Go(func() {
 			value, err := c.fetch(ctx, id)
 			if err != nil {
-				slog.ErrorContext(ctx, "fetch id", "err", err, "id", id)
+				slog.ErrorContext(ctx, "fetch id", "error", err, "id", id)
 			}
 
 			output[index] = value
@@ -164,9 +164,9 @@ func (c *Cache[K, V]) redisValues(ctx context.Context, ids []K) ([]string, []str
 	values, err := c.read.LoadMany(loadCtx, keys...)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
-			slog.WarnContext(ctx, "load many from cache", "err", err, "key", strconv.Itoa(len(keys)))
+			slog.WarnContext(ctx, "load many from cache", "error", err, "key", strconv.Itoa(len(keys)))
 		} else {
-			slog.ErrorContext(ctx, "load many from cache", "err", err, "key", strconv.Itoa(len(keys)))
+			slog.ErrorContext(ctx, "load many from cache", "error", err, "key", strconv.Itoa(len(keys)))
 		}
 
 		values = make([]string, len(ids))

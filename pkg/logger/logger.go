@@ -59,6 +59,11 @@ func configureLogger(writer io.Writer, level slog.Level, json bool, timeKey, lev
 				a.Key = timeKey
 			}
 
+			switch obj := a.Value.Any().(type) {
+			case error:
+				a.Value = slog.AnyValue(ErrorField(obj))
+			}
+
 			return a
 		},
 	}

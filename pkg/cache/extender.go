@@ -82,6 +82,6 @@ func (te *TTLExtender) flush(ctx context.Context) {
 	te.mutex.Unlock()
 
 	if err := te.redis.Expire(ctx, te.ttl, keys...); err != nil {
-		slog.ErrorContext(ctx, "extend keys", "err", err)
+		slog.ErrorContext(ctx, "extend keys", "error", err)
 	}
 }

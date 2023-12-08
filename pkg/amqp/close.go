@@ -18,11 +18,11 @@ func (c *Client) Close() {
 	var err error
 
 	if err = c.cancelListeners(); err != nil {
-		slog.Error("cancel listeners", "err", err)
+		slog.Error("cancel listeners", "error", err)
 	}
 
 	if err = c.closeListeners(); err != nil {
-		slog.Error("close listeners", "err", err)
+		slog.Error("close listeners", "error", err)
 	}
 
 	c.closeChannel()
@@ -76,7 +76,7 @@ func (c *Client) reconnectListeners() {
 			defer c.mutex.Unlock()
 
 			if err := listener.createChannel(c.connection); err != nil {
-				slog.Error("recreate channel", "err", err, "name", listener.name)
+				slog.Error("recreate channel", "error", err, "name", listener.name)
 			}
 
 			listener.reconnect <- true
@@ -114,6 +114,6 @@ func (c *Client) closeConnection() {
 
 func loggedClose(closer io.Closer) {
 	if err := closer.Close(); err != nil {
-		slog.Error("close", "err", err)
+		slog.Error("close", "error", err)
 	}
 }

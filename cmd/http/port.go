@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -46,12 +47,12 @@ func newPort(ctx context.Context, config configuration, client client, adapter a
 			go func() {
 				time.Sleep(time.Millisecond * 100)
 				if err = adapter.hello.EvictOnSuccess(cntxt.WithoutDeadline(ctx), r.URL.Path, nil); err != nil {
-					slog.ErrorContext(r.Context(), "evict on success", "err", err)
+					slog.ErrorContext(r.Context(), "evict on success", "error", err)
 				}
 			}()
 		}
 
-		slog.InfoContext(r.Context(), "coucou")
+		slog.InfoContext(r.Context(), "Hello World", "error", errors.New("coucou"))
 
 		return renderer.NewPage("public", http.StatusOK, nil), nil
 	}

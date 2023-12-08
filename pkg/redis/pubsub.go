@@ -38,11 +38,11 @@ func (s Service) Subscribe(ctx context.Context, channel string) (<-chan *redis.M
 
 	return pubsub.Channel(), func(ctx context.Context) {
 		if err := pubsub.Unsubscribe(ctx, channel); err != nil {
-			slog.ErrorContext(ctx, "unsubscribe pubsub", "err", err, "channel", channel)
+			slog.ErrorContext(ctx, "unsubscribe pubsub", "error", err, "channel", channel)
 		}
 
 		if err := pubsub.Close(); err != nil {
-			slog.ErrorContext(ctx, "close pubsub", "err", err, "channel", channel)
+			slog.ErrorContext(ctx, "close pubsub", "error", err, "channel", channel)
 		}
 	}
 }

@@ -126,7 +126,7 @@ func (s *Service) Start(ctx context.Context) {
 		return queueName, err
 	}, s.exchange, s.routingKey)
 	if err != nil {
-		log.ErrorContext(ctx, "listen", "err", err)
+		log.ErrorContext(ctx, "listen", "error", err)
 
 		return
 	}
@@ -140,7 +140,7 @@ func (s *Service) Start(ctx context.Context) {
 		s.handleMessage(ctx, log, message)
 	}, func() {
 		if err := s.amqpClient.StopListener(consumerName); err != nil {
-			log.ErrorContext(ctx, "stopping listener", "err", err)
+			log.ErrorContext(ctx, "stopping listener", "error", err)
 		}
 	})
 }
@@ -162,13 +162,13 @@ func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 			attribute.String("routingKey", s.routingKey),
 		))
 		if err = message.Ack(false); err != nil {
-			log.ErrorContext(ctx, "ack message", "err", err)
+			log.ErrorContext(ctx, "ack message", "error", err)
 		}
 
 		return
 	}
 
-	log.ErrorContext(ctx, "handle message", "err", err, "body", string(message.Body))
+	log.ErrorContext(ctx, "handle message", "error", err, "body", string(message.Body))
 
 	if s.retryInterval > 0 && s.maxRetry > 0 {
 		s.counter.Add(ctx, 1, metric.WithAttributes(
@@ -181,7 +181,7 @@ func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 			return
 		}
 
-		log.ErrorContext(ctx, "retry message", "err", err)
+		log.ErrorContext(ctx, "retry message", "error", err)
 	}
 
 	if err = message.Ack(false); err != nil {
@@ -191,7 +191,7 @@ func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 			attribute.String("routingKey", s.routingKey),
 		))
 
-		log.ErrorContext(ctx, "ack message to trash it", "err", err)
+		log.ErrorContext(ctx, "ack message to trash it", "error", err)
 	}
 }
 
@@ -215,7 +215,7 @@ func (s *Service) configure(init bool) (string, error) {
 func generateIdentityName() string {
 	raw := make([]byte, 4)
 	if _, err := rand.Read(raw); err != nil {
-		slog.Error("generate identity name", "err", err)
+		slog.Error("generate identity name", "error", err)
 
 		return "error"
 	}
