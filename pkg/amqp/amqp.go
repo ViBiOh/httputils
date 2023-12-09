@@ -130,7 +130,7 @@ func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange,
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
-	if err = c.channel.PublishWithContext(ctx, exchange, routingKey, false, false, payload); err != nil {
+	if err = c.channel.PublishWithContext(ctx, exchange, routingKey, false, false, telemetry.AddToAmqp(ctx, payload)); err != nil {
 		c.increase(ctx, "error", exchange, routingKey)
 
 		return

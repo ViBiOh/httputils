@@ -3,6 +3,7 @@ package telemetry
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -46,4 +47,21 @@ func AddOpenTelemetryToClient(httpClient *http.Client, meterProvider meter.Meter
 	)
 
 	return httpClient
+}
+
+func uint64TraceId(id string) string {
+	if len(id) < 16 {
+		return ""
+	}
+
+	if len(id) > 16 {
+		id = id[16:]
+	}
+
+	intValue, err := strconv.ParseUint(id, 16, 64)
+	if err != nil {
+		return ""
+	}
+
+	return strconv.FormatUint(intValue, 10)
 }
