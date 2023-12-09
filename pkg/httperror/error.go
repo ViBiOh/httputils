@@ -22,9 +22,9 @@ func httpError(ctx context.Context, w http.ResponseWriter, status int, payload s
 	}
 
 	if status >= http.StatusInternalServerError {
-		slog.ErrorContext(ctx, err.Error(), "status", status)
+		slog.ErrorContext(ctx, payload, "error", err, "status", status)
 	} else {
-		slog.WarnContext(ctx, err.Error(), "status", status)
+		slog.WarnContext(ctx, payload, "error", err, "status", status)
 	}
 }
 
