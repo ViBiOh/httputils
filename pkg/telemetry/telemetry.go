@@ -23,11 +23,13 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	tr "go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 )
 
 type Service struct {
+	resource       *resource.Resource
 	tracerProvider *trace.TracerProvider
 	meterProvider  *metric.MeterProvider
 	TraceUint64    bool
@@ -103,6 +105,7 @@ func New(ctx context.Context, config *Config) (Service, error) {
 	}
 
 	return Service{
+		resource:       otelResource,
 		tracerProvider: tracerProvider,
 		meterProvider:  meterProvider,
 	}, nil
@@ -183,8 +186,7 @@ func newResource(ctx context.Context) (*resource.Resource, error) {
 	newResource, err := resource.New(ctx,
 		resource.WithFromEnv(),
 		resource.WithAttributes(
-			attribute.String("version", model.Version()),
-			attribute.String("language", "go"),
+			semconv.ServiceVersion(model.Version()),
 		),
 	)
 	if err != nil {
