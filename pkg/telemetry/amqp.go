@@ -15,6 +15,10 @@ func AddToAmqp(ctx context.Context, payload amqp.Publishing) amqp.Publishing {
 		payload.Headers["trace_id"] = spanCtx.TraceID().String()
 	}
 
+	if spanCtx.HasSpanID() {
+		payload.Headers["span_id"] = spanCtx.SpanID().String()
+	}
+
 	return payload
 }
 
@@ -24,24 +28,50 @@ func FromAmqp(ctx context.Context, message amqp.Delivery) context.Context {
 		return ctx
 	}
 
-	idHex, ok := id.(string)
-	if !ok {
-		return ctx
-	}
-
-	traceID, err := trace.TraceIDFromHex(idHex)
-	if err != nil {
-		slog.Warn("parse trace id", "error", err, "trace_id", id)
-
-		return ctx
+	var spanID trace.SpanID
+	if otherID, ok := message.Headers["span_id"]; ok {
+		spanID = parseSpanID(otherID)
 	}
 
 	spanCtx := trace.NewSpanContext(
 		trace.SpanContextConfig{
-			TraceID: traceID,
+			TraceID: parseTraceID(id),
+			SpanID:  spanID,
 			Remote:  true,
 		},
 	)
 
 	return trace.ContextWithSpanContext(ctx, spanCtx)
+}
+
+func parseTraceID(input any) trace.TraceID {
+	idHex, ok := input.(string)
+	if !ok {
+		return trace.TraceID{}
+	}
+
+	traceID, err := trace.TraceIDFromHex(idHex)
+	if err != nil {
+		slog.Warn("parse trace id", "error", err, "trace_id", input)
+
+		return trace.TraceID{}
+	}
+
+	return traceID
+}
+
+func parseSpanID(input any) trace.SpanID {
+	idHex, ok := input.(string)
+	if !ok {
+		return trace.SpanID{}
+	}
+
+	spanID, err := trace.SpanIDFromHex(idHex)
+	if err != nil {
+		slog.Warn("parse trace id", "error", err, "span_id", input)
+
+		return trace.SpanID{}
+	}
+
+	return spanID
 }
