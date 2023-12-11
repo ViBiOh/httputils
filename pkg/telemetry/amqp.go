@@ -4,12 +4,17 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel/trace"
 )
 
 func AddToAmqp(ctx context.Context, payload amqp.Publishing) amqp.Publishing {
 	spanCtx := trace.SpanContextFromContext(ctx)
+
+	if model.IsNil(payload.Headers) {
+		payload.Headers = amqp.Table{}
+	}
 
 	if spanCtx.HasTraceID() {
 		payload.Headers["trace_id"] = spanCtx.TraceID().String()
