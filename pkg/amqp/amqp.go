@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel/attribute"
@@ -124,8 +125,10 @@ func initMetrics(provider metric.MeterProvider) (metric.Int64Counter, metric.Int
 }
 
 func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange, routingKey string) (err error) {
-	_, end := telemetry.StartSpan(ctx, c.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
+	ctx, end := telemetry.StartSpan(ctx, c.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
 	defer end(&err)
+
+	defer recoverer.Error(&err)
 
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
