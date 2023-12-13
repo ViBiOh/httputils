@@ -2,30 +2,62 @@ package telemetry
 
 import (
 	"context"
-	"log/slog"
 
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/propagation"
 )
 
-func AddToAmqp(ctx context.Context, payload amqp.Publishing) amqp.Publishing {
-	payload.Headers["otel_link"] = trace.LinkFromContext(ctx)
+var amqpPropagator = propagation.TraceContext{}
+
+type SimpleHeaderCarrier map[string]any
+
+func (shc SimpleHeaderCarrier) Get(key string) string {
+	raw, ok := shc[key]
+	if !ok {
+		return ""
+	}
+
+	value, ok := raw.(string)
+	if !ok {
+		return ""
+	}
+
+	return value
+}
+
+func (shc SimpleHeaderCarrier) Set(key string, value string) {
+	shc[key] = value
+}
+
+func (shc SimpleHeaderCarrier) Keys() []string {
+	keys := make([]string, len(shc))
+
+	index := 0
+	for k := range shc {
+		keys[index] = k
+		index++
+	}
+
+	return keys
+}
+
+func InjectToAmqp(ctx context.Context, payload amqp.Publishing) amqp.Publishing {
+	headers := SimpleHeaderCarrier{}
+
+	amqpPropagator.Inject(ctx, headers)
+
+	if model.IsNil(payload.Headers) {
+		payload.Headers = amqp.Table{}
+	}
+
+	for key, value := range headers {
+		payload.Headers[key] = value
+	}
 
 	return payload
 }
 
-func GetAmqpLink(ctx context.Context, message amqp.Delivery) trace.SpanStartOption {
-	rawLink, ok := message.Headers["otel_link"]
-	if !ok {
-		return nil
-	}
-
-	link, ok := rawLink.(trace.Link)
-	if !ok {
-		slog.Warn("link is not in expected format")
-
-		return nil
-	}
-
-	return trace.WithLinks(link)
+func ExtractContext(ctx context.Context, headers map[string]any) context.Context {
+	return amqpPropagator.Extract(ctx, SimpleHeaderCarrier(headers))
 }

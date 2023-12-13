@@ -137,7 +137,7 @@ func (s *Service) Start(ctx context.Context) {
 	defer log.InfoContext(ctx, "End listening messages")
 
 	concurrent.ChanUntilDone(ctx, messages, func(message amqp.Delivery) {
-		s.handleMessage(ctx, log, message)
+		s.handleMessage(telemetry.ExtractContext(ctx, message.Headers), log, message)
 	}, func() {
 		if err := s.amqpClient.StopListener(consumerName); err != nil {
 			log.ErrorContext(ctx, "stopping listener", "error", err)
@@ -148,7 +148,7 @@ func (s *Service) Start(ctx context.Context) {
 func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message amqp.Delivery) {
 	var err error
 
-	ctx, end := telemetry.StartSpan(ctx, s.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer), telemetry.GetAmqpLink(ctx, message))
+	ctx, end := telemetry.StartSpan(ctx, s.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer))
 	defer end(&err)
 
 	defer recoverer.Error(&err)
