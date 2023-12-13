@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -43,6 +43,10 @@ func newPort(ctx context.Context, config configuration, client client, adapter a
 			return renderer.Page{}, err
 		}
 
+		if err := client.amqp.PublishJSON(ctx, r.URL.Path, config.amqHandler.Exchange, ""); err != nil {
+			return renderer.Page{}, fmt.Errorf("amqp publish: %w", err)
+		}
+
 		if len(r.URL.Query().Get("evict")) > 0 {
 			go func() {
 				time.Sleep(time.Millisecond * 100)
@@ -52,7 +56,7 @@ func newPort(ctx context.Context, config configuration, client client, adapter a
 			}()
 		}
 
-		slog.InfoContext(r.Context(), "Hello World", "error", errors.New("coucou"))
+		slog.InfoContext(r.Context(), "Hello World")
 
 		return renderer.NewPage("public", http.StatusOK, nil), nil
 	}

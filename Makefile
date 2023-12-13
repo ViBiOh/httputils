@@ -108,7 +108,7 @@ run:
 ## sidecars: Start the sidecar needed to run
 .PHONY: sidecars
 sidecars:
-	docker run --detach --name "httputils-rabbit" --rm --publish "127.0.0.1:5672:5672" --publish "127.0.0.1:15672:15672" "rabbitmq:management"
+	docker run --detach --name "httputils-rabbit" --publish "127.0.0.1:5672:5672" --publish "127.0.0.1:15672:15672" "rabbitmq:management"
 	docker run --detach --name "httputils-redis" --publish "127.0.0.1:6379:6379" "redis"
 
 ## sidecars-off: stop the sidecar needed to run
