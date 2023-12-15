@@ -28,6 +28,8 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 )
 
+var propagator propagation.TraceContext
+
 type Service struct {
 	resource       *resource.Resource
 	tracerProvider *trace.TracerProvider
@@ -148,7 +150,7 @@ func (s Service) Middleware(name string) func(next http.Handler) http.Handler {
 
 		return otelhttp.NewHandler(next, name,
 			otelhttp.WithTracerProvider(s.TracerProvider()),
-			otelhttp.WithPropagators(propagation.TraceContext{}),
+			otelhttp.WithPropagators(propagator),
 			otelhttp.WithMeterProvider(s.MeterProvider()),
 		)
 	}
@@ -187,6 +189,7 @@ func newResource(ctx context.Context) (*resource.Resource, error) {
 		resource.WithFromEnv(),
 		resource.WithAttributes(
 			semconv.ServiceVersion(model.Version()),
+			attribute.String("git.commit.sha", model.GitSha()),
 		),
 	)
 	if err != nil {

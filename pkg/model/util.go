@@ -25,3 +25,11 @@ func Version() string {
 
 	return "development"
 }
+
+func GitSha() string {
+	if version := os.Getenv("GIT_SHA"); len(version) != 0 {
+		return version
+	}
+
+	return "HEAD"
+}

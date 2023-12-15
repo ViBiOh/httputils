@@ -5,10 +5,7 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"go.opentelemetry.io/otel/propagation"
 )
-
-var amqpPropagator = propagation.TraceContext{}
 
 type SimpleHeaderCarrier map[string]any
 
@@ -45,7 +42,7 @@ func (shc SimpleHeaderCarrier) Keys() []string {
 func InjectToAmqp(ctx context.Context, payload amqp.Publishing) amqp.Publishing {
 	headers := SimpleHeaderCarrier{}
 
-	amqpPropagator.Inject(ctx, headers)
+	propagator.Inject(ctx, headers)
 
 	if model.IsNil(payload.Headers) {
 		payload.Headers = amqp.Table{}
@@ -59,5 +56,5 @@ func InjectToAmqp(ctx context.Context, payload amqp.Publishing) amqp.Publishing 
 }
 
 func ExtractContext(ctx context.Context, headers map[string]any) context.Context {
-	return amqpPropagator.Extract(ctx, SimpleHeaderCarrier(headers))
+	return propagator.Extract(ctx, SimpleHeaderCarrier(headers))
 }
