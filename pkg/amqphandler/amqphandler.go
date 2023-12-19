@@ -23,27 +23,29 @@ import (
 type Handler func(context.Context, amqp.Delivery) error
 
 type Service struct {
-	amqpClient    *amqpclient.Client
-	tracer        trace.Tracer
-	done          chan struct{}
-	handler       Handler
-	counter       metric.Int64Counter
-	exchange      string
-	delayExchange string
-	queue         string
-	routingKey    string
-	maxRetry      int64
-	retryInterval time.Duration
-	exclusive     bool
+	amqpClient      *amqpclient.Client
+	tracer          trace.Tracer
+	done            chan struct{}
+	handler         Handler
+	counter         metric.Int64Counter
+	exchange        string
+	delayExchange   string
+	queue           string
+	routingKey      string
+	maxRetry        int64
+	retryInterval   time.Duration
+	inactiveTimeout time.Duration
+	exclusive       bool
 }
 
 type Config struct {
-	Exchange      string
-	Queue         string
-	RoutingKey    string
-	RetryInterval time.Duration
-	MaxRetry      uint
-	Exclusive     bool
+	Exchange        string
+	Queue           string
+	RoutingKey      string
+	RetryInterval   time.Duration
+	InactiveTimeout time.Duration
+	MaxRetry        uint
+	Exclusive       bool
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
@@ -55,21 +57,23 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	flags.New("RoutingKey", "RoutingKey name").Prefix(prefix).DocPrefix("amqp").StringVar(fs, &config.RoutingKey, "", overrides)
 	flags.New("RetryInterval", "Interval duration when send fails").Prefix(prefix).DocPrefix("amqp").DurationVar(fs, &config.RetryInterval, time.Hour, overrides)
 	flags.New("MaxRetry", "Max send retries").Prefix(prefix).DocPrefix("amqp").UintVar(fs, &config.MaxRetry, 3, overrides)
+	flags.New("InactiveTimeout", "When inactive during the given timeout, stop listening").Prefix(prefix).DocPrefix("amqp").DurationVar(fs, &config.InactiveTimeout, 0, overrides)
 
 	return &config
 }
 
 func New(config *Config, amqpClient *amqpclient.Client, metricProvider metric.MeterProvider, tracerProvider trace.TracerProvider, handler Handler) (*Service, error) {
 	service := &Service{
-		amqpClient:    amqpClient,
-		exchange:      config.Exchange,
-		queue:         config.Queue,
-		exclusive:     config.Exclusive,
-		routingKey:    config.RoutingKey,
-		retryInterval: config.RetryInterval,
-		done:          make(chan struct{}),
-		handler:       handler,
-		maxRetry:      int64(config.MaxRetry),
+		amqpClient:      amqpClient,
+		exchange:        config.Exchange,
+		queue:           config.Queue,
+		exclusive:       config.Exclusive,
+		routingKey:      config.RoutingKey,
+		retryInterval:   config.RetryInterval,
+		inactiveTimeout: config.InactiveTimeout,
+		done:            make(chan struct{}),
+		handler:         handler,
+		maxRetry:        int64(config.MaxRetry),
 	}
 
 	if service.amqpClient == nil {
@@ -136,7 +140,28 @@ func (s *Service) Start(ctx context.Context) {
 	log.InfoContext(ctx, "Start listening messages")
 	defer log.InfoContext(ctx, "End listening messages")
 
+	var ticker *time.Ticker
+	if s.inactiveTimeout != 0 {
+		ticker = time.NewTicker(s.inactiveTimeout)
+
+		tickerCtx, cancel := context.WithCancel(ctx)
+		go func(ctx context.Context) {
+			defer cancel()
+
+			select {
+			case <-ctx.Done():
+			case <-ticker.C:
+			}
+		}(tickerCtx)
+
+		ctx = tickerCtx
+	}
+
 	concurrent.ChanUntilDone(ctx, messages, func(message amqp.Delivery) {
+		if ticker != nil {
+			ticker.Reset(s.inactiveTimeout)
+		}
+
 		s.handleMessage(telemetry.ExtractContext(ctx, message.Headers), log, message)
 	}, func() {
 		if err := s.amqpClient.StopListener(consumerName); err != nil {
