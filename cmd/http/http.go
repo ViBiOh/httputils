@@ -4,9 +4,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"log/slog"
 	"net/http"
-	"os"
 	"syscall"
 
 	_ "net/http/pprof"
@@ -14,6 +12,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
 	"github.com/ViBiOh/httputils/v4/pkg/cors"
 	"github.com/ViBiOh/httputils/v4/pkg/httputils"
+	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
@@ -26,10 +25,7 @@ func main() {
 	ctx := context.Background()
 
 	config, err := newConfig()
-	if err != nil {
-		slog.ErrorContext(ctx, "config", "error", err)
-		os.Exit(1)
-	}
+	logger.FatalfOnErr(ctx, err, "config")
 
 	alcotest.DoAndExit(config.alcotest)
 
@@ -38,20 +34,14 @@ func main() {
 	}()
 
 	client, err := newClient(ctx, config)
-	if err != nil {
-		slog.ErrorContext(ctx, "client", "error", err)
-		os.Exit(1)
-	}
+	logger.FatalfOnErr(ctx, err, "client")
 
 	defer client.Close(ctx)
 
 	ctxEnd := client.health.EndCtx()
 
 	adapter, err := newAdapter(ctxEnd, config, client)
-	if err != nil {
-		slog.ErrorContext(ctx, "adapter", "error", err)
-		os.Exit(1)
-	}
+	logger.FatalfOnErr(ctx, err, "adapter")
 
 	startBackground(ctxEnd, config, client, adapter)
 

@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"flag"
 	"io"
 	"log/slog"
@@ -76,6 +77,15 @@ func configureLogger(writer io.Writer, level slog.Level, json bool, timeKey, lev
 	}
 
 	slog.SetDefault(slog.New(handler))
+}
+
+func FatalfOnErr(ctx context.Context, err error, msg string, args ...any) {
+	if err == nil {
+		return
+	}
+
+	slog.ErrorContext(ctx, msg, append([]any{"error", err}, args...)...)
+	os.Exit(1)
 }
 
 func AddOpenTelemetryToDefaultLogger(telemetryApp telemetry.Service) {
