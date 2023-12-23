@@ -5,6 +5,7 @@
 //
 //	mockgen -destination pkg/mocks/pgx.go -package mocks -mock_names Tx=Tx,Row=Row,Rows=Rows github.com/jackc/pgx/v5 Tx,Row,Rows
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 

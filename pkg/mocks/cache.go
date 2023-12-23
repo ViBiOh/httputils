@@ -5,6 +5,7 @@
 //
 //	mockgen -source cache.go -destination ../mocks/cache.go -package mocks -mock_names RedisClient=RedisClient
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 

@@ -5,6 +5,7 @@
 //
 //	mockgen -destination pkg/mocks/io.go -package mocks -mock_names ReadCloser=ReadCloser io ReadCloser
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 

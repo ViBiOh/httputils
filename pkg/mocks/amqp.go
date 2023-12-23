@@ -5,6 +5,7 @@
 //
 //	mockgen -source amqp.go -destination ../mocks/amqp.go -package mocks -mock_names Connection=AMQPConnection
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 

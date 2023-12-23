@@ -5,6 +5,7 @@
 //
 //	mockgen -source cron.go -destination ../mocks/cron.go -package mocks -mock_names Semaphore=Semaphore
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
