@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
@@ -33,6 +34,8 @@ func (c *Cache[K, V]) redisEvict(ctx context.Context, id K, err error) error {
 	defer end(&err)
 
 	key := c.toKey(id)
+
+	slog.DebugContext(ctx, "evicting from redis cache", "id", id)
 
 	if err = c.write.Delete(ctx, key); err != nil {
 		return fmt.Errorf("evict key `%s` from cache: %w", key, err)
