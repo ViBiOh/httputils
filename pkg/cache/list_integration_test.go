@@ -45,7 +45,7 @@ func (s *ListSuite) TestList() {
 	s.Run("no item", func() {
 		instance := cache.New(nil, func(id int) string { return strconv.Itoa(id) }, noFetch, nil)
 
-		got, err := instance.List(context.Background())
+		got, err := instance.List(context.Background(), nil)
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository(nil), got)
 	})
@@ -59,7 +59,7 @@ func (s *ListSuite) TestList() {
 		second := getRepository(s.T())
 		second.ID = 20
 
-		got, err := instance.List(cache.Bypass(context.Background()), 10, 20)
+		got, err := instance.List(cache.Bypass(context.Background()), nil, 10, 20)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first, second}, got)
@@ -74,7 +74,7 @@ func (s *ListSuite) TestList() {
 		second := getRepository(s.T())
 		second.ID = 20
 
-		got, err := instance.List(context.Background(), 10, 20)
+		got, err := instance.List(context.Background(), nil, 10, 20)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first, second}, got)
@@ -90,7 +90,7 @@ func (s *ListSuite) TestList() {
 		second := getRepository(s.T())
 		second.ID = 20
 
-		got, err := instance.List(context.Background(), 10, 20)
+		got, err := instance.List(context.Background(), nil, 10, 20)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first, second}, got)
@@ -112,7 +112,7 @@ func (s *ListSuite) TestList() {
 		third := getRepository(s.T())
 		third.ID = 30
 
-		got, err := instance.List(context.Background(), 10, 20, 30)
+		got, err := instance.List(context.Background(), nil, 10, 20, 30)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first, second, third}, got)
@@ -120,7 +120,7 @@ func (s *ListSuite) TestList() {
 		// Wait for async save
 		time.Sleep(time.Second)
 
-		got, err = instance.List(context.Background(), 10, 20, 30)
+		got, err = instance.List(context.Background(), nil, 10, 20, 30)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first, second, third}, got)
@@ -138,7 +138,7 @@ func (s *ListSuite) TestList() {
 		third := getRepository(s.T())
 		third.ID = 30
 
-		got, err := instance.List(context.Background(), 10, 20, 30)
+		got, err := instance.List(context.Background(), nil, 10, 20, 30)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first, second, third}, got)
@@ -146,7 +146,7 @@ func (s *ListSuite) TestList() {
 		// Wait for async save
 		time.Sleep(time.Second)
 
-		got, err = instance.List(context.Background(), 10, 20, 30)
+		got, err = instance.List(context.Background(), nil, 10, 20, 30)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first, second, third}, got)
@@ -171,7 +171,7 @@ func (s *ListSuite) TestList() {
 		four := getRepository(s.T())
 		four.ID = 4000
 
-		got, err := instance.List(context.Background(), 1000)
+		got, err := instance.List(context.Background(), nil, 1000)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first}, got)
@@ -182,7 +182,7 @@ func (s *ListSuite) TestList() {
 		err = s.integration.Client().Store(ctx, "2000", "invalid_payload", 0)
 		assert.NoError(s.T(), err)
 
-		got, err = instance.List(context.Background(), 1000, 2000, 3000)
+		got, err = instance.List(context.Background(), nil, 1000, 2000, 3000)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first, second, third}, got)
@@ -196,7 +196,7 @@ func (s *ListSuite) TestList() {
 		err = s.integration.Client().Store(ctx, "4000", payload, 0)
 		assert.NoError(s.T(), err)
 
-		got, err = instance.List(context.Background(), 1000, 4000, 2000, 3000)
+		got, err = instance.List(context.Background(), nil, 1000, 4000, 2000, 3000)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first, four, second, third}, got)
@@ -224,7 +224,7 @@ func (s *ListSuite) TestList() {
 		four := getRepository(s.T())
 		four.ID = 400
 
-		got, err := instance.List(context.Background(), 100)
+		got, err := instance.List(context.Background(), nil, 100)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first}, got)
@@ -235,7 +235,7 @@ func (s *ListSuite) TestList() {
 		err = s.integration.Client().Store(ctx, "200", "invalid_payload", 0)
 		assert.NoError(s.T(), err)
 
-		got, err = instance.List(context.Background(), 100, 200, 300)
+		got, err = instance.List(context.Background(), nil, 100, 200, 300)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first, second, third}, got)
@@ -249,7 +249,7 @@ func (s *ListSuite) TestList() {
 		err = s.integration.Client().Store(ctx, "400", payload, 0)
 		assert.NoError(s.T(), err)
 
-		got, err = instance.List(context.Background(), 100, 400, 200, 300)
+		got, err = instance.List(context.Background(), nil, 100, 400, 200, 300)
 
 		assert.Nil(s.T(), err)
 		assert.Equal(s.T(), []Repository{first, four, second, third}, got)

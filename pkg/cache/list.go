@@ -13,6 +13,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+type FetchErrHandler[K comparable] func(context.Context, K, error) error
+
 type IndexedID[K comparable] struct {
 	id    K
 	index int
@@ -30,13 +32,13 @@ func (ii IndexedIDs[K]) IDs() []K {
 	return output
 }
 
-func (c *Cache[K, V]) List(ctx context.Context, ids ...K) (outputs []V, err error) {
+func (c *Cache[K, V]) List(ctx context.Context, onFetchErr FetchErrHandler[K], ids ...K) (outputs []V, err error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
 
 	if IsBypassed(ctx) {
-		return c.fetchAll(ctx, ids)
+		return c.fetchAll(ctx, onFetchErr, ids)
 	}
 
 	ctx, end := telemetry.StartSpan(ctx, c.tracer, "list", trace.WithSpanKind(trace.SpanKindInternal))
@@ -45,15 +47,15 @@ func (c *Cache[K, V]) List(ctx context.Context, ids ...K) (outputs []V, err erro
 	output, remainingIDs := c.memoryValues(ids)
 	keys, values := c.redisValues(ctx, remainingIDs)
 
-	return c.handleList(ctx, ids, output, remainingIDs, keys, values)
+	return c.handleList(ctx, onFetchErr, ids, output, remainingIDs, keys, values)
 }
 
-func (c *Cache[K, V]) fetchAll(ctx context.Context, ids []K) ([]V, error) {
+func (c *Cache[K, V]) fetchAll(ctx context.Context, onFetchErr FetchErrHandler[K], ids []K) ([]V, error) {
 	if c.onMissMany != nil {
 		return c.onMissMany(ctx, ids)
 	}
 
-	wg := concurrent.NewLimiter(c.concurrency)
+	wg := concurrent.NewFailFast(c.concurrency)
 
 	output := make([]V, len(ids))
 
@@ -61,22 +63,26 @@ func (c *Cache[K, V]) fetchAll(ctx context.Context, ids []K) ([]V, error) {
 		index := index
 		id := id
 
-		wg.Go(func() {
+		wg.Go(func() error {
 			value, err := c.fetch(ctx, id)
 			if err != nil {
+				if onFetchErr != nil {
+					return onFetchErr(ctx, id, err)
+				}
+
 				slog.ErrorContext(ctx, "fetch id", "error", err, "id", id)
+			} else {
+				output[index] = value
 			}
 
-			output[index] = value
+			return nil
 		})
 	}
 
-	wg.Wait()
-
-	return output, nil
+	return output, wg.Wait()
 }
 
-func (c *Cache[K, V]) handleList(ctx context.Context, ids []K, output []V, remainings []K, keys, values []string) ([]V, error) {
+func (c *Cache[K, V]) handleList(ctx context.Context, onFetchErr FetchErrHandler[K], ids []K, output []V, remainings []K, keys, values []string) ([]V, error) {
 	var extendKeys []string
 	var missingIDs IndexedIDs[K]
 
@@ -118,7 +124,7 @@ func (c *Cache[K, V]) handleList(ctx context.Context, ids []K, output []V, remai
 		return output, nil
 	}
 
-	missingValues, err := c.fetchAll(ctx, missingIDs.IDs())
+	missingValues, err := c.fetchAll(ctx, onFetchErr, missingIDs.IDs())
 	if err != nil {
 		return output, fmt.Errorf("fetch many: %w", err)
 	}
