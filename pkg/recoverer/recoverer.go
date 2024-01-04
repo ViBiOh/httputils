@@ -12,6 +12,27 @@ import (
 
 const OutputSize = 8192
 
+var _ error = errWithStackTrace{}
+
+type errWithStackTrace struct {
+	error
+	stackTrace []byte
+}
+
+func WithStack(err error) errWithStackTrace {
+	output := make([]byte, OutputSize)
+	written := runtime.Stack(output, false)
+
+	return errWithStackTrace{
+		error:      err,
+		stackTrace: output[:written],
+	}
+}
+
+func (e errWithStackTrace) StackTrace() string {
+	return string(e.stackTrace)
+}
+
 func Middleware(next http.Handler) http.Handler {
 	if next == nil {
 		return next
@@ -20,10 +41,7 @@ func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				output := make([]byte, OutputSize)
-				written := runtime.Stack(output, false)
-
-				httperror.InternalServerError(req.Context(), w, fmt.Errorf("recovered from panic: %s\n%s", r, output[:written]))
+				httperror.InternalServerError(req.Context(), w, WithStack(fmt.Errorf("recovered from panic: %s", r)))
 			}
 		}()
 
@@ -33,22 +51,16 @@ func Middleware(next http.Handler) http.Handler {
 
 func Error(err *error) {
 	if r := recover(); r != nil {
-		output := make([]byte, 1024)
-		written := runtime.Stack(output, false)
-
 		if err == nil {
 			return
 		}
 
-		*err = errors.Join(*err, fmt.Errorf("recovered from panic: %s", output[:written]))
+		*err = errors.Join(*err, WithStack(fmt.Errorf("recovered from panic: %s", r)))
 	}
 }
 
 func Logger() {
 	if r := recover(); r != nil {
-		output := make([]byte, 1024)
-		written := runtime.Stack(output, false)
-
-		slog.Error("recovered from panic", "stacktrace", string(output[:written]))
+		slog.Error("recovered from panic", "error", WithStack(fmt.Errorf("%s", r)))
 	}
 }

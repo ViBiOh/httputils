@@ -32,7 +32,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 }
 
 func init() {
-	configureLogger(os.Stdout, slog.LevelInfo, false, "time", "level", "msg")
+	slog.SetDefault(configureLogger(os.Stdout, slog.LevelInfo, false, "time", "level", "msg"))
 }
 
 func Init(config *Config) {
@@ -44,10 +44,10 @@ func Init(config *Config) {
 		return
 	}
 
-	configureLogger(os.Stdout, level, config.JSON, config.TimeKey, config.LevelKey, config.MessageKey)
+	slog.SetDefault(configureLogger(os.Stdout, level, config.JSON, config.TimeKey, config.LevelKey, config.MessageKey))
 }
 
-func configureLogger(writer io.Writer, level slog.Level, json bool, timeKey, levelKey, messageKey string) {
+func configureLogger(writer io.Writer, level slog.Level, json bool, timeKey, levelKey, messageKey string) *slog.Logger {
 	options := &slog.HandlerOptions{
 		Level: level,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
@@ -76,7 +76,7 @@ func configureLogger(writer io.Writer, level slog.Level, json bool, timeKey, lev
 		handler = slog.NewTextHandler(writer, options)
 	}
 
-	slog.SetDefault(slog.New(handler))
+	return slog.New(handler)
 }
 
 func FatalfOnErr(ctx context.Context, err error, msg string, args ...any) {
