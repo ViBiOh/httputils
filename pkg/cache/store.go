@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
@@ -32,7 +33,11 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 		return nil
 	}
 
-	var err error
+	var zeroValue V
+	zeroPayload, err := c.serializer.Encode(zeroValue)
+	if err != nil {
+		return fmt.Errorf("encode zero value: %w", err)
+	}
 
 	ctx, end := telemetry.StartSpan(ctx, c.tracer, "store_many", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
@@ -43,12 +48,6 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 		id := indexed.id
 		index := indexed.index
 
-		c.memoryWrite(id, values[index], c.ttl)
-
-		if c.write == nil {
-			continue
-		}
-
 		key := c.toKey(id)
 
 		payload, err := c.serializer.Encode(values[index])
@@ -58,7 +57,15 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 			continue
 		}
 
-		toSet[key] = payload
+		if bytes.Equal(zeroPayload, payload) {
+			continue
+		}
+
+		c.memoryWrite(id, values[index], c.ttl)
+
+		if c.write == nil {
+			toSet[key] = payload
+		}
 	}
 
 	if c.write != nil {
