@@ -21,8 +21,10 @@ func newAdapter(ctx context.Context, config configuration, client client) (adapt
 	var output adapter
 	var err error
 
-	if err = client.amqp.Publisher(config.amqHandler.Exchange, "direct", nil); err != nil {
-		return output, fmt.Errorf("publisher: %w", err)
+	if client.amqp != nil {
+		if err = client.amqp.Publisher(config.amqHandler.Exchange, "direct", nil); err != nil {
+			return output, fmt.Errorf("publisher: %w", err)
+		}
 	}
 
 	output.amqp, err = amqphandler.New(config.amqHandler, client.amqp, client.telemetry.MeterProvider(), client.telemetry.TracerProvider(), amqpHandler)

@@ -148,7 +148,7 @@ func (s Service) Middleware(name string) func(next http.Handler) http.Handler {
 			return next
 		}
 
-		return otelhttp.NewHandler(next, name,
+		return otelhttp.NewHandler(AsyncRouteTagMiddleware(next), name,
 			otelhttp.WithTracerProvider(s.TracerProvider()),
 			otelhttp.WithPropagators(propagator),
 			otelhttp.WithMeterProvider(s.MeterProvider()),

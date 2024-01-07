@@ -39,7 +39,7 @@ func newPort(ctx context.Context, config configuration, client client, adapter a
 			return renderer.Page{}, err
 		}
 
-		if _, err = adapter.hello.Get(r.Context(), hash.String(r.URL.Path)); err != nil {
+		if _, err = adapter.hello.Get(ctx, hash.String(r.URL.Path)); err != nil {
 			return renderer.Page{}, err
 		}
 
@@ -51,12 +51,13 @@ func newPort(ctx context.Context, config configuration, client client, adapter a
 			go func() {
 				time.Sleep(time.Millisecond * 100)
 				if err = adapter.hello.EvictOnSuccess(cntxt.WithoutDeadline(ctx), r.URL.Path, nil); err != nil {
-					slog.ErrorContext(r.Context(), "evict on success", "error", err)
+					slog.ErrorContext(ctx, "evict on success", "error", err)
 				}
 			}()
 		}
 
-		slog.InfoContext(r.Context(), "Hello World")
+		telemetry.SetRouteTag(ctx, "hello")
+		slog.InfoContext(ctx, "Hello World")
 
 		return renderer.NewPage("public", http.StatusOK, nil), nil
 	}

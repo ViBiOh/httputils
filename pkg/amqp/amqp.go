@@ -125,6 +125,10 @@ func initMetrics(provider metric.MeterProvider) (metric.Int64Counter, metric.Int
 }
 
 func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange, routingKey string) (err error) {
+	if c == nil {
+		return nil
+	}
+
 	ctx, end := telemetry.StartSpan(ctx, c.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
 	defer end(&err)
 
@@ -145,6 +149,10 @@ func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange,
 }
 
 func (c *Client) PublishJSON(ctx context.Context, item any, exchange, routingKey string) (err error) {
+	if c == nil {
+		return nil
+	}
+
 	ctx, end := telemetry.StartSpan(ctx, c.tracer, "publish_json", trace.WithSpanKind(trace.SpanKindProducer))
 	defer end(&err)
 
