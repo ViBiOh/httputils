@@ -12,7 +12,7 @@ require (
 	github.com/redis/go-redis/v9 v9.4.0
 	github.com/rs/xid v1.5.0
 	github.com/stretchr/testify v1.8.4
-	github.com/tdewolff/minify/v2 v2.20.10
+	github.com/tdewolff/minify/v2 v2.20.12
 	github.com/zeebo/xxh3 v1.0.2
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.46.1
