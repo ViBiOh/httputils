@@ -5,6 +5,7 @@ import (
 	"reflect"
 )
 
+// Interface to unwrap joined errors.Join https://pkg.go.dev/errors#Join
 type UnwrapJoin interface {
 	Unwrap() []error
 }
@@ -35,18 +36,16 @@ func ErrorField(err error) errorField {
 func getStacktrace(err error) string {
 	errorsToTest := []error{err}
 
-	if joinErr, ok := err.(UnwrapJoin); ok {
-		errorsToTest = append(errorsToTest, joinErr.Unwrap()...)
-	}
-
 	for index := 0; index < len(errorsToTest); index++ {
 		testedErr := errorsToTest[index]
 
-		if strackTracer, ok := testedErr.(StackTracer); ok {
-			return strackTracer.StackTrace()
+		if stackTracer, ok := testedErr.(StackTracer); ok {
+			return stackTracer.StackTrace()
 		}
 
-		if unwraped := errors.Unwrap(testedErr); unwraped != nil {
+		if joinErr, ok := testedErr.(UnwrapJoin); ok {
+			errorsToTest = append(errorsToTest, joinErr.Unwrap()...)
+		} else if unwraped := errors.Unwrap(testedErr); unwraped != nil {
 			errorsToTest = append(errorsToTest, unwraped)
 		}
 	}
