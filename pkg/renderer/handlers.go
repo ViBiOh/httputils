@@ -33,8 +33,6 @@ func (s Service) Redirect(w http.ResponseWriter, r *http.Request, pathname strin
 }
 
 func (s Service) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error) {
-	slog.ErrorContext(r.Context(), err.Error())
-
 	content = s.feedContent(content)
 
 	status, message := httperror.ErrorStatus(err)
@@ -42,12 +40,16 @@ func (s Service) Error(w http.ResponseWriter, r *http.Request, content map[strin
 		content["Message"] = NewErrorMessage(message)
 	}
 
+	ctx := r.Context()
+
+	httperror.Log(ctx, err, status, message)
+
 	nonce := owasp.Nonce()
 	owasp.WriteNonce(w, nonce)
 	content["nonce"] = nonce
 
-	if err = templates.ResponseHTMLTemplate(r.Context(), s.tracer, s.tpl.Lookup("error"), w, content, status); err != nil {
-		httperror.InternalServerError(r.Context(), w, err)
+	if err = templates.ResponseHTMLTemplate(ctx, s.tracer, s.tpl.Lookup("error"), w, content, status); err != nil {
+		httperror.InternalServerError(ctx, w, err)
 	}
 }
 
@@ -91,12 +93,14 @@ func (s Service) render(w http.ResponseWriter, r *http.Request, templateFunc Tem
 		responder = templates.ResponseHTMLTemplateRaw
 	}
 
+	ctx := r.Context()
+
 	if s.generatedMeter != nil {
-		s.generatedMeter.Add(r.Context(), 1, metric.WithAttributes(attribute.String("template", page.Template)))
+		s.generatedMeter.Add(ctx, 1, metric.WithAttributes(attribute.String("template", page.Template)))
 	}
 
-	if err = responder(r.Context(), s.tracer, s.tpl.Lookup(page.Template), w, page.Content, page.Status); err != nil {
-		httperror.InternalServerError(r.Context(), w, err)
+	if err = responder(ctx, s.tracer, s.tpl.Lookup(page.Template), w, page.Content, page.Status); err != nil {
+		httperror.InternalServerError(ctx, w, err)
 	}
 }
 

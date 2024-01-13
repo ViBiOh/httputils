@@ -71,6 +71,20 @@ func HandleError(ctx context.Context, w http.ResponseWriter, err error) bool {
 	return true
 }
 
+func Log(ctx context.Context, err error, status int, message string) {
+	if err == nil {
+		return
+	}
+
+	fields := []any{"error", err, "status", status}
+
+	if status >= http.StatusInternalServerError {
+		slog.ErrorContext(ctx, message, fields...)
+	} else {
+		slog.WarnContext(ctx, message, fields...)
+	}
+}
+
 func ErrorStatus(err error) (status int, message string) {
 	status = http.StatusInternalServerError
 	if err == nil {
