@@ -55,7 +55,14 @@ func Error(err *error) {
 			return
 		}
 
-		*err = errors.Join(*err, WithStack(fmt.Errorf("recovered from panic: %s", r)))
+		recoverErr := WithStack(fmt.Errorf("recovered from panic: %s", r))
+
+		// Don't erase a potential error already present
+		if *err != nil {
+			*err = errors.Join(*err, recoverErr)
+		} else {
+			*err = recoverErr
+		}
 	}
 }
 

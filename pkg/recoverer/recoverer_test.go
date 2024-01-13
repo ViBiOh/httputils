@@ -1,7 +1,7 @@
 package recoverer
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -89,7 +89,7 @@ func TestError(t *testing.T) {
 	t.Run("join", func(t *testing.T) {
 		t.Parallel()
 
-		err := fmt.Errorf("invalid")
+		err := errors.New("invalid")
 
 		func() {
 			defer Error(&err)
@@ -100,6 +100,30 @@ func TestError(t *testing.T) {
 		assert.ErrorContains(t, err, "invalid")
 		assert.ErrorContains(t, err, "recovered")
 	})
+}
+
+func TestHandler(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct{}{
+		"simple": {},
+	}
+
+	for intention := range cases {
+		t.Run(intention, func(t *testing.T) {
+			var err error
+
+			func() {
+				defer Handler(func(e error) {
+					err = e
+				})
+
+				panic("catch me if you can")
+			}()
+
+			assert.ErrorContains(t, err, "recovered")
+		})
+	}
 }
 
 func TestLogger(t *testing.T) {
