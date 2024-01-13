@@ -2,13 +2,12 @@ package renderer
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
-	"runtime"
 	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
+	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
 	"go.opentelemetry.io/otel/attribute"
@@ -54,15 +53,9 @@ func (s Service) Error(w http.ResponseWriter, r *http.Request, content map[strin
 }
 
 func (s Service) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
-	defer func() {
-		if exception := recover(); exception != nil {
-			output := make([]byte, 1024)
-			runtime.Stack(output, false)
-			slog.ErrorContext(r.Context(), "recovered from panic", "error", exception, "stacktrace", string(output))
-
-			s.Error(w, r, nil, fmt.Errorf("recovered from panic: %s", exception))
-		}
-	}()
+	defer recoverer.Handler(func(err error) {
+		s.Error(w, r, nil, err)
+	})
 
 	page, err := templateFunc(w, r)
 	if err != nil {
@@ -144,9 +137,11 @@ func appendNonceAndEtag(w http.ResponseWriter, content map[string]any, etag stri
 
 func (s Service) svg() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		tpl := s.tpl.Lookup("svg-" + strings.Trim(r.URL.Path, "/"))
 		if tpl == nil {
-			httperror.NotFound(r.Context(), w)
+			httperror.NotFound(ctx, w)
 
 			return
 		}
@@ -154,8 +149,8 @@ func (s Service) svg() http.Handler {
 		w.Header().Add("Cache-Control", staticCacheDuration)
 		w.Header().Add("Content-Type", "image/svg+xml")
 
-		if err := templates.WriteTemplate(r.Context(), s.tracer, tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {
-			httperror.InternalServerError(r.Context(), w, err)
+		if err := templates.WriteTemplate(ctx, s.tracer, tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {
+			httperror.InternalServerError(ctx, w, err)
 		}
 	})
 }

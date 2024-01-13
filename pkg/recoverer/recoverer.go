@@ -59,6 +59,16 @@ func Error(err *error) {
 	}
 }
 
+func Handler(handler func(error)) {
+	if r := recover(); r != nil {
+		if handler == nil {
+			return
+		}
+
+		handler(WithStack(fmt.Errorf("recovered from panic: %s", r)))
+	}
+}
+
 func Logger() {
 	if r := recover(); r != nil {
 		slog.Error("recovered from panic", "error", WithStack(fmt.Errorf("%s", r)))

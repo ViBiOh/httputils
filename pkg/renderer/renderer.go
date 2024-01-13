@@ -174,7 +174,7 @@ func (s *Service) Handler(templateFunc TemplateFunc) http.Handler {
 		}
 
 		if s.tpl == nil {
-			httperror.NotFound(r.Context(), w)
+			httperror.NotFound(ctx, w)
 
 			return
 		}
