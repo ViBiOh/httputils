@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"html/template"
@@ -98,7 +99,7 @@ func New(config *Config, filesystem fs.FS, funcMap template.FuncMap, meterProvid
 	instance.tpl = tpl
 
 	if strings.HasPrefix(instance.publicURL, "http://localhost") {
-		slog.Warn("PublicURL has a development/debug value: You may need to configure it.", "url", instance.publicURL)
+		slog.LogAttrs(context.Background(), slog.LevelWarn, "PublicURL has a development/debug value: You may need to configure it.", slog.String("url", instance.publicURL))
 	}
 
 	if meterProvider != nil {
@@ -207,7 +208,7 @@ func (s *Service) handleStatic(w http.ResponseWriter, r *http.Request) bool {
 
 	defer func() {
 		if closeErr := file.Close(); closeErr != nil {
-			slog.WarnContext(r.Context(), "close static file", "error", err)
+			slog.LogAttrs(r.Context(), slog.LevelWarn, "close static file", slog.Any("error", err))
 		}
 	}()
 

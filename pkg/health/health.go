@@ -104,7 +104,7 @@ func (s *Service) WaitForTermination(done <-chan struct{}, signals ...os.Signal)
 	case <-done:
 	default:
 		if s.graceDuration != 0 {
-			slog.Info("Waiting for graceful shutdown", "duration", s.graceDuration.String())
+			slog.LogAttrs(context.Background(), slog.LevelInfo, "Waiting for graceful shutdown", slog.String("duration", s.graceDuration.String()))
 			time.Sleep(s.graceDuration)
 		}
 	}
@@ -122,14 +122,14 @@ func (s *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	select {
 	case <-done:
 	case sig := <-signalsChan:
-		slog.Info("Signal received", "signal", sig.String())
+		slog.LogAttrs(context.Background(), slog.LevelInfo, "Signal received", slog.String("signal", sig.String()))
 	}
 }
 
 func (s *Service) isReady(ctx context.Context) bool {
 	for _, pinger := range s.pingers {
 		if err := pinger(ctx); err != nil {
-			slog.ErrorContext(ctx, "ping", "error", err)
+			slog.LogAttrs(ctx, slog.LevelError, "ping", slog.Any("error", err))
 
 			return false
 		}

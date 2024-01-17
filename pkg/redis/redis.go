@@ -93,7 +93,7 @@ func (s *Service) Enabled() bool {
 
 func (s *Service) Close() {
 	if err := s.client.Close(); err != nil {
-		slog.Error("redis close", "error", err)
+		slog.LogAttrs(context.Background(), slog.LevelError, "redis close", slog.Any("error", err))
 	}
 }
 

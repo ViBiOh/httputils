@@ -240,7 +240,7 @@ func (s *Service) configure(init bool) (string, error) {
 func generateIdentityName() string {
 	raw := make([]byte, 4)
 	if _, err := rand.Read(raw); err != nil {
-		slog.Error("generate identity name", "error", err)
+		slog.LogAttrs(context.Background(), slog.LevelError, "generate identity name", slog.Any("error", err))
 
 		return "error"
 	}

@@ -94,7 +94,7 @@ func NewFromURI(uri string, prefetch int, meterProvider metric.MeterProvider, tr
 	client.channel = channel
 	client.vhost = connection.Config.Vhost
 
-	slog.Info("Connected to AMQP!", "vhost", client.vhost)
+	slog.LogAttrs(context.Background(), slog.LevelInfo, "Connected to AMQP!", slog.String("vhost", client.vhost))
 
 	if err = client.Ping(); err != nil {
 		return client, fmt.Errorf("ping amqp: %w", err)

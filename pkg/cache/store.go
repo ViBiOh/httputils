@@ -52,7 +52,7 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 
 		payload, err := c.serializer.Encode(values[index])
 		if err != nil {
-			slog.ErrorContext(ctx, "encoding", "error", err, "key", key)
+			slog.LogAttrs(ctx, slog.LevelError, "encoding", slog.Any("key", key), slog.Any("error", err))
 
 			continue
 		}

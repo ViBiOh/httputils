@@ -35,7 +35,7 @@ func (c *Cache[K, V]) redisEvict(ctx context.Context, id K, err error) error {
 
 	key := c.toKey(id)
 
-	slog.DebugContext(ctx, "evicting from redis cache", "id", id)
+	slog.LogAttrs(ctx, slog.LevelDebug, "evicting from redis cache", slog.Any("id", id))
 
 	if err = c.write.Delete(ctx, key); err != nil {
 		return fmt.Errorf("evict key `%s` from cache: %w", key, err)

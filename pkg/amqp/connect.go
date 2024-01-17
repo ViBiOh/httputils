@@ -76,7 +76,7 @@ func (c *Client) onDisconnect() {
 		}
 
 		if err := c.reconnect(); err != nil {
-			slog.Error("reconnect", "error", err)
+			slog.LogAttrs(context.Background(), slog.LevelError, "reconnect", slog.Any("error", err))
 
 			slog.Info("Waiting one minute before attempting to reconnect again...")
 			time.Sleep(time.Minute)

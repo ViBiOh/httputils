@@ -51,7 +51,7 @@ func newPort(ctx context.Context, config configuration, client client, adapter a
 			go func() {
 				time.Sleep(time.Millisecond * 100)
 				if err = adapter.hello.EvictOnSuccess(cntxt.WithoutDeadline(ctx), r.URL.Path, nil); err != nil {
-					slog.ErrorContext(ctx, "evict on success", "error", err)
+					slog.LogAttrs(ctx, slog.LevelError, "evict on success", slog.Any("error", err))
 				}
 			}()
 		}

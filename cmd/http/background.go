@@ -16,23 +16,23 @@ import (
 func startBackground(ctx context.Context, config configuration, client client, adapter adapter) {
 	go redis.SubscribeFor(ctx, client.redis, "httputils:tasks", func(content time.Time, err error) {
 		if err != nil {
-			slog.ErrorContext(ctx, "consume on pubsub", "error", err)
+			slog.LogAttrs(ctx, slog.LevelError, "consume on pubsub", slog.Any("error", err))
 
 			return
 		}
 
-		slog.InfoContext(ctx, "time from pubsub", "content", content)
+		slog.LogAttrs(ctx, slog.LevelInfo, "time from pubsub", slog.Time("content", content))
 	})
 
 	speakingClock := cron.New().Each(15 * time.Second).OnSignal(syscall.SIGUSR1).OnError(func(ctx context.Context, err error) {
-		slog.ErrorContext(ctx, "run cron", "error", err)
+		slog.LogAttrs(ctx, slog.LevelError, "run cron", slog.Any("error", err))
 	}).Now()
 
 	go speakingClock.Start(ctx, func(_ context.Context) error {
 		slog.InfoContext(ctx, "Clock is ticking")
 
 		if err := client.redis.PublishJSON(ctx, "httputils:tasks", time.Now()); err != nil {
-			slog.ErrorContext(ctx, "publish on pubsub", "error", err)
+			slog.LogAttrs(ctx, slog.LevelError, "publish on pubsub", slog.Any("error", err))
 		}
 
 		return nil

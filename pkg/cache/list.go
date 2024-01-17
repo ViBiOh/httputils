@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strconv"
 
 	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
@@ -70,7 +69,7 @@ func (c *Cache[K, V]) fetchAll(ctx context.Context, onFetchErr FetchErrHandler[K
 					return onFetchErr(ctx, id, err)
 				}
 
-				slog.ErrorContext(ctx, "fetch id", "error", err, "id", id)
+				slog.LogAttrs(ctx, slog.LevelError, "fetch id", slog.Any("id", id), slog.Any("error", err))
 			} else {
 				output[index] = value
 			}
@@ -169,11 +168,12 @@ func (c *Cache[K, V]) redisValues(ctx context.Context, ids []K) ([]string, []str
 
 	values, err := c.read.LoadMany(loadCtx, keys...)
 	if err != nil {
+		level := slog.LevelError
 		if errors.Is(err, context.Canceled) {
-			slog.WarnContext(ctx, "load many from cache", "error", err, "key", strconv.Itoa(len(keys)))
-		} else {
-			slog.ErrorContext(ctx, "load many from cache", "error", err, "key", strconv.Itoa(len(keys)))
+			level = slog.LevelWarn
 		}
+
+		slog.LogAttrs(ctx, level, "load many from cache", slog.Int("key", len(keys)), slog.Any("error", err))
 
 		values = make([]string, len(ids))
 	}

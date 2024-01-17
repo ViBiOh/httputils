@@ -1,6 +1,7 @@
 package recoverer
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -78,6 +79,6 @@ func Handler(handler func(error)) {
 
 func Logger() {
 	if r := recover(); r != nil {
-		slog.Error("recovered from panic", "error", WithStack(fmt.Errorf("%s", r)))
+		slog.LogAttrs(context.Background(), slog.LevelError, "recovered from panic", slog.Any("error", WithStack(fmt.Errorf("%s", r))))
 	}
 }

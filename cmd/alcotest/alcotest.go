@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log/slog"
 	"os"
@@ -16,7 +17,7 @@ func main() {
 	alcotestConfig := alcotest.Flags(fs, "")
 
 	if err := fs.Parse(os.Args[1:]); err != nil {
-		slog.Error("parse flag", "error", err)
+		slog.LogAttrs(context.Background(), slog.LevelError, "parse flag", slog.Any("error", err))
 		os.Exit(1)
 	}
 

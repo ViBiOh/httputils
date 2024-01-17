@@ -21,11 +21,12 @@ func httpError(ctx context.Context, w http.ResponseWriter, status int, payload s
 		return
 	}
 
-	if status >= http.StatusInternalServerError {
-		slog.ErrorContext(ctx, payload, "error", err, "status", status)
-	} else {
-		slog.WarnContext(ctx, payload, "error", err, "status", status)
+	level := slog.LevelError
+	if status < http.StatusInternalServerError {
+		level = slog.LevelWarn
 	}
+
+	slog.LogAttrs(ctx, level, payload, slog.Int("status", status), slog.Any("error", err))
 }
 
 func BadRequest(ctx context.Context, w http.ResponseWriter, err error) {
@@ -76,13 +77,12 @@ func Log(ctx context.Context, err error, status int, message string) {
 		return
 	}
 
-	fields := []any{"error", err, "status", status}
-
-	if status >= http.StatusInternalServerError {
-		slog.ErrorContext(ctx, message, fields...)
-	} else {
-		slog.WarnContext(ctx, message, fields...)
+	level := slog.LevelError
+	if status < http.StatusInternalServerError {
+		level = slog.LevelWarn
 	}
+
+	slog.LogAttrs(ctx, level, message, slog.Int("status", status), slog.Any("error", err))
 }
 
 func ErrorStatus(err error) (status int, message string) {

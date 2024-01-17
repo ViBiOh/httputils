@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -18,11 +19,11 @@ func (c *Client) Close() {
 	var err error
 
 	if err = c.cancelListeners(); err != nil {
-		slog.Error("cancel listeners", "error", err)
+		slog.LogAttrs(context.Background(), slog.LevelError, "cancel listeners", slog.Any("error", err))
 	}
 
 	if err = c.closeListeners(); err != nil {
-		slog.Error("close listeners", "error", err)
+		slog.LogAttrs(context.Background(), slog.LevelError, "close listeners", slog.Any("error", err))
 	}
 
 	c.closeChannel()
@@ -76,7 +77,7 @@ func (c *Client) reconnectListeners() {
 			defer c.mutex.Unlock()
 
 			if err := listener.createChannel(c.connection); err != nil {
-				slog.Error("recreate channel", "error", err, "name", listener.name)
+				slog.LogAttrs(context.Background(), slog.LevelError, "recreate channel", slog.String("name", listener.name), slog.Any("error", err))
 			}
 
 			listener.reconnect <- true
@@ -106,7 +107,7 @@ func (c *Client) closeConnection() {
 		return
 	}
 
-	slog.Info("Closing AMQP connection", "vhost", c.Vhost())
+	slog.LogAttrs(context.Background(), slog.LevelInfo, "Closing AMQP connection", slog.String("vhost", c.Vhost()))
 	loggedClose(c.connection)
 
 	c.connection = nil
@@ -114,6 +115,6 @@ func (c *Client) closeConnection() {
 
 func loggedClose(closer io.Closer) {
 	if err := closer.Close(); err != nil {
-		slog.Error("close", "error", err)
+		slog.LogAttrs(context.Background(), slog.LevelError, "close", slog.Any("error", err))
 	}
 }

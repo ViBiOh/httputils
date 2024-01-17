@@ -39,7 +39,7 @@ func Init(config *Config) {
 	var level slog.Level
 
 	if err := level.UnmarshalText([]byte(config.Level)); err != nil {
-		slog.Error(err.Error(), "level", config.Level)
+		slog.LogAttrs(context.Background(), slog.LevelError, err.Error(), slog.String("level", config.Level))
 
 		return
 	}
@@ -79,12 +79,12 @@ func configureLogger(writer io.Writer, level slog.Level, json bool, timeKey, lev
 	return slog.New(handler)
 }
 
-func FatalfOnErr(ctx context.Context, err error, msg string, args ...any) {
+func FatalfOnErr(ctx context.Context, err error, msg string, args ...slog.Attr) {
 	if err == nil {
 		return
 	}
 
-	slog.ErrorContext(ctx, msg, append([]any{"error", err}, args...)...)
+	slog.LogAttrs(ctx, slog.LevelError, msg, append([]slog.Attr{slog.Any("error", err)}, args...)...)
 	os.Exit(1)
 }
 
