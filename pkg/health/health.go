@@ -104,7 +104,7 @@ func (s *Service) WaitForTermination(done <-chan struct{}, signals ...os.Signal)
 	case <-done:
 	default:
 		if s.graceDuration != 0 {
-			slog.LogAttrs(context.Background(), slog.LevelInfo, "Waiting for graceful shutdown", slog.String("duration", s.graceDuration.String()))
+			slog.LogAttrs(context.Background(), slog.LevelInfo, "Waiting for graceful shutdown", slog.Duration("duration", s.graceDuration))
 			time.Sleep(s.graceDuration)
 		}
 	}
