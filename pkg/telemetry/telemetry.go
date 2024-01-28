@@ -158,12 +158,20 @@ func (s Service) Middleware(name string) func(next http.Handler) http.Handler {
 
 func (s Service) Close(ctx context.Context) {
 	if s.tracerProvider != nil {
+		if err := s.tracerProvider.ForceFlush(ctx); err != nil {
+			slog.LogAttrs(ctx, slog.LevelError, "flush trace provider", slog.Any("error", err))
+		}
+
 		if err := s.tracerProvider.Shutdown(ctx); err != nil {
 			slog.LogAttrs(ctx, slog.LevelError, "shutdown trace provider", slog.Any("error", err))
 		}
 	}
 
 	if s.meterProvider != nil {
+		if err := s.meterProvider.ForceFlush(ctx); err != nil {
+			slog.LogAttrs(ctx, slog.LevelError, "flush meter provider", slog.Any("error", err))
+		}
+
 		if err := s.meterProvider.Shutdown(ctx); err != nil {
 			slog.LogAttrs(ctx, slog.LevelError, "shutdown meter provider", slog.Any("error", err))
 		}
