@@ -14,27 +14,31 @@ var NoRedirection = func(*http.Request, []*http.Request) error {
 	return http.ErrUseLastResponse
 }
 
+var defaultTransport = &http.Transport{
+	Proxy: http.ProxyFromEnvironment,
+
+	DialContext: (&net.Dialer{
+		Timeout:   time.Second * 5,
+		KeepAlive: time.Second * 15,
+	}).DialContext,
+
+	TLSHandshakeTimeout:   time.Second * 5,
+	ExpectContinueTimeout: time.Second * 1,
+
+	MaxConnsPerHost:     512,
+	MaxIdleConns:        256,
+	MaxIdleConnsPerHost: 128,
+	IdleConnTimeout:     time.Second * 60,
+}
+
 func CreateClient(timeout time.Duration, onRedirect func(*http.Request, []*http.Request) error) *http.Client {
+	return CreateClientWithTransport(timeout, onRedirect, defaultTransport)
+}
+
+func CreateClientWithTransport(timeout time.Duration, onRedirect func(*http.Request, []*http.Request) error, transport *http.Transport) *http.Client {
 	return &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-
-			DialContext: (&net.Dialer{
-				Timeout:   5 * time.Second,
-				KeepAlive: 15 * time.Second,
-			}).DialContext,
-
-			TLSHandshakeTimeout:   5 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-
-			MaxConnsPerHost:     512,
-			MaxIdleConns:        256,
-			MaxIdleConnsPerHost: 128,
-			IdleConnTimeout:     60 * time.Second,
-		},
-
-		Timeout: timeout,
-
+		Transport:     transport,
+		Timeout:       timeout,
 		CheckRedirect: onRedirect,
 	}
 }
