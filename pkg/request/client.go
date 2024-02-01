@@ -35,7 +35,7 @@ func CreateClient(timeout time.Duration, onRedirect func(*http.Request, []*http.
 	return CreateClientWithTransport(timeout, onRedirect, defaultTransport)
 }
 
-func CreateClientWithTransport(timeout time.Duration, onRedirect func(*http.Request, []*http.Request) error, transport *http.Transport) *http.Client {
+func CreateClientWithTransport(timeout time.Duration, onRedirect func(*http.Request, []*http.Request) error, transport http.RoundTripper) *http.Client {
 	return &http.Client{
 		Transport:     transport,
 		Timeout:       timeout,
