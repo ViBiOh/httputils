@@ -122,20 +122,22 @@ func moveDecoderToKey(decoder *json.Decoder, key string) error {
 	var nested uint64
 	var err error
 
-	for {
-		token, err = decoder.Token()
-		if err != nil {
-			return fmt.Errorf("decode token: %w", err)
-		}
+	if key != "." {
+		for {
+			token, err = decoder.Token()
+			if err != nil {
+				return fmt.Errorf("decode token: %w", err)
+			}
 
-		if nested == 1 && strings.EqualFold(fmt.Sprintf("%s", token), key) {
-			break
-		}
+			if nested == 1 && strings.EqualFold(fmt.Sprintf("%s", token), key) {
+				break
+			}
 
-		if strToken := fmt.Sprintf("%s", token); strToken == "{" {
-			nested++
-		} else if strToken == "}" {
-			nested--
+			if strToken := fmt.Sprintf("%s", token); strToken == "{" {
+				nested++
+			} else if strToken == "}" {
+				nested--
+			}
 		}
 	}
 

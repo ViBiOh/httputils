@@ -482,6 +482,14 @@ func TestStream(t *testing.T) {
 			[]string{"test", "next", "final"},
 			nil,
 		},
+		"direct array": {
+			args{
+				stream: strings.NewReader(`[{"value":"test"},{"value":"next"},{"value":"final"}]`),
+				key:    ".",
+			},
+			[]string{"test", "next", "final"},
+			nil,
+		},
 		"stream error": {
 			args{
 				stream: strings.NewReader(`{"value":"test"}{"value":"next"}{"value":"final}`),
