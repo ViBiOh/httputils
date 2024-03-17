@@ -19,6 +19,8 @@ type LeastRecentlyUsedAction[K comparable] struct {
 }
 
 func (c *Cache[K, V]) startLRU(ctx context.Context) {
+	defer close(c.lruUpdates)
+
 	if c.maxSize == 0 {
 		return
 	}
@@ -30,9 +32,7 @@ func (c *Cache[K, V]) startLRU(ctx context.Context) {
 		case Add:
 			c.addEntryLRU(update.id)
 		}
-	}, func() {})
-
-	close(c.lruUpdates)
+	}, c.close)
 }
 
 func (c *Cache[K, V]) touchLRU(id K) {
@@ -76,6 +76,13 @@ func (c *Cache[K, V]) addEntryLRU(id K) {
 
 func (c *Cache[K, V]) sendLRUAction(action LeastRecentlyUsedAction[K]) {
 	select {
+	case <-c.done:
+		return
+	default:
+	}
+
+	select {
+	case <-c.done:
 	case c.lruUpdates <- action:
 	default:
 	}

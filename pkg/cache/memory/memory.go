@@ -9,6 +9,7 @@ import (
 )
 
 type Cache[K comparable, V any] struct {
+	done              chan struct{}
 	content           map[K]V
 	expiration        *ExpirationQueue[K]
 	lru               *list.List
@@ -20,6 +21,7 @@ type Cache[K comparable, V any] struct {
 
 func New[K comparable, V any](maxSize int) *Cache[K, V] {
 	return &Cache[K, V]{
+		done:              make(chan struct{}),
 		content:           make(map[K]V),
 		expiration:        &ExpirationQueue[K]{},
 		expirationUpdates: make(chan ExpirationQueueAction[K], runtime.NumCPU()),
@@ -33,6 +35,12 @@ func (c *Cache[K, V]) Start(ctx context.Context) {
 	go c.startLRU(ctx)
 
 	c.startEvicter(ctx.Done())
+}
+
+func (c *Cache[K, V]) close() {
+	sync.OnceFunc(func() {
+		close(c.done)
+	})
 }
 
 func (c *Cache[K, V]) Get(id K) (V, bool) {

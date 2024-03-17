@@ -21,6 +21,8 @@ type ExpirationQueueAction[K comparable] struct {
 }
 
 func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
+	defer close(c.expirationUpdates)
+
 	timer := time.NewTimer(defaultTimer)
 
 	var toExpire *Item[K]
@@ -37,8 +39,13 @@ func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 
 		select {
 		case <-done:
-			timer.Stop()
 			done = nil
+
+			if !timer.Stop() {
+				<-timer.C
+			}
+
+			c.close()
 
 		case _, ok := <-timer.C:
 			if !ok {
@@ -92,5 +99,14 @@ func (c *Cache[K, V]) addExpiration(id K, ttl time.Duration) {
 		return
 	}
 
-	c.expirationUpdates <- ExpirationQueueAction[K]{id: id, ttl: ttl, action: AddItem}
+	select {
+	case <-c.done:
+		return
+	default:
+	}
+
+	select {
+	case <-c.done:
+	case c.expirationUpdates <- ExpirationQueueAction[K]{id: id, ttl: ttl, action: AddItem}:
+	}
 }
