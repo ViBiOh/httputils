@@ -38,8 +38,9 @@ type Database interface {
 }
 
 type Service struct {
-	tracer trace.Tracer
-	db     Database
+	tracer     trace.Tracer
+	db         Database
+	attributes []attribute.KeyValue
 }
 
 type Config struct {
@@ -87,6 +88,14 @@ func New(ctx context.Context, config *Config, tracerProvider trace.TracerProvide
 
 	if tracerProvider != nil {
 		instance.tracer = tracerProvider.Tracer("database")
+
+		// cf. https://opentelemetry.io/docs/specs/semconv/database/database-spans/
+		instance.attributes = []attribute.KeyValue{
+			attribute.String("db.system", "postgres"),
+			attribute.String("db.name", config.Name),
+			attribute.String("server.address", config.Host),
+			attribute.Int("server.port", int(config.Port)),
+		}
 	}
 
 	return instance, instance.Ping(ctx)
@@ -166,8 +175,7 @@ func (s Service) Query(ctx context.Context, query string, args ...any) (rows pgx
 	ctx, end := telemetry.StartSpan(ctx, s.tracer, "query",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
-			attribute.String("db.system", "postgres"),
-			attribute.String("db.statement", query),
+			append([]attribute.KeyValue{attribute.String("db.statement", query)}, s.attributes...)...,
 		),
 	)
 	defer end(&err)
@@ -205,8 +213,7 @@ func (s Service) QueryRow(ctx context.Context, query string, args ...any) pgx.Ro
 	ctx, end := telemetry.StartSpan(ctx, s.tracer, "query_row",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
-			attribute.String("db.system", "postgres"),
-			attribute.String("db.statement", query),
+			append([]attribute.KeyValue{attribute.String("db.statement", query)}, s.attributes...)...,
 		),
 	)
 	defer end(nil)
@@ -268,8 +275,7 @@ func (s Service) exec(ctx context.Context, query string, args ...any) (command p
 	ctx, end := telemetry.StartSpan(ctx, s.tracer, "exec",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
-			attribute.String("db.system", "postgres"),
-			attribute.String("db.statement", query),
+			append([]attribute.KeyValue{attribute.String("db.statement", query)}, s.attributes...)...,
 		),
 	)
 	defer end(&err)
@@ -304,7 +310,15 @@ func (bc *feeder) Err() error {
 }
 
 func (s Service) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) (err error) {
-	ctx, end := telemetry.StartSpan(ctx, s.tracer, "bulk", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("schema", schema), attribute.String("table", table)))
+	ctx, end := telemetry.StartSpan(ctx, s.tracer, "bulk",
+		trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(
+			append([]attribute.KeyValue{
+				attribute.String("db.schema", schema),
+				attribute.String("db.table", table),
+			}, s.attributes...)...,
+		),
+	)
 	defer end(&err)
 
 	tx := readTx(ctx)
