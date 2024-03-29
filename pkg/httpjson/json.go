@@ -95,16 +95,18 @@ func Stream[T any](stream io.Reader, output chan<- T, key string, closeChan bool
 	decoder := json.NewDecoder(stream)
 
 	if len(key) > 0 {
-		if err := moveDecoderToKey(decoder, key); err != nil {
-			return err
+		if err := moveToKey(decoder, key); err != nil {
+			return fmt.Errorf("move to key: %w", err)
 		}
 	}
 
 	var obj T
+
 	for decoder.More() {
 		if err := decoder.Decode(&obj); err != nil {
 			return fmt.Errorf("decode stream: %w", err)
 		}
+
 		output <- obj
 	}
 
@@ -117,33 +119,42 @@ func Stream[T any](stream io.Reader, output chan<- T, key string, closeChan bool
 	return nil
 }
 
-func moveDecoderToKey(decoder *json.Decoder, key string) error {
-	var token json.Token
-	var nested uint64
-	var err error
-
+func moveToKey(decoder *json.Decoder, key string) error {
 	if key != "." {
-		for {
-			token, err = decoder.Token()
-			if err != nil {
-				return fmt.Errorf("decode token: %w", err)
-			}
-
-			if nested == 1 && strings.EqualFold(fmt.Sprintf("%s", token), key) {
-				break
-			}
-
-			if strToken := fmt.Sprintf("%s", token); strToken == "{" {
-				nested++
-			} else if strToken == "}" {
-				nested--
-			}
+		if err := findStart(decoder, key); err != nil {
+			return fmt.Errorf("find start: %w", err)
 		}
 	}
 
-	if _, err = decoder.Token(); err != nil {
+	if _, err := decoder.Token(); err != nil {
 		return fmt.Errorf("read opening token: %w", err)
 	}
 
 	return nil
+}
+
+func findStart(decoder *json.Decoder, key string) error {
+	var nested uint64
+
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return fmt.Errorf("decode token: %w", err)
+		}
+
+		switch tokenType := token.(type) {
+		case string:
+			if nested == 1 && strings.EqualFold(tokenType, key) {
+				return nil
+			}
+
+		case json.Delim:
+			switch tokenType {
+			case '{':
+				nested++
+			case '}':
+				nested--
+			}
+		}
+	}
 }
