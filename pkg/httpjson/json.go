@@ -88,11 +88,19 @@ func Read(resp *http.Response, obj any) error {
 	return err
 }
 
-func Stream[T any](stream io.Reader, output chan<- T, key string, closeChan bool) error {
+// Stream decodes JSON from a `reader` and send unmarshalled `T` to the given `output` chan
+// `closeChan` make Stream to close the `output` channel once read.
+// There is no guarantee that the `reader` wil be fully read. For HTTP Body you might want to drain it.
+//
+// `key` supports three kinds of values:
+// - ""  => the reader contains a stream of objects like `{"id":12}{"id":34}{"id":56}`, e.g. processing a websocket
+// - "." => the reader contains an array of objects like `[{"id":12},{"id":34},{"id":56}]`
+// - <key name>" => the reader contains an array of objects at the given root key `{"items":[{"id":12},{"id":34},{"id":56}]}`
+func Stream[T any](reader io.Reader, output chan<- T, key string, closeChan bool) error {
 	if closeChan {
 		defer close(output)
 	}
-	decoder := json.NewDecoder(stream)
+	decoder := json.NewDecoder(reader)
 
 	if len(key) > 0 {
 		if err := moveToKey(decoder, key); err != nil {
