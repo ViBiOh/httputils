@@ -94,8 +94,9 @@ func New(ctx context.Context, config *Config, tracerProvider trace.TracerProvide
 		instance.attributes = []attribute.KeyValue{
 			semconv.DBSystemPostgreSQL,
 			semconv.DBNameKey.String(config.Name),
-			attribute.String("server.address", config.Host),
-			attribute.Int("server.port", int(config.Port)),
+			semconv.DBUser(config.User),
+			semconv.ServerAddress(config.Host),
+			semconv.ServerPort(int(config.Port)),
 		}
 	}
 
@@ -147,7 +148,10 @@ func (s Service) DoAtomic(ctx context.Context, action func(context.Context) erro
 		return errors.New("no action provided")
 	}
 
-	ctx, end := telemetry.StartSpan(ctx, s.tracer, "transaction", trace.WithSpanKind(trace.SpanKindClient))
+	ctx, end := telemetry.StartSpan(ctx, s.tracer, "transaction",
+		trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(s.attributes...),
+	)
 	defer end(&err)
 
 	if readTx(ctx) != nil {

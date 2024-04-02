@@ -8,6 +8,8 @@ import (
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 )
 
 type QueueResolver func() (string, error)
@@ -81,9 +83,13 @@ func (c *Client) forward(listener *listener, queueResolver QueueResolver, input 
 	defer close(listener.done)
 	defer close(output)
 
+	attributes := append([]attribute.KeyValue{
+		semconv.MessagingOperationReceive,
+	}, c.getAttributes(exchange, routingKey)...)
+
 forward:
 	for delivery := range input {
-		c.increase(context.Background(), "consume", exchange, routingKey)
+		c.increase(context.Background(), attributes)
 		output <- delivery
 	}
 

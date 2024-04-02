@@ -32,14 +32,15 @@ type Connection interface {
 
 type Client struct {
 	tracer          trace.Tracer
-	channel         *amqp.Channel
 	connection      Connection
-	listeners       map[string]*listener
 	reconnectMetric metric.Int64Counter
 	listenerMetric  metric.Int64UpDownCounter
 	messageMetric   metric.Int64Counter
+	channel         *amqp.Channel
+	listeners       map[string]*listener
 	vhost           string
 	uri             string
+	attributes      []attribute.KeyValue
 	prefetch        int
 	mutex           sync.RWMutex
 }
@@ -84,6 +85,11 @@ func NewFromURI(uri string, prefetch int, meterProvider metric.MeterProvider, tr
 
 	if tracerProvider != nil {
 		client.tracer = tracerProvider.Tracer("amqp")
+
+		client.attributes = []attribute.KeyValue{
+			semconv.MessagingSystemRabbitmq,
+			semconv.NetworkProtocolName("rabbitmq"),
+		}
 	}
 
 	connection, channel, err := connect(uri, client.prefetch, client.onDisconnect)
@@ -130,7 +136,16 @@ func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange,
 		return nil
 	}
 
-	ctx, end := telemetry.StartSpan(ctx, c.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
+	attributes := c.getAttributes(exchange, routingKey)
+
+	ctx, end := telemetry.StartSpan(ctx, c.tracer, "publish",
+		trace.WithSpanKind(trace.SpanKindProducer),
+		trace.WithAttributes(
+			append([]attribute.KeyValue{
+				semconv.MessagingOperationPublish,
+			}, attributes...)...,
+		),
+	)
 	defer end(&err)
 
 	defer recoverer.Error(&err)
@@ -139,23 +154,22 @@ func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange,
 	defer c.mutex.RUnlock()
 
 	if err = c.channel.PublishWithContext(ctx, exchange, routingKey, false, false, telemetry.InjectToAmqp(ctx, payload)); err != nil {
-		c.increase(ctx, "error", exchange, routingKey)
+		c.increase(ctx, append([]attribute.KeyValue{
+			semconv.ErrorTypeKey.String("amqp:publish"),
+		}, attributes...))
 
 		return
 	}
 
-	c.increase(ctx, "send", exchange, routingKey)
+	c.increase(ctx, attributes)
 
 	return nil
 }
 
-func (c *Client) PublishJSON(ctx context.Context, item any, exchange, routingKey string) (err error) {
+func (c *Client) PublishJSON(ctx context.Context, item any, exchange, routingKey string) error {
 	if c == nil {
 		return nil
 	}
-
-	ctx, end := telemetry.StartSpan(ctx, c.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
-	defer end(&err)
 
 	payload, err := json.Marshal(item)
 	if err != nil {
@@ -172,21 +186,20 @@ func (c *Client) PublishJSON(ctx context.Context, item any, exchange, routingKey
 	return nil
 }
 
-func (c *Client) increase(ctx context.Context, name, exchange, routingKey string) {
+func (c *Client) increase(ctx context.Context, attributes []attribute.KeyValue) {
 	if c.messageMetric == nil {
 		return
 	}
 
-	attributes := []attribute.KeyValue{
-		semconv.MessagingSystemRabbitmq,
-		semconv.NetworkProtocolName("rabbitmq"),
-		semconv.MessagingDestinationName(exchange),
-		attribute.String("state", name),
-	}
+	c.messageMetric.Add(ctx, 1, metric.WithAttributes(attributes...))
+}
+
+func (c *Client) getAttributes(exchange, routingKey string) []attribute.KeyValue {
+	attributes := append([]attribute.KeyValue{semconv.MessagingDestinationName(exchange)}, c.attributes...)
 
 	if len(routingKey) != 0 {
 		attributes = append(attributes, semconv.MessagingRabbitmqDestinationRoutingKey(routingKey))
 	}
 
-	c.messageMetric.Add(ctx, 1, metric.WithAttributes(attributes...))
+	return attributes
 }

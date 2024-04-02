@@ -17,21 +17,23 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type Handler func(context.Context, amqp.Delivery) error
 
 type Service struct {
-	amqpClient      *amqpclient.Client
 	tracer          trace.Tracer
+	counter         metric.Int64Counter
+	amqpClient      *amqpclient.Client
 	done            chan struct{}
 	handler         Handler
-	counter         metric.Int64Counter
-	exchange        string
 	delayExchange   string
+	exchange        string
 	queue           string
 	routingKey      string
+	attributes      []attribute.KeyValue
 	maxRetry        int64
 	retryInterval   time.Duration
 	inactiveTimeout time.Duration
@@ -103,6 +105,16 @@ func New(config *Config, amqpClient *amqpclient.Client, metricProvider metric.Me
 	}
 
 	if tracerProvider != nil {
+		service.attributes = []attribute.KeyValue{
+			semconv.MessagingSystemRabbitmq,
+			semconv.NetworkProtocolName("rabbitmq"),
+			semconv.MessagingDestinationName(service.exchange),
+		}
+
+		if len(service.routingKey) != 0 {
+			service.attributes = append(service.attributes, semconv.MessagingRabbitmqDestinationRoutingKey(service.routingKey))
+		}
+
 		service.tracer = tracerProvider.Tracer("amqp_handler")
 	}
 
@@ -173,7 +185,14 @@ func (s *Service) Start(ctx context.Context) {
 func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message amqp.Delivery) {
 	var err error
 
-	ctx, end := telemetry.StartSpan(ctx, s.tracer, "receive", trace.WithSpanKind(trace.SpanKindConsumer))
+	ctx, end := telemetry.StartSpan(ctx, s.tracer, "receive",
+		trace.WithSpanKind(trace.SpanKindConsumer),
+		trace.WithAttributes(
+			append([]attribute.KeyValue{
+				semconv.MessagingOperationReceive,
+			}, s.attributes...)...,
+		),
+	)
 	defer end(&err)
 
 	defer recoverer.Error(&err)
