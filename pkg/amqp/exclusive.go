@@ -61,7 +61,7 @@ func (c *Client) shouldCreateExclusiveQueue(name string) (bool, int) {
 }
 
 func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (acquired bool, err error) {
-	ctx, end := telemetry.StartSpan(ctx, c.tracer, "exclusive", trace.WithSpanKind(trace.SpanKindClient))
+	ctx, end := telemetry.StartSpan(ctx, c.tracer, "receive", trace.WithSpanKind(trace.SpanKindConsumer))
 	defer end(&err)
 
 	var channel *amqp.Channel

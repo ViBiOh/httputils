@@ -173,7 +173,7 @@ func (s *Service) Start(ctx context.Context) {
 func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message amqp.Delivery) {
 	var err error
 
-	ctx, end := telemetry.StartSpan(ctx, s.tracer, "handle", trace.WithSpanKind(trace.SpanKindConsumer))
+	ctx, end := telemetry.StartSpan(ctx, s.tracer, "receive", trace.WithSpanKind(trace.SpanKindConsumer))
 	defer end(&err)
 
 	defer recoverer.Error(&err)

@@ -116,7 +116,7 @@ func initMetrics(provider metric.MeterProvider) (metric.Int64Counter, metric.Int
 		return nil, nil, nil, fmt.Errorf("create listener counter: %w", err)
 	}
 
-	message, err := meter.Int64Counter("amqp.message")
+	message, err := meter.Int64Counter("messaging.publish.messages")
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create message counter: %w", err)
 	}
@@ -153,7 +153,7 @@ func (c *Client) PublishJSON(ctx context.Context, item any, exchange, routingKey
 		return nil
 	}
 
-	ctx, end := telemetry.StartSpan(ctx, c.tracer, "publish_json", trace.WithSpanKind(trace.SpanKindProducer))
+	ctx, end := telemetry.StartSpan(ctx, c.tracer, "publish", trace.WithSpanKind(trace.SpanKindProducer))
 	defer end(&err)
 
 	payload, err := json.Marshal(item)
@@ -176,9 +176,16 @@ func (c *Client) increase(ctx context.Context, name, exchange, routingKey string
 		return
 	}
 
-	c.messageMetric.Add(ctx, 1, metric.WithAttributes(
+	attributes := []attribute.KeyValue{
+		attribute.String("messaging.system", "rabbitmq"),
+		attribute.String("network.protocol.name", "amqp"),
 		attribute.String("state", name),
-		attribute.String("exchange", exchange),
-		attribute.String("routingKey", routingKey),
-	))
+		attribute.String("messaging.destination.name", exchange),
+	}
+
+	if len(routingKey) != 0 {
+		attributes = append(attributes, attribute.String("messaging.rabbitmq.destination.routing_key", routingKey))
+	}
+
+	c.messageMetric.Add(ctx, 1, metric.WithAttributes(attributes...))
 }
