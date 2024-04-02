@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -91,8 +92,8 @@ func New(ctx context.Context, config *Config, tracerProvider trace.TracerProvide
 
 		// cf. https://opentelemetry.io/docs/specs/semconv/database/database-spans/
 		instance.attributes = []attribute.KeyValue{
-			attribute.String("db.system", "postgres"),
-			attribute.String("db.name", config.Name),
+			semconv.DBSystemPostgreSQL,
+			semconv.DBNameKey.String(config.Name),
 			attribute.String("server.address", config.Host),
 			attribute.Int("server.port", int(config.Port)),
 		}
@@ -175,7 +176,7 @@ func (s Service) Query(ctx context.Context, query string, args ...any) (rows pgx
 	ctx, end := telemetry.StartSpan(ctx, s.tracer, "query",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
-			append([]attribute.KeyValue{attribute.String("db.statement", query)}, s.attributes...)...,
+			append([]attribute.KeyValue{semconv.DBStatementKey.String(query)}, s.attributes...)...,
 		),
 	)
 	defer end(&err)
@@ -213,7 +214,7 @@ func (s Service) QueryRow(ctx context.Context, query string, args ...any) pgx.Ro
 	ctx, end := telemetry.StartSpan(ctx, s.tracer, "query_row",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
-			append([]attribute.KeyValue{attribute.String("db.statement", query)}, s.attributes...)...,
+			append([]attribute.KeyValue{semconv.DBStatementKey.String(query)}, s.attributes...)...,
 		),
 	)
 	defer end(nil)
@@ -275,7 +276,7 @@ func (s Service) exec(ctx context.Context, query string, args ...any) (command p
 	ctx, end := telemetry.StartSpan(ctx, s.tracer, "exec",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
-			append([]attribute.KeyValue{attribute.String("db.statement", query)}, s.attributes...)...,
+			append([]attribute.KeyValue{semconv.DBStatementKey.String(query)}, s.attributes...)...,
 		),
 	)
 	defer end(&err)
@@ -314,8 +315,8 @@ func (s Service) Bulk(ctx context.Context, fetcher func() ([]any, error), schema
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
 			append([]attribute.KeyValue{
+				semconv.DBNameKey.String(table),
 				attribute.String("db.schema", schema),
-				attribute.String("db.table", table),
 			}, s.attributes...)...,
 		),
 	)

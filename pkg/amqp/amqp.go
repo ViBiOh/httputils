@@ -16,6 +16,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -177,14 +178,14 @@ func (c *Client) increase(ctx context.Context, name, exchange, routingKey string
 	}
 
 	attributes := []attribute.KeyValue{
-		attribute.String("messaging.system", "rabbitmq"),
-		attribute.String("network.protocol.name", "amqp"),
+		semconv.MessagingSystemRabbitmq,
+		semconv.NetworkProtocolName("rabbitmq"),
+		semconv.MessagingDestinationName(exchange),
 		attribute.String("state", name),
-		attribute.String("messaging.destination.name", exchange),
 	}
 
 	if len(routingKey) != 0 {
-		attributes = append(attributes, attribute.String("messaging.rabbitmq.destination.routing_key", routingKey))
+		attributes = append(attributes, semconv.MessagingRabbitmqDestinationRoutingKey(routingKey))
 	}
 
 	c.messageMetric.Add(ctx, 1, metric.WithAttributes(attributes...))
