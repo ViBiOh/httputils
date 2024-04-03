@@ -5,7 +5,6 @@ import (
 	"reflect"
 )
 
-// Interface to unwrap joined errors.Join https://pkg.go.dev/errors#Join
 type UnwrapJoin interface {
 	Unwrap() []error
 }

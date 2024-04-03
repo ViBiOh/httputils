@@ -26,8 +26,6 @@ func TestFlags(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -65,8 +63,6 @@ func TestEnabled(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -102,8 +98,6 @@ func TestPing(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -196,8 +190,6 @@ func TestReadTx(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -272,8 +264,6 @@ func TestDoAtomic(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -346,8 +336,6 @@ func TestList(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -433,8 +421,6 @@ func TestGet(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -509,8 +495,6 @@ func TestCreate(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -576,8 +560,6 @@ func TestExec(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -639,8 +621,6 @@ func TestOne(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -707,8 +687,6 @@ func TestBulk(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 

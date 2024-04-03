@@ -83,8 +83,6 @@ func TestReadContent(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -126,8 +124,6 @@ func TestReadBodyRequest(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -169,8 +165,6 @@ func TestReadBodyResponse(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 

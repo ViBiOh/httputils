@@ -33,8 +33,6 @@ func TestWriteTemplate(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -80,8 +78,6 @@ func TestResponseHTMLTemplate(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -154,8 +150,6 @@ func TestResponseHTMLTemplateRaw(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
@@ -200,8 +194,6 @@ func TestResponseXMLTemplate(t *testing.T) {
 	}
 
 	for intention, testCase := range cases {
-		intention, testCase := intention, testCase
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
