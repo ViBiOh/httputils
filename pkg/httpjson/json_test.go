@@ -7,11 +7,11 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/ViBiOh/httputils/v4/pkg/request"
+	"github.com/stretchr/testify/assert"
 )
 
 type testStruct struct {
@@ -60,20 +60,8 @@ func TestRawWrite(t *testing.T) {
 
 			gotErr := RawWrite(testCase.args.writer, testCase.args.obj)
 
-			failed := false
-
-			switch {
-			case
-				testCase.wantErr == nil && gotErr != nil,
-				testCase.wantErr != nil && gotErr == nil,
-				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
-				testCase.args.writer.String() != testCase.want:
-				failed = true
-			}
-
-			if failed {
-				t.Errorf("RawWrite() = (`%s`, `%s`), want (`%s`, `%s`)", testCase.args.writer.String(), gotErr, testCase.want, testCase.wantErr)
-			}
+			assert.Equal(t, testCase.want, testCase.args.writer.String())
+			checkErr(t, testCase.wantErr, gotErr)
 		})
 	}
 }
@@ -296,20 +284,8 @@ func TestParse(t *testing.T) {
 
 			gotErr := Parse(testCase.args.req, &testCase.args.obj)
 
-			failed := false
-
-			switch {
-			case
-				testCase.wantErr == nil && gotErr != nil,
-				testCase.wantErr != nil && gotErr == nil,
-				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
-				!reflect.DeepEqual(testCase.args.obj, testCase.want):
-				failed = true
-			}
-
-			if failed {
-				t.Errorf("Parse() = (%+v, `%s`), want (%+v, `%s`)", testCase.args.obj, gotErr, testCase.want, testCase.wantErr)
-			}
+			assert.Equal(t, testCase.want, testCase.args.obj)
+			checkErr(t, testCase.wantErr, gotErr)
 		})
 	}
 }
@@ -387,20 +363,8 @@ func TestRead(t *testing.T) {
 
 			gotErr := Read(testCase.args.resp, &testCase.args.obj)
 
-			failed := false
-
-			switch {
-			case
-				testCase.wantErr == nil && gotErr != nil,
-				testCase.wantErr != nil && gotErr == nil,
-				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
-				!reflect.DeepEqual(testCase.args.obj, testCase.want):
-				failed = true
-			}
-
-			if failed {
-				t.Errorf("Read() = (%+v, `%s`), want (%+v, `%s`)", testCase.args.obj, gotErr, testCase.want, testCase.wantErr)
-			}
+			assert.Equal(t, testCase.want, testCase.args.obj)
+			checkErr(t, testCase.wantErr, gotErr)
 		})
 	}
 }
@@ -507,20 +471,18 @@ func TestStream(t *testing.T) {
 
 			<-done
 
-			failed := false
-
-			switch {
-			case
-				testCase.wantErr == nil && gotErr != nil,
-				testCase.wantErr != nil && gotErr == nil,
-				testCase.wantErr != nil && gotErr != nil && !strings.Contains(gotErr.Error(), testCase.wantErr.Error()),
-				!reflect.DeepEqual(got, testCase.want):
-				failed = true
-			}
-
-			if failed {
-				t.Errorf("Stream() = (%+v, `%s`), want (%+v, `%s`)", got, gotErr, testCase.want, testCase.wantErr)
-			}
+			assert.Equal(t, testCase.want, got)
+			checkErr(t, testCase.wantErr, gotErr)
 		})
+	}
+}
+
+func checkErr(t *testing.T, want, got error) {
+	t.Helper()
+
+	if want == nil {
+		assert.NoError(t, got)
+	} else {
+		assert.ErrorContains(t, got, want.Error())
 	}
 }
