@@ -22,16 +22,14 @@ import (
 var content embed.FS
 
 func main() {
-	ctx := context.Background()
-
-	config, err := newConfig()
-	logger.FatalfOnErr(ctx, err, "config")
-
+	config := newConfig()
 	alcotest.DoAndExit(config.alcotest)
 
 	go func() {
 		fmt.Println(http.ListenAndServe("localhost:9999", http.DefaultServeMux))
 	}()
+
+	ctx := context.Background()
 
 	client, err := newClient(ctx, config)
 	logger.FatalfOnErr(ctx, err, "client")

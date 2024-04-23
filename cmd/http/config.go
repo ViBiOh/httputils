@@ -33,11 +33,11 @@ type configuration struct {
 	health     *health.Config
 }
 
-func newConfig() (configuration, error) {
+func newConfig() configuration {
 	fs := flag.NewFlagSet("http", flag.ExitOnError)
 	fs.Usage = flags.Usage(fs)
 
-	return configuration{
+	config := configuration{
 		appServer:  server.Flags(fs, ""),
 		health:     health.Flags(fs, ""),
 		alcotest:   alcotest.Flags(fs, ""),
@@ -49,5 +49,9 @@ func newConfig() (configuration, error) {
 		amqHandler: amqphandler.Flags(fs, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RoutingKey", "local"), flags.NewOverride("RetryInterval", 10*time.Second)),
 		redis:      redis.Flags(fs, "redis"),
 		renderer:   renderer.Flags(fs, "renderer"),
-	}, fs.Parse(os.Args[1:])
+	}
+
+	_ = fs.Parse(os.Args[1:])
+
+	return config
 }
