@@ -3,6 +3,7 @@ package health
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -122,7 +123,7 @@ func (s *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	select {
 	case <-done:
 	case sig := <-signalsChan:
-		slog.LogAttrs(context.Background(), slog.LevelInfo, "Signal received", slog.String("signal", sig.String()))
+		slog.LogAttrs(context.Background(), slog.LevelInfo, fmt.Sprintf("Signal %s received", sig.String()))
 	}
 }
 
