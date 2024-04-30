@@ -1,6 +1,14 @@
 package hash
 
-import "testing"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"testing"
+	"time"
+
+	"github.com/zeebo/xxh3"
+)
 
 func TestString(t *testing.T) {
 	t.Parallel()
@@ -116,15 +124,53 @@ func TestStream(t *testing.T) {
 	}
 }
 
-func BenchmarkNew(b *testing.B) {
-	type testStruct struct {
-		ID int
+type testStruct struct {
+	ID     int
+	Name   string
+	Date   time.Time
+	Orders []string
+}
+
+func BenchmarkHash(b *testing.B) {
+	hash := func(content any) string {
+		hasher := xxh3.New()
+
+		fmt.Fprintf(hasher, "%v", content)
+
+		return hex.EncodeToString(hasher.Sum(nil))
 	}
 
-	item := testStruct{}
+	item := testStruct{
+		ID:     123456789,
+		Name:   "Benchmark",
+		Date:   time.Now(),
+		Orders: []string{"1234", "5678"},
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		Hash(item)
+		hash(item)
+	}
+}
+
+func BenchmarkSha256(b *testing.B) {
+	hash := func(content any) string {
+		hasher := sha256.New()
+
+		fmt.Fprintf(hasher, "%v", content)
+
+		return hex.EncodeToString(hasher.Sum(nil))
+	}
+
+	item := testStruct{
+		ID:     123456789,
+		Name:   "Benchmark",
+		Date:   time.Now(),
+		Orders: []string{"1234", "5678"},
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		hash(item)
 	}
 }
