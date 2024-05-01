@@ -1,7 +1,6 @@
 # httputils
 
 [![Build](https://github.com/ViBiOh/httputils/workflows/Build/badge.svg)](https://github.com/ViBiOh/httputils/actions)
-[![codecov](https://codecov.io/gh/ViBiOh/httputils/branch/main/graph/badge.svg)](https://codecov.io/gh/ViBiOh/httputils)
 
 Golang HTTP Utils func
 

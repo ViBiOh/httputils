@@ -56,23 +56,6 @@ jobs:
           make config
           make
           git --no-pager diff -- ':(exclude)go.sum' && git diff --quiet -- ':(exclude)go.sum'
-      - name: Codecov
-        uses: codecov/codecov-action@v4
-
-  sonarcloud:
-    name: SonarCloud
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: SonarCloud
-        uses: SonarSource/sonarcloud-github-action@master
-        if: env.SONAR_TOKEN
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   package:
     name: Docker
