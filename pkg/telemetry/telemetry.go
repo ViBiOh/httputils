@@ -178,6 +178,23 @@ func (s Service) Close(ctx context.Context) {
 	}
 }
 
+func (s Service) GetServiceVersionAndEnv() (service, version, env string) {
+	for _, attribute := range s.resource.Attributes() {
+		switch attribute.Key {
+		case semconv.ServiceNameKey:
+			service = attribute.Value.AsString()
+
+		case semconv.ServiceVersionKey:
+			version = attribute.Value.AsString()
+
+		case "env":
+			env = attribute.Value.AsString()
+		}
+	}
+
+	return
+}
+
 func newTraceExporter(ctx context.Context, endpoint string) (trace.SpanExporter, error) {
 	return otlptracegrpc.New(ctx,
 		otlptracegrpc.WithInsecure(),
