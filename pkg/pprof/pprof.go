@@ -87,6 +87,8 @@ func (s Service) execute(ctx context.Context) error {
 }
 
 func (s Service) getCpuProfile() error {
+	s.buffer.Reset()
+
 	if err := pprof.StartCPUProfile(s.buffer); err != nil {
 		return fmt.Errorf("start profiler: %w", err)
 	}
