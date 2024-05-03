@@ -42,6 +42,10 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 }
 
 func New(config *Config, service, version, env string) Service {
+	if len(config.URL) == 0 {
+		return Service{}
+	}
+
 	return Service{
 		req:     request.Post(fmt.Sprintf("%s/profiling/v1/input", config.URL)),
 		buffer:  bytes.NewBuffer(nil),
@@ -52,6 +56,10 @@ func New(config *Config, service, version, env string) Service {
 }
 
 func (s Service) Start(ctx context.Context) {
+	if !s.enabled() {
+		return
+	}
+
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 
@@ -65,6 +73,10 @@ func (s Service) Start(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (s Service) enabled() bool {
+	return s.buffer != nil
 }
 
 func (s Service) execute(ctx context.Context) error {
