@@ -689,7 +689,6 @@ func TestDiscardBody(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockReadCloser := mocks.NewReadCloser(ctrl)
 

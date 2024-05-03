@@ -48,7 +48,6 @@ func TestEvictOnSuccess(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockRedisClient := mocks.NewRedisClient(ctrl)
 			mockRedisClient.EXPECT().Enabled().Return(true)

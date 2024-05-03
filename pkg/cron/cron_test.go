@@ -81,7 +81,6 @@ func TestString(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			redisMock := mocks.NewSemaphore(ctrl)
 
@@ -490,7 +489,6 @@ func TestStart(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			redisMock := mocks.NewSemaphore(ctrl)
 

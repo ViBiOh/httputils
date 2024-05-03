@@ -67,7 +67,6 @@ func TestEnabled(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
@@ -102,7 +101,6 @@ func TestPing(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
@@ -140,7 +138,6 @@ func TestClose(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
@@ -268,7 +265,6 @@ func TestDoAtomic(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
@@ -340,7 +336,6 @@ func TestList(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
@@ -425,7 +420,6 @@ func TestGet(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
@@ -499,7 +493,6 @@ func TestCreate(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
@@ -564,7 +557,6 @@ func TestExec(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
@@ -625,7 +617,6 @@ func TestOne(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
@@ -691,7 +682,6 @@ func TestBulk(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDatabase := mocks.NewDatabase(ctrl)
 
