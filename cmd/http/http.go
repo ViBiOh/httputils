@@ -5,8 +5,6 @@ import (
 	"embed"
 	"syscall"
 
-	_ "net/http/pprof"
-
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
 	"github.com/ViBiOh/httputils/v4/pkg/cors"
 	"github.com/ViBiOh/httputils/v4/pkg/httputils"

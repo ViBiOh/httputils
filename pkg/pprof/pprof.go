@@ -11,6 +11,8 @@ import (
 	"runtime/pprof"
 	"time"
 
+	_ "net/http/pprof"
+
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
