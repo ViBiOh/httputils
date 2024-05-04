@@ -15,8 +15,9 @@ import (
 )
 
 var ProfileNames = []string{
-	"heap",
+	"allocs",
 	"goroutine",
+	"heap",
 }
 
 var cpuDuration = time.Second * 30
