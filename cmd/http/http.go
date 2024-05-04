@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"embed"
-	"fmt"
-	"net/http"
 	"syscall"
 
 	_ "net/http/pprof"
@@ -25,15 +23,12 @@ func main() {
 	config := newConfig()
 	alcotest.DoAndExit(config.alcotest)
 
-	go func() {
-		fmt.Println(http.ListenAndServe("localhost:9999", http.DefaultServeMux))
-	}()
-
 	ctx := context.Background()
 
 	client, err := newClient(ctx, config)
 	logger.FatalfOnErr(ctx, err, "client")
 
+	go client.Start()
 	defer client.Close(ctx)
 
 	ctxEnd := client.health.EndCtx()

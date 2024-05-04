@@ -13,6 +13,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/health"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
+	"github.com/ViBiOh/httputils/v4/pkg/pprof"
 	"github.com/ViBiOh/httputils/v4/pkg/redis"
 	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
@@ -24,6 +25,7 @@ type configuration struct {
 	owasp      *owasp.Config
 	alcotest   *alcotest.Config
 	telemetry  *telemetry.Config
+	pprof      *pprof.Config
 	cors       *cors.Config
 	renderer   *renderer.Config
 	amqp       *amqp.Config
@@ -43,6 +45,7 @@ func newConfig() configuration {
 		alcotest:   alcotest.Flags(fs, ""),
 		logger:     logger.Flags(fs, "logger"),
 		telemetry:  telemetry.Flags(fs, "telemetry"),
+		pprof:      pprof.Flags(fs, "pprof"),
 		owasp:      owasp.Flags(fs, "", flags.NewOverride("Csp", "default-src 'self'; base-uri 'self'; script-src 'httputils-nonce'")),
 		cors:       cors.Flags(fs, "cors"),
 		amqp:       amqp.Flags(fs, "amqp"),

@@ -9,6 +9,7 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/amqp"
 	"github.com/ViBiOh/httputils/v4/pkg/health"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
+	"github.com/ViBiOh/httputils/v4/pkg/pprof"
 	"github.com/ViBiOh/httputils/v4/pkg/redis"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
@@ -19,6 +20,7 @@ type client struct {
 	amqp      *amqp.Client
 	health    *health.Service
 	telemetry telemetry.Service
+	pprof     pprof.Service
 }
 
 const closeTimeout = time.Second * 10
@@ -37,6 +39,9 @@ func newClient(ctx context.Context, config configuration) (client, error) {
 	logger.AddOpenTelemetryToDefaultLogger(output.telemetry)
 	request.AddOpenTelemetryToDefaultClient(output.telemetry.MeterProvider(), output.telemetry.TracerProvider())
 
+	service, version, env := output.telemetry.GetServiceVersionAndEnv()
+	output.pprof = pprof.New(config.pprof, service, version, env)
+
 	output.health = health.New(ctx, config.health)
 
 	output.redis, err = redis.New(config.redis, output.telemetry.MeterProvider(), output.telemetry.TracerProvider())
@@ -50,6 +55,10 @@ func newClient(ctx context.Context, config configuration) (client, error) {
 	}
 
 	return output, nil
+}
+
+func (c client) Start() {
+	go c.pprof.Start(c.health.DoneCtx())
 }
 
 func (c client) Close(ctx context.Context) {

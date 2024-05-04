@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"log/slog"
 	"mime/multipart"
+	"net/http"
 	"runtime/pprof"
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
 )
 
@@ -28,38 +30,57 @@ type Service struct {
 	version string
 	env     string
 	req     request.Request
+	port    int
 }
 
 type Config struct {
-	URL string
+	URL  string
+	Port int
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
 	flags.New("Agent", "URL of the Datadog Trace Agent (e.g. http://datadog.observability:8126)").Prefix(prefix).DocPrefix("pprof").StringVar(fs, &config.URL, "", overrides)
+	flags.New("Port", "Port of the HTTP server (0 to disable)").Prefix(prefix).DocPrefix("pprof").IntVar(fs, &config.Port, 0, overrides)
 
 	return &config
 }
 
 func New(config *Config, service, version, env string) Service {
-	if len(config.URL) == 0 {
-		return Service{}
+	instance := Service{
+		port: config.Port,
 	}
 
-	return Service{
-		req:     request.Post(fmt.Sprintf("%s/profiling/v1/input", config.URL)),
-		buffer:  bytes.NewBuffer(nil),
-		service: service,
-		version: version,
-		env:     env,
+	if len(config.URL) != 0 {
+		instance.req = request.Post(fmt.Sprintf("%s/profiling/v1/input", config.URL)).WithClient(request.CreateClient(15*time.Second, request.NoRedirection))
+		instance.buffer = bytes.NewBuffer(nil)
+		instance.service = service
+		instance.version = version
+		instance.env = env
 	}
+
+	return instance
 }
 
 func (s Service) Start(ctx context.Context) {
-	if !s.enabled() {
-		return
+	if s.port > 0 {
+		go s.http(ctx)
 	}
+
+	if s.buffer != nil {
+		go s.push(ctx)
+	}
+}
+
+func (s Service) http(ctx context.Context) {
+	if err := http.ListenAndServe(fmt.Sprintf("localhost:%d", s.port), http.DefaultServeMux); err != nil {
+		slog.LogAttrs(ctx, slog.LevelError, fmt.Sprintf("pprof http: %s", err.Error()))
+	}
+}
+
+func (s Service) push(ctx context.Context) {
+	defer recoverer.Logger()
 
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
@@ -69,18 +90,14 @@ func (s Service) Start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if err := s.execute(ctx); err != nil {
+			if err := s.send(ctx); err != nil {
 				slog.LogAttrs(ctx, slog.LevelError, "pprof export", slog.Any("error", err))
 			}
 		}
 	}
 }
 
-func (s Service) enabled() bool {
-	return s.buffer != nil
-}
-
-func (s Service) execute(ctx context.Context) error {
+func (s Service) send(ctx context.Context) error {
 	now := time.Now()
 
 	if err := s.getCpuProfile(); err != nil {

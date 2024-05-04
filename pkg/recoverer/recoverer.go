@@ -42,7 +42,7 @@ func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				httperror.InternalServerError(req.Context(), w, WithStack(fmt.Errorf("recovered from panic: %s", r)))
+				httperror.InternalServerError(req.Context(), w, WithStack(formatRecover(r)))
 			}
 		}()
 
@@ -56,7 +56,7 @@ func Error(err *error) {
 			return
 		}
 
-		recoverErr := WithStack(fmt.Errorf("recovered from panic: %s", r))
+		recoverErr := WithStack(formatRecover(r))
 
 		// Don't erase a potential error already present
 		if *err != nil {
@@ -73,12 +73,16 @@ func Handler(handler func(error)) {
 			return
 		}
 
-		handler(WithStack(fmt.Errorf("recovered from panic: %s", r)))
+		handler(WithStack(formatRecover(r)))
 	}
 }
 
 func Logger() {
 	if r := recover(); r != nil {
-		slog.LogAttrs(context.Background(), slog.LevelError, "recovered from panic", slog.Any("error", WithStack(fmt.Errorf("%s", r))))
+		slog.LogAttrs(context.Background(), slog.LevelError, fmt.Sprintf("recovered from panic: %s", r), slog.Any("error", WithStack(fmt.Errorf("%s", r))))
 	}
+}
+
+func formatRecover(r any) error {
+	return fmt.Errorf("recovered from panic: %s", r)
 }
