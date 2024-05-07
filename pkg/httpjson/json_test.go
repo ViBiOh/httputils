@@ -187,63 +187,6 @@ func TestWriteArray(t *testing.T) {
 	}
 }
 
-func TestWritePagination(t *testing.T) {
-	t.Parallel()
-
-	cases := map[string]struct {
-		pageSize   uint
-		total      uint
-		last       string
-		obj        any
-		want       string
-		wantHeader map[string]string
-	}{
-		"simple": {
-			2,
-			2,
-			"8000",
-			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			"{\"items\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"last\":\"8000\",\"pageSize\":2,\"pageCount\":1,\"total\":2}\n",
-			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
-		},
-		"compute page count rounded": {
-			10,
-			40,
-			"8000",
-			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			"{\"items\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"last\":\"8000\",\"pageSize\":10,\"pageCount\":4,\"total\":40}\n",
-			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
-		},
-		"compute page count exceed": {
-			10,
-			45,
-			"8000",
-			[]testStruct{{id: "Test"}, {id: "Test", Active: true, Amount: 12.34}},
-			"{\"items\":[{\"Active\":false,\"Amount\":0},{\"Active\":true,\"Amount\":12.34}],\"last\":\"8000\",\"pageSize\":10,\"pageCount\":5,\"total\":45}\n",
-			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
-		},
-	}
-
-	for intention, testCase := range cases {
-		t.Run(intention, func(t *testing.T) {
-			t.Parallel()
-
-			writer := httptest.NewRecorder()
-			WritePagination(context.Background(), writer, http.StatusOK, testCase.pageSize, testCase.total, testCase.last, testCase.obj)
-
-			if result, _ := request.ReadBodyResponse(writer.Result()); string(result) != testCase.want {
-				t.Errorf("WritePagination() = `%s`, want `%s`", string(result), testCase.want)
-			}
-
-			for key, value := range testCase.wantHeader {
-				if result, ok := writer.Result().Header[key]; !ok || strings.Join(result, "") != value {
-					t.Errorf("WritePagination().Header[%s] = `%s`, want `%s`", key, strings.Join(result, ""), value)
-				}
-			}
-		})
-	}
-}
-
 func TestParse(t *testing.T) {
 	t.Parallel()
 

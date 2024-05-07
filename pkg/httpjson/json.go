@@ -26,14 +26,6 @@ type items struct {
 	Items any `json:"items"`
 }
 
-type pagination struct {
-	Items     any    `json:"items"`
-	Last      string `json:"last"`
-	PageSize  uint   `json:"pageSize"`
-	PageCount uint   `json:"pageCount"`
-	Total     uint   `json:"total"`
-}
-
 func RawWrite(w io.Writer, obj any) error {
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
 		return fmt.Errorf("%s: %w", err, ErrCannotMarshal)
@@ -55,15 +47,6 @@ func Write(ctx context.Context, w http.ResponseWriter, status int, obj any) {
 
 func WriteArray(ctx context.Context, w http.ResponseWriter, status int, array any) {
 	Write(ctx, w, status, items{array})
-}
-
-func WritePagination(ctx context.Context, w http.ResponseWriter, status int, pageSize, total uint, last string, array any) {
-	pageCount := total / pageSize
-	if total%pageSize != 0 {
-		pageCount++
-	}
-
-	Write(ctx, w, status, pagination{Items: array, PageSize: pageSize, PageCount: pageCount, Total: total, Last: last})
 }
 
 func Parse(req *http.Request, obj any) error {
