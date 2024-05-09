@@ -202,7 +202,7 @@ func TestParse(t *testing.T) {
 	}{
 		"valid": {
 			args{
-				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(`{"key": "value","valid":true}`))),
+				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBufferString(`{"key": "value","valid":true}`)),
 				obj: make(map[string]any),
 			},
 			map[string]any{
@@ -213,7 +213,7 @@ func TestParse(t *testing.T) {
 		},
 		"invalid": {
 			args{
-				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBuffer([]byte(`{"key": "value","valid":true`))),
+				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBufferString(`{"key": "value","valid":true`)),
 				obj: make(map[string]any),
 			},
 			make(map[string]any),

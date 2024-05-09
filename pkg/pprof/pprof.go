@@ -8,10 +8,9 @@ import (
 	"log/slog"
 	"mime/multipart"
 	"net/http"
+	_ "net/http/pprof"
 	"runtime/pprof"
 	"time"
-
-	_ "net/http/pprof"
 
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"

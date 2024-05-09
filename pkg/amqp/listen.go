@@ -12,6 +12,8 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 )
 
+const reconnectInterval = time.Second * 30
+
 type QueueResolver func() (string, error)
 
 func (c *Client) Listen(queueResolver QueueResolver, exchange, routingKey string) (string, <-chan amqp.Delivery, error) {
@@ -20,7 +22,9 @@ func (c *Client) Listen(queueResolver QueueResolver, exchange, routingKey string
 		return "", nil, fmt.Errorf("get queue name: %w", err)
 	}
 
-	listener, err := c.getListener()
+	ctx := context.Background()
+
+	listener, err := c.getListener(ctx)
 	if err != nil {
 		return "", nil, fmt.Errorf("get listener name for queue `%s`: %w", queueName, err)
 	}
@@ -31,7 +35,7 @@ func (c *Client) Listen(queueResolver QueueResolver, exchange, routingKey string
 	}
 
 	forward := make(chan amqp.Delivery)
-	go c.forward(listener, queueResolver, messages, forward, exchange, routingKey)
+	go c.forward(ctx, listener, queueResolver, messages, forward, exchange, routingKey)
 
 	return listener.name, forward, nil
 }
@@ -53,7 +57,7 @@ func (c *Client) StopListener(consumer string) (err error) {
 		err = errors.Join(err, fmt.Errorf("close listener: %w", closeErr))
 	}
 
-	c.removeListener(consumer)
+	c.removeListener(context.Background(), consumer)
 
 	return err
 }
@@ -79,7 +83,7 @@ func (c *Client) listen(listener *listener, queue string) (<-chan amqp.Delivery,
 	return messages, nil
 }
 
-func (c *Client) forward(listener *listener, queueResolver QueueResolver, input <-chan amqp.Delivery, output chan<- amqp.Delivery, exchange, routingKey string) {
+func (c *Client) forward(ctx context.Context, listener *listener, queueResolver QueueResolver, input <-chan amqp.Delivery, output chan<- amqp.Delivery, exchange, routingKey string) {
 	defer close(listener.done)
 	defer close(output)
 
@@ -89,7 +93,7 @@ func (c *Client) forward(listener *listener, queueResolver QueueResolver, input 
 
 forward:
 	for delivery := range input {
-		c.increase(context.Background(), attributes)
+		c.increase(ctx, attributes)
 		output <- delivery
 	}
 
@@ -101,18 +105,18 @@ reconnect:
 	log := slog.With("name", listener.name)
 
 	if queueName, err := queueResolver(); err != nil {
-		log.Error("get queue name on reopen", "error", err)
+		log.LogAttrs(ctx, slog.LevelError, "get queue name on reopen", slog.Any("error", err))
 	} else if messages, err := c.listen(listener, queueName); err != nil {
-		log.Error("reopen listener", "error", err)
+		log.LogAttrs(ctx, slog.LevelError, "reopen listener", slog.Any("error", err))
 	} else {
-		log.Info("Listen restarted")
+		log.LogAttrs(ctx, slog.LevelInfo, "Listen restarted")
 		input = messages
 
 		goto forward
 	}
 
-	log.Info("Waiting 30 seconds before attempting to listen again...")
-	time.Sleep(time.Second * 30)
+	log.LogAttrs(ctx, slog.LevelInfo, fmt.Sprintf("Waiting %s before attempting to listen again...", reconnectInterval))
+	time.Sleep(reconnectInterval)
 
 	goto reconnect
 }

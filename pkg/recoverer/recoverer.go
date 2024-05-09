@@ -5,10 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"runtime"
-
-	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 )
 
 const OutputSize = 8192
@@ -34,29 +31,13 @@ func (e errWithStackTrace) StackTrace() string {
 	return string(e.stackTrace)
 }
 
-func Middleware(next http.Handler) http.Handler {
-	if next == nil {
-		return next
-	}
-
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		defer func() {
-			if r := recover(); r != nil {
-				httperror.InternalServerError(req.Context(), w, WithStack(formatRecover(r)))
-			}
-		}()
-
-		next.ServeHTTP(w, req)
-	})
-}
-
 func Error(err *error) {
 	if r := recover(); r != nil {
 		if err == nil {
 			return
 		}
 
-		recoverErr := WithStack(formatRecover(r))
+		recoverErr := WithStack(Format(r))
 
 		// Don't erase a potential error already present
 		if *err != nil {
@@ -73,7 +54,7 @@ func Handler(handler func(error)) {
 			return
 		}
 
-		handler(WithStack(formatRecover(r)))
+		handler(WithStack(Format(r)))
 	}
 }
 
@@ -83,6 +64,6 @@ func Logger() {
 	}
 }
 
-func formatRecover(r any) error {
+func Format(r any) error {
 	return fmt.Errorf("recovered from panic: %s", r)
 }

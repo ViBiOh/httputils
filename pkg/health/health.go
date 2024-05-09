@@ -99,19 +99,21 @@ func (s *Service) WaitForTermination(done <-chan struct{}, signals ...os.Signal)
 		signals = []os.Signal{syscall.SIGTERM}
 	}
 
-	s.waitForDone(done, signals...)
+	ctx := context.Background()
+
+	s.waitForDone(ctx, done, signals...)
 
 	select {
 	case <-done:
 	default:
 		if s.graceDuration != 0 {
-			slog.LogAttrs(context.Background(), slog.LevelInfo, "Waiting for graceful shutdown", slog.Duration("duration", s.graceDuration))
+			slog.LogAttrs(ctx, slog.LevelInfo, "Waiting for graceful shutdown", slog.Duration("duration", s.graceDuration))
 			time.Sleep(s.graceDuration)
 		}
 	}
 }
 
-func (s *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
+func (s *Service) waitForDone(ctx context.Context, done <-chan struct{}, signals ...os.Signal) {
 	signalsChan := make(chan os.Signal, 1)
 	defer close(signalsChan)
 
@@ -123,7 +125,7 @@ func (s *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	select {
 	case <-done:
 	case sig := <-signalsChan:
-		slog.LogAttrs(context.Background(), slog.LevelInfo, fmt.Sprintf("Signal %s received", sig.String()))
+		slog.LogAttrs(ctx, slog.LevelInfo, fmt.Sprintf("Signal %s received", sig.String()))
 	}
 }
 

@@ -16,7 +16,7 @@ func (n Noop) Enabled() bool {
 	return false
 }
 
-func (n Noop) Close() {
+func (n Noop) Close(_ context.Context) {
 	// noop
 }
 

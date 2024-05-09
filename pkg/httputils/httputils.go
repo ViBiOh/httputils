@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ViBiOh/httputils/v4/pkg/health"
+	"github.com/ViBiOh/httputils/v4/pkg/httprecover"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
@@ -12,7 +13,7 @@ func Handler(handler http.Handler, healthService *health.Service, middlewares ..
 	versionHandler := versionHandler()
 	HealthHandler := healthService.HealthHandler()
 	readyHandler := healthService.ReadyHandler()
-	appHandler := model.ChainMiddlewares(handler, middlewares...)
+	appHandler := model.ChainMiddlewares(handler, append([]model.Middleware{httprecover.Middleware}, middlewares...)...)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

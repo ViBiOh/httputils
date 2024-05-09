@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -19,12 +18,12 @@ type port struct {
 	template renderer.TemplateFunc
 }
 
-func newPort(ctx context.Context, config configuration, client client, adapter adapter) port {
+func newPort(config configuration, client client, adapter adapter) port {
 	var output port
 
 	portTracer := client.telemetry.TracerProvider().Tracer("port")
 
-	output.template = func(w http.ResponseWriter, r *http.Request) (renderer.Page, error) {
+	output.template = func(_ http.ResponseWriter, r *http.Request) (renderer.Page, error) {
 		var err error
 
 		ctx, end := telemetry.StartSpan(r.Context(), portTracer, "handler", trace.WithSpanKind(trace.SpanKindInternal))

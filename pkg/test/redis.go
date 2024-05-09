@@ -20,11 +20,11 @@ func NewRedisIntegration(t *testing.T) *RedisIntegration {
 	return &RedisIntegration{t: t}
 }
 
-func (ri *RedisIntegration) Bootstrap(name string) {
-	ri.connect(name)
+func (ri *RedisIntegration) Bootstrap(ctx context.Context, name string) {
+	ri.connect(ctx, name)
 }
 
-func (ri *RedisIntegration) connect(name string) {
+func (ri *RedisIntegration) connect(ctx context.Context, name string) {
 	fs := flag.NewFlagSet("test-"+name, flag.ExitOnError)
 
 	redisConfig := redis.Flags(fs, "")
@@ -33,7 +33,7 @@ func (ri *RedisIntegration) connect(name string) {
 		ri.t.Fatal(err)
 	}
 
-	client, err := redis.New(redisConfig, nil, nil)
+	client, err := redis.New(ctx, redisConfig, nil, nil)
 	if err != nil {
 		ri.t.Fatal(err)
 	}
@@ -51,6 +51,6 @@ func (ri *RedisIntegration) Reset() {
 	assert.NoError(ri.t, err)
 }
 
-func (ri *RedisIntegration) Close() {
-	ri.client.Close()
+func (ri *RedisIntegration) Close(ctx context.Context) {
+	ri.client.Close(ctx)
 }

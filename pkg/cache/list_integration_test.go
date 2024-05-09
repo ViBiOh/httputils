@@ -20,11 +20,11 @@ type ListSuite struct {
 
 func (ls *ListSuite) SetupSuite() {
 	ls.integration = test.NewRedisIntegration(ls.T())
-	ls.integration.Bootstrap("cache_list")
+	ls.integration.Bootstrap(context.Background(), "cache_list")
 }
 
 func (ls *ListSuite) TearDownSuite() {
-	ls.integration.Close()
+	ls.integration.Close(context.Background())
 }
 
 func (ls *ListSuite) TearDownTest() {

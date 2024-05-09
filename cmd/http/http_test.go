@@ -11,11 +11,10 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/cors"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
-	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 )
 
-var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+var handler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 })
 
@@ -67,6 +66,6 @@ func BenchmarkFullMiddlewares(b *testing.B) {
 		b.Error(err)
 	}
 
-	middlewares := model.ChainMiddlewares(handler, recoverer.Middleware, telemetryService.Middleware("http"), owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware)
+	middlewares := model.ChainMiddlewares(handler, telemetryService.Middleware("http"), owasp.New(owaspConfig).Middleware, cors.New(corsConfig).Middleware)
 	benchmarkHandler(b, middlewares)
 }

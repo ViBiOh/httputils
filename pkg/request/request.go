@@ -12,6 +12,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 )
 
 const (
@@ -284,6 +286,8 @@ func (r Request) Multipart(ctx context.Context, feed func(mw *multipart.Writer) 
 
 	var feedErr error
 	go func() {
+		defer recoverer.Error(&feedErr)
+
 		defer func() {
 			if pipeCloseErr := writer.CloseWithError(multipartWriter.Close()); pipeCloseErr != nil {
 				feedErr = errors.Join(feedErr, fmt.Errorf("close multipart writer: %w", pipeCloseErr))

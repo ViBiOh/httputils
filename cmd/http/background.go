@@ -13,7 +13,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func startBackground(ctx context.Context, config configuration, client client, adapter adapter) {
+func startBackground(ctx context.Context, client client, adapter adapter) {
 	go redis.SubscribeFor(ctx, client.redis, "httputils:tasks", func(content time.Time, err error) {
 		if err != nil {
 			slog.LogAttrs(ctx, slog.LevelError, "consume on pubsub", slog.Any("error", err))

@@ -32,7 +32,7 @@ func newAdapter(ctx context.Context, config configuration, client client) (adapt
 		return output, fmt.Errorf("amqphandler: %w", err)
 	}
 
-	output.renderer, err = renderer.New(config.renderer, content, nil, client.telemetry.MeterProvider(), client.telemetry.TracerProvider())
+	output.renderer, err = renderer.New(ctx, config.renderer, content, nil, client.telemetry.MeterProvider(), client.telemetry.TracerProvider())
 	if err != nil {
 		return output, fmt.Errorf("renderer: %w", err)
 	}

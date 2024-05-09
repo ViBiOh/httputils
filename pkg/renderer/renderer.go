@@ -60,7 +60,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	return &config
 }
 
-func New(config *Config, filesystem fs.FS, funcMap template.FuncMap, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Service, error) {
+func New(ctx context.Context, config *Config, filesystem fs.FS, funcMap template.FuncMap, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Service, error) {
 	staticFS, err := fs.Sub(filesystem, "static")
 	if err != nil {
 		return nil, fmt.Errorf("get static/ filesystem: %w", err)
@@ -99,7 +99,7 @@ func New(config *Config, filesystem fs.FS, funcMap template.FuncMap, meterProvid
 	instance.tpl = tpl
 
 	if strings.HasPrefix(instance.publicURL, "http://localhost") {
-		slog.LogAttrs(context.Background(), slog.LevelWarn, "PublicURL has a development/debug value: You may need to configure it.", slog.String("url", instance.publicURL))
+		slog.LogAttrs(ctx, slog.LevelWarn, "PublicURL has a development/debug value: You may need to configure it.", slog.String("url", instance.publicURL))
 	}
 
 	if meterProvider != nil {

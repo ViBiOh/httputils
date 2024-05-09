@@ -18,8 +18,8 @@ type listener struct {
 	sync.RWMutex
 }
 
-func (c *Client) getListener() (*listener, error) {
-	listener := c.createListener(c.prefetch)
+func (c *Client) getListener(ctx context.Context) (*listener, error) {
+	listener := c.createListener(ctx, c.prefetch)
 
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
@@ -31,7 +31,7 @@ func (c *Client) getListener() (*listener, error) {
 	return listener, nil
 }
 
-func (c *Client) createListener(prefetch int) *listener {
+func (c *Client) createListener(ctx context.Context, prefetch int) *listener {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -50,7 +50,7 @@ identity:
 	c.listeners[output.name] = &output
 
 	if c.listenerMetric != nil {
-		c.listenerMetric.Add(context.Background(), 1)
+		c.listenerMetric.Add(ctx, 1)
 	}
 
 	return &output
@@ -86,7 +86,7 @@ func (l *listener) close() error {
 	return l.channel.Close()
 }
 
-func (c *Client) removeListener(name string) {
+func (c *Client) removeListener(ctx context.Context, name string) {
 	if listener := c.listeners[name]; listener == nil {
 		return
 	}
@@ -94,6 +94,6 @@ func (c *Client) removeListener(name string) {
 	delete(c.listeners, name)
 
 	if c.listenerMetric != nil {
-		c.listenerMetric.Add(context.Background(), -1)
+		c.listenerMetric.Add(ctx, -1)
 	}
 }

@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"context"
 	"embed"
 	"errors"
 	"flag"
@@ -164,7 +165,7 @@ var content embed.FS
 func TestHandler(t *testing.T) {
 	t.Parallel()
 
-	configuredService, err := New(&Config{
+	configuredService, err := New(context.Background(), &Config{
 		PublicURL: "http://localhost",
 		Title:     "Golang Test",
 		Minify:    true,
@@ -173,7 +174,7 @@ func TestHandler(t *testing.T) {
 		t.Error(err)
 	}
 
-	configuredPrefixService, err := New(&Config{
+	configuredPrefixService, err := New(context.Background(), &Config{
 		PublicURL:  "http://localhost",
 		PathPrefix: "/app",
 		Title:      "Golang Test",

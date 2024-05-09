@@ -35,11 +35,11 @@ func init() {
 	slog.SetDefault(configureLogger(os.Stdout, slog.LevelInfo, false, "time", "level", "msg"))
 }
 
-func Init(config *Config) {
+func Init(ctx context.Context, config *Config) {
 	var level slog.Level
 
 	if err := level.UnmarshalText([]byte(config.Level)); err != nil {
-		slog.LogAttrs(context.Background(), slog.LevelError, err.Error(), slog.String("level", config.Level))
+		slog.LogAttrs(ctx, slog.LevelError, err.Error(), slog.String("level", config.Level))
 
 		return
 	}

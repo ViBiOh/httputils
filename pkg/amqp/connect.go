@@ -10,7 +10,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func connect(uri string, prefetch int, onDisconnect func()) (*amqp.Connection, *amqp.Channel, error) {
+func connect(uri string, prefetch int, onDisconnect func(context.Context)) (*amqp.Connection, *amqp.Channel, error) {
 	slog.Info("Dialing AMQP with 10 seconds timeout...")
 
 	connection, err := amqp.DialConfig(uri, amqp.Config{
@@ -39,7 +39,7 @@ func connect(uri string, prefetch int, onDisconnect func()) (*amqp.Connection, *
 
 		for range connection.NotifyClose(make(chan *amqp.Error)) {
 			log.Warn("Connection closed, trying to reconnect...")
-			onDisconnect()
+			onDisconnect(context.Background())
 		}
 
 		log.Info("End listening close connection notifications")
@@ -69,14 +69,14 @@ func createChannel(connection Connection, prefetch int) (channel *amqp.Channel, 
 	return channel, nil
 }
 
-func (c *Client) onDisconnect() {
+func (c *Client) onDisconnect(ctx context.Context) {
 	for {
 		if c.reconnectMetric != nil {
 			c.reconnectMetric.Add(context.Background(), 1)
 		}
 
-		if err := c.reconnect(); err != nil {
-			slog.LogAttrs(context.Background(), slog.LevelError, "reconnect", slog.Any("error", err))
+		if err := c.reconnect(ctx); err != nil {
+			slog.LogAttrs(ctx, slog.LevelError, "reconnect", slog.Any("error", err))
 
 			slog.Info("Waiting one minute before attempting to reconnect again...")
 			time.Sleep(time.Minute)

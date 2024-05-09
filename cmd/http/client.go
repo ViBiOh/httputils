@@ -29,7 +29,7 @@ func newClient(ctx context.Context, config configuration) (client, error) {
 	var output client
 	var err error
 
-	logger.Init(config.logger)
+	logger.Init(ctx, config.logger)
 
 	output.telemetry, err = telemetry.New(ctx, config.telemetry)
 	if err != nil {
@@ -44,12 +44,12 @@ func newClient(ctx context.Context, config configuration) (client, error) {
 
 	output.health = health.New(ctx, config.health)
 
-	output.redis, err = redis.New(config.redis, output.telemetry.MeterProvider(), output.telemetry.TracerProvider())
+	output.redis, err = redis.New(ctx, config.redis, output.telemetry.MeterProvider(), output.telemetry.TracerProvider())
 	if err != nil {
 		return output, fmt.Errorf("redis: %w", err)
 	}
 
-	output.amqp, err = amqp.New(config.amqp, output.telemetry.MeterProvider(), output.telemetry.TracerProvider())
+	output.amqp, err = amqp.New(ctx, config.amqp, output.telemetry.MeterProvider(), output.telemetry.TracerProvider())
 	if err != nil && !errors.Is(err, amqp.ErrNoConfig) {
 		return output, fmt.Errorf("amqp: %w", err)
 	}
@@ -65,7 +65,7 @@ func (c client) Close(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(ctx, closeTimeout)
 	defer cancel()
 
-	c.amqp.Close()
-	c.redis.Close()
+	c.amqp.Close(ctx)
+	c.redis.Close(ctx)
 	c.telemetry.Close(ctx)
 }

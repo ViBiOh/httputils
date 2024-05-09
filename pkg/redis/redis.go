@@ -11,6 +11,7 @@ import (
 
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
+	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/metric"
@@ -51,7 +52,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	return &config
 }
 
-func New(config *Config, meter metric.MeterProvider, tracer trace.TracerProvider) (Client, error) {
+func New(ctx context.Context, config *Config, meter metric.MeterProvider, tracer trace.TracerProvider) (Client, error) {
 	if len(config.Address) == 0 {
 		return Noop{}, nil
 	}
@@ -70,7 +71,7 @@ func New(config *Config, meter metric.MeterProvider, tracer trace.TracerProvider
 
 	if !model.IsNil(tracer) {
 		if err := redisotel.InstrumentTracing(service.client, redisotel.WithTracerProvider(tracer)); err != nil {
-			defer service.Close()
+			defer service.Close(ctx)
 
 			return Noop{}, fmt.Errorf("tracing: %w", err)
 		}
@@ -78,7 +79,7 @@ func New(config *Config, meter metric.MeterProvider, tracer trace.TracerProvider
 
 	if !model.IsNil(meter) {
 		if err := redisotel.InstrumentMetrics(service.client, redisotel.WithMeterProvider(meter)); err != nil {
-			defer service.Close()
+			defer service.Close(ctx)
 
 			return Noop{}, fmt.Errorf("meter: %w", err)
 		}
@@ -91,9 +92,9 @@ func (s *Service) Enabled() bool {
 	return true
 }
 
-func (s *Service) Close() {
+func (s *Service) Close(ctx context.Context) {
 	if err := s.client.Close(); err != nil {
-		slog.LogAttrs(context.Background(), slog.LevelError, "redis close", slog.Any("error", err))
+		slog.LogAttrs(ctx, slog.LevelError, "redis close", slog.Any("error", err))
 	}
 }
 
@@ -243,6 +244,7 @@ func (s *Service) DeletePattern(ctx context.Context, pattern string) (err error)
 
 	go func() {
 		defer close(done)
+		defer recoverer.Error(&err)
 
 		pipeline := s.client.Pipeline()
 

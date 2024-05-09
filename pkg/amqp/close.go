@@ -8,7 +8,7 @@ import (
 	"log/slog"
 )
 
-func (c *Client) Close() {
+func (c *Client) Close(ctx context.Context) {
 	if c == nil {
 		return
 	}
@@ -19,18 +19,18 @@ func (c *Client) Close() {
 	var err error
 
 	if err = c.cancelListeners(); err != nil {
-		slog.LogAttrs(context.Background(), slog.LevelError, "cancel listeners", slog.Any("error", err))
+		slog.LogAttrs(ctx, slog.LevelError, "cancel listeners", slog.Any("error", err))
 	}
 
 	if err = c.closeListeners(); err != nil {
-		slog.LogAttrs(context.Background(), slog.LevelError, "close listeners", slog.Any("error", err))
+		slog.LogAttrs(ctx, slog.LevelError, "close listeners", slog.Any("error", err))
 	}
 
-	c.closeChannel()
-	c.closeConnection()
+	c.closeChannel(ctx)
+	c.closeConnection(ctx)
 }
 
-func (c *Client) reconnect() error {
+func (c *Client) reconnect(ctx context.Context) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -45,7 +45,7 @@ func (c *Client) reconnect() error {
 
 	slog.Info("Connection reopened.")
 
-	go c.reconnectListeners()
+	go c.reconnectListeners(ctx)
 
 	return nil
 }
@@ -70,14 +70,14 @@ func (c *Client) closeListeners() (err error) {
 	return nil
 }
 
-func (c *Client) reconnectListeners() {
+func (c *Client) reconnectListeners(ctx context.Context) {
 	for _, item := range c.listeners {
 		func(listener *listener) {
 			c.mutex.Lock()
 			defer c.mutex.Unlock()
 
 			if err := listener.createChannel(c.connection); err != nil {
-				slog.LogAttrs(context.Background(), slog.LevelError, "recreate channel", slog.String("name", listener.name), slog.Any("error", err))
+				slog.LogAttrs(ctx, slog.LevelError, "recreate channel", slog.String("name", listener.name), slog.Any("error", err))
 			}
 
 			listener.reconnect <- true
@@ -85,18 +85,18 @@ func (c *Client) reconnectListeners() {
 	}
 }
 
-func (c *Client) closeChannel() {
+func (c *Client) closeChannel(ctx context.Context) {
 	if c.channel == nil {
 		return
 	}
 
 	slog.Info("Closing AMQP channel")
-	loggedClose(c.channel)
+	loggedClose(ctx, c.channel)
 
 	c.channel = nil
 }
 
-func (c *Client) closeConnection() {
+func (c *Client) closeConnection(ctx context.Context) {
 	if c.connection == nil {
 		return
 	}
@@ -107,14 +107,14 @@ func (c *Client) closeConnection() {
 		return
 	}
 
-	slog.LogAttrs(context.Background(), slog.LevelInfo, "Closing AMQP connection", slog.String("vhost", c.Vhost()))
-	loggedClose(c.connection)
+	slog.LogAttrs(ctx, slog.LevelInfo, "Closing AMQP connection", slog.String("vhost", c.Vhost()))
+	loggedClose(ctx, c.connection)
 
 	c.connection = nil
 }
 
-func loggedClose(closer io.Closer) {
+func loggedClose(ctx context.Context, closer io.Closer) {
 	if err := closer.Close(); err != nil {
-		slog.LogAttrs(context.Background(), slog.LevelError, "close", slog.Any("error", err))
+		slog.LogAttrs(ctx, slog.LevelError, "close", slog.Any("error", err))
 	}
 }

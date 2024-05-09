@@ -11,7 +11,7 @@ type Client interface {
 	Subscriber
 
 	Enabled() bool
-	Close()
+	Close(context.Context)
 	FlushAll(context.Context) error
 	Ping(ctx context.Context) error
 	Load(ctx context.Context, key string) ([]byte, error)

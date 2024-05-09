@@ -59,11 +59,11 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	return &config
 }
 
-func New(config *Config, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Client, error) {
-	return NewFromURI(config.URI, config.Prefetch, meterProvider, tracerProvider)
+func New(ctx context.Context, config *Config, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Client, error) {
+	return NewFromURI(ctx, config.URI, config.Prefetch, meterProvider, tracerProvider)
 }
 
-func NewFromURI(uri string, prefetch int, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Client, error) {
+func NewFromURI(ctx context.Context, uri string, prefetch int, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Client, error) {
 	if len(uri) == 0 {
 		return nil, ErrNoConfig
 	}
@@ -101,7 +101,7 @@ func NewFromURI(uri string, prefetch int, meterProvider metric.MeterProvider, tr
 	client.channel = channel
 	client.vhost = connection.Config.Vhost
 
-	slog.LogAttrs(context.Background(), slog.LevelInfo, "Connected to AMQP!", slog.String("vhost", client.vhost))
+	slog.LogAttrs(ctx, slog.LevelInfo, "Connected to AMQP!", slog.String("vhost", client.vhost))
 
 	if err = client.Ping(); err != nil {
 		return client, fmt.Errorf("ping amqp: %w", err)

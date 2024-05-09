@@ -20,11 +20,11 @@ type GetSuite struct {
 
 func (gs *GetSuite) SetupSuite() {
 	gs.integration = test.NewRedisIntegration(gs.T())
-	gs.integration.Bootstrap("cache_get")
+	gs.integration.Bootstrap(context.Background(), "cache_get")
 }
 
 func (gs *GetSuite) TearDownSuite() {
-	gs.integration.Close()
+	gs.integration.Close(context.Background())
 }
 
 func (gs *GetSuite) TearDownTest() {
