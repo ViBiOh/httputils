@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 )
 
 type Server struct {
@@ -94,7 +93,7 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 
 	go func() {
 		<-ctx.Done()
-		s.Stop(cntxt.WithoutDeadline(ctx))
+		s.Stop(context.WithoutCancel(ctx))
 	}()
 
 	var err error

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/redis/go-redis/v9"
 )
@@ -54,6 +53,6 @@ func SubscribeFor[T any](ctx context.Context, client Subscriber, channel string,
 		var instance T
 		handler(instance, json.Unmarshal([]byte(item.Payload), &instance))
 	}, func() {
-		unsubscribe(cntxt.WithoutDeadline(ctx))
+		unsubscribe(context.WithoutCancel(ctx))
 	})
 }

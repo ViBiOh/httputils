@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/cache/memory"
-	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"github.com/redis/go-redis/v9"
@@ -179,7 +178,7 @@ func (c *Cache[K, V]) fetch(ctx context.Context, id K) (V, error) {
 	value, err := c.onMiss(ctx, id)
 
 	if err == nil {
-		go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
+		go doInBackground(context.WithoutCancel(ctx), func(ctx context.Context) error {
 			return c.store(ctx, id, value)
 		})
 	}
@@ -203,7 +202,7 @@ func (c *Cache[K, V]) extendTTL(ctx context.Context, keys ...string) {
 		return
 	}
 
-	go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
+	go doInBackground(context.WithoutCancel(ctx), func(ctx context.Context) error {
 		return c.extender.Extend(ctx, keys...)
 	})
 }

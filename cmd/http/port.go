@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/hash"
 	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
@@ -49,7 +49,7 @@ func newPort(config configuration, client client, adapter adapter) port {
 		if len(r.URL.Query().Get("evict")) > 0 {
 			go func() {
 				time.Sleep(time.Millisecond * 100)
-				if err = adapter.hello.EvictOnSuccess(cntxt.WithoutDeadline(ctx), r.URL.Path, nil); err != nil {
+				if err = adapter.hello.EvictOnSuccess(context.WithoutCancel(ctx), r.URL.Path, nil); err != nil {
 					slog.LogAttrs(ctx, slog.LevelError, "evict on success", slog.Any("error", err))
 				}
 			}()

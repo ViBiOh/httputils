@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/ViBiOh/httputils/v4/pkg/cntxt"
 	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
@@ -132,7 +131,7 @@ func (c *Cache[K, V]) handleList(ctx context.Context, onFetchErr FetchErrHandler
 		output[missing.index] = missingValues[index]
 	}
 
-	go doInBackground(cntxt.WithoutDeadline(ctx), func(ctx context.Context) error {
+	go doInBackground(context.WithoutCancel(ctx), func(ctx context.Context) error {
 		return c.storeMany(ctx, ids, output, missingIDs)
 	})
 
