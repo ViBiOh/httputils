@@ -13,6 +13,8 @@ const (
 	internalError = "Oops! Something went wrong. Server's logs contain more details."
 )
 
+var ErrNoLog = errors.New("no log")
+
 func httpError(ctx context.Context, w http.ResponseWriter, status int, payload string, err error) {
 	w.Header().Add("Cache-Control", "no-cache")
 	http.Error(w, payload, status)
@@ -73,7 +75,7 @@ func HandleError(ctx context.Context, w http.ResponseWriter, err error) bool {
 }
 
 func Log(ctx context.Context, err error, status int, message string) {
-	if err == nil {
+	if err == nil || errors.Is(err, ErrNoLog) {
 		return
 	}
 
