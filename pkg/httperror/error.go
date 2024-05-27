@@ -13,8 +13,6 @@ const (
 	internalError = "Oops! Something went wrong. Server's logs contain more details."
 )
 
-var ErrNoLog = errors.New("no log")
-
 func httpError(ctx context.Context, w http.ResponseWriter, status int, payload string, err error) {
 	w.Header().Add("Cache-Control", "no-cache")
 	http.Error(w, payload, status)
@@ -36,7 +34,12 @@ func BadRequest(ctx context.Context, w http.ResponseWriter, err error) {
 }
 
 func Unauthorized(ctx context.Context, w http.ResponseWriter, err error) {
-	httpError(ctx, w, http.StatusUnauthorized, err.Error(), err)
+	message := "🙅"
+	if err != nil {
+		message = err.Error()
+	}
+
+	httpError(ctx, w, http.StatusUnauthorized, message, err)
 }
 
 func Forbidden(ctx context.Context, w http.ResponseWriter) {
@@ -44,7 +47,7 @@ func Forbidden(ctx context.Context, w http.ResponseWriter) {
 }
 
 func NotFound(ctx context.Context, w http.ResponseWriter) {
-	httpError(ctx, w, http.StatusNotFound, "¯\\_(ツ)_/¯", nil)
+	httpError(ctx, w, http.StatusNotFound, "🤷", nil)
 }
 
 func InternalServerError(ctx context.Context, w http.ResponseWriter, err error) {
@@ -75,7 +78,7 @@ func HandleError(ctx context.Context, w http.ResponseWriter, err error) bool {
 }
 
 func Log(ctx context.Context, err error, status int, message string) {
-	if err == nil || errors.Is(err, ErrNoLog) {
+	if err == nil {
 		return
 	}
 

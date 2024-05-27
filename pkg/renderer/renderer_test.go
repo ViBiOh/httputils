@@ -220,7 +220,7 @@ func TestHandler(t *testing.T) {
 			configuredService,
 			httptest.NewRequest(http.MethodGet, "/svg/unknown?fill=black", nil),
 			nil,
-			"¯\\_(ツ)_/¯\n",
+			"🤷\n",
 			http.StatusNotFound,
 			http.Header{},
 		},

@@ -58,6 +58,11 @@ func TestUnauthorized(t *testing.T) {
 			"unauthorized\n",
 			http.StatusUnauthorized,
 		},
+		"should set default message": {
+			nil,
+			"🙅\n",
+			http.StatusUnauthorized,
+		},
 	}
 
 	for intention, testCase := range cases {
@@ -117,7 +122,7 @@ func TestNotFound(t *testing.T) {
 		wantStatus int
 	}{
 		"should set body and status": {
-			"¯\\_(ツ)_/¯\n",
+			"🤷\n",
 			http.StatusNotFound,
 		},
 	}
@@ -210,7 +215,7 @@ func TestHandleError(t *testing.T) {
 			model.WrapNotFound(errors.New("unknown id")),
 			true,
 			http.StatusNotFound,
-			"¯\\_(ツ)_/¯\n",
+			"🤷\n",
 		},
 		"method not allowed": {
 			model.WrapMethodNotAllowed(errors.New("unknown method")),
