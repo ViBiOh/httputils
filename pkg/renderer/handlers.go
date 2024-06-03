@@ -15,6 +15,20 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+type errOption struct {
+	noLog bool
+}
+
+type ErrorOption func(errOption) errOption
+
+func WithNoLog() ErrorOption {
+	return func(in errOption) errOption {
+		in.noLog = true
+
+		return in
+	}
+}
+
 func (s Service) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
 	joinChar := "?"
 	if strings.Contains(pathname, "?") {
@@ -31,8 +45,13 @@ func (s Service) Redirect(w http.ResponseWriter, r *http.Request, pathname strin
 	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", s.url(parts[0]), joinChar, message, anchor), http.StatusFound)
 }
 
-func (s Service) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error) {
+func (s Service) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error, opts ...ErrorOption) {
 	content = s.feedContent(content)
+
+	var config errOption
+	for _, opt := range opts {
+		config = opt(config)
+	}
 
 	status, message := httperror.ErrorStatus(err)
 	if len(message) > 0 {
@@ -41,7 +60,9 @@ func (s Service) Error(w http.ResponseWriter, r *http.Request, content map[strin
 
 	ctx := r.Context()
 
-	httperror.Log(ctx, err, status, message)
+	if !config.noLog {
+		httperror.Log(ctx, err, status, message)
+	}
 
 	nonce := owasp.Nonce()
 	owasp.WriteNonce(w, nonce)
