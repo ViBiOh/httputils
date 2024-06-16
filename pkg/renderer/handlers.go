@@ -155,23 +155,3 @@ func appendNonceAndEtag(w http.ResponseWriter, content map[string]any, etag stri
 	content["nonce"] = nonce
 	w.Header().Add("Etag", fmt.Sprintf(`W/"%s-%s"`, etag, nonce))
 }
-
-func (s Service) svg() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		tpl := s.tpl.Lookup("svg-" + strings.Trim(r.URL.Path, "/"))
-		if tpl == nil {
-			httperror.NotFound(ctx, w)
-
-			return
-		}
-
-		w.Header().Add("Cache-Control", staticCacheDuration)
-		w.Header().Add("Content-Type", "image/svg+xml")
-
-		if err := templates.WriteTemplate(ctx, s.tracer, tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {
-			httperror.InternalServerError(ctx, w, err)
-		}
-	})
-}

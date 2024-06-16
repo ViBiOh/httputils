@@ -16,12 +16,9 @@ import (
 	"github.com/ViBiOh/flags"
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
+	"github.com/ViBiOh/httputils/v4/pkg/templates"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
-)
-
-const (
-	svgPath = "/svg"
 )
 
 var (
@@ -162,26 +159,14 @@ func (s *Service) feedContent(content map[string]any) map[string]any {
 }
 
 func (s *Service) Handler(templateFunc TemplateFunc) http.Handler {
-	svgHandler := http.StripPrefix(svgPath, s.svg())
-
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, end := telemetry.StartSpan(r.Context(), s.tracer, "renderer", trace.WithSpanKind(trace.SpanKindInternal))
 		defer end(nil)
 
 		r = r.WithContext(ctx)
 
-		if s.handleStatic(w, r) {
-			return
-		}
-
 		if s.tpl == nil {
 			httperror.NotFound(ctx, w)
-
-			return
-		}
-
-		if strings.HasPrefix(r.URL.Path, svgPath) {
-			svgHandler.ServeHTTP(w, r)
 
 			return
 		}
@@ -196,24 +181,48 @@ func (s *Service) Handler(templateFunc TemplateFunc) http.Handler {
 	return http.StripPrefix(s.pathPrefix, handler)
 }
 
-func (s *Service) handleStatic(w http.ResponseWriter, r *http.Request) bool {
-	if !isStaticPaths(r.URL.Path) {
-		return false
-	}
+func (s *Service) HandleStatic() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
-	file, err := s.staticFileSystem.Open(r.URL.Path)
-	if err != nil {
-		return false
-	}
+		telemetry.SetRouteTag(ctx, "/static")
 
-	defer func() {
-		if closeErr := file.Close(); closeErr != nil {
-			slog.LogAttrs(r.Context(), slog.LevelWarn, "close static file", slog.Any("error", err))
+		file, err := s.staticFileSystem.Open(r.PathValue("path"))
+		if err != nil {
+			httperror.NotFound(ctx, w)
+
+			return
 		}
-	}()
 
-	w.Header().Add("Cache-Control", staticCacheDuration)
-	s.staticHandler.ServeHTTP(w, r)
+		defer func() {
+			if closeErr := file.Close(); closeErr != nil {
+				slog.LogAttrs(r.Context(), slog.LevelWarn, "close static file", slog.Any("error", err))
+			}
+		}()
 
-	return true
+		w.Header().Add("Cache-Control", staticCacheDuration)
+		s.staticHandler.ServeHTTP(w, r)
+	})
+}
+
+func (s Service) HandleSVG() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		telemetry.SetRouteTag(ctx, "/svg")
+
+		tpl := s.tpl.Lookup("svg-" + strings.Trim(r.PathValue("path"), "/"))
+		if tpl == nil {
+			httperror.NotFound(ctx, w)
+
+			return
+		}
+
+		w.Header().Add("Cache-Control", staticCacheDuration)
+		w.Header().Add("Content-Type", "image/svg+xml")
+
+		if err := templates.WriteTemplate(ctx, s.tracer, tpl, w, r.URL.Query().Get("fill"), "text/xml"); err != nil {
+			httperror.InternalServerError(ctx, w, err)
+		}
+	})
 }

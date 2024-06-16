@@ -14,16 +14,20 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type port struct {
-	template renderer.TemplateFunc
+func newPort(config configuration, client client, adapter adapter) http.Handler {
+	mux := http.NewServeMux()
+
+	mux.Handle("/app/svg/{path}", adapter.renderer.HandleSVG())
+	mux.Handle("/app/static/{path}", adapter.renderer.HandleStatic())
+	mux.Handle("/", adapter.renderer.Handler(getDefaultRenderer(config, client, adapter)))
+
+	return mux
 }
 
-func newPort(config configuration, client client, adapter adapter) port {
-	var output port
-
+func getDefaultRenderer(config configuration, client client, adapter adapter) func(http.ResponseWriter, *http.Request) (renderer.Page, error) {
 	portTracer := client.telemetry.TracerProvider().Tracer("port")
 
-	output.template = func(_ http.ResponseWriter, r *http.Request) (renderer.Page, error) {
+	return func(_ http.ResponseWriter, r *http.Request) (renderer.Page, error) {
 		var err error
 
 		ctx, end := telemetry.StartSpan(r.Context(), portTracer, "handler", trace.WithSpanKind(trace.SpanKindInternal))
@@ -60,6 +64,4 @@ func newPort(config configuration, client client, adapter adapter) port {
 
 		return renderer.NewPage("public", http.StatusOK, nil), nil
 	}
-
-	return output
 }

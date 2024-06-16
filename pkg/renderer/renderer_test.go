@@ -174,16 +174,6 @@ func TestHandler(t *testing.T) {
 		t.Error(err)
 	}
 
-	configuredPrefixService, err := New(context.Background(), &Config{
-		PublicURL:  "http://localhost",
-		PathPrefix: "/app",
-		Title:      "Golang Test",
-		Minify:     true,
-	}, content, template.FuncMap{}, nil, nil)
-	if err != nil {
-		t.Error(err)
-	}
-
 	cases := map[string]struct {
 		instance     *Service
 		request      *http.Request
@@ -192,38 +182,6 @@ func TestHandler(t *testing.T) {
 		wantStatus   int
 		wantHeader   http.Header
 	}{
-		"favicon": {
-			configuredService,
-			httptest.NewRequest(http.MethodGet, "/images/favicon/manifest.json", nil),
-			nil,
-			"{}\n",
-			http.StatusOK,
-			http.Header{},
-		},
-		"svg": {
-			configuredService,
-			httptest.NewRequest(http.MethodGet, "/svg/test?fill=black", nil),
-			nil,
-			"color=black",
-			http.StatusOK,
-			http.Header{},
-		},
-		"svg with prefix": {
-			configuredPrefixService,
-			httptest.NewRequest(http.MethodGet, "/app/svg/test?fill=black", nil),
-			nil,
-			"color=black",
-			http.StatusOK,
-			http.Header{},
-		},
-		"svg not found": {
-			configuredService,
-			httptest.NewRequest(http.MethodGet, "/svg/unknown?fill=black", nil),
-			nil,
-			"🤷\n",
-			http.StatusNotFound,
-			http.Header{},
-		},
 		"html": {
 			configuredService,
 			httptest.NewRequest(http.MethodGet, "/", nil),
@@ -275,6 +233,148 @@ func TestHandler(t *testing.T) {
 
 			writer := httptest.NewRecorder()
 			testCase.instance.Handler(testCase.templateFunc).ServeHTTP(writer, testCase.request)
+
+			if got := writer.Code; got != testCase.wantStatus {
+				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)
+			}
+
+			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.want {
+				t.Errorf("Handler = `%s`, want `%s`", string(got), testCase.want)
+			}
+
+			for key := range testCase.wantHeader {
+				want := testCase.wantHeader.Get(key)
+				if got := writer.Header().Get(key); got != want {
+					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
+				}
+			}
+		})
+	}
+}
+
+func TestHandleStatic(t *testing.T) {
+	t.Parallel()
+
+	configuredService, err := New(context.Background(), &Config{
+		PublicURL: "http://localhost",
+		Title:     "Golang Test",
+		Minify:    true,
+	}, content, template.FuncMap{}, nil, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	faviconRequest := httptest.NewRequest(http.MethodGet, "/images/favicon/manifest.json", nil)
+	faviconRequest.SetPathValue("path", "images/favicon/manifest.json")
+
+	cases := map[string]struct {
+		instance   *Service
+		request    *http.Request
+		want       string
+		wantStatus int
+		wantHeader http.Header
+	}{
+		"favicon": {
+			configuredService,
+			faviconRequest,
+			"{}\n",
+			http.StatusOK,
+			http.Header{},
+		},
+	}
+
+	for intention, testCase := range cases {
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			testCase.instance.HandleStatic().ServeHTTP(writer, testCase.request)
+
+			if got := writer.Code; got != testCase.wantStatus {
+				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)
+			}
+
+			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.want {
+				t.Errorf("Handler = `%s`, want `%s`", string(got), testCase.want)
+			}
+
+			for key := range testCase.wantHeader {
+				want := testCase.wantHeader.Get(key)
+				if got := writer.Header().Get(key); got != want {
+					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
+				}
+			}
+		})
+	}
+}
+
+func TestHandleSVG(t *testing.T) {
+	t.Parallel()
+
+	configuredService, err := New(context.Background(), &Config{
+		PublicURL: "http://localhost",
+		Title:     "Golang Test",
+		Minify:    true,
+	}, content, template.FuncMap{}, nil, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	configuredPrefixService, err := New(context.Background(), &Config{
+		PublicURL:  "http://localhost",
+		PathPrefix: "/app",
+		Title:      "Golang Test",
+		Minify:     true,
+	}, content, template.FuncMap{}, nil, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	svgTestRequest := httptest.NewRequest(http.MethodGet, "/svg/test?fill=black", nil)
+	svgTestRequest.SetPathValue("path", "test")
+
+	svgAppTestRequest := httptest.NewRequest(http.MethodGet, "/app/svg/test?fill=black", nil)
+	svgAppTestRequest.SetPathValue("path", "test")
+
+	unknownRequest := httptest.NewRequest(http.MethodGet, "/svg/unknown?fill=black", nil)
+	unknownRequest.SetPathValue("path", "unknown")
+
+	cases := map[string]struct {
+		instance   *Service
+		request    *http.Request
+		want       string
+		wantStatus int
+		wantHeader http.Header
+	}{
+		"svg": {
+			configuredService,
+			svgTestRequest,
+			"color=black",
+			http.StatusOK,
+			http.Header{},
+		},
+		"svg with prefix": {
+			configuredPrefixService,
+			svgAppTestRequest,
+			"color=black",
+			http.StatusOK,
+			http.Header{},
+		},
+		"svg not found": {
+			configuredService,
+			unknownRequest,
+			"🤷\n",
+			http.StatusNotFound,
+			http.Header{},
+		},
+	}
+
+	for intention, testCase := range cases {
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			testCase.instance.HandleSVG().ServeHTTP(writer, testCase.request)
 
 			if got := writer.Code; got != testCase.wantStatus {
 				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)
