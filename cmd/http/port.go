@@ -17,9 +17,7 @@ import (
 func newPort(config configuration, client client, adapter adapter) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.Handle("/app/svg/{path}", adapter.renderer.HandleSVG())
-	mux.Handle("/app/static/{path}", adapter.renderer.HandleStatic())
-	mux.Handle("/", adapter.renderer.Handler(getDefaultRenderer(config, client, adapter)))
+	adapter.renderer.Register(mux, getDefaultRenderer(config, client, adapter))
 
 	return mux
 }

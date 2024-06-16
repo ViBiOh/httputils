@@ -48,54 +48,6 @@ func TestFlags(t *testing.T) {
 	}
 }
 
-func TestIsStaticRootPaths(t *testing.T) {
-	t.Parallel()
-
-	type args struct {
-		requestPath string
-	}
-
-	cases := map[string]struct {
-		args args
-		want bool
-	}{
-		"empty": {
-			args{
-				requestPath: "/",
-			},
-			false,
-		},
-		"robots": {
-			args{
-				requestPath: "/robots.txt",
-			},
-			true,
-		},
-		"sitemap": {
-			args{
-				requestPath: "/sitemap.xml",
-			},
-			true,
-		},
-		"subpath": {
-			args{
-				requestPath: "/test/sitemap.xml",
-			},
-			false,
-		},
-	}
-
-	for intention, testCase := range cases {
-		t.Run(intention, func(t *testing.T) {
-			t.Parallel()
-
-			if got := isStaticPaths(testCase.args.requestPath); got != testCase.want {
-				t.Errorf("isStaticPaths() = %t, want %t", got, testCase.want)
-			}
-		})
-	}
-}
-
 func TestFeedContent(t *testing.T) {
 	t.Parallel()
 
@@ -288,7 +240,7 @@ func TestHandleStatic(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			testCase.instance.HandleStatic().ServeHTTP(writer, testCase.request)
+			testCase.instance.HandleStatic("/").ServeHTTP(writer, testCase.request)
 
 			if got := writer.Code; got != testCase.wantStatus {
 				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)

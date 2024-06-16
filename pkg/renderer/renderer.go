@@ -115,6 +115,20 @@ func New(ctx context.Context, config *Config, filesystem fs.FS, funcMap template
 	return &instance, nil
 }
 
+func (s *Service) Register(mux *http.ServeMux, templateFunc TemplateFunc) {
+	mux.Handle(path.Join(s.pathPrefix, "/svg/{path...}"), s.HandleSVG())
+
+	for _, folder := range staticFolders {
+		mux.Handle(path.Join(s.pathPrefix, folder, "{path...}"), s.HandleStatic(folder))
+	}
+
+	for _, item := range staticRootPaths {
+		mux.Handle(path.Join(s.pathPrefix, item), s.HandleStatic(item))
+	}
+
+	mux.Handle(path.Join(s.pathPrefix, "/"), s.Handler(templateFunc))
+}
+
 func (s *Service) PublicURL(url string) string {
 	return s.publicURL + s.url(url)
 }
@@ -126,22 +140,6 @@ func (s *Service) url(url string) string {
 	}
 
 	return prefixedURL
-}
-
-func isStaticPaths(requestPath string) bool {
-	for _, rootPath := range staticRootPaths {
-		if strings.EqualFold(rootPath, requestPath) {
-			return true
-		}
-	}
-
-	for _, folder := range staticFolders {
-		if strings.HasPrefix(requestPath, folder) {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (s *Service) feedContent(content map[string]any) map[string]any {
@@ -181,13 +179,18 @@ func (s *Service) Handler(templateFunc TemplateFunc) http.Handler {
 	return http.StripPrefix(s.pathPrefix, handler)
 }
 
-func (s *Service) HandleStatic() http.Handler {
+func (s *Service) HandleStatic(prefix string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		telemetry.SetRouteTag(ctx, "/static")
 
-		file, err := s.staticFileSystem.Open(r.PathValue("path"))
+		item := r.PathValue("path")
+		if len(prefix) != 0 {
+			item = path.Join(prefix, item)
+		}
+
+		file, err := s.staticFileSystem.Open(item)
 		if err != nil {
 			httperror.NotFound(ctx, w)
 
