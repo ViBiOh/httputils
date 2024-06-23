@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (s Service) Push(ctx context.Context, key string, value any) error {
+func (s *Service) Push(ctx context.Context, key string, value any) error {
 	if content, err := json.Marshal(value); err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	} else if err := s.client.LPush(ctx, key, content).Err(); err != nil {
@@ -19,7 +19,7 @@ func (s Service) Push(ctx context.Context, key string, value any) error {
 	return nil
 }
 
-func (s Service) Pull(ctx context.Context, key string, handler func(string, error)) {
+func (s *Service) Pull(ctx context.Context, key string, handler func(string, error)) {
 	for {
 		content, err := s.client.BRPop(ctx, 0, key).Result()
 		if err != nil {

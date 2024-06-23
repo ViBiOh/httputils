@@ -29,7 +29,7 @@ func WithNoLog() ErrorOption {
 	}
 }
 
-func (s Service) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
+func (s *Service) Redirect(w http.ResponseWriter, r *http.Request, pathname string, message Message) {
 	joinChar := "?"
 	if strings.Contains(pathname, "?") {
 		joinChar = "&"
@@ -45,7 +45,7 @@ func (s Service) Redirect(w http.ResponseWriter, r *http.Request, pathname strin
 	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", s.url(parts[0]), joinChar, message, anchor), http.StatusFound)
 }
 
-func (s Service) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error, opts ...ErrorOption) {
+func (s *Service) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error, opts ...ErrorOption) {
 	content = s.feedContent(content)
 
 	var config errOption
@@ -73,7 +73,7 @@ func (s Service) Error(w http.ResponseWriter, r *http.Request, content map[strin
 	}
 }
 
-func (s Service) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
+func (s *Service) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
 	defer recoverer.Handler(func(err error) {
 		s.Error(w, r, nil, err)
 	})
@@ -118,7 +118,7 @@ func (s Service) render(w http.ResponseWriter, r *http.Request, templateFunc Tem
 	}
 }
 
-func (s Service) matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
+func (s *Service) matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
 	_, end := telemetry.StartSpan(r.Context(), s.tracer, "match_etag", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(nil)
 

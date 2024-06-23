@@ -8,7 +8,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (s Service) AddTraceToLogHandler(handler slog.Handler) slog.Handler {
+func (s *Service) AddTraceToLogHandler(handler slog.Handler) slog.Handler {
+	if s == nil {
+		return handler
+	}
+
 	return OtlpLogger{
 		Handler:    handler,
 		Uint64:     s.TraceUint64,

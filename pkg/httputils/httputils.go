@@ -1,6 +1,7 @@
 package httputils
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -10,26 +11,15 @@ import (
 )
 
 func Handler(handler http.Handler, healthService *health.Service, middlewares ...model.Middleware) http.Handler {
-	versionHandler := versionHandler()
-	HealthHandler := healthService.HealthHandler()
-	readyHandler := healthService.ReadyHandler()
-	appHandler := model.ChainMiddlewares(handler, append([]model.Middleware{httprecover.Middleware}, middlewares...)...)
+	mux := http.NewServeMux()
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case health.LivePath:
-			HealthHandler.ServeHTTP(w, r)
+	mux.Handle(fmt.Sprintf("GET %s", health.LivePath), healthService.HealthHandler())
+	mux.Handle(fmt.Sprintf("GET %s", health.ReadyPath), healthService.ReadyHandler())
 
-		case health.ReadyPath:
-			readyHandler.ServeHTTP(w, r)
+	mux.Handle("GET /version", versionHandler())
+	mux.Handle("GET /", model.ChainMiddlewares(handler, append([]model.Middleware{httprecover.Middleware}, middlewares...)...))
 
-		case "/version":
-			versionHandler.ServeHTTP(w, r)
-
-		default:
-			appHandler.ServeHTTP(w, r)
-		}
-	})
+	return mux
 }
 
 func versionHandler() http.Handler {

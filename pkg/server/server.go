@@ -15,9 +15,9 @@ import (
 type Server struct {
 	done            chan struct{}
 	logger          *slog.Logger
+	server          *http.Server
 	cert            string
 	key             string
-	server          http.Server
 	shutdownTimeout time.Duration
 }
 
@@ -49,17 +49,15 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	return &config
 }
 
-func New(config *Config) Server {
+func New(config *Config) *Server {
 	port := config.Port
 	done := make(chan struct{})
 
 	if port == 0 {
-		return Server{
-			done: done,
-		}
+		return nil
 	}
 
-	return Server{
+	return &Server{
 		done: done,
 
 		cert:            config.Cert,
@@ -67,7 +65,7 @@ func New(config *Config) Server {
 		shutdownTimeout: config.ShutdownTimeout,
 
 		logger: slog.With("name", config.Name),
-		server: http.Server{
+		server: &http.Server{
 			Addr:         fmt.Sprintf("%s:%d", config.Address, port),
 			ReadTimeout:  config.ReadTimeout,
 			WriteTimeout: config.WriteTimeout,
@@ -77,10 +75,21 @@ func New(config *Config) Server {
 }
 
 func (s *Server) Done() <-chan struct{} {
+	if s == nil {
+		done := make(chan struct{})
+		close(done)
+
+		return done
+	}
+
 	return s.done
 }
 
 func (s *Server) Start(ctx context.Context, handler http.Handler) {
+	if s == nil {
+		return
+	}
+
 	defer close(s.done)
 
 	if len(s.server.Addr) == 0 {
@@ -111,6 +120,10 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 }
 
 func (s *Server) Stop(ctx context.Context) {
+	if s == nil {
+		return
+	}
+
 	ctx, cancelFn := context.WithTimeout(ctx, s.shutdownTimeout)
 	defer cancelFn()
 

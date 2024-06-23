@@ -15,18 +15,19 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 )
 
-type client struct {
-	redis     redis.Client
-	amqp      *amqp.Client
+type clients struct {
+	telemetry *telemetry.Service
+	pprof     *pprof.Service
 	health    *health.Service
-	telemetry telemetry.Service
-	pprof     pprof.Service
+
+	redis redis.Client
+	amqp  *amqp.Client
 }
 
 const closeTimeout = time.Second * 10
 
-func newClient(ctx context.Context, config configuration) (client, error) {
-	var output client
+func newClient(ctx context.Context, config configuration) (clients, error) {
+	var output clients
 	var err error
 
 	logger.Init(ctx, config.logger)
@@ -57,11 +58,11 @@ func newClient(ctx context.Context, config configuration) (client, error) {
 	return output, nil
 }
 
-func (c client) Start() {
+func (c clients) Start() {
 	go c.pprof.Start(c.health.DoneCtx())
 }
 
-func (c client) Close(ctx context.Context) {
+func (c clients) Close(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(ctx, closeTimeout)
 	defer cancel()
 

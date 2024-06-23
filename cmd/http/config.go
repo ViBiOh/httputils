@@ -21,18 +21,20 @@ import (
 )
 
 type configuration struct {
-	logger     *logger.Config
-	owasp      *owasp.Config
-	alcotest   *alcotest.Config
-	telemetry  *telemetry.Config
-	pprof      *pprof.Config
-	cors       *cors.Config
-	renderer   *renderer.Config
+	logger    *logger.Config
+	alcotest  *alcotest.Config
+	telemetry *telemetry.Config
+	pprof     *pprof.Config
+	health    *health.Config
+
+	server   *server.Config
+	owasp    *owasp.Config
+	cors     *cors.Config
+	renderer *renderer.Config
+
 	amqp       *amqp.Config
-	redis      *redis.Config
 	amqHandler *amqphandler.Config
-	appServer  *server.Config
-	health     *health.Config
+	redis      *redis.Config
 }
 
 func newConfig() configuration {
@@ -40,12 +42,12 @@ func newConfig() configuration {
 	fs.Usage = flags.Usage(fs)
 
 	config := configuration{
-		appServer:  server.Flags(fs, ""),
-		health:     health.Flags(fs, ""),
-		alcotest:   alcotest.Flags(fs, ""),
 		logger:     logger.Flags(fs, "logger"),
+		alcotest:   alcotest.Flags(fs, ""),
 		telemetry:  telemetry.Flags(fs, "telemetry"),
 		pprof:      pprof.Flags(fs, "pprof"),
+		health:     health.Flags(fs, ""),
+		server:     server.Flags(fs, ""),
 		owasp:      owasp.Flags(fs, "", flags.NewOverride("Csp", "default-src 'self'; base-uri 'self'; script-src 'httputils-nonce'")),
 		cors:       cors.Flags(fs, "cors"),
 		amqp:       amqp.Flags(fs, "amqp"),

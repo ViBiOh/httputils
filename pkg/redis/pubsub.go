@@ -10,7 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func (s Service) PublishJSON(ctx context.Context, channel string, value any) error {
+func (s *Service) PublishJSON(ctx context.Context, channel string, value any) error {
 	payload, err := json.Marshal(value)
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
@@ -19,7 +19,7 @@ func (s Service) PublishJSON(ctx context.Context, channel string, value any) err
 	return s.Publish(ctx, channel, payload)
 }
 
-func (s Service) Publish(ctx context.Context, channel string, value any) (err error) {
+func (s *Service) Publish(ctx context.Context, channel string, value any) (err error) {
 	count, err := s.client.Publish(ctx, channel, value).Result()
 	if err != nil {
 		return fmt.Errorf("publish: %w", err)
@@ -32,7 +32,7 @@ func (s Service) Publish(ctx context.Context, channel string, value any) (err er
 	return nil
 }
 
-func (s Service) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context)) {
+func (s *Service) Subscribe(ctx context.Context, channel string) (<-chan *redis.Message, func(context.Context)) {
 	pubsub := s.client.Subscribe(ctx, channel)
 
 	return pubsub.Channel(), func(ctx context.Context) {

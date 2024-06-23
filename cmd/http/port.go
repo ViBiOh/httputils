@@ -14,15 +14,15 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func newPort(config configuration, client client, adapter adapter) http.Handler {
+func newPort(config configuration, client clients, adapter adapters) http.Handler {
 	mux := http.NewServeMux()
 
-	adapter.renderer.Register(mux, getDefaultRenderer(config, client, adapter))
+	mux.Handle(config.renderer.PathPrefix+"/", adapter.renderer.NewServeMux(getDefaultRenderer(config, client, adapter)))
 
 	return mux
 }
 
-func getDefaultRenderer(config configuration, client client, adapter adapter) func(http.ResponseWriter, *http.Request) (renderer.Page, error) {
+func getDefaultRenderer(config configuration, client clients, adapter adapters) func(http.ResponseWriter, *http.Request) (renderer.Page, error) {
 	portTracer := client.telemetry.TracerProvider().Tracer("port")
 
 	return func(_ http.ResponseWriter, r *http.Request) (renderer.Page, error) {

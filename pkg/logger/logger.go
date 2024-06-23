@@ -88,6 +88,6 @@ func FatalfOnErr(ctx context.Context, err error, msg string, args ...slog.Attr) 
 	os.Exit(1)
 }
 
-func AddOpenTelemetryToDefaultLogger(telemetryApp telemetry.Service) {
-	slog.SetDefault(slog.New(telemetryApp.AddTraceToLogHandler(slog.Default().Handler())))
+func AddOpenTelemetryToDefaultLogger(telemetry *telemetry.Service) {
+	slog.SetDefault(slog.New(telemetry.AddTraceToLogHandler(slog.Default().Handler())))
 }

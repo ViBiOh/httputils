@@ -53,24 +53,24 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	return &config
 }
 
-func New(ctx context.Context, config *Config) (Service, error) {
+func New(ctx context.Context, config *Config) (*Service, error) {
 	if len(config.URL) == 0 {
-		return Service{}, nil
+		return nil, nil
 	}
 
 	otelResource, err := newResource(ctx)
 	if err != nil {
-		return Service{}, fmt.Errorf("otel resource: %w", err)
+		return nil, fmt.Errorf("otel resource: %w", err)
 	}
 
 	tracerExporter, err := newTraceExporter(ctx, config.URL)
 	if err != nil {
-		return Service{}, fmt.Errorf("trace exporter: %w", err)
+		return nil, fmt.Errorf("trace exporter: %w", err)
 	}
 
 	sampler, err := newSampler(strings.TrimSpace(config.Rate))
 	if err != nil {
-		return Service{}, fmt.Errorf("sampler: %w", err)
+		return nil, fmt.Errorf("sampler: %w", err)
 	}
 
 	tracerProvider := trace.NewTracerProvider(
@@ -81,7 +81,7 @@ func New(ctx context.Context, config *Config) (Service, error) {
 
 	metricExporter, err := newMetricExporter(ctx, config.URL)
 	if err != nil {
-		return Service{}, fmt.Errorf("metric exporter: %w", err)
+		return nil, fmt.Errorf("metric exporter: %w", err)
 	}
 
 	meterProvider := metric.NewMeterProvider(
@@ -103,46 +103,33 @@ func New(ctx context.Context, config *Config) (Service, error) {
 	)
 
 	if err := runtime.Start(runtime.WithMeterProvider(meterProvider)); err != nil {
-		return Service{}, fmt.Errorf("runtime: %w", err)
+		return nil, fmt.Errorf("runtime: %w", err)
 	}
 
-	return Service{
+	return &Service{
 		resource:       otelResource,
 		tracerProvider: tracerProvider,
 		meterProvider:  meterProvider,
 	}, nil
 }
 
-func allowedHttpAttr(v ...string) attribute.Filter {
-	m := make(map[string]any, len(v))
-
-	for _, s := range v {
-		m[s] = struct{}{}
-	}
-
-	return func(kv attribute.KeyValue) bool {
-		_, ok := m[string(kv.Key)]
-		return ok
-	}
-}
-
-func (s Service) MeterProvider() meter.MeterProvider {
-	if s.meterProvider == nil {
+func (s *Service) MeterProvider() meter.MeterProvider {
+	if s == nil || s.meterProvider == nil {
 		return noop_meter.MeterProvider{}
 	}
 
 	return s.meterProvider
 }
 
-func (s Service) TracerProvider() tr.TracerProvider {
-	if s.meterProvider == nil {
+func (s *Service) TracerProvider() tr.TracerProvider {
+	if s == nil || s.meterProvider == nil {
 		return noop.NewTracerProvider()
 	}
 
 	return s.tracerProvider
 }
 
-func (s Service) Middleware(name string) func(next http.Handler) http.Handler {
+func (s *Service) Middleware(name string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		if next == nil {
 			return next
@@ -156,7 +143,11 @@ func (s Service) Middleware(name string) func(next http.Handler) http.Handler {
 	}
 }
 
-func (s Service) Close(ctx context.Context) {
+func (s *Service) Close(ctx context.Context) {
+	if s == nil {
+		return
+	}
+
 	if s.tracerProvider != nil {
 		if err := s.tracerProvider.ForceFlush(ctx); err != nil {
 			slog.LogAttrs(ctx, slog.LevelError, "flush trace provider", slog.Any("error", err))
@@ -178,7 +169,11 @@ func (s Service) Close(ctx context.Context) {
 	}
 }
 
-func (s Service) GetServiceVersionAndEnv() (service, version, env string) {
+func (s *Service) GetServiceVersionAndEnv() (service, version, env string) {
+	if s == nil {
+		return "", "", ""
+	}
+
 	for _, attribute := range s.resource.Attributes() {
 		switch attribute.Key {
 		case semconv.ServiceNameKey:
@@ -244,5 +239,18 @@ func newSampler(rate string) (trace.Sampler, error) {
 		}
 
 		return trace.TraceIDRatioBased(rateRatio), nil
+	}
+}
+
+func allowedHttpAttr(v ...string) attribute.Filter {
+	m := make(map[string]any, len(v))
+
+	for _, s := range v {
+		m[s] = struct{}{}
+	}
+
+	return func(kv attribute.KeyValue) bool {
+		_, ok := m[string(kv.Key)]
+		return ok
 	}
 }

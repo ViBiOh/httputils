@@ -115,18 +115,22 @@ func New(ctx context.Context, config *Config, filesystem fs.FS, funcMap template
 	return &instance, nil
 }
 
-func (s *Service) Register(mux *http.ServeMux, templateFunc TemplateFunc) {
-	mux.Handle(path.Join(s.pathPrefix, "/svg/{path...}"), s.HandleSVG())
+func (s *Service) NewServeMux(templateFunc TemplateFunc) *http.ServeMux {
+	mux := http.NewServeMux()
+
+	mux.Handle("/svg/{path...}", s.HandleSVG())
 
 	for _, folder := range staticFolders {
-		mux.Handle(path.Join(s.pathPrefix, folder, "{path...}"), s.HandleStatic(folder))
+		mux.Handle(path.Join(folder, "{path...}"), s.HandleStatic(folder))
 	}
 
 	for _, item := range staticRootPaths {
-		mux.Handle(path.Join(s.pathPrefix, item), s.HandleStatic(item))
+		mux.Handle(item, s.HandleStatic(item))
 	}
 
-	mux.Handle(path.Join(s.pathPrefix, "/"), s.Handler(templateFunc))
+	mux.Handle("/", s.Handler(templateFunc))
+
+	return mux
 }
 
 func (s *Service) PublicURL(url string) string {
@@ -157,7 +161,7 @@ func (s *Service) feedContent(content map[string]any) map[string]any {
 }
 
 func (s *Service) Handler(templateFunc TemplateFunc) http.Handler {
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, end := telemetry.StartSpan(r.Context(), s.tracer, "renderer", trace.WithSpanKind(trace.SpanKindInternal))
 		defer end(nil)
 
@@ -171,12 +175,6 @@ func (s *Service) Handler(templateFunc TemplateFunc) http.Handler {
 
 		s.render(w, r, templateFunc)
 	})
-
-	if len(s.pathPrefix) == 0 {
-		return handler
-	}
-
-	return http.StripPrefix(s.pathPrefix, handler)
 }
 
 func (s *Service) HandleStatic(prefix string) http.Handler {
@@ -208,7 +206,7 @@ func (s *Service) HandleStatic(prefix string) http.Handler {
 	})
 }
 
-func (s Service) HandleSVG() http.Handler {
+func (s *Service) HandleSVG() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 

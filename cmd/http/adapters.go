@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"time"
 
@@ -11,14 +12,17 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/renderer"
 )
 
-type adapter struct {
-	renderer *renderer.Service
+//go:embed templates static
+var content embed.FS
+
+type adapters struct {
 	amqp     *amqphandler.Service
+	renderer *renderer.Service
 	hello    *cache.Cache[string, string]
 }
 
-func newAdapter(ctx context.Context, config configuration, client client) (adapter, error) {
-	var output adapter
+func newAdapters(ctx context.Context, config configuration, client clients) (adapters, error) {
+	var output adapters
 	var err error
 
 	if client.amqp != nil {

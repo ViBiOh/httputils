@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"embed"
 	"syscall"
 
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
@@ -13,34 +12,30 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/server"
 )
 
-//go:embed templates static
-var content embed.FS
-
 func main() {
 	config := newConfig()
 	alcotest.DoAndExit(config.alcotest)
 
 	ctx := context.Background()
 
-	client, err := newClient(ctx, config)
+	clients, err := newClient(ctx, config)
 	logger.FatalfOnErr(ctx, err, "client")
 
-	go client.Start()
-	defer client.Close(ctx)
+	go clients.Start()
+	defer clients.Close(ctx)
 
-	ctxEnd := client.health.EndCtx()
+	ctxEnd := clients.health.EndCtx()
 
-	adapter, err := newAdapter(ctxEnd, config, client)
+	adapters, err := newAdapters(ctxEnd, config, clients)
 	logger.FatalfOnErr(ctx, err, "adapter")
 
-	startBackground(ctxEnd, client, adapter)
+	startBackground(ctxEnd, clients, adapters)
 
-	handler := newPort(config, client, adapter)
+	services := newServices(config)
+	port := newPort(config, clients, adapters)
 
-	appServer := server.New(config.appServer)
+	go services.server.Start(ctxEnd, httputils.Handler(port, clients.health, clients.telemetry.Middleware("http"), owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
 
-	go appServer.Start(ctxEnd, httputils.Handler(handler, client.health, client.telemetry.Middleware("http"), owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
-
-	client.health.WaitForTermination(appServer.Done(), syscall.SIGTERM, syscall.SIGINT)
-	server.GracefulWait(appServer.Done(), adapter.amqp.Done())
+	clients.health.WaitForTermination(services.server.Done(), syscall.SIGTERM, syscall.SIGINT)
+	server.GracefulWait(services.server.Done(), adapters.amqp.Done())
 }

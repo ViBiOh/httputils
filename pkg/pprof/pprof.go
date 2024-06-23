@@ -48,7 +48,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	return &config
 }
 
-func New(config *Config, service, version, env string) Service {
+func New(config *Config, service, version, env string) *Service {
 	instance := Service{
 		port: config.Port,
 	}
@@ -61,10 +61,10 @@ func New(config *Config, service, version, env string) Service {
 		instance.env = env
 	}
 
-	return instance
+	return &instance
 }
 
-func (s Service) Start(ctx context.Context) {
+func (s *Service) Start(ctx context.Context) {
 	if s.port > 0 {
 		go s.http(ctx)
 	}
@@ -74,13 +74,13 @@ func (s Service) Start(ctx context.Context) {
 	}
 }
 
-func (s Service) http(ctx context.Context) {
+func (s *Service) http(ctx context.Context) {
 	if err := http.ListenAndServe(fmt.Sprintf("localhost:%d", s.port), http.DefaultServeMux); err != nil {
 		slog.LogAttrs(ctx, slog.LevelError, fmt.Sprintf("pprof http: %s", err.Error()))
 	}
 }
 
-func (s Service) push(ctx context.Context) {
+func (s *Service) push(ctx context.Context) {
 	defer recoverer.Logger()
 
 	ticker := time.NewTicker(time.Minute)
@@ -98,7 +98,7 @@ func (s Service) push(ctx context.Context) {
 	}
 }
 
-func (s Service) send(ctx context.Context) error {
+func (s *Service) send(ctx context.Context) error {
 	now := time.Now()
 
 	if err := s.getCpuProfile(); err != nil {
@@ -117,7 +117,7 @@ func (s Service) send(ctx context.Context) error {
 	return nil
 }
 
-func (s Service) getCpuProfile() error {
+func (s *Service) getCpuProfile() error {
 	s.buffer.Reset()
 
 	if err := pprof.StartCPUProfile(s.buffer); err != nil {
@@ -130,7 +130,7 @@ func (s Service) getCpuProfile() error {
 	return nil
 }
 
-func (s Service) writeMultipart(ctx context.Context, now time.Time) func(*multipart.Writer) error {
+func (s *Service) writeMultipart(ctx context.Context, now time.Time) func(*multipart.Writer) error {
 	return func(mw *multipart.Writer) error {
 		if err := mw.WriteField("version", "3"); err != nil {
 			return fmt.Errorf("write field `version`: %w", err)
