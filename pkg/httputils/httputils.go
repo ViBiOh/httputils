@@ -17,7 +17,7 @@ func Handler(handler http.Handler, healthService *health.Service, middlewares ..
 	mux.Handle(fmt.Sprintf("GET %s", health.ReadyPath), healthService.ReadyHandler())
 
 	mux.Handle("GET /version", versionHandler())
-	mux.Handle("GET /", model.ChainMiddlewares(handler, append([]model.Middleware{httprecover.Middleware}, middlewares...)...))
+	mux.Handle("/", model.ChainMiddlewares(handler, append([]model.Middleware{httprecover.Middleware}, middlewares...)...))
 
 	return mux
 }
