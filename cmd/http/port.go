@@ -17,7 +17,7 @@ import (
 func newPort(config configuration, client clients, adapter adapters) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.Handle(config.renderer.PathPrefix+"/", adapter.renderer.NewServeMux(getDefaultRenderer(config, client, adapter)))
+	adapter.renderer.RegisterMux(mux, getDefaultRenderer(config, client, adapter))
 
 	return mux
 }

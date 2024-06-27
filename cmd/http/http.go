@@ -5,10 +5,8 @@ import (
 	"syscall"
 
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
-	"github.com/ViBiOh/httputils/v4/pkg/cors"
 	"github.com/ViBiOh/httputils/v4/pkg/httputils"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
 )
 
@@ -34,7 +32,7 @@ func main() {
 	services := newServices(config)
 	port := newPort(config, clients, adapters)
 
-	go services.server.Start(ctxEnd, httputils.Handler(port, clients.health, clients.telemetry.Middleware("http"), owasp.New(config.owasp).Middleware, cors.New(config.cors).Middleware))
+	go services.server.Start(ctxEnd, httputils.Handler(port, clients.health, clients.telemetry.Middleware("http"), services.owasp.Middleware, services.cors.Middleware))
 
 	clients.health.WaitForTermination(services.server.Done(), syscall.SIGTERM, syscall.SIGINT)
 	server.GracefulWait(services.server.Done(), adapters.amqp.Done())

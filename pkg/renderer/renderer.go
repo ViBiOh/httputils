@@ -115,6 +115,10 @@ func New(ctx context.Context, config *Config, filesystem fs.FS, funcMap template
 	return &instance, nil
 }
 
+func (s *Service) RegisterMux(mux *http.ServeMux, templateFunc TemplateFunc) {
+	mux.Handle(s.pathPrefix+"/", http.StripPrefix(s.pathPrefix, s.NewServeMux(templateFunc)))
+}
+
 func (s *Service) NewServeMux(templateFunc TemplateFunc) *http.ServeMux {
 	mux := http.NewServeMux()
 
