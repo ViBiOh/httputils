@@ -21,27 +21,27 @@ type adapters struct {
 	hello    *cache.Cache[string, string]
 }
 
-func newAdapters(ctx context.Context, config configuration, client clients) (adapters, error) {
+func newAdapters(ctx context.Context, config configuration, clients clients) (adapters, error) {
 	var output adapters
 	var err error
 
-	if client.amqp != nil {
-		if err = client.amqp.Publisher(config.amqHandler.Exchange, "direct", nil); err != nil {
+	if clients.amqp != nil {
+		if err = clients.amqp.Publisher(config.amqHandler.Exchange, "direct", nil); err != nil {
 			return output, fmt.Errorf("publisher: %w", err)
 		}
 	}
 
-	output.amqp, err = amqphandler.New(config.amqHandler, client.amqp, client.telemetry.MeterProvider(), client.telemetry.TracerProvider(), amqpHandler)
+	output.amqp, err = amqphandler.New(config.amqHandler, clients.amqp, clients.telemetry.MeterProvider(), clients.telemetry.TracerProvider(), amqpHandler)
 	if err != nil {
 		return output, fmt.Errorf("amqphandler: %w", err)
 	}
 
-	output.renderer, err = renderer.New(ctx, config.renderer, content, nil, client.telemetry.MeterProvider(), client.telemetry.TracerProvider())
+	output.renderer, err = renderer.New(ctx, config.renderer, content, nil, clients.telemetry.MeterProvider(), clients.telemetry.TracerProvider())
 	if err != nil {
 		return output, fmt.Errorf("renderer: %w", err)
 	}
 
-	output.hello = cache.New(client.redis, func(id string) string { return id }, func(_ context.Context, id string) (string, error) { return hash.String(id), nil }, client.telemetry.TracerProvider()).
+	output.hello = cache.New(clients.redis, func(id string) string { return id }, func(_ context.Context, id string) (string, error) { return hash.String(id), nil }, clients.telemetry.TracerProvider()).
 		WithTTL(time.Hour).
 		WithExtendOnHit(ctx, 10*time.Second, 50).
 		WithClientSideCaching(ctx, "httputils_hello", 10)

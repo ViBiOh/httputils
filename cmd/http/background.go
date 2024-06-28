@@ -13,8 +13,8 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func startBackground(ctx context.Context, client clients, adapter adapters) {
-	go redis.SubscribeFor(ctx, client.redis, "httputils:tasks", func(content time.Time, err error) {
+func startBackground(ctx context.Context, clients clients, adapters adapters) {
+	go redis.SubscribeFor(ctx, clients.redis, "httputils:tasks", func(content time.Time, err error) {
 		if err != nil {
 			slog.LogAttrs(ctx, slog.LevelError, "consume on pubsub", slog.Any("error", err))
 
@@ -31,14 +31,14 @@ func startBackground(ctx context.Context, client clients, adapter adapters) {
 	go speakingClock.Start(ctx, func(_ context.Context) error {
 		slog.InfoContext(ctx, "Clock is ticking")
 
-		if err := client.redis.PublishJSON(ctx, "httputils:tasks", time.Now()); err != nil {
+		if err := clients.redis.PublishJSON(ctx, "httputils:tasks", time.Now()); err != nil {
 			slog.LogAttrs(ctx, slog.LevelError, "publish on pubsub", slog.Any("error", err))
 		}
 
 		return nil
 	})
 
-	go adapter.amqp.Start(ctx)
+	go adapters.amqp.Start(ctx)
 }
 
 func amqpHandler(_ context.Context, message amqp.Delivery) error {
