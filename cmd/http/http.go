@@ -5,7 +5,6 @@ import (
 	"syscall"
 
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
-	"github.com/ViBiOh/httputils/v4/pkg/httputils"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
 	"github.com/ViBiOh/httputils/v4/pkg/server"
 )
@@ -22,17 +21,15 @@ func main() {
 	go clients.Start()
 	defer clients.Close(ctx)
 
-	ctxEnd := clients.health.EndCtx()
-
-	adapters, err := newAdapters(ctxEnd, config, clients)
+	adapters, err := newAdapters(clients.health.EndCtx(), config, clients)
 	logger.FatalfOnErr(ctx, err, "adapter")
 
-	startBackground(ctxEnd, clients, adapters)
+	startBackground(clients.health.EndCtx(), clients, adapters)
 
 	services := newServices(config)
-	port := newPort(config, clients, adapters)
+	port := newPort(config, clients, adapters, services)
 
-	go services.server.Start(ctxEnd, httputils.Handler(port, clients.health, clients.telemetry.Middleware("http"), services.owasp.Middleware, services.cors.Middleware))
+	go services.server.Start(clients.health.EndCtx(), port)
 
 	clients.health.WaitForTermination(services.server.Done(), syscall.SIGTERM, syscall.SIGINT)
 	server.GracefulWait(services.server.Done(), adapters.amqp.Done())

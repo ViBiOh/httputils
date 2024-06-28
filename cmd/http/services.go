@@ -13,9 +13,11 @@ type services struct {
 }
 
 func newServices(config configuration) services {
-	return services{
-		server: server.New(config.server),
-		cors:   cors.New(config.cors),
-		owasp:  owasp.New(config.owasp),
-	}
+	var output services
+
+	output.server = server.New(config.server)
+	output.cors = cors.New(config.cors)
+	output.owasp = owasp.New(config.owasp)
+
+	return output
 }
