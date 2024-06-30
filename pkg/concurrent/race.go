@@ -30,7 +30,17 @@ func ChanUntilDone[T any](ctx context.Context, source <-chan T, onSource func(T)
 done:
 	onDone()
 
-	for item := range source {
-		onSource(item)
+	for {
+		select {
+		case item, ok := <-source:
+			if !ok {
+				return
+			}
+
+			onSource(item)
+
+		default:
+			return
+		}
 	}
 }
