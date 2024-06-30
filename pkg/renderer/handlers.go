@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
@@ -89,6 +90,12 @@ func (s *Service) render(w http.ResponseWriter, r *http.Request, templateFunc Te
 		return
 	}
 
+	tpl := s.tpl.Lookup(page.Template)
+	if tpl == nil {
+		s.Error(w, r, page.Content, model.WrapNotFound(fmt.Errorf("unknown template `%s`", page.Template)))
+		return
+	}
+
 	page.Content = s.feedContent(page.Content)
 
 	message := ParseMessage(r)
@@ -113,7 +120,7 @@ func (s *Service) render(w http.ResponseWriter, r *http.Request, templateFunc Te
 		s.generatedMeter.Add(ctx, 1, metric.WithAttributes(attribute.String("template", page.Template)))
 	}
 
-	if err = responder(ctx, s.tracer, s.tpl.Lookup(page.Template), w, page.Content, page.Status); err != nil {
+	if err = responder(ctx, s.tracer, tpl, w, page.Content, page.Status); err != nil {
 		httperror.InternalServerError(ctx, w, err)
 	}
 }

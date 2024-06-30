@@ -177,6 +177,20 @@ func TestHandler(t *testing.T) {
 			http.StatusBadRequest,
 			http.Header{},
 		},
+		"unknown": {
+			configuredService,
+			httptest.NewRequest(http.MethodGet, "/", nil),
+			func(_ http.ResponseWriter, _ *http.Request) (Page, error) {
+				return Page{
+					Template: "unknownpage",
+					Status:   http.StatusOK,
+					Content:  nil,
+				}, nil
+			},
+			`messageContent=unknown+template+%60unknownpage%60%0Anot+found&amp;messageLevel=error`,
+			http.StatusNotFound,
+			http.Header{},
+		},
 	}
 
 	for intention, testCase := range cases {
