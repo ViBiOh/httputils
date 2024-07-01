@@ -15,6 +15,7 @@ import (
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFlags(t *testing.T) {
@@ -159,7 +160,7 @@ func TestHandler(t *testing.T) {
 					Content:  nil,
 				}, nil
 			},
-			`messageContent=Hello+world&amp;messageLevel=success`,
+			`msgKey=Message&amp;msgCnt=Hello+world&amp;msgLvl=success`,
 			http.StatusUnauthorized,
 			http.Header{},
 		},
@@ -173,7 +174,7 @@ func TestHandler(t *testing.T) {
 					Content:  nil,
 				}, model.WrapInvalid(errors.New("error"))
 			},
-			`messageContent=error%0Ainvalid&amp;messageLevel=error`,
+			`msgKey=Message&amp;msgCnt=error%0Ainvalid&amp;msgLvl=error`,
 			http.StatusBadRequest,
 			http.Header{},
 		},
@@ -187,7 +188,7 @@ func TestHandler(t *testing.T) {
 					Content:  nil,
 				}, nil
 			},
-			`messageContent=unknown+template+%60unknownpage%60%0Anot+found&amp;messageLevel=error`,
+			`msgKey=Message&amp;msgCnt=unknown+template+%60unknownpage%60%0Anot+found&amp;msgLvl=error`,
 			http.StatusNotFound,
 			http.Header{},
 		},
@@ -200,19 +201,13 @@ func TestHandler(t *testing.T) {
 			writer := httptest.NewRecorder()
 			testCase.instance.Handler(testCase.templateFunc).ServeHTTP(writer, testCase.request)
 
-			if got := writer.Code; got != testCase.wantStatus {
-				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)
-			}
+			assert.Equal(t, testCase.wantStatus, writer.Code)
 
-			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.want {
-				t.Errorf("Handler = `%s`, want `%s`", string(got), testCase.want)
-			}
+			actual, _ := request.ReadBodyResponse(writer.Result())
+			assert.Equal(t, testCase.want, string(actual))
 
 			for key := range testCase.wantHeader {
-				want := testCase.wantHeader.Get(key)
-				if got := writer.Header().Get(key); got != want {
-					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
-				}
+				assert.Equal(t, testCase.wantHeader.Get(key), writer.Header().Get(key))
 			}
 		})
 	}
@@ -256,19 +251,13 @@ func TestHandleStatic(t *testing.T) {
 			writer := httptest.NewRecorder()
 			testCase.instance.HandleStatic("/").ServeHTTP(writer, testCase.request)
 
-			if got := writer.Code; got != testCase.wantStatus {
-				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)
-			}
+			assert.Equal(t, testCase.wantStatus, writer.Code)
 
-			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.want {
-				t.Errorf("Handler = `%s`, want `%s`", string(got), testCase.want)
-			}
+			actual, _ := request.ReadBodyResponse(writer.Result())
+			assert.Equal(t, testCase.want, string(actual))
 
 			for key := range testCase.wantHeader {
-				want := testCase.wantHeader.Get(key)
-				if got := writer.Header().Get(key); got != want {
-					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
-				}
+				assert.Equal(t, testCase.wantHeader.Get(key), writer.Header().Get(key))
 			}
 		})
 	}
@@ -342,19 +331,13 @@ func TestHandleSVG(t *testing.T) {
 			writer := httptest.NewRecorder()
 			testCase.instance.HandleSVG().ServeHTTP(writer, testCase.request)
 
-			if got := writer.Code; got != testCase.wantStatus {
-				t.Errorf("Handler = %d, want %d", got, testCase.wantStatus)
-			}
+			assert.Equal(t, testCase.wantStatus, writer.Code)
 
-			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.want {
-				t.Errorf("Handler = `%s`, want `%s`", string(got), testCase.want)
-			}
+			actual, _ := request.ReadBodyResponse(writer.Result())
+			assert.Equal(t, testCase.want, string(actual))
 
 			for key := range testCase.wantHeader {
-				want := testCase.wantHeader.Get(key)
-				if got := writer.Header().Get(key); got != want {
-					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
-				}
+				assert.Equal(t, testCase.wantHeader.Get(key), writer.Header().Get(key))
 			}
 		})
 	}

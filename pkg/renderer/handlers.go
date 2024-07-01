@@ -54,15 +54,16 @@ func (s *Service) Error(w http.ResponseWriter, r *http.Request, content map[stri
 		config = opt(config)
 	}
 
-	status, message := httperror.ErrorStatus(err)
-	if len(message) > 0 {
-		content["Message"] = NewErrorMessage(message)
+	status, statusMessage := httperror.ErrorStatus(err)
+	if len(content) > 0 {
+		message := NewErrorMessage(statusMessage)
+		content[message.Key] = message
 	}
 
 	ctx := r.Context()
 
 	if !config.noLog {
-		httperror.Log(ctx, err, status, message)
+		httperror.Log(ctx, err, status, statusMessage)
 	}
 
 	nonce := owasp.Nonce()
@@ -100,7 +101,7 @@ func (s *Service) render(w http.ResponseWriter, r *http.Request, templateFunc Te
 
 	message := ParseMessage(r)
 	if len(message.Content) > 0 {
-		page.Content["Message"] = message
+		page.Content[message.Key] = message
 	}
 
 	if s.matchEtag(w, r, page) {

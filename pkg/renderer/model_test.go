@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEtag(t *testing.T) {
@@ -66,9 +68,9 @@ func TestParseMessage(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
-			if got := ParseMessage(testCase.args.r); got != testCase.want {
-				t.Errorf("ParseMessage() = %v, want %v", got, testCase.want)
-			}
+			actual := ParseMessage(testCase.args.r)
+
+			assert.Equal(t, testCase.want, actual)
 		})
 	}
 }

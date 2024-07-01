@@ -9,6 +9,13 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/hash"
 )
 
+const (
+	defaultMessageKey = "Message"
+	paramKey          = "msgKey"
+	paramLevel        = "msgLvl"
+	paramContent      = "msgCnt"
+)
+
 type TemplateFunc = func(http.ResponseWriter, *http.Request) (Page, error)
 
 type Page struct {
@@ -59,12 +66,14 @@ func (p Page) etag() string {
 }
 
 type Message struct {
+	Key     string
 	Level   string
 	Content string
 }
 
-func newMessage(level, format string, a ...any) Message {
+func newMessage(key, level, format string, a ...any) Message {
 	return Message{
+		Key:     key,
 		Level:   level,
 		Content: fmt.Sprintf(format, a...),
 	}
@@ -75,22 +84,27 @@ func (m Message) String() string {
 		return ""
 	}
 
-	return fmt.Sprintf("messageContent=%s&messageLevel=%s", url.QueryEscape(m.Content), url.QueryEscape(m.Level))
+	return fmt.Sprintf("%s=%s&%s=%s&%s=%s", paramKey, url.QueryEscape(m.Key), paramContent, url.QueryEscape(m.Content), paramLevel, url.QueryEscape(m.Level))
 }
 
 func ParseMessage(r *http.Request) Message {
 	values := r.URL.Query()
 
 	return Message{
-		Level:   values.Get("messageLevel"),
-		Content: values.Get("messageContent"),
+		Key:     values.Get(paramKey),
+		Level:   values.Get(paramLevel),
+		Content: values.Get(paramContent),
 	}
 }
 
 func NewSuccessMessage(format string, a ...any) Message {
-	return newMessage("success", format, a...)
+	return newMessage(defaultMessageKey, "success", format, a...)
 }
 
 func NewErrorMessage(format string, a ...any) Message {
-	return newMessage("error", format, a...)
+	return newMessage(defaultMessageKey, "error", format, a...)
+}
+
+func NewKeyErrorMessage(key, format string, a ...any) Message {
+	return newMessage(key, "error", format, a...)
 }

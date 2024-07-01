@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ViBiOh/httputils/v4/pkg/request"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRedirect(t *testing.T) {
@@ -26,7 +27,7 @@ func TestRedirect(t *testing.T) {
 			httptest.NewRequest(http.MethodGet, "https://vibioh.fr/", nil),
 			"/",
 			NewSuccessMessage("Created with success"),
-			"<a href=\"/?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
+			"<a href=\"/?msgKey=Message&amp;msgCnt=Created+with+success&amp;msgLvl=success\">Found</a>.\n\n",
 			http.StatusFound,
 			http.Header{
 				"Location": []string{fmt.Sprintf("/?%s", NewSuccessMessage("Created with success"))},
@@ -37,7 +38,7 @@ func TestRedirect(t *testing.T) {
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success?refresh=true",
 			NewSuccessMessage("Created with success"),
-			"<a href=\"/success?refresh=true&amp;messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
+			"<a href=\"/success?refresh=true&amp;msgKey=Message&amp;msgCnt=Created+with+success&amp;msgLvl=success\">Found</a>.\n\n",
 			http.StatusFound,
 			http.Header{
 				"Location": []string{fmt.Sprintf("/success?refresh=true&%s", NewSuccessMessage("Created with success"))},
@@ -50,7 +51,7 @@ func TestRedirect(t *testing.T) {
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success",
 			NewSuccessMessage("Created with success"),
-			"<a href=\"/app/success?messageContent=Created+with+success&amp;messageLevel=success\">Found</a>.\n\n",
+			"<a href=\"/app/success?msgKey=Message&amp;msgCnt=Created+with+success&amp;msgLvl=success\">Found</a>.\n\n",
 			http.StatusFound,
 			http.Header{
 				"Location": []string{fmt.Sprintf("/app/success?%s", NewSuccessMessage("Created with success"))},
@@ -61,21 +62,21 @@ func TestRedirect(t *testing.T) {
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success#id",
 			NewSuccessMessage("Created with success"),
-			"<a href=\"/success?messageContent=Created+with+success&amp;messageLevel=success#id\">Found</a>.\n\n",
+			"<a href=\"/success?msgKey=Message&amp;msgCnt=Created+with+success&amp;msgLvl=success#id\">Found</a>.\n\n",
 			http.StatusFound,
 			http.Header{
 				"Location": []string{fmt.Sprintf("/success?%s#id", NewSuccessMessage("Created with success"))},
 			},
 		},
-		"anchor and query": {
+		"anchor query and custom": {
 			Service{},
 			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
 			"/success?refresh=true#id",
-			NewSuccessMessage("Created with success"),
-			"<a href=\"/success?refresh=true&amp;messageContent=Created+with+success&amp;messageLevel=success#id\">Found</a>.\n\n",
+			NewKeyErrorMessage("ModalMessage", "Created with success"),
+			"<a href=\"/success?refresh=true&amp;msgKey=ModalMessage&amp;msgCnt=Created+with+success&amp;msgLvl=error#id\">Found</a>.\n\n",
 			http.StatusFound,
 			http.Header{
-				"Location": []string{fmt.Sprintf("/success?refresh=true&%s#id", NewSuccessMessage("Created with success"))},
+				"Location": []string{fmt.Sprintf("/success?refresh=true&%s#id", NewKeyErrorMessage("ModalMessage", "Created with success"))},
 			},
 		},
 	}
@@ -87,19 +88,13 @@ func TestRedirect(t *testing.T) {
 			writer := httptest.NewRecorder()
 			testCase.instance.Redirect(writer, testCase.request, testCase.path, testCase.message)
 
-			if got := writer.Code; got != testCase.wantStatus {
-				t.Errorf("Redirect = %d, want %d", got, testCase.wantStatus)
-			}
+			assert.Equal(t, testCase.wantStatus, writer.Code)
 
-			if got, _ := request.ReadBodyResponse(writer.Result()); string(got) != testCase.want {
-				t.Errorf("Redirect = `%s`, want `%s`", string(got), testCase.want)
-			}
+			actual, _ := request.ReadBodyResponse(writer.Result())
+			assert.Equal(t, testCase.want, string(actual))
 
 			for key := range testCase.wantHeader {
-				want := testCase.wantHeader.Get(key)
-				if got := writer.Header().Get(key); got != want {
-					t.Errorf("`%s` Header = `%s`, want `%s`", key, got, want)
-				}
+				assert.Equal(t, testCase.wantHeader.Get(key), writer.Header().Get(key))
 			}
 		})
 	}
