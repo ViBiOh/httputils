@@ -3,6 +3,7 @@ package pprof
 import (
 	"bytes"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -91,7 +92,7 @@ func (s *Service) push(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if err := s.send(ctx); err != nil {
+			if err := s.send(ctx); err != nil && !errors.Is(err, context.Canceled) {
 				slog.LogAttrs(ctx, slog.LevelError, "pprof export", slog.Any("error", err))
 			}
 		}

@@ -37,7 +37,7 @@ func (s *Service) Subscribe(ctx context.Context, channel string) (<-chan *redis.
 	pubsub := s.client.Subscribe(ctx, channel)
 
 	return pubsub.Channel(), func(ctx context.Context) {
-		if err := pubsub.Unsubscribe(ctx, channel); err != nil && errors.Is(err, redis.ErrClosed) {
+		if err := pubsub.Unsubscribe(ctx, channel); err != nil && !errors.Is(err, redis.ErrClosed) {
 			slog.LogAttrs(ctx, slog.LevelError, "unsubscribe pubsub", slog.String("channel", channel), slog.Any("error", err))
 		}
 
