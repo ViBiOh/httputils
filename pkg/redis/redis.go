@@ -112,10 +112,10 @@ func (s *Service) Ping(ctx context.Context) error {
 func (s *Service) Load(ctx context.Context, key string) ([]byte, error) {
 	content, err := s.client.Get(ctx, key).Bytes()
 	if err == nil {
-		return content, err
+		return content, nil
 	}
 
-	if err != redis.Nil {
+	if err != redis.Nil && !errors.Is(err, context.Canceled) {
 		return nil, fmt.Errorf("exec get: %w", err)
 	}
 

@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"time"
 
@@ -152,11 +151,7 @@ func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
 	defer cancel()
 
 	if content, err := c.read.Load(loadCtx, key); err != nil {
-		if errors.Is(err, context.Canceled) {
-			slog.LogAttrs(ctx, slog.LevelWarn, "load from cache", slog.String("key", key), slog.Any("error", err))
-		} else {
-			slog.LogAttrs(ctx, slog.LevelError, "load from cache", slog.String("key", key), slog.Any("error", err))
-		}
+		slog.LogAttrs(ctx, slog.LevelError, "load from cache", slog.String("key", key), slog.Any("error", err))
 	} else if value, ok, err := c.decode([]byte(content)); err != nil {
 		logUnmarshalError(ctx, key, err)
 	} else if ok {
