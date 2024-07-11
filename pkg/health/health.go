@@ -99,21 +99,19 @@ func (s *Service) WaitForTermination(done <-chan struct{}, signals ...os.Signal)
 		signals = []os.Signal{syscall.SIGTERM}
 	}
 
-	ctx := context.Background()
-
-	s.waitForDone(ctx, done, signals...)
+	s.waitForDone(done, signals...)
 
 	select {
 	case <-done:
 	default:
 		if s.graceDuration != 0 {
-			slog.LogAttrs(ctx, slog.LevelInfo, "Waiting for graceful shutdown", slog.Duration("duration", s.graceDuration))
+			slog.LogAttrs(s.endCtx, slog.LevelInfo, "Waiting for graceful shutdown", slog.Duration("duration", s.graceDuration))
 			time.Sleep(s.graceDuration)
 		}
 	}
 }
 
-func (s *Service) waitForDone(ctx context.Context, done <-chan struct{}, signals ...os.Signal) {
+func (s *Service) waitForDone(done <-chan struct{}, signals ...os.Signal) {
 	signalsChan := make(chan os.Signal, 1)
 	defer close(signalsChan)
 
@@ -125,14 +123,14 @@ func (s *Service) waitForDone(ctx context.Context, done <-chan struct{}, signals
 	select {
 	case <-done:
 	case sig := <-signalsChan:
-		slog.LogAttrs(ctx, slog.LevelInfo, fmt.Sprintf("Signal %s received", sig.String()))
+		slog.LogAttrs(s.endCtx, slog.LevelInfo, fmt.Sprintf("Signal %s received", sig.String()))
 	}
 }
 
 func (s *Service) isReady(ctx context.Context) bool {
 	for _, pinger := range s.pingers {
 		if err := pinger(ctx); err != nil {
-			slog.LogAttrs(ctx, slog.LevelError, "ping", slog.Any("error", err))
+			slog.LogAttrs(s.endCtx, slog.LevelError, "ping", slog.Any("error", err))
 
 			return false
 		}

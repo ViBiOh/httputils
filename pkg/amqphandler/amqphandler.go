@@ -155,6 +155,7 @@ func (s *Service) Start(ctx context.Context) {
 	var ticker *time.Ticker
 	if s.inactiveTimeout != 0 {
 		ticker = time.NewTicker(s.inactiveTimeout)
+		defer ticker.Stop()
 
 		tickerCtx, cancel := context.WithCancel(ctx)
 		go func(ctx context.Context) {

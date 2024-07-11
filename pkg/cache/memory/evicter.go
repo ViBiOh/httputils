@@ -42,16 +42,15 @@ func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 			done = nil
 
 			if !timer.Stop() {
-				<-timer.C
+				select {
+				case <-timer.C:
+				default:
+				}
 			}
 
 			c.close()
 
-		case _, ok := <-timer.C:
-			if !ok {
-				goto done
-			}
-
+		case <-timer.C:
 			if toExpire == nil {
 				continue
 			}
@@ -67,11 +66,6 @@ func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 
 			c.handleExpirationUpdate(update, toExpire)
 		}
-	}
-
-done:
-	for update := range c.expirationUpdates {
-		c.handleExpirationUpdate(update, toExpire)
 	}
 }
 
