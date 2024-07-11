@@ -5,8 +5,8 @@ import (
 	"syscall"
 
 	"github.com/ViBiOh/httputils/v4/pkg/alcotest"
+	"github.com/ViBiOh/httputils/v4/pkg/health"
 	"github.com/ViBiOh/httputils/v4/pkg/logger"
-	"github.com/ViBiOh/httputils/v4/pkg/server"
 )
 
 func main() {
@@ -32,5 +32,5 @@ func main() {
 	go services.server.Start(clients.health.EndCtx(), port)
 
 	clients.health.WaitForTermination(services.server.Done(), syscall.SIGTERM, syscall.SIGINT)
-	server.GracefulWait(services.server.Done(), adapters.amqp.Done())
+	health.WaitAll(services.server.Done(), adapters.amqp.Done())
 }
