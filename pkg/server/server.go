@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ViBiOh/flags"
@@ -131,4 +132,22 @@ func (s *Server) Stop(ctx context.Context) {
 	if err := s.server.Shutdown(ctx); err != nil {
 		s.logger.ErrorContext(ctx, "shutdown server", "error", err)
 	}
+}
+
+func (s *Server) ListenAddr() string {
+	if s == nil || len(s.server.Addr) == 0 {
+		return ""
+	}
+
+	address := s.server.Addr
+	if strings.HasPrefix(s.server.Addr, ":") {
+		address = "127.0.0.1" + address
+	}
+
+	protocol := "http"
+	if len(s.cert) != 0 && len(s.key) != 0 {
+		protocol += "s"
+	}
+
+	return protocol + "://" + address
 }

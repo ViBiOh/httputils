@@ -13,6 +13,7 @@ require (
 	github.com/rs/xid v1.5.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tdewolff/minify/v2 v2.20.37
+	github.com/zeebo/assert v1.3.0
 	github.com/zeebo/xxh3 v1.0.2
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.53.0

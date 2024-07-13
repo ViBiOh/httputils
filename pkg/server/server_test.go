@@ -4,6 +4,8 @@ import (
 	"flag"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFlags(t *testing.T) {
@@ -35,4 +37,40 @@ func TestFlags(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestListenAddr(t *testing.T) {
+	t.Parallel()
+
+	t.Run("no config", func(t *testing.T) {
+		t.Parallel()
+
+		actual := New(&Config{}).ListenAddr()
+
+		assert.Equal(t, "", actual)
+	})
+
+	t.Run("minimal config", func(t *testing.T) {
+		t.Parallel()
+
+		actual := New(&Config{Port: 1080}).ListenAddr()
+
+		assert.Equal(t, "http://127.0.0.1:1080", actual)
+	})
+
+	t.Run("with addr", func(t *testing.T) {
+		t.Parallel()
+
+		actual := New(&Config{Port: 80, Address: "localhost"}).ListenAddr()
+
+		assert.Equal(t, "http://localhost:80", actual)
+	})
+
+	t.Run("with TLS", func(t *testing.T) {
+		t.Parallel()
+
+		actual := New(&Config{Port: 80, Address: "localhost", Cert: "example", Key: "example"}).ListenAddr()
+
+		assert.Equal(t, "https://localhost:80", actual)
+	})
 }
