@@ -49,26 +49,20 @@ func WriteArray(ctx context.Context, w http.ResponseWriter, status int, array an
 	Write(ctx, w, status, items{array})
 }
 
-func Parse(req *http.Request, obj any) error {
-	if err := json.NewDecoder(req.Body).Decode(obj); err != nil {
-		return fmt.Errorf("parse JSON: %w", err)
-	}
+func Parse[T any](req *http.Request) (T, error) {
+	var output T
 
-	return nil
+	return output, json.NewDecoder(req.Body).Decode(&output)
 }
 
-func Read(resp *http.Response, obj any) error {
-	var err error
+func Read[T any](resp *http.Response) (output T, err error) {
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = errors.Join(err, closeErr)
+		}
+	}()
 
-	if err = json.NewDecoder(resp.Body).Decode(obj); err != nil {
-		err = fmt.Errorf("read JSON: %w", err)
-	}
-
-	if closeErr := resp.Body.Close(); closeErr != nil {
-		return errors.Join(err, closeErr)
-	}
-
-	return err
+	return output, json.NewDecoder(resp.Body).Decode(&output)
 }
 
 // Stream decodes JSON from a `reader` and send unmarshalled `T` to the given `output` chan

@@ -192,18 +192,16 @@ func TestParse(t *testing.T) {
 
 	type args struct {
 		req *http.Request
-		obj any
 	}
 
 	cases := map[string]struct {
 		args    args
-		want    any
+		want    map[string]any
 		wantErr error
 	}{
 		"valid": {
 			args{
 				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBufferString(`{"key": "value","valid":true}`)),
-				obj: make(map[string]any),
 			},
 			map[string]any{
 				"key":   "value",
@@ -214,10 +212,9 @@ func TestParse(t *testing.T) {
 		"invalid": {
 			args{
 				req: httptest.NewRequest(http.MethodGet, "/", bytes.NewBufferString(`{"key": "value","valid":true`)),
-				obj: make(map[string]any),
 			},
-			make(map[string]any),
-			errors.New("parse JSON"),
+			nil,
+			errors.New("EOF"),
 		},
 	}
 
@@ -225,9 +222,9 @@ func TestParse(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
-			gotErr := Parse(testCase.args.req, &testCase.args.obj)
+			got, gotErr := Parse[map[string]any](testCase.args.req)
 
-			assert.Equal(t, testCase.want, testCase.args.obj)
+			assert.Equal(t, testCase.want, got)
 			checkErr(t, testCase.wantErr, gotErr)
 		})
 	}
@@ -246,12 +243,11 @@ func TestRead(t *testing.T) {
 
 	type args struct {
 		resp *http.Response
-		obj  any
 	}
 
 	cases := map[string]struct {
 		args    args
-		want    any
+		want    map[string]any
 		wantErr error
 	}{
 		"parse error": {
@@ -261,14 +257,13 @@ func TestRead(t *testing.T) {
 				},
 			},
 			nil,
-			errors.New("read JSON"),
+			errors.New("invalid character"),
 		},
 		"close error": {
 			args{
 				resp: &http.Response{
 					Body: errCloser{bytes.NewReader([]byte(`{"key": "value","valid":true}`))},
 				},
-				obj: make(map[string]any),
 			},
 			map[string]any{
 				"key":   "value",
@@ -283,14 +278,13 @@ func TestRead(t *testing.T) {
 				},
 			},
 			nil,
-			errors.New("read JSON: invalid character 'i' looking for beginning of value\nclose error"),
+			errors.New("invalid character 'i' looking for beginning of value\nclose error"),
 		},
 		"valid": {
 			args{
 				resp: &http.Response{
 					Body: io.NopCloser(bytes.NewReader([]byte(`{"key": "value","valid":true}`))),
 				},
-				obj: make(map[string]any),
 			},
 			map[string]any{
 				"key":   "value",
@@ -304,9 +298,9 @@ func TestRead(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
-			gotErr := Read(testCase.args.resp, &testCase.args.obj)
+			got, gotErr := Read[map[string]any](testCase.args.resp)
 
-			assert.Equal(t, testCase.want, testCase.args.obj)
+			assert.Equal(t, testCase.want, got)
 			checkErr(t, testCase.wantErr, gotErr)
 		})
 	}
