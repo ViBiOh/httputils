@@ -47,6 +47,12 @@ func (s *Service) Redirect(w http.ResponseWriter, r *http.Request, pathname stri
 }
 
 func (s *Service) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error, opts ...ErrorOption) {
+	ctx := r.Context()
+
+	if r.Header.Get("Accept") == "text/plain" && httperror.HandleError(ctx, w, err) {
+		return
+	}
+
 	content = s.feedContent(content)
 
 	var config errOption
@@ -59,8 +65,6 @@ func (s *Service) Error(w http.ResponseWriter, r *http.Request, content map[stri
 		message := NewErrorMessage(statusMessage)
 		content[message.Key] = message
 	}
-
-	ctx := r.Context()
 
 	if !config.noLog {
 		httperror.Log(ctx, err, status, statusMessage)
