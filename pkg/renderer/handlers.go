@@ -62,7 +62,7 @@ func (s *Service) Error(w http.ResponseWriter, r *http.Request, content map[stri
 
 	status, statusMessage := httperror.ErrorStatus(err)
 	if len(content) > 0 {
-		message := NewErrorMessage(statusMessage)
+		message := NewErrorMessage("%s", statusMessage)
 		content[message.Key] = message
 	}
 

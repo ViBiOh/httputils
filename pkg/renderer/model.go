@@ -79,14 +79,6 @@ func newMessage(key, level, format string, a ...any) Message {
 	}
 }
 
-func newRawMessage(key, level, format string) Message {
-	return Message{
-		Key:     key,
-		Level:   level,
-		Content: format,
-	}
-}
-
 func (m Message) String() string {
 	if len(m.Content) == 0 {
 		return ""
@@ -106,25 +98,13 @@ func ParseMessage(r *http.Request) Message {
 }
 
 func NewSuccessMessage(format string, a ...any) Message {
-	if len(a) == 0 {
-		return newRawMessage(defaultMessageKey, "success", format)
-	}
-
 	return newMessage(defaultMessageKey, "success", format, a...)
 }
 
 func NewErrorMessage(format string, a ...any) Message {
-	if len(a) == 0 {
-		return newRawMessage(defaultMessageKey, "error", format)
-	}
-
 	return newMessage(defaultMessageKey, "error", format, a...)
 }
 
 func NewKeyErrorMessage(key, format string, a ...any) Message {
-	if len(a) == 0 {
-		return newRawMessage(key, "error", format)
-	}
-
 	return newMessage(key, "error", format, a...)
 }
