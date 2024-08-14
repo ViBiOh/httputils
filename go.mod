@@ -1,11 +1,11 @@
 module github.com/ViBiOh/httputils/v4
 
-go 1.22
+go 1.23
 
-toolchain go1.22.0
+toolchain go1.23.0
 
 require (
-	github.com/ViBiOh/flags v1.5.0
+	github.com/ViBiOh/flags v1.6.0
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/extra/redisotel/v9 v9.5.3

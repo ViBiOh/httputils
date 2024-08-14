@@ -41,13 +41,7 @@ func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 		case <-done:
 			done = nil
 
-			if !timer.Stop() {
-				select {
-				case <-timer.C:
-				default:
-				}
-			}
-
+			timer.Stop()
 			c.close()
 
 		case <-timer.C:

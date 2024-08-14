@@ -336,14 +336,7 @@ func (c *Cron) iterate(done <-chan struct{}, signals <-chan os.Signal, shouldRet
 	var stop bool
 
 	timer := time.NewTimer(c.getTickerDuration(shouldRetry))
-	defer func() {
-		if !timer.Stop() {
-			select {
-			case <-timer.C:
-			default:
-			}
-		}
-	}()
+	defer timer.Stop()
 
 	select {
 	case <-done:
