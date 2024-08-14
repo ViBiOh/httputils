@@ -101,8 +101,8 @@ func NewSuccessMessage(format string, a ...any) Message {
 	return newMessage(defaultMessageKey, "success", format, a...)
 }
 
-func NewErrorMessage(format string, a ...any) Message {
-	return newMessage(defaultMessageKey, "error", format, a...)
+func NewErrorMessage(format string) Message {
+	return newMessage(defaultMessageKey, "error", format)
 }
 
 func NewKeyErrorMessage(key, format string, a ...any) Message {
