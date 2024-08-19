@@ -139,7 +139,7 @@ func TestRun(t *testing.T) {
 			t.Parallel()
 
 			var result int
-			err := testCase.instance.Run(func(synchronization uint64, items []any) error {
+			err := testCase.instance.Run(func(synchronization uint, items []any) error {
 				if synchronization != 0 {
 					return nil
 				}

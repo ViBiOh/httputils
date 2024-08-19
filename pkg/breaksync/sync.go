@@ -32,7 +32,7 @@ func (s *Synchronization) AddSources(sources ...SyncSource) *Synchronization {
 	return s
 }
 
-func (s *Synchronization) Run(business func(uint64, []any) error) (err error) {
+func (s *Synchronization) Run(business func(uint, []any) error) (err error) {
 	if err = s.read(); err != nil {
 		return
 	}
@@ -98,8 +98,8 @@ func (s *Synchronization) computeRuptures() {
 	}
 }
 
-func (s *Synchronization) computeItems(items []any) uint64 {
-	var itemsFlags uint64
+func (s *Synchronization) computeItems(items []any) uint {
+	var itemsFlags uint
 
 	for i, source := range s.sources {
 		if !source.IsSynchronized() {

@@ -237,7 +237,7 @@ func (s Service) Get(ctx context.Context, scanner func(pgx.Row) error, query str
 	return scanner(s.QueryRow(ctx, query, args...))
 }
 
-func (s Service) Create(ctx context.Context, query string, args ...any) (id uint64, err error) {
+func (s Service) Create(ctx context.Context, query string, args ...any) (id uint, err error) {
 	tx := readTx(ctx)
 	if tx == nil {
 		return 0, ErrNoTransaction
@@ -246,7 +246,7 @@ func (s Service) Create(ctx context.Context, query string, args ...any) (id uint
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	var newID uint64
+	var newID uint
 
 	return newID, tx.QueryRow(ctx, query, args...).Scan(&newID)
 }
