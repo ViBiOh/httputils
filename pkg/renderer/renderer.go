@@ -216,7 +216,9 @@ func (s *Service) HandleSVG() http.Handler {
 
 		telemetry.SetRouteTag(ctx, "/svg")
 
-		tpl := s.tpl.Lookup("svg-" + strings.Trim(r.PathValue("path"), "/"))
+		name := strings.ToLower(strings.Trim(r.PathValue("path"), "/"))
+
+		tpl := s.tpl.Lookup("svg-" + name)
 		if tpl == nil {
 			httperror.NotFound(ctx, w)
 
