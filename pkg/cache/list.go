@@ -2,11 +2,11 @@ package cache
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
 	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
+	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -168,7 +168,7 @@ func (c *Cache[K, V]) redisValues(ctx context.Context, ids []K) ([]string, []str
 	values, err := c.read.LoadMany(loadCtx, keys...)
 	if err != nil {
 		level := slog.LevelError
-		if errors.Is(err, context.Canceled) {
+		if httperror.CanBeIgnored(err) {
 			level = slog.LevelWarn
 		}
 

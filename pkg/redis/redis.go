@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/redis/go-redis/extra/redisotel/v9"
@@ -115,7 +116,7 @@ func (s *Service) Load(ctx context.Context, key string) ([]byte, error) {
 		return content, nil
 	}
 
-	if err != redis.Nil && !errors.Is(err, context.Canceled) {
+	if err != redis.Nil && !httperror.CanBeIgnored(err) {
 		return nil, fmt.Errorf("exec get: %w", err)
 	}
 

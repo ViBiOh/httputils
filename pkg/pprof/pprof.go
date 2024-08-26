@@ -3,7 +3,6 @@ package pprof
 import (
 	"bytes"
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/flags"
+	"github.com/ViBiOh/httputils/v4/pkg/httperror"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
 )
@@ -92,7 +92,7 @@ func (s *Service) push(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if err := s.send(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			if err := s.send(ctx); !httperror.CanBeIgnored(err) {
 				slog.LogAttrs(ctx, slog.LevelError, "pprof export", slog.Any("error", err))
 			}
 		}

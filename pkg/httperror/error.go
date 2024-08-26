@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"syscall"
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
@@ -12,6 +13,14 @@ import (
 const (
 	internalError = "Oops! Something went wrong. Server's logs contain more details."
 )
+
+func CanBeIgnored(err error) bool {
+	if err == nil {
+		return true
+	}
+
+	return errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, context.Canceled)
+}
 
 func httpError(ctx context.Context, w http.ResponseWriter, status int, payload string, err error) {
 	w.Header().Add("Cache-Control", "no-cache")
