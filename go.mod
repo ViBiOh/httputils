@@ -12,7 +12,7 @@ require (
 	github.com/redis/go-redis/v9 v9.6.2
 	github.com/rs/xid v1.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/tdewolff/minify/v2 v2.20.37
+	github.com/tdewolff/minify/v2 v2.21.0
 	github.com/zeebo/xxh3 v1.0.2
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.56.0
@@ -42,7 +42,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.5.3 // indirect
-	github.com/tdewolff/parse/v2 v2.7.16 // indirect
+	github.com/tdewolff/parse/v2 v2.7.17 // indirect
 	github.com/zeebo/assert v1.3.1 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.31.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
