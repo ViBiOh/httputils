@@ -8,8 +8,8 @@ require (
 	github.com/ViBiOh/flags v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/rabbitmq/amqp091-go v1.10.0
-	github.com/redis/go-redis/extra/redisotel/v9 v9.5.3
-	github.com/redis/go-redis/v9 v9.6.2
+	github.com/redis/go-redis/extra/redisotel/v9 v9.7.0
+	github.com/redis/go-redis/v9 v9.7.0
 	github.com/rs/xid v1.6.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tdewolff/minify/v2 v2.21.0
@@ -41,7 +41,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/redis/go-redis/extra/rediscmd/v9 v9.5.3 // indirect
+	github.com/redis/go-redis/extra/rediscmd/v9 v9.7.0 // indirect
 	github.com/tdewolff/parse/v2 v2.7.17 // indirect
 	github.com/zeebo/assert v1.3.1 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.31.0 // indirect
