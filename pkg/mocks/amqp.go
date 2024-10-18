@@ -18,6 +18,7 @@ import (
 
 // AMQPConnection is a mock of Connection interface.
 type AMQPConnection struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *AMQPConnectionMockRecorder
 }

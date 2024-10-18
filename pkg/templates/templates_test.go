@@ -66,8 +66,7 @@ func TestResponseHTMLTemplate(t *testing.T) {
 	}{
 		"simple": {
 			template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html")),
-			`<!doctype html><html lang=fr><meta charset=utf-8><title>Golang Testing</title>
-<meta name=description content="Golang Testing"><meta name=author content="ViBiOh"><script>function helloWorld(){console.info("Hello world!")}</script><style>html{height:100vh;width:100vw}</style><body onload=helloWorld()><h1>It works!</h1>`,
+			`<!doctype html><html lang=fr><meta charset=utf-8><title>Golang Testing</title><meta name=description content="Golang Testing"><meta name=author content="ViBiOh"><script>function helloWorld(){console.info("Hello world!")}</script><style>html{height:100vh;width:100vw}</style><body onload=helloWorld()><h1>It works!</h1>`,
 			nil,
 		},
 		"error": {

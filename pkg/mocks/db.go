@@ -20,6 +20,7 @@ import (
 
 // Database is a mock of Database interface.
 type Database struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *DatabaseMockRecorder
 }

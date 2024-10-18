@@ -19,6 +19,7 @@ import (
 
 // Semaphore is a mock of Semaphore interface.
 type Semaphore struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *SemaphoreMockRecorder
 }

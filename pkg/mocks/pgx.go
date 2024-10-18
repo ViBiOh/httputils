@@ -20,6 +20,7 @@ import (
 
 // Tx is a mock of Tx interface.
 type Tx struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *TxMockRecorder
 }
@@ -42,32 +43,32 @@ func (m *Tx) EXPECT() *TxMockRecorder {
 }
 
 // Begin mocks base method.
-func (m *Tx) Begin(arg0 context.Context) (pgx.Tx, error) {
+func (m *Tx) Begin(ctx context.Context) (pgx.Tx, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Begin", arg0)
+	ret := m.ctrl.Call(m, "Begin", ctx)
 	ret0, _ := ret[0].(pgx.Tx)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Begin indicates an expected call of Begin.
-func (mr *TxMockRecorder) Begin(arg0 any) *gomock.Call {
+func (mr *TxMockRecorder) Begin(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Begin", reflect.TypeOf((*Tx)(nil).Begin), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Begin", reflect.TypeOf((*Tx)(nil).Begin), ctx)
 }
 
 // Commit mocks base method.
-func (m *Tx) Commit(arg0 context.Context) error {
+func (m *Tx) Commit(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Commit", arg0)
+	ret := m.ctrl.Call(m, "Commit", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Commit indicates an expected call of Commit.
-func (mr *TxMockRecorder) Commit(arg0 any) *gomock.Call {
+func (mr *TxMockRecorder) Commit(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*Tx)(nil).Commit), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*Tx)(nil).Commit), ctx)
 }
 
 // Conn mocks base method.
@@ -85,25 +86,25 @@ func (mr *TxMockRecorder) Conn() *gomock.Call {
 }
 
 // CopyFrom mocks base method.
-func (m *Tx) CopyFrom(arg0 context.Context, arg1 pgx.Identifier, arg2 []string, arg3 pgx.CopyFromSource) (int64, error) {
+func (m *Tx) CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CopyFrom", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "CopyFrom", ctx, tableName, columnNames, rowSrc)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CopyFrom indicates an expected call of CopyFrom.
-func (mr *TxMockRecorder) CopyFrom(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *TxMockRecorder) CopyFrom(ctx, tableName, columnNames, rowSrc any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CopyFrom", reflect.TypeOf((*Tx)(nil).CopyFrom), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CopyFrom", reflect.TypeOf((*Tx)(nil).CopyFrom), ctx, tableName, columnNames, rowSrc)
 }
 
 // Exec mocks base method.
-func (m *Tx) Exec(arg0 context.Context, arg1 string, arg2 ...any) (pgconn.CommandTag, error) {
+func (m *Tx) Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, sql}
+	for _, a := range arguments {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Exec", varargs...)
@@ -113,9 +114,9 @@ func (m *Tx) Exec(arg0 context.Context, arg1 string, arg2 ...any) (pgconn.Comman
 }
 
 // Exec indicates an expected call of Exec.
-func (mr *TxMockRecorder) Exec(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *TxMockRecorder) Exec(ctx, sql any, arguments ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, sql}, arguments...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exec", reflect.TypeOf((*Tx)(nil).Exec), varargs...)
 }
 
@@ -134,25 +135,25 @@ func (mr *TxMockRecorder) LargeObjects() *gomock.Call {
 }
 
 // Prepare mocks base method.
-func (m *Tx) Prepare(arg0 context.Context, arg1, arg2 string) (*pgconn.StatementDescription, error) {
+func (m *Tx) Prepare(ctx context.Context, name, sql string) (*pgconn.StatementDescription, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Prepare", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Prepare", ctx, name, sql)
 	ret0, _ := ret[0].(*pgconn.StatementDescription)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Prepare indicates an expected call of Prepare.
-func (mr *TxMockRecorder) Prepare(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *TxMockRecorder) Prepare(ctx, name, sql any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Prepare", reflect.TypeOf((*Tx)(nil).Prepare), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Prepare", reflect.TypeOf((*Tx)(nil).Prepare), ctx, name, sql)
 }
 
 // Query mocks base method.
-func (m *Tx) Query(arg0 context.Context, arg1 string, arg2 ...any) (pgx.Rows, error) {
+func (m *Tx) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, sql}
+	for _, a := range args {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Query", varargs...)
@@ -162,17 +163,17 @@ func (m *Tx) Query(arg0 context.Context, arg1 string, arg2 ...any) (pgx.Rows, er
 }
 
 // Query indicates an expected call of Query.
-func (mr *TxMockRecorder) Query(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *TxMockRecorder) Query(ctx, sql any, args ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, sql}, args...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Query", reflect.TypeOf((*Tx)(nil).Query), varargs...)
 }
 
 // QueryRow mocks base method.
-func (m *Tx) QueryRow(arg0 context.Context, arg1 string, arg2 ...any) pgx.Row {
+func (m *Tx) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, sql}
+	for _, a := range args {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "QueryRow", varargs...)
@@ -181,42 +182,43 @@ func (m *Tx) QueryRow(arg0 context.Context, arg1 string, arg2 ...any) pgx.Row {
 }
 
 // QueryRow indicates an expected call of QueryRow.
-func (mr *TxMockRecorder) QueryRow(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *TxMockRecorder) QueryRow(ctx, sql any, args ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, sql}, args...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryRow", reflect.TypeOf((*Tx)(nil).QueryRow), varargs...)
 }
 
 // Rollback mocks base method.
-func (m *Tx) Rollback(arg0 context.Context) error {
+func (m *Tx) Rollback(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Rollback", arg0)
+	ret := m.ctrl.Call(m, "Rollback", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Rollback indicates an expected call of Rollback.
-func (mr *TxMockRecorder) Rollback(arg0 any) *gomock.Call {
+func (mr *TxMockRecorder) Rollback(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rollback", reflect.TypeOf((*Tx)(nil).Rollback), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rollback", reflect.TypeOf((*Tx)(nil).Rollback), ctx)
 }
 
 // SendBatch mocks base method.
-func (m *Tx) SendBatch(arg0 context.Context, arg1 *pgx.Batch) pgx.BatchResults {
+func (m *Tx) SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendBatch", arg0, arg1)
+	ret := m.ctrl.Call(m, "SendBatch", ctx, b)
 	ret0, _ := ret[0].(pgx.BatchResults)
 	return ret0
 }
 
 // SendBatch indicates an expected call of SendBatch.
-func (mr *TxMockRecorder) SendBatch(arg0, arg1 any) *gomock.Call {
+func (mr *TxMockRecorder) SendBatch(ctx, b any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendBatch", reflect.TypeOf((*Tx)(nil).SendBatch), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendBatch", reflect.TypeOf((*Tx)(nil).SendBatch), ctx, b)
 }
 
 // Row is a mock of Row interface.
 type Row struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *RowMockRecorder
 }
@@ -239,10 +241,10 @@ func (m *Row) EXPECT() *RowMockRecorder {
 }
 
 // Scan mocks base method.
-func (m *Row) Scan(arg0 ...any) error {
+func (m *Row) Scan(dest ...any) error {
 	m.ctrl.T.Helper()
 	varargs := []any{}
-	for _, a := range arg0 {
+	for _, a := range dest {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Scan", varargs...)
@@ -251,13 +253,14 @@ func (m *Row) Scan(arg0 ...any) error {
 }
 
 // Scan indicates an expected call of Scan.
-func (mr *RowMockRecorder) Scan(arg0 ...any) *gomock.Call {
+func (mr *RowMockRecorder) Scan(dest ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*Row)(nil).Scan), arg0...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*Row)(nil).Scan), dest...)
 }
 
 // Rows is a mock of Rows interface.
 type Rows struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *RowsMockRecorder
 }
@@ -376,10 +379,10 @@ func (mr *RowsMockRecorder) RawValues() *gomock.Call {
 }
 
 // Scan mocks base method.
-func (m *Rows) Scan(arg0 ...any) error {
+func (m *Rows) Scan(dest ...any) error {
 	m.ctrl.T.Helper()
 	varargs := []any{}
-	for _, a := range arg0 {
+	for _, a := range dest {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Scan", varargs...)
@@ -388,9 +391,9 @@ func (m *Rows) Scan(arg0 ...any) error {
 }
 
 // Scan indicates an expected call of Scan.
-func (mr *RowsMockRecorder) Scan(arg0 ...any) *gomock.Call {
+func (mr *RowsMockRecorder) Scan(dest ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*Rows)(nil).Scan), arg0...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*Rows)(nil).Scan), dest...)
 }
 
 // Values mocks base method.

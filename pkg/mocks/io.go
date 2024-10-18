@@ -17,6 +17,7 @@ import (
 
 // ReadCloser is a mock of ReadCloser interface.
 type ReadCloser struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *ReadCloserMockRecorder
 }
@@ -53,16 +54,16 @@ func (mr *ReadCloserMockRecorder) Close() *gomock.Call {
 }
 
 // Read mocks base method.
-func (m *ReadCloser) Read(arg0 []byte) (int, error) {
+func (m *ReadCloser) Read(p []byte) (int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Read", arg0)
+	ret := m.ctrl.Call(m, "Read", p)
 	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Read indicates an expected call of Read.
-func (mr *ReadCloserMockRecorder) Read(arg0 any) *gomock.Call {
+func (mr *ReadCloserMockRecorder) Read(p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*ReadCloser)(nil).Read), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*ReadCloser)(nil).Read), p)
 }
