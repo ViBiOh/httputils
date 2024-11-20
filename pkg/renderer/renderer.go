@@ -43,6 +43,7 @@ type Config struct {
 	PublicURL  string
 	PathPrefix string
 	Title      string
+	Extension  string
 	Minify     bool
 }
 
@@ -52,6 +53,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	flags.New("PublicURL", "Public URL").Prefix(prefix).DocPrefix("").StringVar(fs, &config.PublicURL, "http://localhost:1080", overrides)
 	flags.New("PathPrefix", "Root Path Prefix").Prefix(prefix).DocPrefix("").StringVar(fs, &config.PathPrefix, "", overrides)
 	flags.New("Title", "Application title").Prefix(prefix).DocPrefix("").StringVar(fs, &config.Title, "App", overrides)
+	flags.New("Extension", "Go Template Extension").Prefix(prefix).DocPrefix("").StringVar(fs, &config.Extension, "html", overrides)
 	flags.New("Minify", "Minify HTML").Prefix(prefix).DocPrefix("").BoolVar(fs, &config.Minify, true, overrides)
 
 	return &config
@@ -88,9 +90,9 @@ func New(ctx context.Context, config *Config, filesystem fs.FS, funcMap template
 	funcMap["url"] = instance.url
 	funcMap["publicURL"] = instance.PublicURL
 
-	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*.html")
+	tpl, err := template.New("app").Funcs(funcMap).ParseFS(filesystem, "templates/*."+config.Extension)
 	if err != nil {
-		return nil, fmt.Errorf("parse templates/*.html templates: %w", err)
+		return nil, fmt.Errorf("parse templates/*.%s templates: %w", config.Extension, err)
 	}
 
 	instance.tpl = tpl
