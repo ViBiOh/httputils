@@ -20,8 +20,7 @@ import (
 )
 
 const (
-	metricsNamespace = "redis"
-	defaultPageSize  = 100
+	defaultPageSize = 100
 )
 
 var ErrNoSubscriber = errors.New("no subscriber for channel")

@@ -53,7 +53,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	flags.New("PublicURL", "Public URL").Prefix(prefix).DocPrefix("").StringVar(fs, &config.PublicURL, "http://localhost:1080", overrides)
 	flags.New("PathPrefix", "Root Path Prefix").Prefix(prefix).DocPrefix("").StringVar(fs, &config.PathPrefix, "", overrides)
 	flags.New("Title", "Application title").Prefix(prefix).DocPrefix("").StringVar(fs, &config.Title, "App", overrides)
-	flags.New("Extension", "Go Template Extension").Prefix(prefix).DocPrefix("").StringVar(fs, &config.Extension, "html", overrides)
+	flags.New("Extension", "Go Template Extension").Prefix(prefix).DocPrefix("").StringVar(fs, &config.Extension, "tmpl", overrides)
 	flags.New("Minify", "Minify HTML").Prefix(prefix).DocPrefix("").BoolVar(fs, &config.Minify, true, overrides)
 
 	return &config

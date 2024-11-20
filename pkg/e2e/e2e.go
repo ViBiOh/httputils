@@ -18,12 +18,12 @@ func New(secretKey string) Service {
 }
 
 func (s Service) Encrypt(content []byte) ([]byte, error) {
-	aes, err := aes.NewCipher(s.secretKey)
+	aesCipher, err := aes.NewCipher(s.secretKey)
 	if err != nil {
 		return nil, fmt.Errorf("cipher: %w", err)
 	}
 
-	gcm, err := cipher.NewGCM(aes)
+	gcm, err := cipher.NewGCM(aesCipher)
 	if err != nil {
 		return nil, fmt.Errorf("gcm: %w", err)
 	}
@@ -37,12 +37,12 @@ func (s Service) Encrypt(content []byte) ([]byte, error) {
 }
 
 func (s Service) Decrypt(content []byte) ([]byte, error) {
-	aes, err := aes.NewCipher(s.secretKey)
+	aesCipher, err := aes.NewCipher(s.secretKey)
 	if err != nil {
 		return nil, fmt.Errorf("cipher: %w", err)
 	}
 
-	gcm, err := cipher.NewGCM(aes)
+	gcm, err := cipher.NewGCM(aesCipher)
 	if err != nil {
 		return nil, fmt.Errorf("gcm: %w", err)
 	}

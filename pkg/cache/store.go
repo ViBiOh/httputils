@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
@@ -21,14 +20,14 @@ func (c *Cache[K, V]) Store(ctx context.Context, id K, value V) error {
 func (c *Cache[K, V]) store(ctx context.Context, id K, value V) error {
 	c.memoryWrite(id, value, c.ttl)
 
-	if err := c.redisWrite(ctx, id, value, c.ttl); err != nil {
+	if err := c.redisWrite(ctx, id, value); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexedIDs IndexedIDs[K]) error {
+func (c *Cache[K, V]) storeMany(ctx context.Context, values []V, indexedIDs IndexedIDs[K]) error {
 	if c.write == nil && c.memory == nil {
 		return nil
 	}
@@ -75,7 +74,7 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, ids []K, values []V, indexe
 	return nil
 }
 
-func (c *Cache[K, V]) redisWrite(ctx context.Context, id K, value V, ttl time.Duration) (err error) {
+func (c *Cache[K, V]) redisWrite(ctx context.Context, id K, value V) (err error) {
 	if c.write == nil {
 		return nil
 	}

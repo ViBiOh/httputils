@@ -152,7 +152,7 @@ func (c *Cache[K, V]) Get(ctx context.Context, id K) (V, error) {
 
 	if content, err := c.read.Load(loadCtx, key); err != nil {
 		slog.LogAttrs(ctx, slog.LevelError, "load from cache", slog.String("key", key), slog.Any("error", err))
-	} else if value, ok, err := c.decode([]byte(content)); err != nil {
+	} else if value, ok, err := c.decode(content); err != nil {
 		logUnmarshalError(ctx, key, err)
 	} else if ok {
 		c.memoryWrite(id, value, c.ttl)

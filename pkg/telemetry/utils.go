@@ -15,7 +15,7 @@ import (
 
 type FinishSpan = func(err *error, options ...tr.SpanEndOption)
 
-var noopFunc FinishSpan = func(*error, ...tr.SpanEndOption) {
+var noopFunc = func(*error, ...tr.SpanEndOption) {
 	// Nothing to do
 }
 

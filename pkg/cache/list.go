@@ -132,7 +132,7 @@ func (c *Cache[K, V]) handleList(ctx context.Context, onFetchErr FetchErrHandler
 	}
 
 	go doInBackground(context.WithoutCancel(ctx), func(ctx context.Context) error {
-		return c.storeMany(ctx, ids, output, missingIDs)
+		return c.storeMany(ctx, output, missingIDs)
 	})
 
 	return output, nil

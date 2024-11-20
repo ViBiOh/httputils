@@ -7,27 +7,27 @@ import (
 	"strings"
 )
 
-var _ error = RequestError{}
+var _ error = Error{}
 
-type RequestError struct {
+type Error struct {
 	Header     http.Header
 	Body       []byte
 	StatusCode int
 }
 
-func NewResponseError(resp *http.Response) RequestError {
+func NewResponseError(resp *http.Response) Error {
 	errBody, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBody))
 
 	_ = DiscardBody(resp.Body)
 
-	return RequestError{
+	return Error{
 		StatusCode: resp.StatusCode,
 		Header:     resp.Header,
 		Body:       errBody,
 	}
 }
 
-func (re RequestError) Error() string {
+func (re Error) Error() string {
 	builder := strings.Builder{}
 
 	_, _ = fmt.Fprintf(&builder, "HTTP/%d", re.StatusCode)

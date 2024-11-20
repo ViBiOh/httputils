@@ -17,7 +17,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	meter "go.opentelemetry.io/otel/metric"
-	noop_meter "go.opentelemetry.io/otel/metric/noop"
+	noopmeter "go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/instrumentation"
 	"go.opentelemetry.io/otel/sdk/metric"
@@ -115,7 +115,7 @@ func New(ctx context.Context, config *Config) (*Service, error) {
 
 func (s *Service) MeterProvider() meter.MeterProvider {
 	if s == nil || s.meterProvider == nil {
-		return noop_meter.MeterProvider{}
+		return noopmeter.MeterProvider{}
 	}
 
 	return s.meterProvider
@@ -174,16 +174,16 @@ func (s *Service) GetServiceVersionAndEnv() (service, version, env string) {
 		return "", "", ""
 	}
 
-	for _, attribute := range s.resource.Attributes() {
-		switch attribute.Key {
+	for _, attr := range s.resource.Attributes() {
+		switch attr.Key {
 		case semconv.ServiceNameKey:
-			service = attribute.Value.AsString()
+			service = attr.Value.AsString()
 
 		case semconv.ServiceVersionKey:
-			version = attribute.Value.AsString()
+			version = attr.Value.AsString()
 
 		case "env":
-			env = attribute.Value.AsString()
+			env = attr.Value.AsString()
 		}
 	}
 

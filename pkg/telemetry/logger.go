@@ -23,8 +23,8 @@ func (s *Service) AddTraceToLogHandler(handler slog.Handler) slog.Handler {
 func otelAttributeToSlogAttr(attributes []attribute.KeyValue) []slog.Attr {
 	output := make([]slog.Attr, len(attributes))
 
-	for index, attribute := range attributes {
-		output[index] = slog.String(string(attribute.Key), attribute.Value.AsString())
+	for index, attr := range attributes {
+		output[index] = slog.String(string(attr.Key), attr.Value.AsString())
 	}
 
 	return output

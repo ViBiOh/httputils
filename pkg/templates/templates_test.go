@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ViBiOh/httputils/v4/pkg/request"
 )
 
@@ -21,12 +23,12 @@ func TestWriteTemplate(t *testing.T) {
 		wantErr error
 	}{
 		"simple": {
-			template.Must(template.New("css_template.html").ParseFiles("../../templates/css_template.html")),
+			template.Must(template.New("css_template.tmpl").ParseFiles("../../templates/css_template.tmpl")),
 			"html{height:100vh;width:100vw}",
 			nil,
 		},
 		"error": {
-			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.html")),
+			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.tmpl")),
 			"",
 			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
 		},
@@ -65,12 +67,12 @@ func TestResponseHTMLTemplate(t *testing.T) {
 		wantErr error
 	}{
 		"simple": {
-			template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html")),
+			template.Must(template.New("html5_template.tmpl").ParseFiles("../../templates/html5_template.tmpl")),
 			`<!doctype html><html lang=fr><meta charset=utf-8><title>Golang Testing</title><meta name=description content="Golang Testing"><meta name=author content="ViBiOh"><script>function helloWorld(){console.info("Hello world!")}</script><style>html{height:100vh;width:100vw}</style><body onload=helloWorld()><h1>It works!</h1>`,
 			nil,
 		},
 		"error": {
-			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.html")),
+			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.tmpl")),
 			"",
 			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
 		},
@@ -109,7 +111,7 @@ func TestResponseHTMLTemplateRaw(t *testing.T) {
 		wantErr error
 	}{
 		"simple": {
-			template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html")),
+			template.Must(template.New("html5_template.tmpl").ParseFiles("../../templates/html5_template.tmpl")),
 			`<!doctype html>
 
 <html lang="fr">
@@ -142,7 +144,7 @@ func TestResponseHTMLTemplateRaw(t *testing.T) {
 			nil,
 		},
 		"error": {
-			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.html")),
+			template.Must(template.New("invalidName").ParseFiles("../../templates/html5_template.tmpl")),
 			"",
 			fmt.Errorf("template: \"invalidName\" is an incomplete or empty template"),
 		},
@@ -157,17 +159,8 @@ func TestResponseHTMLTemplateRaw(t *testing.T) {
 
 			result, _ := request.ReadBodyResponse(writer.Result())
 
-			failed := false
-
-			if testCase.wantErr != nil && (err == nil || err.Error() != testCase.wantErr.Error()) {
-				failed = true
-			} else if string(result) != testCase.want {
-				failed = true
-			}
-
-			if failed {
-				t.Errorf("ResponseHTMLTemplateRaw() = (`%s`, `%s`), want error (`%s`, `%s`)", string(result), err, testCase.want, testCase.wantErr)
-			}
+			assert.Equal(t, testCase.want, string(result))
+			assert.Equal(t, testCase.wantErr, err)
 		})
 	}
 }
@@ -217,7 +210,7 @@ func TestResponseXMLTemplate(t *testing.T) {
 }
 
 func BenchmarkWriteTemplateRaw(b *testing.B) {
-	tpl := template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html"))
+	tpl := template.Must(template.New("html5_template.tmpl").ParseFiles("../../templates/html5_template.tmpl"))
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -228,7 +221,7 @@ func BenchmarkWriteTemplateRaw(b *testing.B) {
 }
 
 func BenchmarkWriteTemplate(b *testing.B) {
-	tpl := template.Must(template.New("html5_template.html").ParseFiles("../../templates/html5_template.html"))
+	tpl := template.Must(template.New("html5_template.tmpl").ParseFiles("../../templates/html5_template.tmpl"))
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
