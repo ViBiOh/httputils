@@ -17,7 +17,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-//go:generate mockgen -source db.go -destination ../mocks/db.go  -package mocks -mock_names Database=Database
+//go:generate mockgen -source $GOFILE -destination ../mocks/$GOFILE  -package mocks -mock_names Database=Database
 
 type key struct{}
 

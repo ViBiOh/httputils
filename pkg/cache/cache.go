@@ -12,7 +12,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-//go:generate mockgen -source cache.go -destination ../mocks/cache.go -package mocks -mock_names RedisClient=RedisClient
+//go:generate mockgen -source $GOFILE -destination ../mocks/$GOFILE -package mocks -mock_names RedisClient=RedisClient
 
 var syncActionTimeout = time.Millisecond * 150
 

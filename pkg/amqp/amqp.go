@@ -20,7 +20,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-//go:generate mockgen -source amqp.go -destination ../mocks/amqp.go -package mocks -mock_names Connection=AMQPConnection
+//go:generate mockgen -source $GOFILE -destination ../mocks/$GOFILE -package mocks -mock_names Connection=AMQPConnection
 
 var ErrNoConfig = errors.New("URI is required")
 
