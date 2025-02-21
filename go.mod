@@ -8,8 +8,8 @@ require (
 	github.com/ViBiOh/flags v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/rabbitmq/amqp091-go v1.10.0
-	github.com/redis/go-redis/extra/redisotel/v9 v9.7.0
-	github.com/redis/go-redis/v9 v9.7.0
+	github.com/redis/go-redis/extra/redisotel/v9 v9.7.1
+	github.com/redis/go-redis/v9 v9.7.1
 	github.com/rs/xid v1.6.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tdewolff/minify/v2 v2.21.3
@@ -41,7 +41,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/redis/go-redis/extra/rediscmd/v9 v9.7.0 // indirect
+	github.com/redis/go-redis/extra/rediscmd/v9 v9.7.1 // indirect
 	github.com/tdewolff/parse/v2 v2.7.20 // indirect
 	github.com/zeebo/assert v1.3.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
@@ -52,8 +52,8 @@ require (
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250212204824-5a70512c5d8b // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250212204824-5a70512c5d8b // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
 	google.golang.org/grpc v1.70.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
