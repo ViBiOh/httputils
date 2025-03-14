@@ -2,8 +2,6 @@ module github.com/ViBiOh/httputils/v4
 
 go 1.24
 
-toolchain go1.24.0
-
 require (
 	github.com/ViBiOh/flags v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
@@ -12,7 +10,7 @@ require (
 	github.com/redis/go-redis/v9 v9.7.1
 	github.com/rs/xid v1.6.0
 	github.com/stretchr/testify v1.10.0
-	github.com/tdewolff/minify/v2 v2.21.3
+	github.com/tdewolff/minify/v2 v2.22.2
 	github.com/zeebo/xxh3 v1.0.2
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.60.0
@@ -42,7 +40,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.7.1 // indirect
-	github.com/tdewolff/parse/v2 v2.7.20 // indirect
+	github.com/tdewolff/parse/v2 v2.7.21 // indirect
 	github.com/zeebo/assert v1.3.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.35.0 // indirect
