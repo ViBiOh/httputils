@@ -175,7 +175,7 @@ func TestResponseXMLTemplate(t *testing.T) {
 	}{
 		"simple": {
 			template.Must(template.New("sitemap.xml").ParseFiles("../../templates/sitemap.xml")),
-			`<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://www.sitemaps.org/schemas/sitemap/0.9 https://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"><url><loc>https://vibioh.fr</loc><changefreq>weekly</changefreq><priority>1.00</priority></url></urlset>`,
+			`<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://vibioh.fr</loc><changefreq>weekly</changefreq><priority>1.00</priority></url></urlset>`,
 			nil,
 		},
 		"error": {
