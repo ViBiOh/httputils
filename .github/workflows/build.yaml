@@ -60,9 +60,6 @@ jobs:
   package:
     name: Docker
     runs-on: ubuntu-latest
-    env:
-      DOCKER_USER: ${{ secrets.DOCKER_USER }}
-      DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -72,12 +69,11 @@ jobs:
           go-version: "^1.24"
           cache: true
       - name: Build
-        if: env.DOCKER_USER && env.DOCKER_PASS
         env:
           GO_ARCHS: linux/amd64 linux/arm linux/arm64 darwin/amd64 darwin/arm64
         run: |
           curl --disable --silent --show-error --location --max-time 30 "https://raw.githubusercontent.com/ViBiOh/scripts/main/bootstrap.sh" | bash -s -- "-c" "release.sh"
-          DOCKER_IMAGE="${{ secrets.DOCKER_USER }}/scratch" IMAGE_VERSION="$(make version)" ./scripts/release.sh build
+          DOCKER_IMAGE="${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/scratch" IMAGE_VERSION="$(make version)" ./scripts/release.sh build
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
       - name: Docker
