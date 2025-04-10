@@ -15,8 +15,7 @@ func BenchmarkJSONDeserializer(b *testing.B) {
 	payload, err := instance.Encode(content)
 	assert.NoError(b, err)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = instance.Decode(payload)
 	}
 }
@@ -27,8 +26,7 @@ func BenchmarkStringDeserializer(b *testing.B) {
 	payload, err := instance.Encode(githubRepoPayload)
 	assert.NoError(b, err)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = instance.Decode(payload)
 	}
 }

@@ -99,8 +99,7 @@ func BenchmarkEtag(b *testing.B) {
 		Status:   http.StatusOK,
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		page.etag()
 	}
 }

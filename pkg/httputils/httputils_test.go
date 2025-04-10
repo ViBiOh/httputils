@@ -132,8 +132,7 @@ func BenchmarkMux(b *testing.B) {
 	testRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 	recorder := httptest.NewRecorder()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		mux.ServeHTTP(recorder, testRequest)
 	}
 }
@@ -152,8 +151,7 @@ func BenchmarkHandler(b *testing.B) {
 	testRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 	recorder := httptest.NewRecorder()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		handler.ServeHTTP(recorder, testRequest)
 	}
 }

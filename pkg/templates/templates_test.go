@@ -9,9 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/ViBiOh/httputils/v4/pkg/request"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWriteTemplate(t *testing.T) {
@@ -212,8 +211,7 @@ func TestResponseXMLTemplate(t *testing.T) {
 func BenchmarkWriteTemplateRaw(b *testing.B) {
 	tpl := template.Must(template.New("html5_template.tmpl").ParseFiles("../../templates/html5_template.tmpl"))
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if err := tpl.Execute(io.Discard, nil); err != nil {
 			b.Error(err)
 		}
@@ -223,8 +221,7 @@ func BenchmarkWriteTemplateRaw(b *testing.B) {
 func BenchmarkWriteTemplate(b *testing.B) {
 	tpl := template.Must(template.New("html5_template.tmpl").ParseFiles("../../templates/html5_template.tmpl"))
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if err := WriteTemplate(context.Background(), nil, tpl, io.Discard, nil, "text/html"); err != nil {
 			b.Error(err)
 		}

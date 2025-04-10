@@ -207,8 +207,7 @@ func BenchmarkMiddleware(b *testing.B) {
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	writer := httptest.NewRecorder()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		middleware.ServeHTTP(writer, request)
 	}
 }
@@ -226,8 +225,7 @@ func BenchmarkMiddlewareNonce(b *testing.B) {
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	writer := httptest.NewRecorder()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		middleware.ServeHTTP(writer, request)
 	}
 }

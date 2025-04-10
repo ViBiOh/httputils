@@ -54,8 +54,7 @@ func BenchmarkLimiter(b *testing.B) {
 		func() {},
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		instance := NewLimiter(2)
 
 		for _, f := range funcs {

@@ -95,8 +95,7 @@ func BenchmarkPing(b *testing.B) {
 		connection: &amqp.Connection{},
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = instance.Ping()
 	}
 }
