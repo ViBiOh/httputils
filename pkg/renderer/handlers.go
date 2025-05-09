@@ -38,12 +38,13 @@ func (s *Service) Redirect(w http.ResponseWriter, r *http.Request, pathname stri
 
 	var anchor string
 
-	parts := strings.SplitN(pathname, "#", 2)
-	if len(parts) == 2 && len(parts[1]) > 0 {
-		anchor = "#" + parts[1]
+	anchorIndex := strings.Index(pathname, "#")
+	if anchorIndex != -1 && len(pathname[anchorIndex+1:]) > 0 {
+		anchor = "#" + pathname[anchorIndex+1:]
+		pathname = pathname[:anchorIndex]
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", s.url(parts[0]), joinChar, message, anchor), http.StatusFound)
+	http.Redirect(w, r, fmt.Sprintf("%s%s%s%s", s.url(pathname), joinChar, message, anchor), http.StatusFound)
 }
 
 func (s *Service) Error(w http.ResponseWriter, r *http.Request, content map[string]any, err error, opts ...ErrorOption) {
@@ -143,15 +144,15 @@ func (s *Service) matchEtag(w http.ResponseWriter, r *http.Request, page Page) b
 		return false
 	}
 
-	parts := strings.SplitN(noneMatch, "-", 2)
-	if len(parts) != 2 {
+	dashIndex := strings.Index(noneMatch, "-")
+	if dashIndex == -1 {
 		appendNonceAndEtag(w, page.Content, etag)
 
 		return false
 	}
 
-	if strings.TrimPrefix(parts[0], `W/"`) == etag {
-		owasp.WriteNonce(w, strings.TrimSuffix(parts[1], `"`))
+	if strings.TrimPrefix(noneMatch[:dashIndex], `W/"`) == etag {
+		owasp.WriteNonce(w, strings.TrimSuffix(noneMatch[dashIndex+1:], `"`))
 
 		return true
 	}

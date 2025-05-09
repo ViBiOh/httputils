@@ -99,3 +99,70 @@ func TestRedirect(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchEtag(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		request *http.Request
+		page    Page
+	}
+
+	noHeader := httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil)
+
+	withInvalidHeader := httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil)
+	withInvalidHeader.Header.Add("If-None-Match", "Something")
+
+	missingPrefix := httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil)
+	missingPrefix.Header.Add("If-None-Match", "Some-thing")
+
+	validPage := Page{Template: "hello", Content: map[string]any{"name": "World"}}
+	valid := httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil)
+	valid.Header.Add("If-None-Match", "W/\""+validPage.etag()+"-nonceValue\"")
+
+	cases := map[string]struct {
+		args args
+		want bool
+	}{
+		"no header": {
+			args{
+				request: noHeader,
+				page:    Page{Template: "hello", Content: map[string]any{"name": "World"}},
+			},
+			false,
+		},
+		"invalid header": {
+			args{
+				request: withInvalidHeader,
+				page:    Page{Template: "hello", Content: map[string]any{"name": "World"}},
+			},
+			false,
+		},
+		"missing prefix": {
+			args{
+				request: missingPrefix,
+				page:    Page{Template: "hello", Content: map[string]any{"name": "World"}},
+			},
+			false,
+		},
+		"valid": {
+			args{
+				request: valid,
+				page:    validPage,
+			},
+			true,
+		},
+	}
+
+	for intention, testCase := range cases {
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			writer := httptest.NewRecorder()
+			service := &Service{}
+			actual := service.matchEtag(writer, testCase.args.request, testCase.args.page)
+
+			assert.Equal(t, testCase.want, actual)
+		})
+	}
+}
