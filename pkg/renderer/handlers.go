@@ -9,11 +9,9 @@ import (
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/owasp"
 	"github.com/ViBiOh/httputils/v4/pkg/recoverer"
-	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"github.com/ViBiOh/httputils/v4/pkg/templates"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type errOption struct {
@@ -132,9 +130,6 @@ func (s *Service) render(w http.ResponseWriter, r *http.Request, templateFunc Te
 }
 
 func (s *Service) matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
-	_, end := telemetry.StartSpan(r.Context(), s.tracer, "match_etag", trace.WithSpanKind(trace.SpanKindInternal))
-	defer end(nil)
-
 	etag := page.etag()
 
 	noneMatch := r.Header.Get("If-None-Match")
