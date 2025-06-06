@@ -243,7 +243,7 @@ func newSampler(rate string) (trace.Sampler, error) {
 }
 
 func allowedHttpAttr(v ...string) attribute.Filter {
-	m := make(map[string]any, len(v))
+	m := make(map[string]struct{}, len(v))
 
 	for _, s := range v {
 		m[s] = struct{}{}
