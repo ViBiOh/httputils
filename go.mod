@@ -6,8 +6,8 @@ require (
 	github.com/ViBiOh/flags v1.6.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/rabbitmq/amqp091-go v1.10.0
-	github.com/redis/go-redis/extra/redisotel/v9 v9.9.0
-	github.com/redis/go-redis/v9 v9.9.0
+	github.com/redis/go-redis/extra/redisotel/v9 v9.10.0
+	github.com/redis/go-redis/v9 v9.10.0
 	github.com/rs/xid v1.6.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tdewolff/minify/v2 v2.23.8
@@ -39,7 +39,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/redis/go-redis/extra/rediscmd/v9 v9.9.0 // indirect
+	github.com/redis/go-redis/extra/rediscmd/v9 v9.10.0 // indirect
 	github.com/tdewolff/parse/v2 v2.8.1 // indirect
 	github.com/zeebo/assert v1.3.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
