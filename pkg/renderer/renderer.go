@@ -23,7 +23,7 @@ import (
 
 var (
 	staticFolders       = []string{"/images", "/scripts", "/styles"}
-	staticRootPaths     = []string{"/robots.txt", "/sitemap.xml", "/favicon.ico"}
+	staticRootPaths     = []string{"/robots.txt", "/sitemap.xml", "/favicon.ico", "/service-worker.js"}
 	staticCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Hour * 24 * 180).Seconds())
 )
 
