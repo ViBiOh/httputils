@@ -207,6 +207,10 @@ func (s *Service) HandleStatic(prefix string) http.Handler {
 			}
 		}()
 
+		if item == "/service-worker.js" {
+			w.Header().Add("Service-Worker-Allowed", "/")
+		}
+
 		w.Header().Add("Cache-Control", staticCacheDuration)
 		s.staticHandler.ServeHTTP(w, r)
 	})
