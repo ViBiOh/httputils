@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"strings"
 
@@ -35,9 +36,7 @@ func RawWrite(w io.Writer, obj any) error {
 }
 
 func Write(ctx context.Context, w http.ResponseWriter, status int, obj any) {
-	for key, value := range headers {
-		w.Header()[key] = value
-	}
+	maps.Copy(w.Header(), headers)
 	w.WriteHeader(status)
 
 	if err := RawWrite(w, obj); err != nil {

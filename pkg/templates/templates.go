@@ -5,6 +5,7 @@ import (
 	"context"
 	"html/template"
 	"io"
+	"maps"
 	"net/http"
 	"regexp"
 	"sync"
@@ -80,9 +81,7 @@ func ResponseHTMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Te
 		return err
 	}
 
-	for key, value := range htmlHeaders {
-		w.Header()[key] = value
-	}
+	maps.Copy(w.Header(), htmlHeaders)
 	w.WriteHeader(status)
 
 	return minifyWithTracing(ctx, tr, "text/html", buffer, w)
@@ -92,9 +91,7 @@ func ResponseHTMLTemplateRaw(ctx context.Context, tr trace.Tracer, tpl *template
 	_, end := telemetry.StartSpan(ctx, tr, "html_template_raw", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
-	for key, value := range htmlHeaders {
-		w.Header()[key] = value
-	}
+	maps.Copy(w.Header(), htmlHeaders)
 	w.WriteHeader(status)
 
 	return tpl.Execute(w, content)
@@ -113,9 +110,7 @@ func ResponseXMLTemplate(ctx context.Context, tr trace.Tracer, tpl *template.Tem
 		return err
 	}
 
-	for key, value := range xmlHeaders {
-		w.Header()[key] = value
-	}
+	maps.Copy(w.Header(), xmlHeaders)
 	w.WriteHeader(status)
 
 	return minifyWithTracing(ctx, tr, "text/xml", buffer, w)
