@@ -501,8 +501,7 @@ func TestStart(t *testing.T) {
 			wg.Add(1)
 			testCase.cron.clock = testCase.clock
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 
 			go testCase.cron.OnError(testCase.onError(&wg, testCase.cron)).Start(ctx, testCase.action(&wg, testCase.cron))
 
