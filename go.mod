@@ -9,7 +9,7 @@ require (
 	github.com/redis/go-redis/extra/redisotel/v9 v9.12.1
 	github.com/redis/go-redis/v9 v9.12.1
 	github.com/rs/xid v1.6.0
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/minify/v2 v2.24.0
 	github.com/zeebo/xxh3 v1.0.2
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
