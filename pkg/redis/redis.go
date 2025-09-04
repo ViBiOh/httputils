@@ -261,7 +261,7 @@ func (s *Service) DeletePattern(ctx context.Context, pattern string) (err error)
 
 	<-done
 
-	return
+	return err
 }
 
 func (s *Service) execPipeline(ctx context.Context, pipeline redis.Pipeliner) error {
@@ -308,9 +308,9 @@ func (s *Service) Exclusive(ctx context.Context, name string, timeout time.Durat
 	if acquired, err = s.client.SetNX(ctx, name, "acquired", timeout).Result(); err != nil {
 		err = fmt.Errorf("exec setnx: %w", err)
 
-		return
+		return acquired, err
 	} else if !acquired {
-		return
+		return acquired, err
 	}
 
 	actionCtx, cancel := context.WithTimeout(ctx, timeout)
@@ -322,7 +322,7 @@ func (s *Service) Exclusive(ctx context.Context, name string, timeout time.Durat
 		err = errors.Join(err, delErr)
 	}
 
-	return
+	return acquired, err
 }
 
 func (s *Service) Pipeline() redis.Pipeliner {

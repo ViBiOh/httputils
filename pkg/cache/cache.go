@@ -183,13 +183,13 @@ func (c *Cache[K, V]) fetch(ctx context.Context, id K) (V, error) {
 
 func (c *Cache[K, V]) decode(content []byte) (value V, ok bool, err error) {
 	if len(content) == 0 {
-		return
+		return value, ok, err
 	}
 
 	value, err = c.serializer.Decode(content)
 	ok = err == nil
 
-	return
+	return value, ok, err
 }
 
 func (c *Cache[K, V]) extendTTL(ctx context.Context, keys ...string) {

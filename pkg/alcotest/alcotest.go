@@ -64,16 +64,14 @@ func GetStatusCode(url, userAgent string) (status int, err error) {
 	status = resp.StatusCode
 
 	if err = request.DiscardBody(resp.Body); err != nil {
-		return
+		return status, err
 	}
 
 	if status <= http.StatusBadRequest {
-		return
+		return status, err
 	}
 
-	err = fmt.Errorf("HTTP/%d", status)
-
-	return
+	return status, fmt.Errorf("HTTP/%d", status)
 }
 
 func Do(url, userAgent string) error {

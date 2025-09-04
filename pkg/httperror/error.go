@@ -102,7 +102,7 @@ func Log(ctx context.Context, err error, status int, message string) {
 func ErrorStatus(err error) (status int, message string) {
 	status = http.StatusInternalServerError
 	if err == nil {
-		return
+		return status, message
 	}
 
 	message = err.Error()
@@ -122,7 +122,7 @@ func ErrorStatus(err error) (status int, message string) {
 		message = internalError
 	}
 
-	return
+	return status, message
 }
 
 func FromStatus(status int, err error) error {

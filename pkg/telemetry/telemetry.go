@@ -187,7 +187,7 @@ func (s *Service) GetServiceVersionAndEnv() (service, version, env string) {
 		}
 	}
 
-	return
+	return service, version, env
 }
 
 func newTraceExporter(ctx context.Context, endpoint string) (trace.SpanExporter, error) {

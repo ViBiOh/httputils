@@ -64,7 +64,7 @@ func (l *listener) createChannel(connection Connection) (err error) {
 		err = fmt.Errorf("create channel: %w", err)
 	}
 
-	return
+	return err
 }
 
 func (l *listener) cancel() error {
