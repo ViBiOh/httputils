@@ -52,7 +52,7 @@ func ParsePagination(r *http.Request, defaultPageSize, maxPageSize uint) (pagina
 	if err != nil {
 		err = fmt.Errorf("%s: %w", err, ErrInvalidValue)
 
-		return
+		return pagination, err
 	}
 
 	pagination.PageSize = defaultPageSize
@@ -63,19 +63,19 @@ func ParsePagination(r *http.Request, defaultPageSize, maxPageSize uint) (pagina
 		if err != nil {
 			err = fmt.Errorf("pageSize is invalid %s: %w", err, ErrInvalidValue)
 
-			return
+			return pagination, err
 		}
 
 		if parsedUint > maxPageSize {
 			err = ErrMaxPageSizeExceeded
 
-			return
+			return pagination, err
 		}
 
 		if parsedUint < 1 {
 			err = ErrPageSizeInvalid
 
-			return
+			return pagination, err
 		}
 
 		pagination.PageSize = parsedUint
@@ -90,5 +90,5 @@ func ParsePagination(r *http.Request, defaultPageSize, maxPageSize uint) (pagina
 	pagination.Desc = GetBool(r, "desc")
 	pagination.Last = params.Get("last")
 
-	return
+	return pagination, err
 }

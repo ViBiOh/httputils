@@ -158,7 +158,7 @@ func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange,
 			semconv.ErrorTypeKey.String("amqp:publish"),
 		}, attributes...))
 
-		return
+		return err
 	}
 
 	c.increase(ctx, attributes)

@@ -95,7 +95,7 @@ func (c *Client) createChannel() (channel *amqp.Channel, err error) {
 		err = fmt.Errorf("create channel: %w", err)
 	}
 
-	return
+	return channel, err
 }
 
 func closeChannel(err error, channel *amqp.Channel) error {

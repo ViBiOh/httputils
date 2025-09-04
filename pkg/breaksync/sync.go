@@ -34,7 +34,7 @@ func (s *Synchronization) AddSources(sources ...SyncSource) *Synchronization {
 
 func (s *Synchronization) Run(business func(uint, []any) error) (err error) {
 	if err = s.read(); err != nil {
-		return
+		return err
 	}
 	s.computeKey()
 
@@ -42,7 +42,7 @@ func (s *Synchronization) Run(business func(uint, []any) error) (err error) {
 
 	for !s.end {
 		if err = s.read(); err != nil {
-			return
+			return err
 		}
 
 		s.computeSynchro()
@@ -50,7 +50,7 @@ func (s *Synchronization) Run(business func(uint, []any) error) (err error) {
 		s.computeRuptures()
 
 		if err = business(s.computeItems(items), items); err != nil {
-			return
+			return err
 		}
 	}
 

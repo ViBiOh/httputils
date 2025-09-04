@@ -67,7 +67,7 @@ func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Durati
 	var channel *amqp.Channel
 	channel, err = c.createChannel()
 	if err != nil {
-		return
+		return acquired, err
 	}
 
 	defer func() {
@@ -76,11 +76,9 @@ func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Durati
 
 	var message amqp.Delivery
 	if message, acquired, err = channel.Get(name, false); err != nil {
-		err = fmt.Errorf("get semaphore: %w", err)
-
-		return
+		return acquired, fmt.Errorf("get semaphore: %w", err)
 	} else if !acquired {
-		return
+		return acquired, err
 	}
 
 	defer func() {
@@ -92,7 +90,5 @@ func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Durati
 	actionCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	err = action(actionCtx)
-
-	return
+	return acquired, action(actionCtx)
 }
