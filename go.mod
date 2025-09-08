@@ -10,7 +10,7 @@ require (
 	github.com/redis/go-redis/v9 v9.13.0
 	github.com/rs/xid v1.6.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tdewolff/minify/v2 v2.24.2
+	github.com/tdewolff/minify/v2 v2.24.3
 	github.com/zeebo/xxh3 v1.0.2
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.63.0
@@ -47,9 +47,9 @@ require (
 	go.opentelemetry.io/proto/otlp v1.8.0 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250826171959-ef028d996bc1 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250826171959-ef028d996bc1 // indirect
 	google.golang.org/grpc v1.75.0 // indirect
