@@ -55,8 +55,13 @@ func Forbidden(ctx context.Context, w http.ResponseWriter) {
 	httpError(ctx, w, http.StatusForbidden, "⛔️", nil)
 }
 
-func NotFound(ctx context.Context, w http.ResponseWriter) {
-	httpError(ctx, w, http.StatusNotFound, "🤷", nil)
+func NotFound(ctx context.Context, w http.ResponseWriter, err error) {
+	message := "🤷"
+	if err != nil {
+		message = err.Error()
+	}
+
+	httpError(ctx, w, http.StatusNotFound, message, err)
 }
 
 func InternalServerError(ctx context.Context, w http.ResponseWriter, err error) {
@@ -76,7 +81,7 @@ func HandleError(ctx context.Context, w http.ResponseWriter, err error) bool {
 	case errors.Is(err, model.ErrForbidden):
 		httpError(ctx, w, http.StatusForbidden, err.Error(), err)
 	case errors.Is(err, model.ErrNotFound):
-		NotFound(ctx, w)
+		NotFound(ctx, w, err)
 	case errors.Is(err, model.ErrMethodNotAllowed):
 		httpError(ctx, w, http.StatusMethodNotAllowed, err.Error(), err)
 	default:

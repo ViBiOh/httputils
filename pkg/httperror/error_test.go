@@ -132,7 +132,7 @@ func TestNotFound(t *testing.T) {
 			t.Parallel()
 
 			writer := httptest.NewRecorder()
-			NotFound(context.Background(), writer)
+			NotFound(context.Background(), writer, nil)
 
 			if result := writer.Code; result != testCase.wantStatus {
 				t.Errorf("NotFound() = %d, want status %d", result, testCase.wantStatus)
@@ -215,7 +215,7 @@ func TestHandleError(t *testing.T) {
 			model.WrapNotFound(errors.New("unknown id")),
 			true,
 			http.StatusNotFound,
-			"🤷\n",
+			"unknown id\nnot found\n",
 		},
 		"method not allowed": {
 			model.WrapMethodNotAllowed(errors.New("unknown method")),

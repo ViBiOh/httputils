@@ -174,7 +174,7 @@ func (s *Service) Handler(templateFunc TemplateFunc) http.Handler {
 		r = r.WithContext(ctx)
 
 		if s.tpl == nil {
-			httperror.NotFound(ctx, w)
+			httperror.NotFound(ctx, w, nil)
 
 			return
 		}
@@ -196,7 +196,7 @@ func (s *Service) HandleStatic(prefix string) http.Handler {
 
 		file, err := s.staticFileSystem.Open(item)
 		if err != nil {
-			httperror.NotFound(ctx, w)
+			httperror.NotFound(ctx, w, err)
 
 			return
 		}
@@ -226,7 +226,7 @@ func (s *Service) HandleSVG() http.Handler {
 
 		tpl := s.tpl.Lookup("svg-" + name)
 		if tpl == nil {
-			httperror.NotFound(ctx, w)
+			httperror.NotFound(ctx, w, nil)
 
 			return
 		}
