@@ -23,7 +23,7 @@ func (shc SimpleHeaderCarrier) Get(key string) string {
 	return value
 }
 
-func (shc SimpleHeaderCarrier) Set(key string, value string) {
+func (shc SimpleHeaderCarrier) Set(key, value string) {
 	shc[key] = value
 }
 
