@@ -37,6 +37,7 @@ type Config struct {
 	Database    int
 	PoolSize    int
 	MinIdleConn int
+	MaxIdleTime time.Duration
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
@@ -47,7 +48,8 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").StringVar(fs, &config.Password, "", overrides)
 	flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").IntVar(fs, &config.Database, 0, overrides)
 	flags.New("PoolSize", "Redis Pool Size (default GOMAXPROCS*10)").Prefix(prefix).DocPrefix("redis").IntVar(fs, &config.PoolSize, 0, overrides)
-	flags.New("MinIdleConn", "Redis Minimum Idle Connections").Prefix(prefix).DocPrefix("redis").IntVar(fs, &config.MinIdleConn, 0, overrides)
+	flags.New("MinIdleConn", "Redis Minimum Idle Connections (default GOMAXPROCS)").Prefix(prefix).DocPrefix("redis").IntVar(fs, &config.MinIdleConn, 0, overrides)
+	flags.New("MaxIdleTime", "Redis Maximum Connection Idle Time").Prefix(prefix).DocPrefix("redis").DurationVar(fs, &config.MaxIdleTime, time.Minute*5, overrides)
 
 	return &config
 }
@@ -57,15 +59,26 @@ func New(ctx context.Context, config *Config, meter metric.MeterProvider, tracer
 		return Noop{}, nil
 	}
 
+	gomaxprocs := runtime.GOMAXPROCS(0)
+
+	if config.MinIdleConn == 0 {
+		config.MinIdleConn = gomaxprocs
+	}
+
+	if config.PoolSize == 0 {
+		config.PoolSize = gomaxprocs * 10
+	}
+
 	service := &Service{
 		isCluster: len(config.Address) > 1,
 		client: redis.NewUniversalClient(&redis.UniversalOptions{
-			Addrs:        config.Address,
-			Username:     config.Username,
-			Password:     config.Password,
-			DB:           config.Database,
-			PoolSize:     config.PoolSize,
-			MinIdleConns: config.MinIdleConn,
+			Addrs:           config.Address,
+			Username:        config.Username,
+			Password:        config.Password,
+			DB:              config.Database,
+			PoolSize:        config.PoolSize,
+			MinIdleConns:    config.MinIdleConn,
+			ConnMaxIdleTime: config.MaxIdleTime,
 		}),
 	}
 

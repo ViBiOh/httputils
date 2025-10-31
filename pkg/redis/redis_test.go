@@ -13,7 +13,22 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -address string slice\n    \t[redis] Redis Address host:port (blank to disable) ${SIMPLE_ADDRESS}, as a string slice, environment variable separated by \",\" (default [127.0.0.1:6379])\n  -database int\n    \t[redis] Redis Database ${SIMPLE_DATABASE}\n  -minIdleConn int\n    \t[redis] Redis Minimum Idle Connections ${SIMPLE_MIN_IDLE_CONN}\n  -password string\n    \t[redis] Redis Password, if any ${SIMPLE_PASSWORD}\n  -poolSize int\n    \t[redis] Redis Pool Size (default GOMAXPROCS*10) ${SIMPLE_POOL_SIZE}\n  -username string\n    \t[redis] Redis Username, if any ${SIMPLE_USERNAME}\n",
+			`Usage of simple:
+  -address string slice
+    	[redis] Redis Address host:port (blank to disable) ${SIMPLE_ADDRESS}, as a string slice, environment variable separated by "," (default [127.0.0.1:6379])
+  -database int
+    	[redis] Redis Database ${SIMPLE_DATABASE}
+  -maxIdleTime duration
+    	[redis] Redis Maximum Connection Idle Time ${SIMPLE_MAX_IDLE_TIME} (default 5m0s)
+  -minIdleConn int
+    	[redis] Redis Minimum Idle Connections (default GOMAXPROCS) ${SIMPLE_MIN_IDLE_CONN}
+  -password string
+    	[redis] Redis Password, if any ${SIMPLE_PASSWORD}
+  -poolSize int
+    	[redis] Redis Pool Size (default GOMAXPROCS*10) ${SIMPLE_POOL_SIZE}
+  -username string
+    	[redis] Redis Username, if any ${SIMPLE_USERNAME}
+`,
 		},
 	}
 
