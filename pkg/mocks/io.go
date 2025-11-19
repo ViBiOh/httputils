@@ -17,9 +17,9 @@ import (
 
 // ReadCloser is a mock of ReadCloser interface.
 type ReadCloser struct {
-	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *ReadCloserMockRecorder
+	isgomock struct{}
 }
 
 // ReadCloserMockRecorder is the mock recorder for ReadCloser.
