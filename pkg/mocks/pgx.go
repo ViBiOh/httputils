@@ -20,9 +20,9 @@ import (
 
 // Tx is a mock of Tx interface.
 type Tx struct {
-	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *TxMockRecorder
+	isgomock struct{}
 }
 
 // TxMockRecorder is the mock recorder for Tx.
@@ -218,9 +218,9 @@ func (mr *TxMockRecorder) SendBatch(ctx, b any) *gomock.Call {
 
 // Row is a mock of Row interface.
 type Row struct {
-	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *RowMockRecorder
+	isgomock struct{}
 }
 
 // RowMockRecorder is the mock recorder for Row.
@@ -260,9 +260,9 @@ func (mr *RowMockRecorder) Scan(dest ...any) *gomock.Call {
 
 // Rows is a mock of Rows interface.
 type Rows struct {
-	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *RowsMockRecorder
+	isgomock struct{}
 }
 
 // RowsMockRecorder is the mock recorder for Rows.

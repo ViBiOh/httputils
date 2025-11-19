@@ -20,9 +20,9 @@ import (
 
 // RedisClient is a mock of RedisClient interface.
 type RedisClient struct {
-	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *RedisClientMockRecorder
+	isgomock struct{}
 }
 
 // RedisClientMockRecorder is the mock recorder for RedisClient.
