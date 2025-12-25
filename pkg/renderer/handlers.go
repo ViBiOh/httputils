@@ -78,22 +78,7 @@ func (s *Service) Error(w http.ResponseWriter, r *http.Request, content map[stri
 	}
 }
 
-func (s *Service) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
-	defer recoverer.Handler(func(err error) {
-		s.Error(w, r, nil, err)
-	})
-
-	page, err := templateFunc(w, r)
-	if err != nil {
-		s.Error(w, r, page.Content, err)
-
-		return
-	}
-
-	if len(page.Template) == 0 {
-		return
-	}
-
+func (s *Service) Serve(w http.ResponseWriter, r *http.Request, page Page) {
 	tpl := s.tpl.Lookup(page.Template)
 	if tpl == nil {
 		s.Error(w, r, page.Content, model.WrapNotFound(fmt.Errorf("unknown template `%s`", page.Template)))
@@ -124,9 +109,28 @@ func (s *Service) render(w http.ResponseWriter, r *http.Request, templateFunc Te
 		s.generatedMeter.Add(ctx, 1, metric.WithAttributes(attribute.String("template", page.Template)))
 	}
 
-	if err = responder(ctx, s.tracer, tpl, w, page.Content, page.Status); err != nil {
+	if err := responder(ctx, s.tracer, tpl, w, page.Content, page.Status); err != nil {
 		httperror.InternalServerError(ctx, w, err)
 	}
+}
+
+func (s *Service) render(w http.ResponseWriter, r *http.Request, templateFunc TemplateFunc) {
+	defer recoverer.Handler(func(err error) {
+		s.Error(w, r, nil, err)
+	})
+
+	page, err := templateFunc(w, r)
+	if err != nil {
+		s.Error(w, r, page.Content, err)
+
+		return
+	}
+
+	if len(page.Template) == 0 {
+		return
+	}
+
+	s.Serve(w, r, page)
 }
 
 func (s *Service) matchEtag(w http.ResponseWriter, r *http.Request, page Page) bool {
