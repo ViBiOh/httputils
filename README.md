@@ -25,7 +25,7 @@ Usage of alcotest:
 in `Dockerfile`
 
 ```bash
-HEALTHCHECK --retries=10 CMD /alcotest -url http://localhost/health
+HEALTHCHECK --retries=10 CMD /alcotest -url http://127.0.0.1/health
 
 COPY bin/alcotest /alcotest
 ```
@@ -108,7 +108,7 @@ Usage of http:
   --redisUsername        string        [redis] Redis Username, if any ${HTTP_REDIS_USERNAME}
   --rendererMinify                     [renderer] Minify HTML ${HTTP_RENDERER_MINIFY} (default true)
   --rendererPathPrefix   string        [renderer] Root Path Prefix ${HTTP_RENDERER_PATH_PREFIX}
-  --rendererPublicURL    string        [renderer] Public URL ${HTTP_RENDERER_PUBLIC_URL} (default "http://localhost:1080")
+  --rendererPublicURL    string        [renderer] Public URL ${HTTP_RENDERER_PUBLIC_URL} (default "http://127.0.0.1:1080")
   --rendererTitle        string        [renderer] Application title ${HTTP_RENDERER_TITLE} (default "App")
   --shutdownTimeout      duration      [server] Shutdown Timeout ${HTTP_SHUTDOWN_TIMEOUT} (default 10s)
   --telemetryRate        string        [telemetry] OpenTelemetry sample rate, 'always', 'never' or a float value ${HTTP_TELEMETRY_RATE} (default "always")

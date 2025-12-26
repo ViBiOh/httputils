@@ -25,22 +25,22 @@ func TestGetBool(t *testing.T) {
 			false,
 		},
 		"should work with empty param": {
-			httptest.NewRequest(http.MethodGet, "http://localhost", nil),
+			httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil),
 			"valid",
 			false,
 		},
 		"should work with valid param": {
-			httptest.NewRequest(http.MethodGet, "http://localhost?valid", nil),
+			httptest.NewRequest(http.MethodGet, "http://127.0.0.1?valid", nil),
 			"valid",
 			true,
 		},
 		"should work with valid value": {
-			httptest.NewRequest(http.MethodGet, "http://localhost?test=1&valid=false", nil),
+			httptest.NewRequest(http.MethodGet, "http://127.0.0.1?test=1&valid=false", nil),
 			"valid",
 			false,
 		},
 		"should work with valid value not equal to a boolean": {
-			httptest.NewRequest(http.MethodGet, "http://localhost?test=1&valid=invalidBool", nil),
+			httptest.NewRequest(http.MethodGet, "http://127.0.0.1?test=1&valid=invalidBool", nil),
 			"valid",
 			false,
 		},

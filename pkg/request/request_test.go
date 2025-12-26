@@ -44,12 +44,12 @@ func TestString(t *testing.T) {
 			"GET, ContentLength: 8000",
 		},
 		"basic auth": {
-			Post("http://localhost").BasicAuth("admin", "password").ContentType("text/plain"),
-			"POST http://localhost, BasicAuth with user `%s`admin, Header Content-Type: `text/plain`",
+			Post("http://127.0.0.1").BasicAuth("admin", "password").ContentType("text/plain"),
+			"POST http://127.0.0.1, BasicAuth with user `%s`admin, Header Content-Type: `text/plain`",
 		},
 		"signature auth": {
-			Post("http://localhost").WithSignatureAuthorization("secret", []byte("password")),
-			"POST http://localhost, SignatureAuthorization with key `secret`",
+			Post("http://127.0.0.1").WithSignatureAuthorization("secret", []byte("password")),
+			"POST http://127.0.0.1, SignatureAuthorization with key `secret`",
 		},
 	}
 
@@ -106,47 +106,47 @@ func TestPath(t *testing.T) {
 		want     Request
 	}{
 		"empty": {
-			Get("http://localhost"),
+			Get("http://127.0.0.1"),
 			args{
 				path: "",
 			},
-			Get("http://localhost"),
+			Get("http://127.0.0.1"),
 		},
 		"no prefix": {
-			Put("http://localhost"),
+			Put("http://127.0.0.1"),
 			args{
 				path: "hello",
 			},
-			Put("http://localhost/hello"),
+			Put("http://127.0.0.1/hello"),
 		},
 		"trailing slash url": {
-			Post("http://localhost/"),
+			Post("http://127.0.0.1/"),
 			args{
 				path: "hello",
 			},
-			Post("http://localhost/hello"),
+			Post("http://127.0.0.1/hello"),
 		},
 		"prefix path": {
-			Patch("http://localhost"),
+			Patch("http://127.0.0.1"),
 			args{
 				path: "/hello",
 			},
-			Patch("http://localhost/hello"),
+			Patch("http://127.0.0.1/hello"),
 		},
 		"full slash": {
-			Delete("http://localhost/"),
+			Delete("http://127.0.0.1/"),
 			args{
 				path: "/hello",
 			},
-			Delete("http://localhost/hello"),
+			Delete("http://127.0.0.1/hello"),
 		},
 		"sprintf slash": {
-			Delete("http://localhost/"),
+			Delete("http://127.0.0.1/"),
 			args{
 				path: "/hello/%s",
 				args: []any{"world"},
 			},
-			Delete("http://localhost/hello/world"),
+			Delete("http://127.0.0.1/hello/world"),
 		},
 	}
 

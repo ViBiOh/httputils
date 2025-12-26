@@ -76,7 +76,7 @@ func (s *Service) Start(ctx context.Context) {
 }
 
 func (s *Service) http(ctx context.Context) {
-	if err := http.ListenAndServe(fmt.Sprintf("localhost:%d", s.port), http.DefaultServeMux); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", s.port), http.DefaultServeMux); err != nil {
 		slog.LogAttrs(ctx, slog.LevelError, fmt.Sprintf("pprof http: %s", err.Error()))
 	}
 }

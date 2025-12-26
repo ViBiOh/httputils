@@ -13,7 +13,7 @@ import (
 
 var (
 	httpClient       = request.CreateClient(5*time.Second, request.NoRedirection)
-	defaultURL       = "http://localhost:1080/health"
+	defaultURL       = "http://127.0.0.1:1080/health"
 	defaultUserAgent = "Alcotest"
 	defaultHeader    = http.Header{}
 	exitFunc         = os.Exit

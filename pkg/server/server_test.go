@@ -61,16 +61,16 @@ func TestListenAddr(t *testing.T) {
 	t.Run("with addr", func(t *testing.T) {
 		t.Parallel()
 
-		actual := New(&Config{Port: 80, Address: "localhost"}).ListenAddr()
+		actual := New(&Config{Port: 80, Address: "127.0.0.1"}).ListenAddr()
 
-		assert.Equal(t, "http://localhost:80", actual)
+		assert.Equal(t, "http://127.0.0.1:80", actual)
 	})
 
 	t.Run("with TLS", func(t *testing.T) {
 		t.Parallel()
 
-		actual := New(&Config{Port: 80, Address: "localhost", Cert: "example", Key: "example"}).ListenAddr()
+		actual := New(&Config{Port: 80, Address: "127.0.0.1", Cert: "example", Key: "example"}).ListenAddr()
 
-		assert.Equal(t, "https://localhost:80", actual)
+		assert.Equal(t, "https://127.0.0.1:80", actual)
 	})
 }

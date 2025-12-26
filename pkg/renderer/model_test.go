@@ -88,7 +88,7 @@ func (ts testStruct) String() string {
 func BenchmarkEtag(b *testing.B) {
 	page := Page{
 		Content: map[string]any{
-			"Version": "localhost",
+			"Version": "127.0.0.1",
 			"Date":    "Today",
 			"Hash":    "deadbeef",
 			"Items": []testStruct{

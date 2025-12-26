@@ -35,7 +35,7 @@ func TestRedirect(t *testing.T) {
 		},
 		"relative URL": {
 			Service{},
-			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
+			httptest.NewRequest(http.MethodGet, "http://127.0.0.1:1080/", nil),
 			"/success?refresh=true",
 			NewSuccessMessage("Created with success"),
 			"<a href=\"/success?refresh=true&amp;msgKey=Message&amp;msgCnt=Created+with+success&amp;msgLvl=success\">Found</a>.\n\n",
@@ -48,7 +48,7 @@ func TestRedirect(t *testing.T) {
 			Service{
 				pathPrefix: "/app",
 			},
-			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
+			httptest.NewRequest(http.MethodGet, "http://127.0.0.1:1080/", nil),
 			"/success",
 			NewSuccessMessage("Created with success"),
 			"<a href=\"/app/success?msgKey=Message&amp;msgCnt=Created+with+success&amp;msgLvl=success\">Found</a>.\n\n",
@@ -59,7 +59,7 @@ func TestRedirect(t *testing.T) {
 		},
 		"anchor": {
 			Service{},
-			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
+			httptest.NewRequest(http.MethodGet, "http://127.0.0.1:1080/", nil),
 			"/success#id",
 			NewSuccessMessage("Created with success"),
 			"<a href=\"/success?msgKey=Message&amp;msgCnt=Created+with+success&amp;msgLvl=success#id\">Found</a>.\n\n",
@@ -70,7 +70,7 @@ func TestRedirect(t *testing.T) {
 		},
 		"anchor query and custom": {
 			Service{},
-			httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil),
+			httptest.NewRequest(http.MethodGet, "http://127.0.0.1:1080/", nil),
 			"/success?refresh=true#id",
 			NewKeyErrorMessage("ModalMessage", "Created with success"),
 			"<a href=\"/success?refresh=true&amp;msgKey=ModalMessage&amp;msgCnt=Created+with+success&amp;msgLvl=error#id\">Found</a>.\n\n",
@@ -108,16 +108,16 @@ func TestMatchEtag(t *testing.T) {
 		page    Page
 	}
 
-	noHeader := httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil)
+	noHeader := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:1080/", nil)
 
-	withInvalidHeader := httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil)
+	withInvalidHeader := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:1080/", nil)
 	withInvalidHeader.Header.Add("If-None-Match", "Something")
 
-	missingPrefix := httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil)
+	missingPrefix := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:1080/", nil)
 	missingPrefix.Header.Add("If-None-Match", "Some-thing")
 
 	validPage := Page{Template: "hello", Content: map[string]any{"name": "World"}}
-	valid := httptest.NewRequest(http.MethodGet, "http://localhost:1080/", nil)
+	valid := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:1080/", nil)
 	valid.Header.Add("If-None-Match", "W/\""+validPage.etag()+"-nonceValue\"")
 
 	cases := map[string]struct {

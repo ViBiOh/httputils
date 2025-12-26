@@ -50,7 +50,7 @@ type Config struct {
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("PublicURL", "Public URL").Prefix(prefix).DocPrefix("").StringVar(fs, &config.PublicURL, "http://localhost:1080", overrides)
+	flags.New("PublicURL", "Public URL").Prefix(prefix).DocPrefix("").StringVar(fs, &config.PublicURL, "http://127.0.0.1:1080", overrides)
 	flags.New("PathPrefix", "Root Path Prefix").Prefix(prefix).DocPrefix("").StringVar(fs, &config.PathPrefix, "", overrides)
 	flags.New("Title", "Application title").Prefix(prefix).DocPrefix("").StringVar(fs, &config.Title, "App", overrides)
 	flags.New("Extension", "Go Template Extension").Prefix(prefix).DocPrefix("").StringVar(fs, &config.Extension, "tmpl", overrides)
@@ -97,7 +97,7 @@ func New(ctx context.Context, config *Config, filesystem fs.FS, funcMap template
 
 	instance.tpl = tpl
 
-	if strings.HasPrefix(instance.publicURL, "http://localhost") {
+	if strings.HasPrefix(instance.publicURL, "http://127.0.0.1") {
 		slog.LogAttrs(ctx, slog.LevelWarn, "PublicURL has a development/debug value: You may need to configure it.", slog.String("url", instance.publicURL))
 	}
 
