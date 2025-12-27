@@ -108,10 +108,10 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 
 	var err error
 	if len(s.cert) != 0 && len(s.key) != 0 {
-		s.logger.InfoContext(ctx, "Listening with TLS", "address", s.server.Addr)
+		s.logger.InfoContext(ctx, "Listening with TLS", "address", "https://"+s.server.Addr)
 		err = s.server.ListenAndServeTLS(s.cert, s.key)
 	} else {
-		s.logger.WarnContext(ctx, "Listening without TLS", "address", s.server.Addr)
+		s.logger.WarnContext(ctx, "Listening without TLS", "address", "http://"+s.server.Addr)
 		err = s.server.ListenAndServe()
 	}
 
