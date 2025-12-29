@@ -53,7 +53,6 @@ app: init dev
 .PHONY: init
 init:
 	@curl --disable --silent --show-error --location "https://raw.githubusercontent.com/ViBiOh/scripts/main/bootstrap.sh" | bash -s -- "-c" "git_hooks" "coverage.sh"
-	go install "github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
 	go install "golang.org/x/tools/cmd/goimports@latest"
 	go install "golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@master"
 	go install "mvdan.cc/gofumpt@latest"
@@ -70,7 +69,7 @@ format:
 .PHONY: style
 style:
 	fieldalignment -fix -test=false $(PACKAGES)
-	golangci-lint run
+	golangci-lint run --fix
 
 ## mocks: Generate mocks
 .PHONY: mocks

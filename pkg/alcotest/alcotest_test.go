@@ -16,21 +16,22 @@ func createTestServer() *httptest.Server {
 			w.Header().Add(key, r.Header.Get(key))
 		}
 
-		if r.URL.Path == "/ok" {
+		switch r.URL.Path {
+		case "/ok":
 			w.WriteHeader(http.StatusOK)
-		} else if r.URL.Path == "/health" {
+		case "/health":
 			w.WriteHeader(http.StatusOK)
-		} else if r.URL.Path == "/ko" {
+		case "/ko":
 			w.WriteHeader(http.StatusInternalServerError)
-		} else if r.URL.Path == "/reset" {
+		case "/reset":
 			w.WriteHeader(http.StatusResetContent)
-		} else if r.URL.Path == "/user-agent" {
+		case "/user-agent":
 			if r.Header.Get("User-Agent") == defaultUserAgent {
 				w.WriteHeader(http.StatusInternalServerError)
 			} else {
 				w.WriteHeader(http.StatusServiceUnavailable)
 			}
-		} else {
+		default:
 			http.Error(w, "invalid", http.StatusNotFound)
 		}
 	}))

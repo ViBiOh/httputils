@@ -163,7 +163,8 @@ func TestPath(t *testing.T) {
 
 func TestSend(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/simple" {
+		switch r.URL.Path {
+		case "/simple":
 			w.WriteHeader(http.StatusOK)
 
 			payload, _ := ReadBodyRequest(r)
@@ -181,7 +182,7 @@ func TestSend(t *testing.T) {
 			}
 
 			return
-		} else if r.URL.Path == "/protected" {
+		case "/protected":
 			username, password, ok := r.BasicAuth()
 			if ok && username == "admin" && password == "secret" {
 				w.WriteHeader(http.StatusOK)
@@ -189,39 +190,39 @@ func TestSend(t *testing.T) {
 
 				return
 			}
-		} else if r.URL.Path == "/accept" {
+		case "/accept":
 			if r.Header.Get("Accept") == "text/plain" {
 				w.WriteHeader(http.StatusOK)
 				safeWrite(w, []byte("text me!"))
 
 				return
 			}
-		} else if r.URL.Path == "/explain" {
+		case "/explain":
 			w.WriteHeader(http.StatusBadRequest)
 			safeWrite(w, []byte("missing id"))
 
 			return
-		} else if r.URL.Path == "/long_explain" {
+		case "/long_explain":
 			w.Header().Add("X-Test-Value", "Value with placehodler %d like this %s")
 			w.WriteHeader(http.StatusBadRequest)
 			safeWrite(w, []byte(`Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`))
 
 			return
-		} else if r.URL.Path == "/redirect" {
+		case "/redirect":
 			w.Header().Add("Location", "/simple")
 			w.WriteHeader(http.StatusPermanentRedirect)
 
 			return
-		} else if r.URL.Path == "/client" {
+		case "/client":
 			w.WriteHeader(http.StatusNoContent)
 
 			return
-		} else if r.URL.Path == "/timeout" {
+		case "/timeout":
 			time.Sleep(time.Second * 2)
 			w.WriteHeader(http.StatusNoContent)
 
 			return
-		} else if r.URL.Path == "/signed" {
+		case "/signed":
 			if ok, err := ValidateSignature(r, []byte(`secret`)); err != nil {
 				w.WriteHeader(http.StatusUnauthorized)
 				safeWrite(w, []byte(err.Error()))

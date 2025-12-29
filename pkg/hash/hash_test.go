@@ -135,7 +135,7 @@ func BenchmarkHash(b *testing.B) {
 	hash := func(content any) string {
 		hasher := xxh3.New()
 
-		fmt.Fprintf(hasher, "%v", content)
+		_, _ = fmt.Fprintf(hasher, "%v", content)
 
 		return hex.EncodeToString(hasher.Sum(nil))
 	}
@@ -156,7 +156,7 @@ func BenchmarkSha256(b *testing.B) {
 	hash := func(content any) string {
 		hasher := sha256.New()
 
-		fmt.Fprintf(hasher, "%v", content)
+		_, _ = fmt.Fprintf(hasher, "%v", content)
 
 		return hex.EncodeToString(hasher.Sum(nil))
 	}

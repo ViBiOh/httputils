@@ -16,7 +16,7 @@ func String(value string) string {
 func Hash(content any) string {
 	hasher := xxh3.New()
 
-	fmt.Fprintf(hasher, "%v", content)
+	_, _ = fmt.Fprintf(hasher, "%v", content)
 
 	return hex.EncodeToString(hasher.Sum(nil))
 }
