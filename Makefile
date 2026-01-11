@@ -69,7 +69,7 @@ format:
 .PHONY: style
 style:
 	fieldalignment -fix -test=false $(PACKAGES)
-	golangci-lint run --fix
+	golangci-lint run --fix --show-stats=false
 
 ## mocks: Generate mocks
 .PHONY: mocks
