@@ -7,7 +7,7 @@ require (
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/extra/redisotel/v9 v9.17.3
-	github.com/redis/go-redis/v9 v9.17.3
+	github.com/redis/go-redis/v9 v9.18.0
 	github.com/rs/xid v1.6.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/minify/v2 v2.24.8
@@ -45,6 +45,7 @@ require (
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.40.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/net v0.50.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
