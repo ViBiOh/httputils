@@ -143,15 +143,15 @@ func (s *Service) matchEtag(w http.ResponseWriter, r *http.Request, page Page) b
 		return false
 	}
 
-	dashIndex := strings.Index(noneMatch, "-")
-	if dashIndex == -1 {
+	before, after, ok := strings.Cut(noneMatch, "-")
+	if !ok {
 		appendNonceAndEtag(w, page.Content, etag)
 
 		return false
 	}
 
-	if strings.TrimPrefix(noneMatch[:dashIndex], `W/"`) == etag {
-		owasp.WriteNonce(w, strings.TrimSuffix(noneMatch[dashIndex+1:], `"`))
+	if strings.TrimPrefix(before, `W/"`) == etag {
+		owasp.WriteNonce(w, strings.TrimSuffix(after, `"`))
 
 		return true
 	}

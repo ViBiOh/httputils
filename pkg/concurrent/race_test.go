@@ -29,7 +29,7 @@ func TestChanUntilDone(t *testing.T) {
 					go func() {
 						defer close(ch)
 
-						for i := 0; i < 3; i++ {
+						for i := range 3 {
 							if i == 2 {
 								cancel()
 							}
@@ -50,7 +50,7 @@ func TestChanUntilDone(t *testing.T) {
 					ch := make(chan int, 5)
 
 					go func() {
-						for i := 0; i < 3; i++ {
+						for i := range 3 {
 							if i == 2 {
 								cancel()
 							}

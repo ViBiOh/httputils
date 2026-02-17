@@ -58,9 +58,6 @@ func (c *Cache[K, V]) fetchAll(ctx context.Context, onFetchErr FetchErrHandler[K
 	output := make([]V, len(ids))
 
 	for index, id := range ids {
-		index := index
-		id := id
-
 		wg.Go(func() error {
 			value, err := c.fetch(ctx, id)
 			if err != nil {

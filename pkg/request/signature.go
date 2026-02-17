@@ -74,19 +74,19 @@ func parseAuthorizationHeader(r *http.Request) ([]byte, []byte, error) {
 	var err error
 
 	for _, value := range r.Header.Values(authorizationHeader) {
-		if strings.HasPrefix(value, "headers=") {
-			headers = strings.TrimPrefix(value, "headers=")
-		} else if strings.HasPrefix(value, "created=") {
-			rawCreated := strings.TrimPrefix(value, "created=")
+		if after, ok := strings.CutPrefix(value, "headers="); ok {
+			headers = after
+		} else if after, ok := strings.CutPrefix(value, "created="); ok {
+			rawCreated := after
 
 			created, err = strconv.ParseInt(rawCreated, 10, 64)
 			if err != nil {
 				return nil, nil, fmt.Errorf(createdHeader+" is not an integer: %w", err)
 			}
-		} else if strings.HasPrefix(value, "signature=") {
-			rawSignature = strings.TrimPrefix(value, "signature=")
-		} else if strings.HasPrefix(value, "algorithm=") {
-			algorithm = strings.Trim(strings.TrimPrefix(value, "algorithm="), `"`)
+		} else if after, ok := strings.CutPrefix(value, "signature="); ok {
+			rawSignature = after
+		} else if after, ok := strings.CutPrefix(value, "algorithm="); ok {
+			algorithm = strings.Trim(after, `"`)
 		}
 	}
 

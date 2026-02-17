@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"flag"
+	"maps"
 	"net/http"
 	"strings"
 
@@ -73,9 +74,7 @@ func (s Service) Middleware(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		for key, values := range headers {
-			w.Header()[key] = values
-		}
+		maps.Copy(w.Header(), headers)
 
 		if next != nil {
 			writer := w

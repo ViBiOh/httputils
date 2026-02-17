@@ -1,7 +1,6 @@
 package memory
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -14,8 +13,7 @@ func TestGet(t *testing.T) {
 	t.Run("found", func(t *testing.T) {
 		t.Parallel()
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		instance := New[string, string](0)
 		go instance.Start(ctx)
@@ -33,8 +31,7 @@ func TestGet(t *testing.T) {
 	t.Run("found but expired", func(t *testing.T) {
 		t.Parallel()
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		instance := New[string, string](0)
 		go instance.Start(ctx)
@@ -54,8 +51,7 @@ func TestGet(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		instance := New[string, string](0)
 		go instance.Start(ctx)
@@ -132,8 +128,7 @@ func TestGetAll(t *testing.T) {
 	t.Run("lru", func(t *testing.T) {
 		t.Parallel()
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		instance := New[string, string](3)
 		go instance.Start(ctx)
@@ -164,8 +159,7 @@ func TestDelete(t *testing.T) {
 	t.Run("not present", func(t *testing.T) {
 		t.Parallel()
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		instance := New[string, string](0)
 		go instance.Start(ctx)
@@ -183,8 +177,7 @@ func TestDelete(t *testing.T) {
 	t.Run("present", func(t *testing.T) {
 		t.Parallel()
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		instance := New[string, string](0)
 		go instance.Start(ctx)

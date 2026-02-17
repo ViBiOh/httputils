@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"context"
+	"maps"
 
 	"github.com/ViBiOh/httputils/v4/pkg/model"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -48,9 +49,7 @@ func InjectToAmqp(ctx context.Context, payload amqp.Publishing) amqp.Publishing 
 		payload.Headers = amqp.Table{}
 	}
 
-	for key, value := range headers {
-		payload.Headers[key] = value
-	}
+	maps.Copy(payload.Headers, headers)
 
 	return payload
 }

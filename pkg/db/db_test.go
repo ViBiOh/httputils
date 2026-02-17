@@ -132,8 +132,6 @@ func TestClose(t *testing.T) {
 	}
 
 	for intention := range cases {
-		intention := intention
-
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
