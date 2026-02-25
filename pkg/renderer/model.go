@@ -2,10 +2,9 @@ package renderer
 
 import (
 	"fmt"
-	"maps"
 	"net/http"
 	"net/url"
-	"slices"
+	"sort"
 
 	"github.com/ViBiOh/httputils/v4/pkg/hash"
 )
@@ -39,20 +38,19 @@ func (p Page) etag() string {
 	streamer.WriteString(p.Template)
 	streamer.Write(p.Status)
 
-	keys := make([]string, 0, len(p.Content))
-	keys = slices.AppendSeq(keys, maps.Keys(p.Content))
-	slices.Sort(keys)
+	if len(p.Content) > 0 {
+		keys := make([]string, 0, len(p.Content))
+		for key := range p.Content {
+			keys = append(keys, key)
+		}
 
-	for _, key := range keys {
-		streamer.WriteString(key)
+		if len(keys) > 1 {
+			sort.Strings(keys)
+		}
 
-		switch typedValue := p.Content[key].(type) {
-		case string:
-			streamer.WriteString(typedValue)
-		case []byte:
-			streamer.WriteBytes(typedValue)
-		default:
-			streamer.Write(typedValue)
+		for _, key := range keys {
+			streamer.WriteString(key)
+			streamer.Write(p.Content[key])
 		}
 	}
 

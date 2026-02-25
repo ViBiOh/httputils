@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"testing"
 	"time"
-
-	"github.com/zeebo/xxh3"
 )
 
 func TestString(t *testing.T) {
@@ -132,14 +130,6 @@ type testStruct struct {
 }
 
 func BenchmarkHash(b *testing.B) {
-	hash := func(content any) string {
-		hasher := xxh3.New()
-
-		_, _ = fmt.Fprintf(hasher, "%v", content)
-
-		return hex.EncodeToString(hasher.Sum(nil))
-	}
-
 	item := testStruct{
 		ID:     123456789,
 		Name:   "Benchmark",
@@ -148,7 +138,7 @@ func BenchmarkHash(b *testing.B) {
 	}
 
 	for b.Loop() {
-		hash(item)
+		Stream().Write(item).Sum()
 	}
 }
 
