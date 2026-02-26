@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -151,6 +152,33 @@ func TestGetAll(t *testing.T) {
 		assert.Equal(t, expected, output)
 		assert.Equal(t, expectedMissings, got)
 	})
+}
+
+func BenchmarkLRURefresh(b *testing.B) {
+	for _, size := range []int{100, 1000, 10000} {
+		b.Run(fmt.Sprintf("size=%d", size), func(b *testing.B) {
+			benchmarkLRURefresh(b, size)
+		})
+	}
+}
+
+func benchmarkLRURefresh(b *testing.B, size int) {
+	b.Helper()
+
+	instance := New[int, int](size)
+
+	for i := range size {
+		instance.content[i] = i
+		instance.lruIndex[i] = instance.lru.PushBack(i)
+	}
+
+	// Cycle through all elements so the scan position varies
+	var i int
+
+	for b.Loop() {
+		instance.refreshEntryLRU(i % size)
+		i++
+	}
 }
 
 func TestDelete(t *testing.T) {

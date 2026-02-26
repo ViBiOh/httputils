@@ -52,26 +52,28 @@ func (c *Cache[K, V]) addLRU(id K) {
 }
 
 func (c *Cache[K, V]) refreshEntryLRU(id K) {
-	for element := c.lru.Front(); element != nil; element = element.Next() {
-		if element.Value != id {
-			continue
-		}
-
+	if element, ok := c.lruIndex[id]; ok {
 		c.lru.MoveToFront(element)
-
-		return
 	}
 }
 
 func (c *Cache[K, V]) addEntryLRU(id K) {
+	if element, ok := c.lruIndex[id]; ok {
+		c.lru.MoveToFront(element)
+		return
+	}
+
 	if c.lru.Len() == c.maxSize {
 		back := c.lru.Back()
 		c.lru.Remove(back)
 
-		c.Delete(back.Value.(K))
+		evictedID := back.Value.(K)
+		delete(c.lruIndex, evictedID)
+
+		c.Delete(evictedID)
 	}
 
-	c.lru.PushFront(id)
+	c.lruIndex[id] = c.lru.PushFront(id)
 }
 
 func (c *Cache[K, V]) sendLRUAction(action LeastRecentlyUsedAction[K]) {

@@ -13,6 +13,7 @@ type Cache[K comparable, V any] struct {
 	content           map[K]V
 	expiration        *ExpirationQueue[K]
 	lru               *list.List
+	lruIndex          map[K]*list.Element
 	expirationUpdates chan ExpirationQueueAction[K]
 	lruUpdates        chan LeastRecentlyUsedAction[K]
 	mutex             sync.RWMutex
@@ -23,10 +24,11 @@ func New[K comparable, V any](maxSize int) *Cache[K, V] {
 	return &Cache[K, V]{
 		done:              make(chan struct{}),
 		content:           make(map[K]V),
-		expiration:        &ExpirationQueue[K]{},
+		expiration:        NewExpirationQueue[K](),
 		expirationUpdates: make(chan ExpirationQueueAction[K], runtime.NumCPU()),
 		lruUpdates:        make(chan LeastRecentlyUsedAction[K], runtime.NumCPU()*10), // read ratio 10:1
 		lru:               list.New(),
+		lruIndex:          make(map[K]*list.Element),
 		maxSize:           maxSize,
 	}
 }

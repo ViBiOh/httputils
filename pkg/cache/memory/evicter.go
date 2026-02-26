@@ -28,8 +28,8 @@ func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
 	var toExpire *Item[K]
 
 	for {
-		if len(*c.expiration) > 0 {
-			firstItem := c.expiration.Pop().(Item[K])
+		if c.expiration.Len() > 0 {
+			firstItem := heap.Pop(c.expiration).(Item[K])
 			toExpire = &firstItem
 
 			timer.Reset(time.Until(toExpire.expiration))
