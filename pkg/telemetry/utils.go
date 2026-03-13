@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -33,6 +34,10 @@ func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.Sp
 
 		span.End(options...)
 	}
+}
+
+func AddOpenTelemetryToDefaultLogger(telemetry *Service) {
+	slog.SetDefault(slog.New(telemetry.AddTraceToLogHandler(slog.Default().Handler())))
 }
 
 func AddOpenTelemetryToClient(httpClient *http.Client, meterProvider meter.MeterProvider, tracerProvider tr.TracerProvider) *http.Client {

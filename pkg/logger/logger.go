@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/ViBiOh/flags"
-	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 )
 
 type Config struct {
@@ -86,8 +85,4 @@ func FatalfOnErr(ctx context.Context, err error, msg string, args ...slog.Attr) 
 
 	slog.LogAttrs(ctx, slog.LevelError, msg, append([]slog.Attr{slog.Any("error", err)}, args...)...)
 	os.Exit(1)
-}
-
-func AddOpenTelemetryToDefaultLogger(telemetry *telemetry.Service) {
-	slog.SetDefault(slog.New(telemetry.AddTraceToLogHandler(slog.Default().Handler())))
 }

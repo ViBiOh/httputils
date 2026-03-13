@@ -4,10 +4,6 @@ import (
 	"net"
 	"net/http"
 	"time"
-
-	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
-	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var NoRedirection = func(*http.Request, []*http.Request) error {
@@ -43,6 +39,10 @@ func CreateClientWithTransport(timeout time.Duration, onRedirect func(*http.Requ
 	}
 }
 
-func AddOpenTelemetryToDefaultClient(meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) {
-	defaultHTTPClient = telemetry.AddOpenTelemetryToClient(defaultHTTPClient, meterProvider, tracerProvider)
+func GetDefaultClient() *http.Client {
+	return defaultHTTPClient
+}
+
+func SetDefaultClient(client *http.Client) {
+	defaultHTTPClient = client
 }
