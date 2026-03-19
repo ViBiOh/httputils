@@ -29,7 +29,7 @@ type items struct {
 
 func RawWrite(w io.Writer, obj any) error {
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
-		return fmt.Errorf("%s: %w", err, ErrCannotMarshal)
+		return errors.Join(err, ErrCannotMarshal)
 	}
 
 	return nil

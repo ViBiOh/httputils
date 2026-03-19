@@ -170,7 +170,7 @@ func (s Service) DoAtomic(ctx context.Context, action func(context.Context) erro
 	}
 
 	if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
-		return fmt.Errorf("%s: %w", err, rollbackErr)
+		return errors.Join(err, rollbackErr)
 	}
 
 	return err

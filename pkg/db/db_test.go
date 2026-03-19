@@ -254,7 +254,7 @@ func TestDoAtomic(t *testing.T) {
 					return errors.New("invalid")
 				},
 			},
-			errors.New("invalid: cannot close transaction"),
+			errors.New("invalid\ncannot close transaction"),
 		},
 	}
 
