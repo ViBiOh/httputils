@@ -22,29 +22,30 @@ import (
 )
 
 var (
-	staticFolders       = []string{"/images", "/scripts", "/styles"}
-	staticRootPaths     = []string{"/robots.txt", "/sitemap.xml", "/favicon.ico", "/service-worker.js"}
+	staticFolders       = [...]string{"/images", "/scripts", "/styles"}
 	staticCacheDuration = fmt.Sprintf("public, max-age=%.0f", (time.Hour * 24 * 180).Seconds())
 )
 
 type Service struct {
 	tracer           trace.Tracer
-	tpl              *template.Template
-	content          map[string]any
 	staticFileSystem http.FileSystem
 	staticHandler    http.Handler
 	generatedMeter   metric.Int64Counter
+	tpl              *template.Template
+	content          map[string]any
 	pathPrefix       string
 	publicURL        string
+	staticPaths      []string
 	minify           bool
 }
 
 type Config struct {
-	PublicURL  string
-	PathPrefix string
-	Title      string
-	Extension  string
-	Minify     bool
+	PublicURL   string
+	PathPrefix  string
+	Title       string
+	Extension   string
+	StaticPaths []string
+	Minify      bool
 }
 
 func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
@@ -55,6 +56,7 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	flags.New("Title", "Application title").Prefix(prefix).DocPrefix("").StringVar(fs, &config.Title, "App", overrides)
 	flags.New("Extension", "Go Template Extension").Prefix(prefix).DocPrefix("").StringVar(fs, &config.Extension, "tmpl", overrides)
 	flags.New("Minify", "Minify HTML").Prefix(prefix).DocPrefix("").BoolVar(fs, &config.Minify, true, overrides)
+	flags.New("StaticPaths", "Paths served from static FS").Prefix(prefix).DocPrefix("").StringSliceVar(fs, &config.StaticPaths, []string{"/robots.txt", "/sitemap.xml", "/favicon.ico"}, overrides)
 
 	return &config
 }
@@ -74,6 +76,7 @@ func New(ctx context.Context, config *Config, filesystem fs.FS, funcMap template
 	instance := Service{
 		staticFileSystem: staticFileSystem,
 		staticHandler:    staticHandler,
+		staticPaths:      config.StaticPaths,
 		pathPrefix:       pathPrefix,
 		publicURL:        publicURL,
 		minify:           config.Minify,
@@ -130,7 +133,7 @@ func (s *Service) NewServeMux(templateFunc TemplateFunc) *http.ServeMux {
 		mux.Handle(path.Join(folder, "{path...}"), s.HandleStatic(folder))
 	}
 
-	for _, item := range staticRootPaths {
+	for _, item := range s.staticPaths {
 		mux.Handle(item, s.HandleStatic(item))
 	}
 
