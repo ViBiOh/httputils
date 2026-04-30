@@ -43,7 +43,7 @@ func (c *Client) reconnect(ctx context.Context) error {
 	c.channel = newChannel
 	c.vhost = newConnection.Config.Vhost
 
-	slog.Info("Connection reopened.")
+	slog.InfoContext(ctx, "Connection reopened.")
 
 	go c.reconnectListeners(ctx)
 
@@ -90,7 +90,7 @@ func (c *Client) closeChannel(ctx context.Context) {
 		return
 	}
 
-	slog.Info("Closing AMQP channel")
+	slog.InfoContext(ctx, "Closing AMQP channel")
 	loggedClose(ctx, c.channel)
 
 	c.channel = nil
