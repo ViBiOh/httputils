@@ -20,7 +20,8 @@ func newPort(config configuration, clients clients, adapters adapters, services 
 
 	adapters.renderer.RegisterMux(mux, getDefaultRenderer(config, clients, adapters))
 
-	return httputils.Handler(mux, clients.health,
+	return httputils.Handler(
+		mux, clients.health,
 		clients.telemetry.Middleware("http"),
 		services.owasp.Middleware,
 		services.cors.Middleware,

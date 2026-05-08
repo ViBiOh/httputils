@@ -148,7 +148,8 @@ func (s Service) DoAtomic(ctx context.Context, action func(context.Context) erro
 		return errors.New("no action provided")
 	}
 
-	ctx, end := telemetry.StartSpan(ctx, s.tracer, "transaction",
+	ctx, end := telemetry.StartSpan(
+		ctx, s.tracer, "transaction",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(s.attributes...),
 	)
@@ -177,7 +178,8 @@ func (s Service) DoAtomic(ctx context.Context, action func(context.Context) erro
 }
 
 func (s Service) Query(ctx context.Context, query string, args ...any) (rows pgx.Rows, err error) {
-	ctx, end := telemetry.StartSpan(ctx, s.tracer, "query",
+	ctx, end := telemetry.StartSpan(
+		ctx, s.tracer, "query",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
 			append([]attribute.KeyValue{semconv.DBStatementKey.String(query)}, s.attributes...)...,
@@ -215,7 +217,8 @@ func (s Service) List(ctx context.Context, scanner func(pgx.Rows) error, query s
 }
 
 func (s Service) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
-	ctx, end := telemetry.StartSpan(ctx, s.tracer, "query_row",
+	ctx, end := telemetry.StartSpan(
+		ctx, s.tracer, "query_row",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
 			append([]attribute.KeyValue{semconv.DBStatementKey.String(query)}, s.attributes...)...,
@@ -277,7 +280,8 @@ func (s Service) One(ctx context.Context, query string, args ...any) error {
 }
 
 func (s Service) exec(ctx context.Context, query string, args ...any) (command pgconn.CommandTag, err error) {
-	ctx, end := telemetry.StartSpan(ctx, s.tracer, "exec",
+	ctx, end := telemetry.StartSpan(
+		ctx, s.tracer, "exec",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
 			append([]attribute.KeyValue{semconv.DBStatementKey.String(query)}, s.attributes...)...,
@@ -315,7 +319,8 @@ func (bc *feeder) Err() error {
 }
 
 func (s Service) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) (err error) {
-	ctx, end := telemetry.StartSpan(ctx, s.tracer, "bulk",
+	ctx, end := telemetry.StartSpan(
+		ctx, s.tracer, "bulk",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
 			append([]attribute.KeyValue{

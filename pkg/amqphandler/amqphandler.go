@@ -186,7 +186,8 @@ func (s *Service) Start(ctx context.Context) {
 func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message amqp.Delivery) {
 	var err error
 
-	ctx, end := telemetry.StartSpan(ctx, s.tracer, "receive",
+	ctx, end := telemetry.StartSpan(
+		ctx, s.tracer, "receive",
 		trace.WithSpanKind(trace.SpanKindConsumer),
 		trace.WithAttributes(
 			append([]attribute.KeyValue{

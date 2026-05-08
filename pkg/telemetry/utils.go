@@ -45,7 +45,8 @@ func AddOpenTelemetryToClient(httpClient *http.Client, meterProvider meter.Meter
 		return httpClient
 	}
 
-	httpClient.Transport = otelhttp.NewTransport(httpClient.Transport,
+	httpClient.Transport = otelhttp.NewTransport(
+		httpClient.Transport,
 		otelhttp.WithTracerProvider(tracerProvider),
 		otelhttp.WithMeterProvider(meterProvider),
 		otelhttp.WithPropagators(propagation.TraceContext{}),

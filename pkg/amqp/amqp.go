@@ -138,7 +138,8 @@ func (c *Client) Publish(ctx context.Context, payload amqp.Publishing, exchange,
 
 	attributes := c.getAttributes(exchange, routingKey)
 
-	ctx, end := telemetry.StartSpan(ctx, c.tracer, "publish",
+	ctx, end := telemetry.StartSpan(
+		ctx, c.tracer, "publish",
 		trace.WithSpanKind(trace.SpanKindProducer),
 		trace.WithAttributes(
 			append([]attribute.KeyValue{

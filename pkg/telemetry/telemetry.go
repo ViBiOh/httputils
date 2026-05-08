@@ -135,7 +135,8 @@ func (s *Service) Middleware(name string) func(next http.Handler) http.Handler {
 			return next
 		}
 
-		return otelhttp.NewHandler(AsyncRouteTagMiddleware(next), name,
+		return otelhttp.NewHandler(
+			AsyncRouteTagMiddleware(next), name,
 			otelhttp.WithTracerProvider(s.TracerProvider()),
 			otelhttp.WithPropagators(propagator),
 			otelhttp.WithMeterProvider(s.MeterProvider()),
@@ -191,21 +192,24 @@ func (s *Service) GetServiceVersionAndEnv() (service, version, env string) {
 }
 
 func newTraceExporter(ctx context.Context, endpoint string) (trace.SpanExporter, error) {
-	return otlptracegrpc.New(ctx,
+	return otlptracegrpc.New(
+		ctx,
 		otlptracegrpc.WithInsecure(),
 		otlptracegrpc.WithEndpoint(endpoint),
 	)
 }
 
 func newMetricExporter(ctx context.Context, endpoint string) (metric.Exporter, error) {
-	return otlpmetricgrpc.New(ctx,
+	return otlpmetricgrpc.New(
+		ctx,
 		otlpmetricgrpc.WithInsecure(),
 		otlpmetricgrpc.WithEndpoint(endpoint),
 	)
 }
 
 func newResource(ctx context.Context) (*resource.Resource, error) {
-	newResource, err := resource.New(ctx,
+	newResource, err := resource.New(
+		ctx,
 		resource.WithFromEnv(),
 		resource.WithAttributes(
 			semconv.ServiceVersion(model.Version()),
