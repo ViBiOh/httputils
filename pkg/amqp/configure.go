@@ -53,7 +53,7 @@ func (c *Client) DelayedExchange(queueName, exchangeName, routingKey string, ret
 	delayExchange = fmt.Sprintf("%s-delay", exchangeName)
 
 	if err = declareExchange(channel, delayExchange, "direct", nil); err != nil {
-		return "", fmt.Errorf("declare dead-letter exchange: %s", delayExchange)
+		return "", fmt.Errorf("declare dead-letter exchange `%s`: %w", delayExchange, err)
 	}
 
 	delayQueue := fmt.Sprintf("%s-delay", queueName)
@@ -63,11 +63,11 @@ func (c *Client) DelayedExchange(queueName, exchangeName, routingKey string, ret
 		"x-dead-letter-routing-key": routingKey,
 		"x-message-ttl":             retryDelay.Milliseconds(),
 	}); err != nil {
-		return "", fmt.Errorf("declare dead-letter queue: %s", delayExchange)
+		return "", fmt.Errorf("declare dead-letter queue `%s`: %w", delayQueue, err)
 	}
 
 	if err = channel.QueueBind(delayQueue, routingKey, delayExchange, false, nil); err != nil {
-		return "", fmt.Errorf("bind dead-letter queue: %s", delayExchange)
+		return "", fmt.Errorf("bind dead-letter queue `%s`: %w", delayQueue, err)
 	}
 
 	return delayExchange, nil

@@ -2,9 +2,11 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
+	"github.com/ViBiOh/httputils/v4/pkg/redis"
 	"github.com/ViBiOh/httputils/v4/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -14,18 +16,18 @@ func (c *Cache[K, V]) EvictOnSuccess(ctx context.Context, id K, err error) error
 		return err
 	}
 
-	if err = c.redisEvict(ctx, id, err); err != nil {
+	if err = c.redisEvict(ctx, id); err != nil {
 		return err
 	}
 
-	if err = c.memoryEvict(ctx, id, err); err != nil {
+	if err = c.memoryEvict(ctx, id); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *Cache[K, V]) redisEvict(ctx context.Context, id K, err error) error {
+func (c *Cache[K, V]) redisEvict(ctx context.Context, id K) (err error) {
 	if c.write == nil {
 		return nil
 	}
@@ -44,7 +46,7 @@ func (c *Cache[K, V]) redisEvict(ctx context.Context, id K, err error) error {
 	return nil
 }
 
-func (c *Cache[K, V]) memoryEvict(ctx context.Context, id K, err error) error {
+func (c *Cache[K, V]) memoryEvict(ctx context.Context, id K) (err error) {
 	if c.memory == nil {
 		return nil
 	}
@@ -58,7 +60,7 @@ func (c *Cache[K, V]) memoryEvict(ctx context.Context, id K, err error) error {
 	ctx, end := telemetry.StartSpan(ctx, c.tracer, "evict notify", trace.WithSpanKind(trace.SpanKindInternal))
 	defer end(&err)
 
-	if err = c.write.PublishJSON(ctx, c.channel, id); err != nil {
+	if err := c.write.PublishJSON(ctx, c.channel, id); err != nil && !errors.Is(err, redis.ErrNoSubscriber) {
 		return fmt.Errorf("evict notify for id %v: %w", id, err)
 	}
 

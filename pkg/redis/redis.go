@@ -221,6 +221,10 @@ func (s *Service) Expire(ctx context.Context, ttl time.Duration, keys ...string)
 		return nil
 	}
 
+	if len(keys) == 1 {
+		return s.client.Expire(ctx, keys[0], ttl).Err()
+	}
+
 	pipeline := s.client.Pipeline()
 
 	for _, key := range keys {
@@ -233,6 +237,10 @@ func (s *Service) Expire(ctx context.Context, ttl time.Duration, keys ...string)
 func (s *Service) Delete(ctx context.Context, keys ...string) (err error) {
 	if len(keys) == 0 {
 		return nil
+	}
+
+	if len(keys) == 1 {
+		return s.client.Del(ctx, keys[0]).Err()
 	}
 
 	pipeline := s.client.Pipeline()

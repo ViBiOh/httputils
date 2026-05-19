@@ -13,11 +13,7 @@ func String(value string) string {
 }
 
 func Hash(content any) string {
-	hasher := xxh3.New()
-
-	_, _ = fmt.Fprintf(hasher, "%v", content)
-
-	return hex.EncodeToString(hasher.Sum(nil))
+	return Stream().Write(content).Sum()
 }
 
 type StreamHasher struct {

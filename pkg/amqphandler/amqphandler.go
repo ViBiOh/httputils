@@ -26,6 +26,9 @@ type Handler func(context.Context, amqp.Delivery) error
 type Service struct {
 	tracer          trace.Tracer
 	counter         metric.Int64Counter
+	metricAck       metric.MeasurementOption
+	metricRetry     metric.MeasurementOption
+	metricDrop      metric.MeasurementOption
 	amqpClient      *amqpclient.Client
 	done            chan struct{}
 	handler         Handler
@@ -102,6 +105,15 @@ func New(config *Config, amqpClient *amqpclient.Client, metricProvider metric.Me
 		if err != nil {
 			return service, fmt.Errorf("create counter: %w", err)
 		}
+
+		baseAttrs := []attribute.KeyValue{
+			attribute.String("exchange", config.Exchange),
+			attribute.String("routingKey", config.RoutingKey),
+		}
+
+		service.metricAck = metric.WithAttributes(append([]attribute.KeyValue{attribute.String("state", "ack")}, baseAttrs...)...)
+		service.metricRetry = metric.WithAttributes(append([]attribute.KeyValue{attribute.String("state", "retry")}, baseAttrs...)...)
+		service.metricDrop = metric.WithAttributes(append([]attribute.KeyValue{attribute.String("state", "drop")}, baseAttrs...)...)
 	}
 
 	if tracerProvider != nil {
@@ -183,6 +195,14 @@ func (s *Service) Start(ctx context.Context) {
 	})
 }
 
+func (s *Service) addMetric(ctx context.Context, opt metric.MeasurementOption) {
+	if s.counter == nil {
+		return
+	}
+
+	s.counter.Add(ctx, 1, opt)
+}
+
 func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message amqp.Delivery) {
 	var err error
 
@@ -202,11 +222,7 @@ func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 	err = s.handler(ctx, message)
 
 	if err == nil {
-		s.counter.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("state", "ack"),
-			attribute.String("exchange", s.exchange),
-			attribute.String("routingKey", s.routingKey),
-		))
+		s.addMetric(ctx, s.metricAck)
 		if err = message.Ack(false); err != nil {
 			log.ErrorContext(ctx, "ack message", "error", err)
 		}
@@ -217,11 +233,7 @@ func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 	log.ErrorContext(ctx, "handle message", "error", err, "body", string(message.Body))
 
 	if s.retryInterval > 0 && s.maxRetry > 0 {
-		s.counter.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("state", "retry"),
-			attribute.String("exchange", s.exchange),
-			attribute.String("routingKey", s.routingKey),
-		))
+		s.addMetric(ctx, s.metricRetry)
 
 		if err = s.Retry(message); err == nil {
 			return
@@ -231,11 +243,7 @@ func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 	}
 
 	if err = message.Ack(false); err != nil {
-		s.counter.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("state", "drop"),
-			attribute.String("exchange", s.exchange),
-			attribute.String("routingKey", s.routingKey),
-		))
+		s.addMetric(ctx, s.metricDrop)
 
 		log.ErrorContext(ctx, "ack message to trash it", "error", err)
 	}

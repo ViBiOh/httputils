@@ -62,7 +62,7 @@ func (c *Cache[K, V]) storeMany(ctx context.Context, values []V, indexedIDs Inde
 
 		c.memoryWrite(id, values[index], c.ttl)
 
-		if c.write == nil {
+		if c.write != nil {
 			toSet[key] = payload
 		}
 	}

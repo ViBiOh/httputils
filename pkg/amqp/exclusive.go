@@ -83,7 +83,7 @@ func (c *Client) Exclusive(ctx context.Context, name string, timeout time.Durati
 
 	defer func() {
 		if nackErr := message.Nack(false, true); nackErr != nil {
-			err = errors.Join(err, fmt.Errorf("nack message: %w", err))
+			err = errors.Join(err, fmt.Errorf("nack message: %w", nackErr))
 		}
 	}()
 

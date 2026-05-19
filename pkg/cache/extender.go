@@ -46,11 +46,18 @@ func (te *TTLExtender) Extend(ctx context.Context, keys ...string) error {
 		te.batch[key] = struct{}{}
 	}
 
+	var toExpire []string
 	if te.maxSize != 0 && len(te.batch) > te.maxSize {
-		te.flush(ctx)
+		toExpire = te.drainBatch()
 	}
 
 	te.mutex.Unlock()
+
+	if len(toExpire) > 0 {
+		if err := te.redis.Expire(ctx, te.ttl, toExpire...); err != nil {
+			slog.LogAttrs(ctx, slog.LevelError, "extend keys", slog.Any("error", err))
+		}
+	}
 
 	return nil
 }
@@ -67,9 +74,21 @@ func (te *TTLExtender) Start(ctx context.Context) {
 
 func (te *TTLExtender) flush(ctx context.Context) {
 	te.mutex.Lock()
+	keys := te.drainBatch()
+	te.mutex.Unlock()
 
-	if len(te.batch) == 0 {
+	if len(keys) == 0 {
 		return
+	}
+
+	if err := te.redis.Expire(ctx, te.ttl, keys...); err != nil {
+		slog.LogAttrs(ctx, slog.LevelError, "extend keys", slog.Any("error", err))
+	}
+}
+
+func (te *TTLExtender) drainBatch() []string {
+	if len(te.batch) == 0 {
+		return nil
 	}
 
 	keys := make([]string, 0, len(te.batch))
@@ -79,9 +98,5 @@ func (te *TTLExtender) flush(ctx context.Context) {
 		delete(te.batch, key)
 	}
 
-	te.mutex.Unlock()
-
-	if err := te.redis.Expire(ctx, te.ttl, keys...); err != nil {
-		slog.LogAttrs(ctx, slog.LevelError, "extend keys", slog.Any("error", err))
-	}
+	return keys
 }

@@ -12,12 +12,11 @@ func (c *Client) Enabled() bool {
 
 func (c *Client) Ping() error {
 	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
 	if c.connection != nil && c.connection.IsClosed() {
 		return errors.New("amqp client closed")
 	}
-
-	c.mutex.RUnlock()
 
 	return nil
 }
