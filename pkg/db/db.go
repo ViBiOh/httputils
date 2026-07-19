@@ -70,9 +70,9 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	return &config
 }
 
-func New(ctx context.Context, config *Config, tracerProvider trace.TracerProvider) (Service, error) {
+func New(ctx context.Context, config *Config, tracerProvider trace.TracerProvider) (*Service, error) {
 	if len(config.Host) == 0 {
-		return Service{}, ErrNoHost
+		return nil, ErrNoHost
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
@@ -80,10 +80,10 @@ func New(ctx context.Context, config *Config, tracerProvider trace.TracerProvide
 
 	db, err := pgxpool.New(ctx, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_min_conns=%d pool_max_conns=%d", config.Host, config.Port, config.User, config.Pass, config.Name, config.SSLMode, config.MinConn, config.MaxConn))
 	if err != nil {
-		return Service{}, fmt.Errorf("connect to postgres: %w", err)
+		return nil, fmt.Errorf("connect to postgres: %w", err)
 	}
 
-	instance := Service{
+	instance := &Service{
 		db: db,
 	}
 
@@ -103,11 +103,11 @@ func New(ctx context.Context, config *Config, tracerProvider trace.TracerProvide
 	return instance, instance.Ping(ctx)
 }
 
-func (s Service) Enabled() bool {
+func (s *Service) Enabled() bool {
 	return s.db != nil
 }
 
-func (s Service) Ping(ctx context.Context) error {
+func (s *Service) Ping(ctx context.Context) error {
 	if !s.Enabled() {
 		return nil
 	}
@@ -118,7 +118,7 @@ func (s Service) Ping(ctx context.Context) error {
 	return s.db.Ping(ctx)
 }
 
-func (s Service) Close() {
+func (s *Service) Close() {
 	if !s.Enabled() {
 		return
 	}
@@ -143,7 +143,7 @@ func readTx(ctx context.Context) pgx.Tx {
 	return nil
 }
 
-func (s Service) DoAtomic(ctx context.Context, action func(context.Context) error) (err error) {
+func (s *Service) DoAtomic(ctx context.Context, action func(context.Context) error) (err error) {
 	if action == nil {
 		return errors.New("no action provided")
 	}
@@ -177,7 +177,7 @@ func (s Service) DoAtomic(ctx context.Context, action func(context.Context) erro
 	return err
 }
 
-func (s Service) Query(ctx context.Context, query string, args ...any) (rows pgx.Rows, err error) {
+func (s *Service) Query(ctx context.Context, query string, args ...any) (rows pgx.Rows, err error) {
 	ctx, end := telemetry.StartSpan(
 		ctx, s.tracer, "query",
 		trace.WithSpanKind(trace.SpanKindClient),
@@ -194,7 +194,7 @@ func (s Service) Query(ctx context.Context, query string, args ...any) (rows pgx
 	return s.db.Query(ctx, query, args...)
 }
 
-func (s Service) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) error {
+func (s *Service) List(ctx context.Context, scanner func(pgx.Rows) error, query string, args ...any) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
@@ -216,7 +216,7 @@ func (s Service) List(ctx context.Context, scanner func(pgx.Rows) error, query s
 	return err
 }
 
-func (s Service) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
+func (s *Service) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
 	ctx, end := telemetry.StartSpan(
 		ctx, s.tracer, "query_row",
 		trace.WithSpanKind(trace.SpanKindClient),
@@ -233,14 +233,14 @@ func (s Service) QueryRow(ctx context.Context, query string, args ...any) pgx.Ro
 	return s.db.QueryRow(ctx, query, args...)
 }
 
-func (s Service) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) error {
+func (s *Service) Get(ctx context.Context, scanner func(pgx.Row) error, query string, args ...any) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
 	return scanner(s.QueryRow(ctx, query, args...))
 }
 
-func (s Service) Create(ctx context.Context, query string, args ...any) (id uint64, err error) {
+func (s *Service) Create(ctx context.Context, query string, args ...any) (id uint64, err error) {
 	tx := readTx(ctx)
 	if tx == nil {
 		return 0, ErrNoTransaction
@@ -254,7 +254,7 @@ func (s Service) Create(ctx context.Context, query string, args ...any) (id uint
 	return newID, tx.QueryRow(ctx, query, args...).Scan(&newID)
 }
 
-func (s Service) Exec(ctx context.Context, query string, args ...any) error {
+func (s *Service) Exec(ctx context.Context, query string, args ...any) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
@@ -263,7 +263,7 @@ func (s Service) Exec(ctx context.Context, query string, args ...any) error {
 	return err
 }
 
-func (s Service) One(ctx context.Context, query string, args ...any) error {
+func (s *Service) One(ctx context.Context, query string, args ...any) error {
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
@@ -279,7 +279,7 @@ func (s Service) One(ctx context.Context, query string, args ...any) error {
 	return nil
 }
 
-func (s Service) exec(ctx context.Context, query string, args ...any) (command pgconn.CommandTag, err error) {
+func (s *Service) exec(ctx context.Context, query string, args ...any) (command pgconn.CommandTag, err error) {
 	ctx, end := telemetry.StartSpan(
 		ctx, s.tracer, "exec",
 		trace.WithSpanKind(trace.SpanKindClient),
@@ -318,7 +318,7 @@ func (bc *feeder) Err() error {
 	return bc.err
 }
 
-func (s Service) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) (err error) {
+func (s *Service) Bulk(ctx context.Context, fetcher func() ([]any, error), schema, table string, columns ...string) (err error) {
 	ctx, end := telemetry.StartSpan(
 		ctx, s.tracer, "bulk",
 		trace.WithSpanKind(trace.SpanKindClient),

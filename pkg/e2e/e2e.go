@@ -11,13 +11,13 @@ type Service struct {
 	secretKey []byte
 }
 
-func New(secretKey string) Service {
-	return Service{
+func New(secretKey string) *Service {
+	return &Service{
 		secretKey: []byte(secretKey),
 	}
 }
 
-func (s Service) Encrypt(content []byte) ([]byte, error) {
+func (s *Service) Encrypt(content []byte) ([]byte, error) {
 	aesCipher, err := aes.NewCipher(s.secretKey)
 	if err != nil {
 		return nil, fmt.Errorf("cipher: %w", err)
@@ -36,7 +36,7 @@ func (s Service) Encrypt(content []byte) ([]byte, error) {
 	return gcm.Seal(nonce, nonce, content, nil), nil
 }
 
-func (s Service) Decrypt(content []byte) ([]byte, error) {
+func (s *Service) Decrypt(content []byte) ([]byte, error) {
 	aesCipher, err := aes.NewCipher(s.secretKey)
 	if err != nil {
 		return nil, fmt.Errorf("cipher: %w", err)

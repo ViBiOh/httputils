@@ -33,6 +33,7 @@ type Cron struct {
 
 	signal  os.Signal
 	dayTime time.Time
+	done    chan struct{}
 	now     chan time.Time
 	name    string
 
@@ -50,6 +51,7 @@ type Cron struct {
 func New() *Cron {
 	return &Cron{
 		dayTime: time.Date(0, 1, 1, 8, 0, 0, 0, time.UTC),
+		done:    make(chan struct{}),
 		now:     make(chan time.Time, 1),
 		clock:   time.Now,
 		onError: func(ctx context.Context, err error) {
@@ -264,6 +266,10 @@ func (c *Cron) WithTracerProvider(tracerProvider trace.TracerProvider) *Cron {
 	return c
 }
 
+func (c *Cron) Done() <-chan struct{} {
+	return c.done
+}
+
 func (c *Cron) Now() *Cron {
 	c.now <- c.clock()
 
@@ -271,6 +277,7 @@ func (c *Cron) Now() *Cron {
 }
 
 func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
+	defer close(c.done)
 	defer close(c.now)
 
 	if c.hasError(ctx) {
