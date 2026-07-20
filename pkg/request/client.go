@@ -1,6 +1,7 @@
 package request
 
 import (
+	"crypto/tls"
 	"net"
 	"net/http"
 	"time"
@@ -10,21 +11,41 @@ var NoRedirection = func(*http.Request, []*http.Request) error {
 	return http.ErrUseLastResponse
 }
 
-var defaultTransport = &http.Transport{
-	Proxy: http.ProxyFromEnvironment,
+var defaultTransport = CreateTransport()
 
-	DialContext: (&net.Dialer{
-		Timeout:   time.Second * 5,
-		KeepAlive: time.Second * 15,
-	}).DialContext,
+type TransportOption func(*http.Transport)
 
-	TLSHandshakeTimeout:   time.Second * 5,
-	ExpectContinueTimeout: time.Second * 1,
+func WithInsecure() TransportOption {
+	return func(instance *http.Transport) {
+		instance.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	}
+}
 
-	MaxConnsPerHost:     512,
-	MaxIdleConns:        256,
-	MaxIdleConnsPerHost: 128,
-	IdleConnTimeout:     time.Second * 60,
+func CreateTransport(opts ...TransportOption) *http.Transport {
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+
+		DialContext: (&net.Dialer{
+			Timeout:   time.Second * 5,
+			KeepAlive: time.Second * 15,
+		}).DialContext,
+
+		TLSHandshakeTimeout:   time.Second * 5,
+		ExpectContinueTimeout: time.Second * 1,
+
+		MaxConnsPerHost:     512,
+		MaxIdleConns:        256,
+		MaxIdleConnsPerHost: 128,
+		IdleConnTimeout:     time.Second * 60,
+	}
+
+	for _, opt := range opts {
+		opt(transport)
+	}
+
+	return transport
 }
 
 func CreateClient(timeout time.Duration, onRedirect func(*http.Request, []*http.Request) error) *http.Client {
