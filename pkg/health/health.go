@@ -96,7 +96,7 @@ func (s *Service) WaitForTermination(done <-chan struct{}, signals ...os.Signal)
 	defer s.endCancel()
 
 	if len(signals) == 0 {
-		signals = []os.Signal{syscall.SIGTERM}
+		signals = []os.Signal{syscall.SIGTERM, syscall.SIGSEGV}
 	}
 
 	s.waitForDone(done, signals...)
