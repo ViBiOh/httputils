@@ -345,3 +345,56 @@ func TestHandleSVG(t *testing.T) {
 		})
 	}
 }
+
+func TestUrl(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		url string
+	}
+
+	cases := map[string]struct {
+		instance *Service
+		args     args
+		want     string
+	}{
+		"simple": {
+			&Service{},
+			args{
+				url: "/hello-world",
+			},
+			"/hello-world",
+		},
+		"prefix": {
+			&Service{pathPrefix: "/admin"},
+			args{
+				url: "/hello-world",
+			},
+			"/admin/hello-world",
+		},
+		"trailing slash": {
+			&Service{pathPrefix: "/admin"},
+			args{
+				url: "/objects/",
+			},
+			"/admin/objects/",
+		},
+		"empty": {
+			&Service{},
+			args{
+				url: "",
+			},
+			"/",
+		},
+	}
+
+	for intention, testCase := range cases {
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			actual := testCase.instance.url(testCase.args.url)
+
+			assert.Equal(t, testCase.want, actual)
+		})
+	}
+}
