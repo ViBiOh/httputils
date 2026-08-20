@@ -72,7 +72,7 @@ style:
 .PHONY: mocks
 mocks:
 	find . -name "mocks" -type d -exec rm -r "{}" \+
-	go generate -run "go tool go.uber.org/mock/mockgen" $(PACKAGES)
+	go generate -run 'go tool "go.uber.org/mock/mockgen"' $(PACKAGES)
 	go tool go.uber.org/mock/mockgen -destination pkg/mocks/io.go -package mocks -mock_names ReadCloser=ReadCloser io ReadCloser
 	go tool go.uber.org/mock/mockgen -destination pkg/mocks/pgx.go -package mocks -mock_names Tx=Tx,Row=Row,Rows=Rows github.com/jackc/pgx/v5 Tx,Row,Rows
 	go tool golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment -fix -test=false $(PACKAGES) || true # don't fail on the fix
