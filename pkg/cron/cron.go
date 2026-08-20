@@ -14,7 +14,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-//go:generate mockgen -source $GOFILE -destination ../mocks/$GOFILE -package mocks -mock_names Semaphore=Semaphore
+//go:generate go tool go.uber.org/mock/mockgen -source $GOFILE -destination ../mocks/$GOFILE -package mocks -mock_names Semaphore=Semaphore
 
 type Semaphore interface {
 	Exclusive(context.Context, string, time.Duration, func(context.Context) error) (bool, error)
