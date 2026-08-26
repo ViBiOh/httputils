@@ -148,7 +148,8 @@ func (s *Service) PublicURL(url string) string {
 
 func (s *Service) url(url string) string {
 	prefixedURL := path.Join(s.pathPrefix, url)
-	if len(prefixedURL) == 0 || strings.HasSuffix(url, "/") {
+
+	if len(prefixedURL) == 0 || (strings.HasSuffix(url, "/") && !strings.HasSuffix(prefixedURL, "/")) {
 		return prefixedURL + "/"
 	}
 

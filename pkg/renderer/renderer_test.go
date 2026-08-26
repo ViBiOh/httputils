@@ -386,6 +386,13 @@ func TestUrl(t *testing.T) {
 			},
 			"/",
 		},
+		"root": {
+			&Service{},
+			args{
+				url: "/",
+			},
+			"/",
+		},
 	}
 
 	for intention, testCase := range cases {
