@@ -343,7 +343,7 @@ func TestStream(t *testing.T) {
 				key:    "items",
 			},
 			[]string{"test", "next", "final"},
-			errors.New("read closing token"),
+			errors.New("unexpected end of JSON input"),
 		},
 		"success": {
 			args{
