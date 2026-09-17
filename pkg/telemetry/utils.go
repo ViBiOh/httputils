@@ -20,8 +20,25 @@ var noopFunc = func(*error, ...tr.SpanEndOption) {
 	// Nothing to do
 }
 
+type noTrace struct{}
+
+func NoTrace(ctx context.Context) context.Context {
+	return context.WithValue(ctx, noTrace{}, true)
+}
+
+func isNoTrace(ctx context.Context) bool {
+	value := ctx.Value(noTrace{})
+	if value == nil {
+		return false
+	}
+
+	boolValue, _ := value.(bool)
+
+	return boolValue
+}
+
 func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.SpanStartOption) (context.Context, FinishSpan) {
-	if tracer == nil {
+	if tracer == nil || isNoTrace(ctx) {
 		return ctx, noopFunc
 	}
 

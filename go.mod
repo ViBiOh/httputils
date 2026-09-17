@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	github.com/ViBiOh/flags v1.6.1
 	github.com/jackc/pgx/v5 v5.11.0
-	github.com/rabbitmq/amqp091-go v1.14.0
+	github.com/rabbitmq/amqp091-go v1.15.0
 	github.com/redis/go-redis/extra/redisotel/v9 v9.22.0
 	github.com/redis/go-redis/v9 v9.22.0
 	github.com/rs/xid v1.6.0
