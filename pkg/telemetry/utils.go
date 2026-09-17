@@ -26,7 +26,7 @@ func NoTrace(ctx context.Context) context.Context {
 	return context.WithValue(ctx, noTrace{}, true)
 }
 
-func isNoTrace(ctx context.Context) bool {
+func IsNoTrace(ctx context.Context) bool {
 	value := ctx.Value(noTrace{})
 	if value == nil {
 		return false
@@ -38,7 +38,7 @@ func isNoTrace(ctx context.Context) bool {
 }
 
 func StartSpan(ctx context.Context, tracer tr.Tracer, name string, opts ...tr.SpanStartOption) (context.Context, FinishSpan) {
-	if tracer == nil || isNoTrace(ctx) {
+	if tracer == nil || IsNoTrace(ctx) {
 		return ctx, noopFunc
 	}
 
