@@ -77,7 +77,7 @@ func New(ctx context.Context, config *Config, meter metric.MeterProvider, tracer
 	}
 
 	if !model.IsNil(tracer) {
-		if err := redisotel.InstrumentTracing(service.client, redisotel.WithTracerProvider(tracer)); err != nil {
+		if err := redisotel.InstrumentTracing(service.client, redisotel.WithTracerProvider(tracer), redisotel.WithDBStatement(false)); err != nil {
 			defer service.Close(ctx)
 
 			return Noop{}, fmt.Errorf("tracing: %w", err)
