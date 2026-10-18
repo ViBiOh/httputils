@@ -84,9 +84,9 @@ func Stream[T any](reader io.Reader, output chan<- T, key string, closeChan bool
 		}
 	}
 
-	var obj T
-
 	for decoder.More() {
+		var obj T
+
 		if err := decoder.Decode(&obj); err != nil {
 			return fmt.Errorf("decode stream: %w", err)
 		}

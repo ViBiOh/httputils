@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ViBiOh/flags"
@@ -91,9 +92,11 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 		return
 	}
 
+	close := sync.OnceFunc(func() { close(s.done) })
+
 	if len(s.server.Addr) == 0 {
 		s.logger.WarnContext(ctx, "No listen address")
-		close(s.done)
+		close()
 
 		return
 	}
@@ -103,7 +106,7 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 	go func() {
 		<-ctx.Done()
 		s.Stop(context.WithoutCancel(ctx))
-		close(s.done)
+		close()
 	}()
 
 	var err error
@@ -117,6 +120,7 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 
 	if !errors.Is(err, http.ErrServerClosed) {
 		s.logger.ErrorContext(ctx, "Server error", "error", err)
+		close()
 	}
 }
 

@@ -284,25 +284,24 @@ func (r Request) Multipart(ctx context.Context, feed func(mw *multipart.Writer) 
 	reader, writer := io.Pipe()
 	multipartWriter := multipart.NewWriter(writer)
 
-	var feedErr error
+	feedDone := make(chan error, 1)
 	go func() {
-		defer recoverer.Error(&feedErr)
-
-		defer func() {
-			if pipeCloseErr := writer.CloseWithError(multipartWriter.Close()); pipeCloseErr != nil {
-				feedErr = errors.Join(feedErr, fmt.Errorf("close multipart writer: %w", pipeCloseErr))
-			}
-		}()
-
-		feedErr = feed(multipartWriter)
+		feedDone <- feedMultipart(writer, multipartWriter, feed)
 	}()
 
-	resp, err := r.ContentType(multipartWriter.FormDataContentType()).Send(ctx, io.NopCloser(reader))
+	resp, err := r.ContentType(multipartWriter.FormDataContentType()).Send(ctx, reader)
+
+	// A feed still writing when the request ended early is blocked on the pipe until the reader is closed.
+	_ = reader.Close()
+
+	feedErr := <-feedDone
+
 	if err != nil {
 		return resp, err
 	}
 
-	if feedErr != nil {
+	// A closed pipe only means the server stopped reading the body.
+	if feedErr != nil && !errors.Is(feedErr, io.ErrClosedPipe) {
 		if discardErr := DiscardBody(resp.Body); discardErr != nil {
 			feedErr = errors.Join(feedErr, fmt.Errorf("discard body: %w", discardErr))
 		}
@@ -311,6 +310,16 @@ func (r Request) Multipart(ctx context.Context, feed func(mw *multipart.Writer) 
 	}
 
 	return resp, nil
+}
+
+func feedMultipart(writer *io.PipeWriter, multipartWriter *multipart.Writer, feed func(mw *multipart.Writer) error) (err error) {
+	defer func() {
+		_ = writer.CloseWithError(multipartWriter.Close())
+	}()
+
+	defer recoverer.Error(&err)
+
+	return feed(multipartWriter)
 }
 
 func (r Request) JSON(ctx context.Context, body any) (*http.Response, error) {

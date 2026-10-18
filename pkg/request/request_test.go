@@ -1,6 +1,7 @@
 package request
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"github.com/ViBiOh/httputils/v4/pkg/mocks"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
@@ -537,6 +539,83 @@ func TestMultipart(t *testing.T) {
 
 			if failed {
 				t.Errorf("Multipart() = (`%s`,`%s`), want (`%s`,`%s`)", result, err, testCase.want, testCase.wantErr)
+			}
+		})
+	}
+}
+
+func TestMultipartFeedTermination(t *testing.T) {
+	t.Parallel()
+
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(testServer.Close)
+
+	writeLargeFile := func(mw *multipart.Writer) error {
+		part, err := mw.CreateFormFile("file", "file")
+		if err != nil {
+			return err
+		}
+
+		_, err = part.Write(bytes.Repeat([]byte("x"), 1<<20))
+
+		return err
+	}
+
+	cases := map[string]struct {
+		url         string
+		feed        func(mw *multipart.Writer) error
+		wantErrPart string
+	}{
+		"request fails before the body is read": {
+			"http://127.0.0.1:1",
+			writeLargeFile,
+			"connection refused",
+		},
+		"feed panics": {
+			testServer.URL,
+			func(_ *multipart.Writer) error {
+				panic("boom")
+			},
+			"recovered from panic: boom",
+		},
+	}
+
+	for intention, testCase := range cases {
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			var feedReturned bool
+
+			feed := func(mw *multipart.Writer) error {
+				defer func() { feedReturned = true }()
+
+				return testCase.feed(mw)
+			}
+
+			type result struct {
+				err error
+			}
+
+			done := make(chan result, 1)
+			go func() {
+				resp, err := Post(testCase.url).Multipart(context.Background(), feed)
+				if resp != nil {
+					_ = DiscardBody(resp.Body)
+				}
+
+				done <- result{err}
+			}()
+
+			select {
+			case got := <-done:
+				assert.ErrorContains(t, got.err, testCase.wantErrPart)
+				assert.True(t, feedReturned, "feed must have returned when Multipart returns")
+
+			case <-time.After(5 * time.Second):
+				t.Fatal("Multipart did not return")
 			}
 		})
 	}
