@@ -5,6 +5,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ViBiOh/flags"
@@ -63,8 +67,8 @@ func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config
 	flags.New("User", "User").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.User, "", overrides)
 	flags.New("Pass", "Pass").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.Pass, "", overrides)
 	flags.New("Name", "Name").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.Name, "", overrides)
-	flags.New("MinConn", "Min Open Connections").Prefix(prefix).DocPrefix("database").UintVar(fs, &config.MinConn, 2, overrides)
-	flags.New("MaxConn", "Max Open Connections").Prefix(prefix).DocPrefix("database").UintVar(fs, &config.MaxConn, 5, overrides)
+	flags.New("MinConn", "Min Open Connections").Prefix(prefix).DocPrefix("database").UintVar(fs, &config.MinConn, 5, overrides)
+	flags.New("MaxConn", "Max Open Connections").Prefix(prefix).DocPrefix("database").UintVar(fs, &config.MaxConn, 20, overrides)
 	flags.New("Sslmode", "SSL Mode").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.SSLMode, "disable", overrides)
 
 	return &config
@@ -78,7 +82,7 @@ func New(ctx context.Context, config *Config, tracerProvider trace.TracerProvide
 	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
 
-	db, err := pgxpool.New(ctx, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s pool_min_conns=%d pool_max_conns=%d", config.Host, config.Port, config.User, config.Pass, config.Name, config.SSLMode, config.MinConn, config.MaxConn))
+	db, err := pgxpool.New(ctx, connectionString(config))
 	if err != nil {
 		return nil, fmt.Errorf("connect to postgres: %w", err)
 	}
@@ -101,6 +105,35 @@ func New(ctx context.Context, config *Config, tracerProvider trace.TracerProvide
 	}
 
 	return instance, instance.Ping(ctx)
+}
+
+func connectionString(config *Config) string {
+	port := strconv.FormatUint(uint64(config.Port), 10)
+
+	query := url.Values{}
+	query.Set("sslmode", config.SSLMode)
+	query.Set("pool_min_conns", strconv.FormatUint(uint64(config.MinConn), 10))
+	query.Set("pool_max_conns", strconv.FormatUint(uint64(config.MaxConn), 10))
+
+	target := url.URL{
+		Scheme: "postgres",
+		Path:   "/" + config.Name,
+	}
+
+	if len(config.User) != 0 || len(config.Pass) != 0 {
+		target.User = url.UserPassword(config.User, config.Pass)
+	}
+
+	if strings.HasPrefix(config.Host, "/") {
+		query.Set("host", config.Host)
+		query.Set("port", port)
+	} else {
+		target.Host = net.JoinHostPort(config.Host, port)
+	}
+
+	target.RawQuery = query.Encode()
+
+	return target.String()
 }
 
 func (s *Service) Enabled() bool {

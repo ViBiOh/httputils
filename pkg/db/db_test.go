@@ -11,6 +11,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
@@ -21,7 +23,7 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -host string\n    \t[database] Host ${SIMPLE_HOST}\n  -maxConn uint\n    \t[database] Max Open Connections ${SIMPLE_MAX_CONN} (default 5)\n  -minConn uint\n    \t[database] Min Open Connections ${SIMPLE_MIN_CONN} (default 2)\n  -name string\n    \t[database] Name ${SIMPLE_NAME}\n  -pass string\n    \t[database] Pass ${SIMPLE_PASS}\n  -port uint\n    \t[database] Port ${SIMPLE_PORT} (default 5432)\n  -sslmode string\n    \t[database] SSL Mode ${SIMPLE_SSLMODE} (default \"disable\")\n  -user string\n    \t[database] User ${SIMPLE_USER}\n",
+			"Usage of simple:\n  -host string\n    \t[database] Host ${SIMPLE_HOST}\n  -maxConn uint\n    \t[database] Max Open Connections ${SIMPLE_MAX_CONN} (default 20)\n  -minConn uint\n    \t[database] Min Open Connections ${SIMPLE_MIN_CONN} (default 5)\n  -name string\n    \t[database] Name ${SIMPLE_NAME}\n  -pass string\n    \t[database] Pass ${SIMPLE_PASS}\n  -port uint\n    \t[database] Port ${SIMPLE_PORT} (default 5432)\n  -sslmode string\n    \t[database] SSL Mode ${SIMPLE_SSLMODE} (default \"disable\")\n  -user string\n    \t[database] User ${SIMPLE_USER}\n",
 		},
 	}
 
@@ -719,6 +721,91 @@ func TestBulk(t *testing.T) {
 			if failed {
 				t.Errorf("Bulk() = `%s`, want `%s`", gotErr, testCase.wantErr)
 			}
+		})
+	}
+}
+
+func TestConnectionString(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct {
+		config       Config
+		wantHost     string
+		wantUser     string
+		wantPassword string
+		wantDatabase string
+		wantPort     uint16
+		wantTLS      bool
+	}{
+		"simple": {
+			config:       Config{Host: "db.local", Port: 5432, User: "app", Pass: "secret", Name: "main", SSLMode: "require", MinConn: 2, MaxConn: 5},
+			wantHost:     "db.local",
+			wantPort:     5432,
+			wantUser:     "app",
+			wantPassword: "secret",
+			wantDatabase: "main",
+			wantTLS:      true,
+		},
+		"special characters": {
+			config:       Config{Host: "db.local", Port: 5433, User: "app user", Pass: "p@ss w0rd'&=#%/?\\", Name: "main", SSLMode: "require", MinConn: 2, MaxConn: 5},
+			wantHost:     "db.local",
+			wantPort:     5433,
+			wantUser:     "app user",
+			wantPassword: "p@ss w0rd'&=#%/?\\",
+			wantDatabase: "main",
+			wantTLS:      true,
+		},
+		"parameter injection in password": {
+			config:       Config{Host: "db.local", Port: 5432, User: "app", Pass: "x sslmode=disable host=evil.local", Name: "main", SSLMode: "require", MinConn: 2, MaxConn: 5},
+			wantHost:     "db.local",
+			wantPort:     5432,
+			wantUser:     "app",
+			wantPassword: "x sslmode=disable host=evil.local",
+			wantDatabase: "main",
+			wantTLS:      true,
+		},
+		"parameter injection in database": {
+			config:       Config{Host: "db.local", Port: 5432, User: "app", Pass: "secret", Name: "main?sslmode=disable&host=evil.local", SSLMode: "require", MinConn: 2, MaxConn: 5},
+			wantHost:     "db.local",
+			wantPort:     5432,
+			wantUser:     "app",
+			wantPassword: "secret",
+			wantDatabase: "main?sslmode=disable&host=evil.local",
+			wantTLS:      true,
+		},
+		"ipv6": {
+			config:       Config{Host: "::1", Port: 5432, User: "app", Pass: "secret", Name: "main", SSLMode: "disable", MinConn: 1, MaxConn: 2},
+			wantHost:     "::1",
+			wantPort:     5432,
+			wantUser:     "app",
+			wantPassword: "secret",
+			wantDatabase: "main",
+		},
+		"unix socket": {
+			config:       Config{Host: "/var/run/postgresql", Port: 5432, User: "app", Pass: "secret", Name: "main", SSLMode: "disable", MinConn: 1, MaxConn: 2},
+			wantHost:     "/var/run/postgresql",
+			wantPort:     5432,
+			wantUser:     "app",
+			wantPassword: "secret",
+			wantDatabase: "main",
+		},
+	}
+
+	for intention, testCase := range cases {
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			parsed, err := pgxpool.ParseConfig(connectionString(&testCase.config))
+			require.NoError(t, err)
+
+			assert.Equal(t, testCase.wantHost, parsed.ConnConfig.Host)
+			assert.Equal(t, testCase.wantPort, parsed.ConnConfig.Port)
+			assert.Equal(t, testCase.wantUser, parsed.ConnConfig.User)
+			assert.Equal(t, testCase.wantPassword, parsed.ConnConfig.Password)
+			assert.Equal(t, testCase.wantDatabase, parsed.ConnConfig.Database)
+			assert.Equal(t, int32(testCase.config.MinConn), parsed.MinConns)
+			assert.Equal(t, int32(testCase.config.MaxConn), parsed.MaxConns)
+			assert.Equal(t, testCase.wantTLS, parsed.ConnConfig.TLSConfig != nil)
 		})
 	}
 }
