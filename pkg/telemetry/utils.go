@@ -52,7 +52,7 @@ func isURLRedacted(ctx context.Context) bool {
 	return value
 }
 
-func redactURL(target *url.URL) string {
+func RedactURL(target *url.URL) string {
 	if target == nil || len(target.Host) == 0 {
 		return "<redacted>"
 	}
@@ -73,7 +73,7 @@ type urlRedactingTransport struct {
 
 func (urt urlRedactingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if ctx := req.Context(); isURLRedacted(ctx) {
-		tr.SpanFromContext(ctx).SetAttributes(attribute.String("url.full", redactURL(req.URL)))
+		tr.SpanFromContext(ctx).SetAttributes(attribute.String("url.full", RedactURL(req.URL)))
 	}
 
 	return urt.next.RoundTrip(req)

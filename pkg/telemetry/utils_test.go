@@ -217,12 +217,12 @@ func TestRedactURL(t *testing.T) {
 			parsed, err := url.Parse(tc.input)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.want, redactURL(parsed))
+			assert.Equal(t, tc.want, RedactURL(parsed))
 		})
 	}
 
-	assert.Equal(t, "<redacted>", redactURL(nil))
-	assert.Equal(t, "<redacted>", redactURL(&url.URL{Path: "/SECRET"}))
+	assert.Equal(t, "<redacted>", RedactURL(nil))
+	assert.Equal(t, "<redacted>", RedactURL(&url.URL{Path: "/SECRET"}))
 }
 
 func TestAddOpenTelemetryToClientWithoutProvider(t *testing.T) {
