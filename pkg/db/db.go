@@ -181,9 +181,7 @@ func (s *Service) Query(ctx context.Context, query string, args ...any) (rows pg
 	ctx, end := telemetry.StartSpan(
 		ctx, s.tracer, "query",
 		trace.WithSpanKind(trace.SpanKindClient),
-		trace.WithAttributes(
-			append([]attribute.KeyValue{semconv.DBStatementKey.String(query)}, s.attributes...)...,
-		),
+		trace.WithAttributes(s.attributes...),
 	)
 	defer end(&err)
 
@@ -203,14 +201,14 @@ func (s *Service) List(ctx context.Context, scanner func(pgx.Rows) error, query 
 		return err
 	}
 
+	defer rows.Close()
+
 	for rows.Next() && err == nil {
 		err = scanner(rows)
 	}
 
 	if readErr := rows.Err(); readErr != nil {
 		err = errors.Join(err, readErr)
-
-		rows.Close()
 	}
 
 	return err

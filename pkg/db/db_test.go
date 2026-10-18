@@ -347,6 +347,7 @@ func TestList(t *testing.T) {
 				rows.EXPECT().Next().Return(true)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
+				rows.EXPECT().Close()
 
 				mockDatabase.EXPECT().Query(gomock.Any(), "SELECT id FROM item", 1).Return(rows, nil)
 
@@ -370,6 +371,7 @@ func TestList(t *testing.T) {
 				rows.EXPECT().Next().Return(true)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
+				rows.EXPECT().Close()
 
 				tx.EXPECT().Query(gomock.Any(), "SELECT id FROM item", 1).Return(rows, nil)
 			}

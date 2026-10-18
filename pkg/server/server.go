@@ -91,10 +91,9 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 		return
 	}
 
-	defer close(s.done)
-
 	if len(s.server.Addr) == 0 {
 		s.logger.WarnContext(ctx, "No listen address")
+		close(s.done)
 
 		return
 	}
@@ -104,6 +103,7 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 	go func() {
 		<-ctx.Done()
 		s.Stop(context.WithoutCancel(ctx))
+		close(s.done)
 	}()
 
 	var err error
