@@ -9,12 +9,12 @@ import (
 )
 
 func main() {
-	fs := flag.NewFlagSet("alcotest", flag.ExitOnError)
-	fs.Usage = flags.Usage(fs)
+	flagSet := flag.NewFlagSet("alcotest", flag.ExitOnError)
+	flagSet.Usage = flags.Usage(flagSet)
 
-	alcotestConfig := alcotest.Flags(fs, "")
+	alcotestConfig := alcotest.Flags(flagSet, "")
 
-	_ = fs.Parse(os.Args[1:])
+	_ = flagSet.Parse(os.Args[1:])
 
 	alcotest.DoAndExit(alcotestConfig)
 }

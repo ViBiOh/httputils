@@ -28,12 +28,12 @@ func TestFlags(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
-			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
-			Flags(fs, "")
+			flagSet := flag.NewFlagSet(intention, flag.ContinueOnError)
+			Flags(flagSet, "")
 
 			var writer strings.Builder
-			fs.SetOutput(&writer)
-			fs.Usage()
+			flagSet.SetOutput(&writer)
+			flagSet.Usage()
 
 			result := writer.String()
 

@@ -50,7 +50,7 @@ func (c *Client) StopListener(consumer string) (err error) {
 	}
 
 	if cancelErr := listener.cancel(); cancelErr != nil {
-		err = fmt.Errorf("cancel listener: %w", err)
+		err = fmt.Errorf("cancel listener: %w", cancelErr)
 	}
 
 	if closeErr := listener.close(); closeErr != nil {

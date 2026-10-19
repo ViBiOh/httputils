@@ -28,15 +28,15 @@ func benchmarkHandler(b *testing.B, handler http.Handler) {
 }
 
 func BenchmarkNoMiddleware(b *testing.B) {
-	fs := flag.NewFlagSet("BenchmarkFullMiddlewares", flag.ContinueOnError)
+	flagSet := flag.NewFlagSet("BenchmarkFullMiddlewares", flag.ContinueOnError)
 
-	fs.String("test.timeout", "", "")
-	fs.String("test.bench", "", "")
-	fs.String("test.benchmem", "", "")
-	fs.String("test.run", "", "")
-	fs.String("test.paniconexit0", "", "")
+	flagSet.String("test.timeout", "", "")
+	flagSet.String("test.bench", "", "")
+	flagSet.String("test.benchmem", "", "")
+	flagSet.String("test.run", "", "")
+	flagSet.String("test.paniconexit0", "", "")
 
-	if err := fs.Parse(os.Args[1:]); err != nil {
+	if err := flagSet.Parse(os.Args[1:]); err != nil {
 		b.Error(err)
 	}
 
@@ -44,19 +44,19 @@ func BenchmarkNoMiddleware(b *testing.B) {
 }
 
 func BenchmarkFullMiddlewares(b *testing.B) {
-	fs := flag.NewFlagSet("BenchmarkFullMiddlewares", flag.ContinueOnError)
+	flagSet := flag.NewFlagSet("BenchmarkFullMiddlewares", flag.ContinueOnError)
 
-	fs.String("test.timeout", "", "")
-	fs.String("test.bench", "", "")
-	fs.String("test.benchmem", "", "")
-	fs.String("test.run", "", "")
-	fs.String("test.paniconexit0", "", "")
+	flagSet.String("test.timeout", "", "")
+	flagSet.String("test.bench", "", "")
+	flagSet.String("test.benchmem", "", "")
+	flagSet.String("test.run", "", "")
+	flagSet.String("test.paniconexit0", "", "")
 
-	telemetryConfig := telemetry.Flags(fs, "telemetry")
-	owaspConfig := owasp.Flags(fs, "")
-	corsConfig := cors.Flags(fs, "cors")
+	telemetryConfig := telemetry.Flags(flagSet, "telemetry")
+	owaspConfig := owasp.Flags(flagSet, "")
+	corsConfig := cors.Flags(flagSet, "cors")
 
-	if err := fs.Parse(os.Args[1:]); err != nil {
+	if err := flagSet.Parse(os.Args[1:]); err != nil {
 		b.Error(err)
 	}
 

@@ -67,21 +67,19 @@ func (c *Client) closeListeners() (err error) {
 		}
 	}
 
-	return nil
+	return err
 }
 
 func (c *Client) reconnectListeners(ctx context.Context) {
-	for _, item := range c.listeners {
-		func(listener *listener) {
-			c.mutex.Lock()
-			defer c.mutex.Unlock()
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
-			if err := listener.createChannel(c.connection); err != nil {
-				slog.LogAttrs(ctx, slog.LevelError, "recreate channel", slog.String("name", listener.name), slog.Any("error", err))
-			}
+	for _, listener := range c.listeners {
+		if err := listener.createChannel(c.connection); err != nil {
+			slog.LogAttrs(ctx, slog.LevelError, "recreate channel", slog.String("name", listener.name), slog.Any("error", err))
+		}
 
-			listener.reconnect <- true
-		}(item)
+		listener.reconnect <- true
 	}
 }
 

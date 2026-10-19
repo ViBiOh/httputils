@@ -24,12 +24,12 @@ func TestFlags(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
-			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
-			Flags(fs, "")
+			flagSet := flag.NewFlagSet(intention, flag.ContinueOnError)
+			Flags(flagSet, "")
 
 			var writer strings.Builder
-			fs.SetOutput(&writer)
-			fs.Usage()
+			flagSet.SetOutput(&writer)
+			flagSet.Usage()
 
 			result := writer.String()
 
@@ -60,9 +60,9 @@ func TestNew(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
-			fs := flag.NewFlagSet(intention, flag.ContinueOnError)
+			flagSet := flag.NewFlagSet(intention, flag.ContinueOnError)
 
-			if result := New(Flags(fs, "")); !reflect.DeepEqual(result, testCase.want) {
+			if result := New(Flags(flagSet, "")); !reflect.DeepEqual(result, testCase.want) {
 				t.Errorf("New() = %#v, want %#v", result, testCase.want)
 			}
 		})

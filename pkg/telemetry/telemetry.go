@@ -110,6 +110,7 @@ func New(ctx context.Context, config *Config) (*Service, error) {
 		resource:       otelResource,
 		tracerProvider: tracerProvider,
 		meterProvider:  meterProvider,
+		TraceUint64:    config.TraceUint64,
 	}, nil
 }
 

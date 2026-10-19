@@ -25,11 +25,11 @@ func (ri *RedisIntegration) Bootstrap(ctx context.Context, name string) {
 }
 
 func (ri *RedisIntegration) connect(ctx context.Context, name string) {
-	fs := flag.NewFlagSet("test-"+name, flag.ExitOnError)
+	flagSet := flag.NewFlagSet("test-"+name, flag.ExitOnError)
 
-	redisConfig := redis.Flags(fs, "")
+	redisConfig := redis.Flags(flagSet, "")
 
-	if err := fs.Parse(nil); err != nil {
+	if err := flagSet.Parse(nil); err != nil {
 		ri.t.Fatal(err)
 	}
 

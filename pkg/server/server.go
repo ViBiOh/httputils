@@ -16,6 +16,7 @@ import (
 
 type Server struct {
 	done            chan struct{}
+	closer          func()
 	logger          *slog.Logger
 	server          *http.Server
 	cert            string
@@ -60,7 +61,8 @@ func New(config *Config) *Server {
 	}
 
 	return &Server{
-		done: done,
+		done:   done,
+		closer: sync.OnceFunc(func() { close(done) }),
 
 		cert:            config.Cert,
 		key:             config.Key,
@@ -92,11 +94,9 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 		return
 	}
 
-	close := sync.OnceFunc(func() { close(s.done) })
-
 	if len(s.server.Addr) == 0 {
 		s.logger.WarnContext(ctx, "No listen address")
-		close()
+		s.closer()
 
 		return
 	}
@@ -106,7 +106,6 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 	go func() {
 		<-ctx.Done()
 		s.Stop(context.WithoutCancel(ctx))
-		close()
 	}()
 
 	var err error
@@ -120,7 +119,7 @@ func (s *Server) Start(ctx context.Context, handler http.Handler) {
 
 	if !errors.Is(err, http.ErrServerClosed) {
 		s.logger.ErrorContext(ctx, "Server error", "error", err)
-		close()
+		s.closer()
 	}
 }
 
@@ -128,6 +127,8 @@ func (s *Server) Stop(ctx context.Context) {
 	if s == nil {
 		return
 	}
+
+	defer s.closer()
 
 	ctx, cancelFn := context.WithTimeout(ctx, s.shutdownTimeout)
 	defer cancelFn()

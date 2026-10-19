@@ -38,25 +38,25 @@ type configuration struct {
 }
 
 func newConfig() configuration {
-	fs := flag.NewFlagSet("http", flag.ExitOnError)
-	fs.Usage = flags.Usage(fs)
+	flagSet := flag.NewFlagSet("http", flag.ExitOnError)
+	flagSet.Usage = flags.Usage(flagSet)
 
 	config := configuration{
-		logger:     logger.Flags(fs, "logger"),
-		alcotest:   alcotest.Flags(fs, ""),
-		telemetry:  telemetry.Flags(fs, "telemetry"),
-		pprof:      pprof.Flags(fs, "pprof"),
-		health:     health.Flags(fs, ""),
-		server:     server.Flags(fs, ""),
-		owasp:      owasp.Flags(fs, "", flags.NewOverride("Csp", "default-src 'self'; base-uri 'self'; script-src 'httputils-nonce'")),
-		cors:       cors.Flags(fs, "cors"),
-		amqp:       amqp.Flags(fs, "amqp"),
-		amqHandler: amqphandler.Flags(fs, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RoutingKey", "local"), flags.NewOverride("RetryInterval", 10*time.Second)),
-		redis:      redis.Flags(fs, "redis"),
-		renderer:   renderer.Flags(fs, "renderer"),
+		logger:     logger.Flags(flagSet, "logger"),
+		alcotest:   alcotest.Flags(flagSet, ""),
+		telemetry:  telemetry.Flags(flagSet, "telemetry"),
+		pprof:      pprof.Flags(flagSet, "pprof"),
+		health:     health.Flags(flagSet, ""),
+		server:     server.Flags(flagSet, ""),
+		owasp:      owasp.Flags(flagSet, "", flags.NewOverride("Csp", "default-src 'self'; base-uri 'self'; script-src 'httputils-nonce'")),
+		cors:       cors.Flags(flagSet, "cors"),
+		amqp:       amqp.Flags(flagSet, "amqp"),
+		amqHandler: amqphandler.Flags(flagSet, "amqp", flags.NewOverride("Exchange", "httputils"), flags.NewOverride("Queue", "httputils"), flags.NewOverride("RoutingKey", "local"), flags.NewOverride("RetryInterval", 10*time.Second)),
+		redis:      redis.Flags(flagSet, "redis"),
+		renderer:   renderer.Flags(flagSet, "renderer"),
 	}
 
-	_ = fs.Parse(os.Args[1:])
+	_ = flagSet.Parse(os.Args[1:])
 
 	return config
 }
