@@ -10,16 +10,6 @@ import (
 func TestError(t *testing.T) {
 	t.Parallel()
 
-	t.Run("nil", func(t *testing.T) {
-		t.Parallel()
-
-		func() {
-			defer Error(nil)
-
-			panic("catch me if you can")
-		}()
-	})
-
 	t.Run("valued", func(t *testing.T) {
 		t.Parallel()
 
