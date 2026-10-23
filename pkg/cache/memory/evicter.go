@@ -2,99 +2,68 @@ package memory
 
 import (
 	"container/heap"
+	"context"
 	"time"
 )
 
-type ExpirationAction int
+const idleDelay = time.Hour * 24
 
-const (
-	AddItem    ExpirationAction = iota
-	RemoveItem ExpirationAction = iota
-
-	defaultTimer = time.Hour * 24
-)
-
-type ExpirationQueueAction[K comparable] struct {
-	id     K
-	ttl    time.Duration
-	action ExpirationAction
-}
-
-func (c *Cache[K, V]) startEvicter(done <-chan struct{}) {
-	defer close(c.expirationUpdates)
-
-	timer := time.NewTimer(defaultTimer)
-
-	var toExpire *Item[K]
+func (c *Cache[K, V]) startEvicter(ctx context.Context) {
+	timer := time.NewTimer(idleDelay)
+	defer timer.Stop()
 
 	for {
-		if c.expiration.Len() > 0 {
-			firstItem := heap.Pop(c.expiration).(Item[K])
-			toExpire = &firstItem
-
-			timer.Reset(time.Until(toExpire.expiration))
-		} else {
-			timer.Reset(defaultTimer)
-		}
+		timer.Reset(c.evictExpired())
 
 		select {
-		case <-done:
-			done = nil
-
-			timer.Stop()
-			c.close()
-
+		case <-ctx.Done():
+			return
 		case <-timer.C:
-			if toExpire == nil {
-				continue
-			}
-
-			c.mutex.Lock()
-			delete(c.content, toExpire.id)
-			c.mutex.Unlock()
-
-		case update, ok := <-c.expirationUpdates:
-			if !ok {
-				continue
-			}
-
-			c.handleExpirationUpdate(update, toExpire)
+		case <-c.wake:
 		}
 	}
 }
 
-func (c *Cache[K, V]) handleExpirationUpdate(update ExpirationQueueAction[K], toExpire *Item[K]) {
-	switch update.action {
-	case AddItem:
-		if toExpire != nil {
-			heap.Push(c.expiration, *toExpire)
+func (c *Cache[K, V]) evictExpired() time.Duration {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	for len(c.expiration) > 0 {
+		first := c.expiration[0]
+
+		if remaining := time.Until(first.expiration); remaining > 0 {
+			return remaining
 		}
 
-		heap.Push(c.expiration, Item[K]{
-			id:         update.id,
-			expiration: time.Now().Add(update.ttl),
-		})
-
-	case RemoveItem:
-		if index := c.expiration.Index(update.id); index != -1 {
-			heap.Remove(c.expiration, index)
-		}
+		c.remove(first)
 	}
+
+	return idleDelay
 }
 
-func (c *Cache[K, V]) addExpiration(id K, ttl time.Duration) {
+func (c *Cache[K, V]) setExpiration(item *entry[K, V], ttl time.Duration) {
 	if ttl == 0 {
+		item.expiration = time.Time{}
+
+		if item.index != -1 {
+			heap.Remove(&c.expiration, item.index)
+		}
+
 		return
 	}
 
-	select {
-	case <-c.done:
-		return
-	default:
+	item.expiration = time.Now().Add(ttl)
+
+	if item.index == -1 {
+		heap.Push(&c.expiration, item)
+	} else {
+		heap.Fix(&c.expiration, item.index)
 	}
 
-	select {
-	case <-c.done:
-	case c.expirationUpdates <- ExpirationQueueAction[K]{id: id, ttl: ttl, action: AddItem}:
+	if c.expiration[0] == item {
+		select {
+		case c.wake <- struct{}{}:
+		default:
+		}
 	}
 }

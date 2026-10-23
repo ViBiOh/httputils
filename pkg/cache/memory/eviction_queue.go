@@ -1,63 +1,38 @@
 package memory
 
-import "time"
+type expirationQueue[K comparable, V any] []*entry[K, V]
 
-type Item[K comparable] struct {
-	id         K
-	expiration time.Time
-	index      int
+func (eq expirationQueue[K, V]) Len() int {
+	return len(eq)
 }
 
-type ExpirationQueue[K comparable] struct {
-	index map[K]int
-	items []Item[K]
+func (eq expirationQueue[K, V]) Less(first, second int) bool {
+	return eq[first].expiration.Before(eq[second].expiration)
 }
 
-func NewExpirationQueue[K comparable]() *ExpirationQueue[K] {
-	return &ExpirationQueue[K]{
-		index: make(map[K]int),
-	}
+func (eq expirationQueue[K, V]) Swap(first, second int) {
+	eq[first], eq[second] = eq[second], eq[first]
+
+	eq[first].index = first
+	eq[second].index = second
 }
 
-func (eq *ExpirationQueue[K]) Len() int {
-	return len(eq.items)
+func (eq *expirationQueue[K, V]) Push(item any) {
+	value := item.(*entry[K, V])
+
+	value.index = len(*eq)
+	*eq = append(*eq, value)
 }
 
-func (eq *ExpirationQueue[K]) Less(i, j int) bool {
-	return eq.items[i].expiration.Before(eq.items[j].expiration)
-}
+func (eq *expirationQueue[K, V]) Pop() any {
+	old := *eq
+	last := len(old) - 1
 
-func (eq *ExpirationQueue[K]) Swap(i, j int) {
-	eq.items[i], eq.items[j] = eq.items[j], eq.items[i]
+	value := old[last]
+	old[last] = nil
+	value.index = -1
 
-	eq.items[i].index = i
-	eq.items[j].index = j
-	eq.index[eq.items[i].id] = i
-	eq.index[eq.items[j].id] = j
-}
+	*eq = old[:last]
 
-func (eq *ExpirationQueue[K]) Index(id K) int {
-	if idx, ok := eq.index[id]; ok {
-		return idx
-	}
-
-	return -1
-}
-
-func (eq *ExpirationQueue[K]) Push(x any) {
-	item := x.(Item[K])
-	item.index = len(eq.items)
-	eq.items = append(eq.items, item)
-	eq.index[item.id] = item.index
-}
-
-func (eq *ExpirationQueue[K]) Pop() any {
-	old := eq.items
-
-	n := len(old)
-	item := old[n-1]
-	eq.items = old[0 : n-1]
-	delete(eq.index, item.id)
-
-	return item
+	return value
 }

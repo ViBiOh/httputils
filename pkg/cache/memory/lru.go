@@ -2,90 +2,56 @@ package memory
 
 import (
 	"context"
-
-	"github.com/ViBiOh/httputils/v4/pkg/concurrent"
 )
-
-type LRUAction int
-
-const (
-	Touch LRUAction = iota
-	Add   LRUAction = iota
-)
-
-type LeastRecentlyUsedAction[K comparable] struct {
-	id     K
-	action LRUAction
-}
 
 func (c *Cache[K, V]) startLRU(ctx context.Context) {
-	defer close(c.lruUpdates)
-
 	if c.maxSize == 0 {
 		return
 	}
 
-	concurrent.ChanUntilDone(ctx, c.lruUpdates, func(update LeastRecentlyUsedAction[K]) {
-		switch update.action {
-		case Touch:
-			c.refreshEntryLRU(update.id)
-		case Add:
-			c.addEntryLRU(update.id)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+
+		case id := <-c.touches:
+			c.refresh(id)
 		}
-	}, c.close)
+	}
 }
 
-func (c *Cache[K, V]) touchLRU(id K) {
+func (c *Cache[K, V]) touch(id K) {
 	if c.maxSize == 0 {
 		return
 	}
 
-	c.sendLRUAction(LeastRecentlyUsedAction[K]{id: id, action: Touch})
+	select {
+	case c.touches <- id:
+	default:
+	}
 }
 
-func (c *Cache[K, V]) addLRU(id K) {
+func (c *Cache[K, V]) refresh(id K) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if item, ok := c.content[id]; ok && item.element != nil {
+		c.lru.MoveToFront(item.element)
+	}
+}
+
+func (c *Cache[K, V]) markUsed(item *entry[K, V]) {
 	if c.maxSize == 0 {
 		return
 	}
 
-	c.sendLRUAction(LeastRecentlyUsedAction[K]{id: id, action: Add})
-}
-
-func (c *Cache[K, V]) refreshEntryLRU(id K) {
-	if element, ok := c.lruIndex[id]; ok {
-		c.lru.MoveToFront(element)
-	}
-}
-
-func (c *Cache[K, V]) addEntryLRU(id K) {
-	if element, ok := c.lruIndex[id]; ok {
-		c.lru.MoveToFront(element)
-		return
+	if item.element == nil {
+		item.element = c.lru.PushFront(item)
+	} else {
+		c.lru.MoveToFront(item.element)
 	}
 
-	if c.lru.Len() == c.maxSize {
-		back := c.lru.Back()
-		c.lru.Remove(back)
-
-		evictedID := back.Value.(K)
-		delete(c.lruIndex, evictedID)
-
-		c.Delete(evictedID)
-	}
-
-	c.lruIndex[id] = c.lru.PushFront(id)
-}
-
-func (c *Cache[K, V]) sendLRUAction(action LeastRecentlyUsedAction[K]) {
-	select {
-	case <-c.done:
-		return
-	default:
-	}
-
-	select {
-	case <-c.done:
-	case c.lruUpdates <- action:
-	default:
+	for c.lru.Len() > c.maxSize {
+		c.remove(c.lru.Back().Value.(*entry[K, V]))
 	}
 }

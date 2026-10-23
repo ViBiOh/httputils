@@ -35,9 +35,20 @@ func NewExtender(ttl, interval time.Duration, maxSize int, redis RedisClient) *T
 	return extender
 }
 
+func (te *TTLExtender) setTTL(ttl time.Duration) {
+	te.mutex.Lock()
+	defer te.mutex.Unlock()
+
+	te.ttl = ttl
+}
+
 func (te *TTLExtender) Extend(ctx context.Context, keys ...string) error {
 	if te.interval == 0 {
-		return te.redis.Expire(ctx, te.ttl, keys...)
+		te.mutex.Lock()
+		ttl := te.ttl
+		te.mutex.Unlock()
+
+		return te.expire(ctx, ttl, keys)
 	}
 
 	te.mutex.Lock()
@@ -46,6 +57,8 @@ func (te *TTLExtender) Extend(ctx context.Context, keys ...string) error {
 		te.batch[key] = struct{}{}
 	}
 
+	ttl := te.ttl
+
 	var toExpire []string
 	if te.maxSize != 0 && len(te.batch) > te.maxSize {
 		toExpire = te.drainBatch()
@@ -53,10 +66,8 @@ func (te *TTLExtender) Extend(ctx context.Context, keys ...string) error {
 
 	te.mutex.Unlock()
 
-	if len(toExpire) > 0 {
-		if err := te.redis.Expire(ctx, te.ttl, toExpire...); err != nil {
-			slog.LogAttrs(ctx, slog.LevelError, "extend keys", slog.Any("error", err))
-		}
+	if err := te.expire(ctx, ttl, toExpire); err != nil {
+		slog.LogAttrs(ctx, slog.LevelError, "extend keys", slog.Any("error", err))
 	}
 
 	return nil
@@ -75,15 +86,20 @@ func (te *TTLExtender) Start(ctx context.Context) {
 func (te *TTLExtender) flush(ctx context.Context) {
 	te.mutex.Lock()
 	keys := te.drainBatch()
+	ttl := te.ttl
 	te.mutex.Unlock()
 
-	if len(keys) == 0 {
-		return
-	}
-
-	if err := te.redis.Expire(ctx, te.ttl, keys...); err != nil {
+	if err := te.expire(ctx, ttl, keys); err != nil {
 		slog.LogAttrs(ctx, slog.LevelError, "extend keys", slog.Any("error", err))
 	}
+}
+
+func (te *TTLExtender) expire(ctx context.Context, ttl time.Duration, keys []string) error {
+	if len(keys) == 0 || ttl <= 0 {
+		return nil
+	}
+
+	return te.redis.Expire(ctx, ttl, keys...)
 }
 
 func (te *TTLExtender) drainBatch() []string {

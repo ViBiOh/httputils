@@ -90,6 +90,10 @@ func (c *Cache[K, V]) WithRead(client RedisClient) *Cache[K, V] {
 func (c *Cache[K, V]) WithTTL(ttl time.Duration) *Cache[K, V] {
 	c.ttl = ttl
 
+	if c.extender != nil {
+		c.extender.setTTL(ttl)
+	}
+
 	return c
 }
 
