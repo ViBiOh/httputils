@@ -293,6 +293,10 @@ func (c *Cron) Start(ctx context.Context, action func(context.Context) error) {
 
 			retryCount++
 			shouldRetry = retryCount <= c.maxRetry
+
+			if !shouldRetry {
+				retryCount = 0
+			}
 		} else {
 			retryCount = 0
 			shouldRetry = false

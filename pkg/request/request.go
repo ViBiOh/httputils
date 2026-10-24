@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -108,7 +109,8 @@ func (r Request) String() string {
 	}
 
 	if r.contentLength > 0 {
-		builder.WriteString(", ContentLength: 8000")
+		builder.WriteString(", ContentLength: ")
+		builder.WriteString(strconv.FormatInt(r.contentLength, 10))
 	}
 
 	return builder.String()

@@ -14,8 +14,12 @@ func Middleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				httperror.InternalServerError(req.Context(), w, recoverer.WithStack(recoverer.Format(r)))
+			if recovered := recover(); recovered != nil {
+				if recovered == http.ErrAbortHandler {
+					panic(recovered)
+				}
+
+				httperror.InternalServerError(req.Context(), w, recoverer.WithStack(recoverer.Format(recovered)))
 			}
 		}()
 
