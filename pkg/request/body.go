@@ -4,6 +4,8 @@ import (
 	"errors"
 	"io"
 	"net/http"
+
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 func readContent(body io.ReadCloser) ([]byte, error) {
@@ -20,12 +22,21 @@ func readContent(body io.ReadCloser) ([]byte, error) {
 	return content, err
 }
 
-func ReadBodyRequest(r *http.Request) ([]byte, error) {
-	if r == nil {
+func ReadBodyRequest(r *http.Request, maxSize int64) ([]byte, error) {
+	if r == nil || r.Body == nil {
 		return nil, nil
 	}
 
-	return io.ReadAll(r.Body)
+	content, err := io.ReadAll(http.MaxBytesReader(nil, r.Body, maxSize))
+	if err != nil {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			return nil, model.WrapInvalid(err)
+		}
+
+		return content, err
+	}
+
+	return content, nil
 }
 
 func ReadBodyResponse(r *http.Response) ([]byte, error) {

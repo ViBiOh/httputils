@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +23,8 @@ const (
 	createdHeader       = "(created)"
 	headerSeparator     = ": "
 )
+
+var requiredSignedHeaders = []string{requestTargetHeader, createdHeader, "digest"}
 
 // AddSignature add Authorization header based on content signature based on https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12
 func AddSignature(r *http.Request, created time.Time, keyID string, secret, payload []byte) {
@@ -40,9 +43,23 @@ func AddSignature(r *http.Request, created time.Time, keyID string, secret, payl
 	r.Header.Add(authorizationHeader, fmt.Sprintf(`signature="%s"`, base64.StdEncoding.EncodeToString(signature)))
 }
 
-// ValidateSignature check Authorization header based on content based on https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12
-func ValidateSignature(r *http.Request, secret []byte) (bool, error) {
-	body, err := ReadBodyRequest(r)
+// ValidateSignature requires `(request-target)`, `(created)` and `digest` to be signed, a `created` instant within maxAge of the current time in both directions, and a body of at most maxBodySize bytes.
+// A valid signature can still be replayed until it leaves that window.
+func ValidateSignature(r *http.Request, secret []byte, maxBodySize int64, maxAge time.Duration) (bool, error) {
+	return validateSignature(r, secret, maxBodySize, maxAge, time.Now())
+}
+
+func validateSignature(r *http.Request, secret []byte, maxBodySize int64, maxAge time.Duration, now time.Time) (bool, error) {
+	signatureString, signature, created, err := parseAuthorizationHeader(r)
+	if err != nil {
+		return false, model.WrapInvalid(fmt.Errorf("parse authorization header: %w", err))
+	}
+
+	if age := now.Sub(time.Unix(created, 0)); age > maxAge || age < -maxAge {
+		return false, model.WrapInvalid(errors.New("signature `created` is outside of the accepted time window"))
+	}
+
+	body, err := ReadBodyRequest(r, maxBodySize)
 	if err != nil {
 		return false, fmt.Errorf("read body: %w", err)
 	}
@@ -51,11 +68,6 @@ func ValidateSignature(r *http.Request, secret []byte) (bool, error) {
 
 	if fmt.Sprintf("SHA-512=%x", sha512.Sum512(body)) != r.Header.Get("Digest") {
 		return false, model.WrapInvalid(errors.New("SHA-512 signature of body doesn't match"))
-	}
-
-	signatureString, signature, err := parseAuthorizationHeader(r)
-	if err != nil {
-		return false, model.WrapInvalid(fmt.Errorf("parse authorization header: %w", err))
 	}
 
 	return hmac.Equal(signContent(secret, signatureString), signature), nil
@@ -68,7 +80,7 @@ func signContent(secret, content []byte) []byte {
 	return hash.Sum(nil)
 }
 
-func parseAuthorizationHeader(r *http.Request) ([]byte, []byte, error) {
+func parseAuthorizationHeader(r *http.Request) ([]byte, []byte, int64, error) {
 	var headers, algorithm, rawSignature string
 	var created int64
 	var err error
@@ -81,7 +93,7 @@ func parseAuthorizationHeader(r *http.Request) ([]byte, []byte, error) {
 
 			created, err = strconv.ParseInt(rawCreated, 10, 64)
 			if err != nil {
-				return nil, nil, fmt.Errorf(createdHeader+" is not an integer: %w", err)
+				return nil, nil, 0, fmt.Errorf(createdHeader+" is not an integer: %w", err)
 			}
 		} else if after, ok := strings.CutPrefix(value, "signature="); ok {
 			rawSignature = after
@@ -95,19 +107,27 @@ func parseAuthorizationHeader(r *http.Request) ([]byte, []byte, error) {
 	}
 
 	if len(rawSignature) == 0 {
-		return nil, nil, errors.New("no signature section found in Authorization")
+		return nil, nil, 0, errors.New("no signature section found in Authorization")
 	}
 
 	if strings.Contains(headers, createdHeader) && (strings.HasPrefix(algorithm, "rsa") || strings.HasPrefix(algorithm, "hmac") || strings.HasPrefix(algorithm, "ecdsa")) {
-		return nil, nil, errors.New("`created` header is incompatible with algorithm")
+		return nil, nil, 0, errors.New("`created` header is incompatible with algorithm")
 	}
 
 	signature, err := base64.StdEncoding.DecodeString(strings.Trim(rawSignature, `"`))
 	if err != nil {
-		return nil, nil, fmt.Errorf("decode base64 signature: %w", err)
+		return nil, nil, 0, fmt.Errorf("decode base64 signature: %w", err)
 	}
 
-	return buildSignatureString(r, strings.Split(strings.Trim(headers, `"`), " "), created), signature, nil
+	signedHeaders := strings.Split(strings.Trim(headers, `"`), " ")
+
+	for _, required := range requiredSignedHeaders {
+		if !slices.Contains(signedHeaders, required) {
+			return nil, nil, 0, fmt.Errorf("`%s` must be part of the signed headers", required)
+		}
+	}
+
+	return buildSignatureString(r, signedHeaders, created), signature, created, nil
 }
 
 func buildSignatureString(r *http.Request, parts []string, created int64) []byte {

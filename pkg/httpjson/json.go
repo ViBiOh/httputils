@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/ViBiOh/httputils/v4/pkg/httperror"
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 )
 
 var (
@@ -48,10 +49,16 @@ func WriteArray(ctx context.Context, w http.ResponseWriter, status int, array an
 	Write(ctx, w, status, items{array})
 }
 
-func Parse[T any](req *http.Request) (T, error) {
+func Parse[T any](req *http.Request, maxSize int64) (T, error) {
 	var output T
 
-	return output, json.NewDecoder(req.Body).Decode(&output)
+	err := json.NewDecoder(http.MaxBytesReader(nil, req.Body, maxSize)).Decode(&output)
+
+	if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+		return output, model.WrapInvalid(err)
+	}
+
+	return output, err
 }
 
 func Read[T any](resp *http.Response) (output T, err error) {

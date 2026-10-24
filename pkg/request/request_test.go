@@ -169,7 +169,7 @@ func TestSend(t *testing.T) {
 		case "/simple":
 			w.WriteHeader(http.StatusOK)
 
-			payload, _ := ReadBodyRequest(r)
+			payload, _ := ReadBodyRequest(r, 1<<20)
 
 			if r.Method == http.MethodGet {
 				safeWrite(w, []byte("it works!"))
@@ -225,7 +225,7 @@ func TestSend(t *testing.T) {
 
 			return
 		case "/signed":
-			if ok, err := ValidateSignature(r, []byte(`secret`)); err != nil {
+			if ok, err := ValidateSignature(r, []byte(`secret`), 1<<20, time.Minute); err != nil {
 				w.WriteHeader(http.StatusUnauthorized)
 				safeWrite(w, []byte(err.Error()))
 			} else if ok {
@@ -625,7 +625,7 @@ func TestJSON(t *testing.T) {
 	t.Parallel()
 
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		payload, _ := ReadBodyRequest(r)
+		payload, _ := ReadBodyRequest(r, 1<<20)
 
 		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == `{"Active":true,"Amount":12.34}` && r.Header.Get("Content-Type") == "application/json" {
 			w.WriteHeader(http.StatusOK)
@@ -688,7 +688,7 @@ func TestStreamJSON(t *testing.T) {
 	t.Parallel()
 
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		payload, _ := ReadBodyRequest(r)
+		payload, _ := ReadBodyRequest(r, 1<<20)
 
 		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == `{"Active":true,"Amount":12.34}`+"\n" && r.Header.Get("Content-Type") == "application/json" {
 			w.WriteHeader(http.StatusOK)
@@ -807,7 +807,7 @@ func TestDiscardBody(t *testing.T) {
 
 func BenchmarkJSON(b *testing.B) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := ReadBodyRequest(r); err != nil {
+		if _, err := ReadBodyRequest(r, 1<<20); err != nil {
 			b.Error(err)
 		}
 		w.WriteHeader(http.StatusOK)

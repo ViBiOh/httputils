@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ViBiOh/httputils/v4/pkg/model"
 	"github.com/ViBiOh/httputils/v4/pkg/request"
 	"github.com/stretchr/testify/assert"
 )
@@ -220,7 +221,7 @@ func TestParse(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
-			got, gotErr := Parse[map[string]any](testCase.args.req)
+			got, gotErr := Parse[map[string]any](testCase.args.req, 1024)
 
 			assert.Equal(t, testCase.want, got)
 			checkErr(t, testCase.wantErr, gotErr)
@@ -419,5 +420,45 @@ func checkErr(t *testing.T, want, got error) {
 		assert.NoError(t, got)
 	} else {
 		assert.ErrorContains(t, got, want.Error())
+	}
+}
+
+func TestParseLimit(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct {
+		body    string
+		maxSize int64
+		wantErr error
+	}{
+		"under the limit": {
+			`{"key":"value"}`,
+			1024,
+			nil,
+		},
+		"over the limit": {
+			`{"key":"` + strings.Repeat("x", 4096) + `"}`,
+			64,
+			model.ErrInvalid,
+		},
+	}
+
+	for intention, testCase := range cases {
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(testCase.body))
+
+			_, err := Parse[map[string]any](req, testCase.maxSize)
+
+			if testCase.wantErr != nil {
+				assert.ErrorIs(t, err, testCase.wantErr)
+
+				var tooLarge *http.MaxBytesError
+				assert.ErrorAs(t, err, &tooLarge)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }

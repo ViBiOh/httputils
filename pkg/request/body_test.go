@@ -7,7 +7,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
+
+	"github.com/ViBiOh/httputils/v4/pkg/model"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -127,7 +131,7 @@ func TestReadBodyRequest(t *testing.T) {
 		t.Run(intention, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := ReadBodyRequest(testCase.input)
+			result, err := ReadBodyRequest(testCase.input, 1024)
 
 			failed := false
 
@@ -184,6 +188,69 @@ func TestReadBodyResponse(t *testing.T) {
 
 			if failed {
 				t.Errorf("ReadBodyResponse() = (`%s`, `%s`), want (`%s`, `%s`)", result, err, testCase.want, testCase.wantErr)
+			}
+		})
+	}
+}
+
+func TestReadBodyRequestLimit(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct {
+		body    string
+		maxSize int64
+		want    string
+		wantErr error
+	}{
+		"under the limit": {
+			"Content",
+			1024,
+			"Content",
+			nil,
+		},
+		"exactly the limit": {
+			"Content",
+			7,
+			"Content",
+			nil,
+		},
+		"one byte over the limit": {
+			"Content",
+			6,
+			"",
+			model.ErrInvalid,
+		},
+		"far over the limit": {
+			strings.Repeat("x", 1<<20),
+			16,
+			"",
+			model.ErrInvalid,
+		},
+		"empty body": {
+			"",
+			0,
+			"",
+			nil,
+		},
+	}
+
+	for intention, testCase := range cases {
+		t.Run(intention, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(testCase.body))
+
+			got, err := ReadBodyRequest(req, testCase.maxSize)
+
+			assert.Equal(t, testCase.want, string(got))
+
+			if testCase.wantErr != nil {
+				assert.ErrorIs(t, err, testCase.wantErr)
+
+				var tooLarge *http.MaxBytesError
+				assert.ErrorAs(t, err, &tooLarge)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
