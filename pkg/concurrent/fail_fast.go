@@ -81,6 +81,9 @@ func (ff *FailFast) run(f func() error) {
 
 func (ff *FailFast) Wait() error {
 	ff.wg.Wait()
+	if ff.cancel != nil {
+		ff.cancel()
+	}
 
 	select {
 	case <-ff.done:

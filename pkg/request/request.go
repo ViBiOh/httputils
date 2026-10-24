@@ -96,6 +96,10 @@ func (r Request) String() string {
 	}
 
 	for key, values := range r.header {
+		if key == authorizationHeader {
+			continue
+		}
+
 		builder.WriteString(", Header ")
 		builder.WriteString(key)
 		builder.WriteString(": `")
@@ -242,7 +246,7 @@ func (r Request) Build(ctx context.Context, payload io.ReadCloser) (*http.Reques
 		return nil, err
 	}
 
-	req.Header = r.header
+	req.Header = r.header.Clone()
 
 	if len(r.signatureSecret) != 0 {
 		body, err := readContent(payload)
