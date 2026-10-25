@@ -335,6 +335,18 @@ func TestHasError(t *testing.T) {
 			New().Weekdays().MaxRetry(5),
 			true,
 		},
+		"exclusive without timeout": {
+			New().Each(time.Minute).Exclusive(nil, "test", 0),
+			true,
+		},
+		"exclusive with negative timeout": {
+			New().Each(time.Minute).Exclusive(nil, "test", -time.Second),
+			true,
+		},
+		"exclusive with timeout": {
+			New().Each(time.Minute).Exclusive(nil, "test", time.Minute),
+			false,
+		},
 		"cron with day config": {
 			New().Friday(),
 			false,

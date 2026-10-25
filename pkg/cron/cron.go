@@ -145,6 +145,10 @@ func (c *Cron) At(hour string) *Cron {
 }
 
 func (c *Cron) Exclusive(semaphore Semaphore, name string, timeout time.Duration) *Cron {
+	if timeout <= 0 {
+		c.errors = append(c.errors, errors.New("exclusive mode requires a positive timeout"))
+	}
+
 	c.semaphore = semaphore
 	c.name = name
 	c.timeout = timeout

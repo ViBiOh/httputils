@@ -319,28 +319,6 @@ func (s *Service) Scan(ctx context.Context, pattern string, output chan<- string
 	return nil
 }
 
-func (s *Service) Exclusive(ctx context.Context, name string, timeout time.Duration, action func(context.Context) error) (bool, error) {
-	acquired, err := s.client.SetNX(ctx, name, "acquired", timeout).Result()
-	if err != nil {
-		return false, fmt.Errorf("exec setnx: %w", err)
-	}
-
-	if !acquired {
-		return false, nil
-	}
-
-	actionCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	err = action(actionCtx)
-
-	if delErr := s.client.Del(ctx, name).Err(); delErr != nil {
-		err = errors.Join(err, delErr)
-	}
-
-	return true, err
-}
-
 func (s *Service) Pipeline() redis.Pipeliner {
 	return s.client.Pipeline()
 }
