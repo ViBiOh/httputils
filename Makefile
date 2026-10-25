@@ -75,6 +75,7 @@ mocks:
 	go generate -run 'go tool "go.uber.org/mock/mockgen"' $(PACKAGES)
 	go tool go.uber.org/mock/mockgen -destination pkg/mocks/io.go -package mocks -mock_names ReadCloser=ReadCloser io ReadCloser
 	go tool go.uber.org/mock/mockgen -destination pkg/mocks/pgx.go -package mocks -mock_names Tx=Tx,Row=Row,Rows=Rows github.com/jackc/pgx/v5 Tx,Row,Rows
+	go tool go.uber.org/mock/mockgen -destination pkg/mocks/amqp_acknowledger.go -package mocks -mock_names Acknowledger=Acknowledger github.com/rabbitmq/amqp091-go Acknowledger
 	go tool golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment -fix -test=false $(PACKAGES) || true # don't fail on the fix
 
 ## test: Shortcut to launch all the test tasks (unit, functional and integration).

@@ -47,7 +47,7 @@ func TestString(t *testing.T) {
 		},
 		"basic auth": {
 			Post("http://127.0.0.1").BasicAuth("admin", "password").ContentType("text/plain"),
-			"POST http://127.0.0.1, BasicAuth with user `%s`admin, Header Content-Type: `text/plain`",
+			"POST http://127.0.0.1, BasicAuth with user admin, Header Content-Type: `text/plain`",
 		},
 		"signature auth": {
 			Post("http://127.0.0.1").WithSignatureAuthorization("secret", []byte("password")),

@@ -2,7 +2,6 @@ package amqp
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -13,26 +12,44 @@ func (c *Client) Close(ctx context.Context) {
 		return
 	}
 
+	for _, listener := range c.detachListeners(ctx) {
+		if err := listener.shutdown(); err != nil {
+			slog.LogAttrs(ctx, slog.LevelError, "close listener", slog.String("name", listener.name), slog.Any("error", err))
+		}
+	}
+
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-
-	var err error
-
-	if err = c.cancelListeners(); err != nil {
-		slog.LogAttrs(ctx, slog.LevelError, "cancel listeners", slog.Any("error", err))
-	}
-
-	if err = c.closeListeners(); err != nil {
-		slog.LogAttrs(ctx, slog.LevelError, "close listeners", slog.Any("error", err))
-	}
 
 	c.closeChannel(ctx)
 	c.closeConnection(ctx)
 }
 
+// Listeners are shut down after being detached, without the client lock, because their forwarder may need that lock to finish.
+func (c *Client) detachListeners(ctx context.Context) []*listener {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.closed = true
+
+	listeners := make([]*listener, 0, len(c.listeners))
+
+	for name, listener := range c.listeners {
+		listeners = append(listeners, listener)
+
+		c.removeListener(ctx, name)
+	}
+
+	return listeners
+}
+
 func (c *Client) reconnect(ctx context.Context) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
+
+	if c.closed {
+		return nil
+	}
 
 	newConnection, newChannel, err := connect(c.uri, c.prefetch, c.onDisconnect)
 	if err != nil {
@@ -50,36 +67,20 @@ func (c *Client) reconnect(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) cancelListeners() (err error) {
-	for _, listener := range c.listeners {
-		if cancelErr := listener.cancel(); cancelErr != nil {
-			err = errors.Join(err, fmt.Errorf("cancel listener `%s`: %w", listener.name, cancelErr))
-		}
-	}
-
-	return err
-}
-
-func (c *Client) closeListeners() (err error) {
-	for _, listener := range c.listeners {
-		if cancelErr := listener.close(); cancelErr != nil {
-			err = errors.Join(err, fmt.Errorf("close listener `%s`: %w", listener.name, cancelErr))
-		}
-	}
-
-	return err
-}
-
 func (c *Client) reconnectListeners(ctx context.Context) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
+
+	if c.connection == nil {
+		return
+	}
 
 	for _, listener := range c.listeners {
 		if err := listener.createChannel(c.connection); err != nil {
 			slog.LogAttrs(ctx, slog.LevelError, "recreate channel", slog.String("name", listener.name), slog.Any("error", err))
 		}
 
-		listener.reconnect <- true
+		listener.signalReconnect()
 	}
 }
 

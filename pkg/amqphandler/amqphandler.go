@@ -217,9 +217,7 @@ func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 	)
 	defer end(&err)
 
-	defer recoverer.Error(&err)
-
-	err = s.handler(ctx, message)
+	err = s.callHandler(ctx, message)
 
 	if err == nil {
 		s.addMetric(ctx, s.metricAck)
@@ -247,6 +245,12 @@ func (s *Service) handleMessage(ctx context.Context, log *slog.Logger, message a
 
 		log.ErrorContext(ctx, "ack message to trash it", "error", err)
 	}
+}
+
+func (s *Service) callHandler(ctx context.Context, message amqp.Delivery) (err error) {
+	defer recoverer.Error(&err)
+
+	return s.handler(ctx, message)
 }
 
 func (s *Service) configure(init bool) (string, error) {

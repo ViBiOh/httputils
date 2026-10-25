@@ -43,6 +43,7 @@ type Client struct {
 	attributes      []attribute.KeyValue
 	prefetch        int
 	mutex           sync.RWMutex
+	closed          bool
 }
 
 type Config struct {

@@ -2,7 +2,9 @@ package amqp
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/ViBiOh/httputils/v4/pkg/id"
@@ -10,12 +12,17 @@ import (
 )
 
 type listener struct {
+	cancelErr error
+	closeErr  error
 	reconnect chan bool
 	done      chan struct{}
+	stop      chan struct{}
 	channel   *amqp.Channel
 	name      string
 	prefetch  int
 	sync.RWMutex
+	cancelOnce sync.Once
+	closeOnce  sync.Once
 }
 
 func (c *Client) getListener(ctx context.Context) (*listener, error) {
@@ -45,6 +52,7 @@ identity:
 
 	output.reconnect = make(chan bool, 1)
 	output.done = make(chan struct{})
+	output.stop = make(chan struct{})
 	output.prefetch = prefetch
 
 	c.listeners[output.name] = &output
@@ -68,22 +76,79 @@ func (l *listener) createChannel(connection Connection) (err error) {
 }
 
 func (l *listener) cancel() error {
-	l.RLock()
-	defer l.RUnlock()
+	l.cancelOnce.Do(func() {
+		close(l.stop)
 
-	close(l.reconnect)
-	<-l.reconnect // drain eventually
+		l.RLock()
+		defer l.RUnlock()
 
-	return l.channel.Cancel(l.name, false)
+		close(l.reconnect)
+		<-l.reconnect // drop a reconnection already pending
+
+		if l.channel != nil {
+			l.cancelErr = l.channel.Cancel(l.name, false)
+		}
+	})
+
+	return l.cancelErr
 }
 
 func (l *listener) close() error {
-	l.RLock()
-	defer l.RUnlock()
+	l.closeOnce.Do(func() {
+		<-l.done
 
-	<-l.done
+		l.RLock()
+		defer l.RUnlock()
 
-	return l.channel.Close()
+		if l.channel != nil {
+			l.closeErr = l.channel.Close()
+		}
+	})
+
+	return l.closeErr
+}
+
+func (l *listener) shutdown() (err error) {
+	if cancelErr := l.cancel(); cancelErr != nil {
+		err = fmt.Errorf("cancel listener: %w", cancelErr)
+	}
+
+	if closeErr := l.close(); closeErr != nil {
+		err = errors.Join(err, fmt.Errorf("close listener: %w", closeErr))
+	}
+
+	return err
+}
+
+func (l *listener) signalReconnect() {
+	select {
+	case l.reconnect <- true:
+	default:
+	}
+}
+
+func (l *listener) closeChannel() error {
+	l.Lock()
+	defer l.Unlock()
+
+	if l.channel == nil {
+		return nil
+	}
+
+	err := l.channel.Close()
+	l.channel = nil
+
+	return err
+}
+
+func (c *Client) discardListener(ctx context.Context, item *listener) {
+	c.mutex.Lock()
+	c.removeListener(ctx, item.name)
+	c.mutex.Unlock()
+
+	if err := item.closeChannel(); err != nil {
+		slog.LogAttrs(ctx, slog.LevelError, "close discarded listener channel", slog.String("name", item.name), slog.Any("error", err))
+	}
 }
 
 func (c *Client) removeListener(ctx context.Context, name string) {

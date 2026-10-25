@@ -2,7 +2,6 @@ package amqp
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -26,11 +25,15 @@ func (c *Client) Listen(queueResolver QueueResolver, exchange, routingKey string
 
 	listener, err := c.getListener(ctx)
 	if err != nil {
+		c.discardListener(ctx, listener)
+
 		return "", nil, fmt.Errorf("get listener name for queue `%s`: %w", queueName, err)
 	}
 
 	messages, err := c.listen(listener, queueName)
 	if err != nil {
+		c.discardListener(ctx, listener)
+
 		return "", nil, err
 	}
 
@@ -40,26 +43,20 @@ func (c *Client) Listen(queueResolver QueueResolver, exchange, routingKey string
 	return listener.name, forward, nil
 }
 
-func (c *Client) StopListener(consumer string) (err error) {
+func (c *Client) StopListener(consumer string) error {
 	c.mutex.Lock()
-	defer c.mutex.Unlock()
 
 	listener := c.listeners[consumer]
 	if listener == nil {
+		c.mutex.Unlock()
+
 		return nil
 	}
 
-	if cancelErr := listener.cancel(); cancelErr != nil {
-		err = fmt.Errorf("cancel listener: %w", cancelErr)
-	}
-
-	if closeErr := listener.close(); closeErr != nil {
-		err = errors.Join(err, fmt.Errorf("close listener: %w", closeErr))
-	}
-
 	c.removeListener(context.Background(), consumer)
+	c.mutex.Unlock()
 
-	return err
+	return listener.shutdown()
 }
 
 func (c *Client) listen(listener *listener, queue string) (<-chan amqp.Delivery, error) {
@@ -94,7 +91,12 @@ func (c *Client) forward(ctx context.Context, listener *listener, queueResolver 
 forward:
 	for delivery := range input {
 		c.increase(ctx, attributes)
-		output <- delivery
+
+		select {
+		case output <- delivery:
+		case <-listener.stop:
+			_ = delivery.Nack(false, true)
+		}
 	}
 
 	if _, ok := <-listener.reconnect; !ok {
@@ -102,6 +104,12 @@ forward:
 	}
 
 reconnect:
+	select {
+	case <-listener.stop:
+		return
+	default:
+	}
+
 	log := slog.With("name", listener.name)
 
 	if queueName, err := queueResolver(); err != nil {
@@ -116,7 +124,12 @@ reconnect:
 	}
 
 	log.LogAttrs(ctx, slog.LevelInfo, fmt.Sprintf("Waiting %s before attempting to listen again...", reconnectInterval))
-	time.Sleep(reconnectInterval)
+
+	select {
+	case <-listener.stop:
+		return
+	case <-time.After(reconnectInterval):
+	}
 
 	goto reconnect
 }
