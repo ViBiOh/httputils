@@ -92,7 +92,7 @@ func (r Request) String() string {
 		builder.WriteString(r.signatureKeydID)
 		builder.WriteString("`")
 	} else if len(r.username) != 0 || len(r.password) != 0 {
-		builder.WriteString(", BasicAuth with user `%s`")
+		builder.WriteString(", BasicAuth with user ")
 		builder.WriteString(r.username)
 	}
 
