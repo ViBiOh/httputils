@@ -40,11 +40,11 @@ type Config struct {
 	Port int
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
+func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("Agent", "URL of the Datadog Trace Agent (e.g. http://datadog.observability:8126)").Prefix(prefix).DocPrefix("pprof").StringVar(fs, &config.URL, "", overrides)
-	flags.New("Port", "Port of the HTTP server (0 to disable)").Prefix(prefix).DocPrefix("pprof").IntVar(fs, &config.Port, 0, overrides)
+	flags.New("Agent", "URL of the Datadog Trace Agent (e.g. http://datadog.observability:8126)").Prefix(prefix).DocPrefix("pprof").FlagVar(flagSet, &config.URL, "", overrides)
+	flags.New("Port", "Port of the HTTP server (0 to disable)").Prefix(prefix).DocPrefix("pprof").FlagVar(flagSet, &config.Port, 0, overrides)
 
 	return &config
 }

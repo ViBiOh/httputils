@@ -43,12 +43,12 @@ type Config struct {
 	TraceUint64 bool
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
+func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("URL", "OpenTelemetry gRPC endpoint (e.g. otel-exporter:4317)").Prefix(prefix).DocPrefix("telemetry").StringVar(fs, &config.URL, "", overrides)
-	flags.New("Rate", "OpenTelemetry sample rate, 'always', 'never' or a float value").Prefix(prefix).DocPrefix("telemetry").StringVar(fs, &config.Rate, "always", overrides)
-	flags.New("Uint64", "Change OpenTelemetry Trace ID format to an unsigned int 64").Prefix(prefix).DocPrefix("telemetry").BoolVar(fs, &config.TraceUint64, true, overrides)
+	flags.New("URL", "OpenTelemetry gRPC endpoint (e.g. otel-exporter:4317)").Prefix(prefix).DocPrefix("telemetry").FlagVar(flagSet, &config.URL, "", overrides)
+	flags.New("Rate", "OpenTelemetry sample rate, 'always', 'never' or a float value").Prefix(prefix).DocPrefix("telemetry").FlagVar(flagSet, &config.Rate, "always", overrides)
+	flags.New("Uint64", "Change OpenTelemetry Trace ID format to an unsigned int 64").Prefix(prefix).DocPrefix("telemetry").FlagVar(flagSet, &config.TraceUint64, true, overrides)
 
 	return &config
 }

@@ -59,17 +59,17 @@ type Config struct {
 	MaxConn uint
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
+func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("Host", "Host").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.Host, "", overrides)
-	flags.New("Port", "Port").Prefix(prefix).DocPrefix("database").UintVar(fs, &config.Port, 5432, overrides)
-	flags.New("User", "User").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.User, "", overrides)
-	flags.New("Pass", "Pass").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.Pass, "", overrides)
-	flags.New("Name", "Name").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.Name, "", overrides)
-	flags.New("MinConn", "Min Open Connections").Prefix(prefix).DocPrefix("database").UintVar(fs, &config.MinConn, 5, overrides)
-	flags.New("MaxConn", "Max Open Connections").Prefix(prefix).DocPrefix("database").UintVar(fs, &config.MaxConn, 20, overrides)
-	flags.New("Sslmode", "SSL Mode").Prefix(prefix).DocPrefix("database").StringVar(fs, &config.SSLMode, "disable", overrides)
+	flags.New("Host", "Host").Prefix(prefix).DocPrefix("database").FlagVar(flagSet, &config.Host, "", overrides)
+	flags.New("Port", "Port").Prefix(prefix).DocPrefix("database").FlagVar(flagSet, &config.Port, 5432, overrides)
+	flags.New("User", "User").Prefix(prefix).DocPrefix("database").FlagVar(flagSet, &config.User, "", overrides)
+	flags.New("Pass", "Pass").Prefix(prefix).DocPrefix("database").FlagVar(flagSet, &config.Pass, "", overrides)
+	flags.New("Name", "Name").Prefix(prefix).DocPrefix("database").FlagVar(flagSet, &config.Name, "", overrides)
+	flags.New("MinConn", "Min Open Connections").Prefix(prefix).DocPrefix("database").FlagVar(flagSet, &config.MinConn, 5, overrides)
+	flags.New("MaxConn", "Max Open Connections").Prefix(prefix).DocPrefix("database").FlagVar(flagSet, &config.MaxConn, 20, overrides)
+	flags.New("Sslmode", "SSL Mode").Prefix(prefix).DocPrefix("database").FlagVar(flagSet, &config.SSLMode, "disable", overrides)
 
 	return &config
 }

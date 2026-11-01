@@ -53,16 +53,16 @@ type Config struct {
 	Exclusive       bool
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
+func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("Exchange", "Exchange name").Prefix(prefix).DocPrefix("amqp").StringVar(fs, &config.Exchange, "", overrides)
-	flags.New("Queue", "Queue name").Prefix(prefix).DocPrefix("amqp").StringVar(fs, &config.Queue, "", overrides)
-	flags.New("Exclusive", "Queue exclusive mode (for fanout exchange)").Prefix(prefix).DocPrefix("amqp").BoolVar(fs, &config.Exclusive, false, overrides)
-	flags.New("RoutingKey", "RoutingKey name").Prefix(prefix).DocPrefix("amqp").StringVar(fs, &config.RoutingKey, "", overrides)
-	flags.New("RetryInterval", "Interval duration when send fails").Prefix(prefix).DocPrefix("amqp").DurationVar(fs, &config.RetryInterval, time.Hour, overrides)
-	flags.New("MaxRetry", "Max send retries").Prefix(prefix).DocPrefix("amqp").UintVar(fs, &config.MaxRetry, 3, overrides)
-	flags.New("InactiveTimeout", "When inactive during the given timeout, stop listening").Prefix(prefix).DocPrefix("amqp").DurationVar(fs, &config.InactiveTimeout, 0, overrides)
+	flags.New("Exchange", "Exchange name").Prefix(prefix).DocPrefix("amqp").FlagVar(flagSet, &config.Exchange, "", overrides)
+	flags.New("Queue", "Queue name").Prefix(prefix).DocPrefix("amqp").FlagVar(flagSet, &config.Queue, "", overrides)
+	flags.New("Exclusive", "Queue exclusive mode (for fanout exchange)").Prefix(prefix).DocPrefix("amqp").FlagVar(flagSet, &config.Exclusive, false, overrides)
+	flags.New("RoutingKey", "RoutingKey name").Prefix(prefix).DocPrefix("amqp").FlagVar(flagSet, &config.RoutingKey, "", overrides)
+	flags.New("RetryInterval", "Interval duration when send fails").Prefix(prefix).DocPrefix("amqp").FlagVar(flagSet, &config.RetryInterval, time.Hour, overrides)
+	flags.New("MaxRetry", "Max send retries").Prefix(prefix).DocPrefix("amqp").FlagVar(flagSet, &config.MaxRetry, 3, overrides)
+	flags.New("InactiveTimeout", "When inactive during the given timeout, stop listening").Prefix(prefix).DocPrefix("amqp").FlagVar(flagSet, &config.InactiveTimeout, 0, overrides)
 
 	return &config
 }

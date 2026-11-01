@@ -28,14 +28,14 @@ type Config struct {
 	Credentials bool
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
+func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("Origin", "Access-Control-Allow-Origin").Prefix(prefix).DocPrefix("cors").StringVar(fs, &config.Origin, "*", overrides)
-	flags.New("Headers", "Access-Control-Allow-Headers").Prefix(prefix).DocPrefix("cors").StringVar(fs, &config.Headers, "Content-Type", overrides)
-	flags.New("Methods", "Access-Control-Allow-Methods").Prefix(prefix).DocPrefix("cors").StringVar(fs, &config.Methods, http.MethodGet, overrides)
-	flags.New("Expose", "Access-Control-Expose-Headers").Prefix(prefix).DocPrefix("cors").StringVar(fs, &config.Exposes, "", overrides)
-	flags.New("Credentials", "Access-Control-Allow-Credentials").Prefix(prefix).DocPrefix("cors").BoolVar(fs, &config.Credentials, false, overrides)
+	flags.New("Origin", "Access-Control-Allow-Origin").Prefix(prefix).DocPrefix("cors").FlagVar(flagSet, &config.Origin, "*", overrides)
+	flags.New("Headers", "Access-Control-Allow-Headers").Prefix(prefix).DocPrefix("cors").FlagVar(flagSet, &config.Headers, "Content-Type", overrides)
+	flags.New("Methods", "Access-Control-Allow-Methods").Prefix(prefix).DocPrefix("cors").FlagVar(flagSet, &config.Methods, http.MethodGet, overrides)
+	flags.New("Expose", "Access-Control-Expose-Headers").Prefix(prefix).DocPrefix("cors").FlagVar(flagSet, &config.Exposes, "", overrides)
+	flags.New("Credentials", "Access-Control-Allow-Credentials").Prefix(prefix).DocPrefix("cors").FlagVar(flagSet, &config.Credentials, false, overrides)
 
 	return &config
 }

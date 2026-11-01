@@ -40,13 +40,13 @@ type Config struct {
 	MaxIdleTime time.Duration
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
+func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").StringSliceVar(fs, &config.Address, []string{"127.0.0.1:6379"}, overrides)
-	flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").StringVar(fs, &config.Username, "", overrides)
-	flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").StringVar(fs, &config.Password, "", overrides)
-	flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").IntVar(fs, &config.Database, 0, overrides)
+	flags.New("Address", "Redis Address host:port (blank to disable)").Prefix(prefix).DocPrefix("redis").FlagVar(flagSet, &config.Address, []string{"127.0.0.1:6379"}, overrides)
+	flags.New("Username", "Redis Username, if any").Prefix(prefix).DocPrefix("redis").FlagVar(flagSet, &config.Username, "", overrides)
+	flags.New("Password", "Redis Password, if any").Prefix(prefix).DocPrefix("redis").FlagVar(flagSet, &config.Password, "", overrides)
+	flags.New("Database", "Redis Database").Prefix(prefix).DocPrefix("redis").FlagVar(flagSet, &config.Database, 0, overrides)
 
 	return &config
 }

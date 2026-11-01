@@ -31,11 +31,11 @@ type Config struct {
 	UserAgent string
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
+func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("Url", "URL to check").Prefix(prefix).DocPrefix("alcotest").StringVar(fs, &config.URL, "", overrides)
-	flags.New("UserAgent", "User-Agent for check").Prefix(prefix).DocPrefix("alcotest").StringVar(fs, &config.UserAgent, defaultUserAgent, overrides)
+	flags.New("Url", "URL to check").Prefix(prefix).DocPrefix("alcotest").FlagVar(flagSet, &config.URL, "", overrides)
+	flags.New("UserAgent", "User-Agent for check").Prefix(prefix).DocPrefix("alcotest").FlagVar(flagSet, &config.UserAgent, defaultUserAgent, overrides)
 
 	return &config
 }

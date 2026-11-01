@@ -18,14 +18,14 @@ type Config struct {
 	JSON       bool
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
+func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("Level", "Logger level").Prefix(prefix).DocPrefix("logger").StringVar(fs, &config.Level, "INFO", overrides)
-	flags.New("Json", "Log format as JSON").Prefix(prefix).DocPrefix("logger").BoolVar(fs, &config.JSON, false, overrides)
-	flags.New("TimeKey", "Key for timestamp in JSON").Prefix(prefix).DocPrefix("logger").StringVar(fs, &config.TimeKey, "time", overrides)
-	flags.New("LevelKey", "Key for level in JSON").Prefix(prefix).DocPrefix("logger").StringVar(fs, &config.LevelKey, "level", overrides)
-	flags.New("MessageKey", "Key for message in JSON").Prefix(prefix).DocPrefix("logger").StringVar(fs, &config.MessageKey, "msg", overrides)
+	flags.New("Level", "Logger level").Prefix(prefix).DocPrefix("logger").FlagVar(flagSet, &config.Level, "INFO", overrides)
+	flags.New("Json", "Log format as JSON").Prefix(prefix).DocPrefix("logger").FlagVar(flagSet, &config.JSON, false, overrides)
+	flags.New("TimeKey", "Key for timestamp in JSON").Prefix(prefix).DocPrefix("logger").FlagVar(flagSet, &config.TimeKey, "time", overrides)
+	flags.New("LevelKey", "Key for level in JSON").Prefix(prefix).DocPrefix("logger").FlagVar(flagSet, &config.LevelKey, "level", overrides)
+	flags.New("MessageKey", "Key for message in JSON").Prefix(prefix).DocPrefix("logger").FlagVar(flagSet, &config.MessageKey, "msg", overrides)
 
 	return &config
 }

@@ -38,11 +38,11 @@ type Config struct {
 	GraceDuration time.Duration
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
+func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("OkStatus", "Healthy HTTP Status code").Prefix(prefix).DocPrefix("http").IntVar(fs, &config.OkStatus, http.StatusNoContent, overrides)
-	flags.New("GraceDuration", "Grace duration when signal received").Prefix(prefix).DocPrefix("http").DurationVar(fs, &config.GraceDuration, 30*time.Second, overrides)
+	flags.New("OkStatus", "Healthy HTTP Status code").Prefix(prefix).DocPrefix("http").FlagVar(flagSet, &config.OkStatus, http.StatusNoContent, overrides)
+	flags.New("GraceDuration", "Grace duration when signal received").Prefix(prefix).DocPrefix("http").FlagVar(flagSet, &config.GraceDuration, 30*time.Second, overrides)
 
 	return &config
 }

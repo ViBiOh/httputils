@@ -36,18 +36,18 @@ type Config struct {
 	ShutdownTimeout time.Duration
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
+func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("Address", "Listen address").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Address, "", overrides)
-	flags.New("Name", "Name").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Name, "http", overrides)
-	flags.New("Port", "Listen port (0 to disable)").Prefix(prefix).DocPrefix("server").UintVar(fs, &config.Port, 1080, overrides)
-	flags.New("Cert", "Certificate file").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Cert, "", overrides)
-	flags.New("Key", "Key file").Prefix(prefix).DocPrefix("server").StringVar(fs, &config.Key, "", overrides)
-	flags.New("ReadTimeout", "Read Timeout").Prefix(prefix).DocPrefix("server").DurationVar(fs, &config.ReadTimeout, 5*time.Second, overrides)
-	flags.New("WriteTimeout", "Write Timeout").Prefix(prefix).DocPrefix("server").DurationVar(fs, &config.WriteTimeout, 10*time.Second, overrides)
-	flags.New("IdleTimeout", "Idle Timeout").Prefix(prefix).DocPrefix("server").DurationVar(fs, &config.IdleTimeout, 2*time.Minute, overrides)
-	flags.New("ShutdownTimeout", "Shutdown Timeout").Prefix(prefix).DocPrefix("server").DurationVar(fs, &config.ShutdownTimeout, 10*time.Second, overrides)
+	flags.New("Address", "Listen address").Prefix(prefix).DocPrefix("server").FlagVar(flagSet, &config.Address, "", overrides)
+	flags.New("Name", "Name").Prefix(prefix).DocPrefix("server").FlagVar(flagSet, &config.Name, "http", overrides)
+	flags.New("Port", "Listen port (0 to disable)").Prefix(prefix).DocPrefix("server").FlagVar(flagSet, &config.Port, 1080, overrides)
+	flags.New("Cert", "Certificate file").Prefix(prefix).DocPrefix("server").FlagVar(flagSet, &config.Cert, "", overrides)
+	flags.New("Key", "Key file").Prefix(prefix).DocPrefix("server").FlagVar(flagSet, &config.Key, "", overrides)
+	flags.New("ReadTimeout", "Read Timeout").Prefix(prefix).DocPrefix("server").FlagVar(flagSet, &config.ReadTimeout, 5*time.Second, overrides)
+	flags.New("WriteTimeout", "Write Timeout").Prefix(prefix).DocPrefix("server").FlagVar(flagSet, &config.WriteTimeout, 10*time.Second, overrides)
+	flags.New("IdleTimeout", "Idle Timeout").Prefix(prefix).DocPrefix("server").FlagVar(flagSet, &config.IdleTimeout, 2*time.Minute, overrides)
+	flags.New("ShutdownTimeout", "Shutdown Timeout").Prefix(prefix).DocPrefix("server").FlagVar(flagSet, &config.ShutdownTimeout, 10*time.Second, overrides)
 
 	return &config
 }

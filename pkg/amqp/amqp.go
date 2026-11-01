@@ -51,11 +51,11 @@ type Config struct {
 	Prefetch int
 }
 
-func Flags(fs *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
+func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *Config {
 	var config Config
 
-	flags.New("URI", "Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>").Prefix(prefix).DocPrefix("amqp").StringVar(fs, &config.URI, "", overrides)
-	flags.New("Prefetch", "Prefetch count for QoS").Prefix(prefix).DocPrefix("amqp").IntVar(fs, &config.Prefetch, 1, overrides)
+	flags.New("URI", "Address in the form amqps?://<user>:<password>@<address>:<port>/<vhost>").Prefix(prefix).DocPrefix("amqp").FlagVar(flagSet, &config.URI, "", overrides)
+	flags.New("Prefetch", "Prefetch count for QoS").Prefix(prefix).DocPrefix("amqp").FlagVar(flagSet, &config.Prefetch, 1, overrides)
 
 	return &config
 }
