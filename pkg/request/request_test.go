@@ -3,7 +3,7 @@ package request
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -495,10 +495,9 @@ func TestMultipart(t *testing.T) {
 					return err
 				}
 
-				return json.NewEncoder(writer).Encode(map[string]string{"hello": "world"})
+				return json.MarshalWrite(writer, map[string]string{"hello": "world"})
 			},
-			`{"hello":"world"}
-`,
+			`{"hello":"world"}`,
 			nil,
 		},
 		"feed error": {
@@ -657,7 +656,7 @@ func TestJSON(t *testing.T) {
 			context.Background(),
 			func() {},
 			"",
-			errors.New("json: unsupported type: func()"),
+			errors.New("marshal from Go func()"),
 		},
 	}
 
@@ -690,7 +689,7 @@ func TestStreamJSON(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		payload, _ := ReadBodyRequest(r, 1<<20)
 
-		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == `{"Active":true,"Amount":12.34}`+"\n" && r.Header.Get("Content-Type") == "application/json" {
+		if r.URL.Path == "/simple" && r.Method == http.MethodPost && string(payload) == `{"Active":true,"Amount":12.34}` && r.Header.Get("Content-Type") == "application/json" {
 			w.WriteHeader(http.StatusOK)
 			safeWrite(w, []byte("valid"))
 
@@ -720,7 +719,7 @@ func TestStreamJSON(t *testing.T) {
 			context.Background(),
 			func() {},
 			"",
-			errors.New("json: unsupported type: func()"),
+			errors.New("marshal from Go func()"),
 		},
 	}
 

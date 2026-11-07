@@ -3,7 +3,7 @@ package request
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -340,14 +340,16 @@ func (r Request) JSON(ctx context.Context, body any) (*http.Response, error) {
 	return resp, err
 }
 
-func (r Request) StreamJSON(ctx context.Context, body any) (*http.Response, error) {
+func (r Request) StreamJSON(ctx context.Context, body any) (resp *http.Response, err error) {
 	reader, writer := io.Pipe()
 
 	go func() {
-		_ = writer.CloseWithError(json.NewEncoder(writer).Encode(body))
+		if closeErr := writer.CloseWithError(json.MarshalWrite(writer, body)); closeErr != nil {
+			err = errors.Join(err, closeErr)
+		}
 	}()
 
-	resp, err := r.ContentJSON().Send(ctx, reader)
+	resp, err = r.ContentJSON().Send(ctx, reader)
 
 	if closeErr := reader.Close(); closeErr != nil {
 		err = errors.Join(err, closeErr)

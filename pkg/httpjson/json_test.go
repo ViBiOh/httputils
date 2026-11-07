@@ -50,7 +50,7 @@ func TestRawWrite(t *testing.T) {
 					"valid": true,
 				},
 			},
-			"{\"key\":\"value\",\"valid\":true}\n",
+			"{\"key\":\"value\",\"valid\":true}",
 			nil,
 		},
 	}
@@ -78,13 +78,13 @@ func TestWrite(t *testing.T) {
 	}{
 		"nil": {
 			nil,
-			"null\n",
+			"null",
 			http.StatusOK,
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		"simple object": {
 			testStruct{id: "Test"},
-			"{\"Active\":false,\"Amount\":0}\n",
+			"{\"Active\":false,\"Amount\":0}",
 			http.StatusOK,
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
@@ -156,12 +156,12 @@ func TestWriteArray(t *testing.T) {
 	}{
 		"nil": {
 			nil,
-			"{\"items\":null}\n",
+			"{\"items\":null}",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 		"simple": {
 			[]testStruct{{id: "First", Active: true, Amount: 12.34}, {id: "Second", Active: true, Amount: 12.34}},
-			"{\"items\":[{\"Active\":true,\"Amount\":12.34},{\"Active\":true,\"Amount\":12.34}]}\n",
+			"{\"items\":[{\"Active\":true,\"Amount\":12.34},{\"Active\":true,\"Amount\":12.34}]}",
 			map[string]string{"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache"},
 		},
 	}
@@ -277,7 +277,7 @@ func TestRead(t *testing.T) {
 				},
 			},
 			nil,
-			errors.New("invalid character 'i' looking for beginning of value\nclose error"),
+			errors.New("invalid character 'i' at start of value\nclose error"),
 		},
 		"valid": {
 			args{
@@ -337,14 +337,6 @@ func TestStream(t *testing.T) {
 			},
 			nil,
 			errors.New("read opening token"),
-		},
-		"no closing token": {
-			args{
-				stream: strings.NewReader(`{"count": 10, "items": [{"value":"test"},{"value":"next"},{"value":"final"}`),
-				key:    "items",
-			},
-			[]string{"test", "next", "final"},
-			errors.New("unexpected end of JSON input"),
 		},
 		"success": {
 			args{

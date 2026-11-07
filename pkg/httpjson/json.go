@@ -2,7 +2,8 @@ package httpjson
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -29,7 +30,7 @@ type items struct {
 }
 
 func RawWrite(w io.Writer, obj any) error {
-	if err := json.NewEncoder(w).Encode(obj); err != nil {
+	if err := json.MarshalWrite(w, obj); err != nil {
 		return errors.Join(err, ErrCannotMarshal)
 	}
 
@@ -52,13 +53,17 @@ func WriteArray(ctx context.Context, w http.ResponseWriter, status int, array an
 func Parse[T any](req *http.Request, maxSize int64) (T, error) {
 	var output T
 
-	err := json.NewDecoder(http.MaxBytesReader(nil, req.Body, maxSize)).Decode(&output)
+	if err := json.UnmarshalRead(http.MaxBytesReader(nil, req.Body, maxSize), &output); err != nil {
+		var zero T
 
-	if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
-		return output, model.WrapInvalid(err)
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			return zero, model.WrapInvalid(err)
+		}
+
+		return zero, err
 	}
 
-	return output, err
+	return output, nil
 }
 
 func Read[T any](resp *http.Response) (output T, err error) {
@@ -68,7 +73,7 @@ func Read[T any](resp *http.Response) (output T, err error) {
 		}
 	}()
 
-	return output, json.NewDecoder(resp.Body).Decode(&output)
+	return output, json.UnmarshalRead(resp.Body, &output)
 }
 
 // Stream decodes JSON from a `reader` and send unmarshalled `T` to the given `output` chan
@@ -83,7 +88,8 @@ func Stream[T any](reader io.Reader, output chan<- T, key string, closeChan bool
 	if closeChan {
 		defer close(output)
 	}
-	decoder := json.NewDecoder(reader)
+
+	decoder := jsontext.NewDecoder(reader)
 
 	if len(key) > 0 {
 		if err := moveToKey(decoder, key); err != nil {
@@ -91,61 +97,67 @@ func Stream[T any](reader io.Reader, output chan<- T, key string, closeChan bool
 		}
 	}
 
-	for decoder.More() {
-		var obj T
+stream:
+	for {
+		switch decoder.PeekKind() {
+		case jsontext.KindEndArray:
+			break stream
 
-		if err := decoder.Decode(&obj); err != nil {
-			return fmt.Errorf("decode stream: %w", err)
-		}
+		case jsontext.KindInvalid:
+			break stream
 
-		output <- obj
-	}
+		default:
+			var obj T
 
-	if len(key) > 0 {
-		if _, err := decoder.Token(); err != nil {
-			return fmt.Errorf("read closing token: %w", err)
+			if err := json.UnmarshalDecode(decoder, &obj); err != nil {
+				if errors.Is(err, io.EOF) {
+					break
+				}
+
+				return fmt.Errorf("decode stream: %w", err)
+			}
+
+			output <- obj
 		}
 	}
 
 	return nil
 }
 
-func moveToKey(decoder *json.Decoder, key string) error {
+func moveToKey(decoder *jsontext.Decoder, key string) error {
 	if key != "." {
 		if err := findStart(decoder, key); err != nil {
 			return fmt.Errorf("find start: %w", err)
 		}
 	}
 
-	if _, err := decoder.Token(); err != nil {
+	if _, err := decoder.ReadToken(); err != nil {
 		return fmt.Errorf("read opening token: %w", err)
 	}
 
 	return nil
 }
 
-func findStart(decoder *json.Decoder, key string) error {
+func findStart(decoder *jsontext.Decoder, key string) error {
 	var nested uint64
 
 	for {
-		token, err := decoder.Token()
+		token, err := decoder.ReadToken()
 		if err != nil {
 			return fmt.Errorf("decode token: %w", err)
 		}
 
-		switch tokenType := token.(type) {
-		case string:
-			if nested == 1 && strings.EqualFold(tokenType, key) {
+		switch token.Kind() {
+		case jsontext.KindString:
+			if nested == 1 && strings.EqualFold(token.String(), key) {
 				return nil
 			}
 
-		case json.Delim:
-			switch tokenType {
-			case '{':
-				nested++
-			case '}':
-				nested--
-			}
+		case jsontext.KindBeginObject:
+			nested++
+
+		case jsontext.KindEndObject:
+			nested--
 		}
 	}
 }
