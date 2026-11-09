@@ -25,7 +25,7 @@ func TestFlags(t *testing.T) {
 		want string
 	}{
 		"simple": {
-			"Usage of simple:\n  -extension string\n    \tGo Template Extension ${SIMPLE_EXTENSION} (default \"tmpl\")\n  -minify\n    \tMinify HTML ${SIMPLE_MINIFY} (default true)\n  -pathPrefix string\n    \tRoot Path Prefix ${SIMPLE_PATH_PREFIX}\n  -publicURL string\n    \tPublic URL ${SIMPLE_PUBLIC_URL} (default \"http://127.0.0.1:1080\")\n  -staticPaths string slice\n    \tPaths served from static FS ${SIMPLE_STATIC_PATHS}, as a string slice, environment variable separated by \",\" (default [/robots.txt, /sitemap.xml, /favicon.ico])\n  -title string\n    \tApplication title ${SIMPLE_TITLE} (default \"App\")\n",
+			"Usage of simple:\n  -extension string\n    \tGo Template Extension ${SIMPLE_EXTENSION} (default \"gotmpl\")\n  -minify\n    \tMinify HTML ${SIMPLE_MINIFY} (default true)\n  -pathPrefix string\n    \tRoot Path Prefix ${SIMPLE_PATH_PREFIX}\n  -publicURL string\n    \tPublic URL ${SIMPLE_PUBLIC_URL} (default \"http://127.0.0.1:1080\")\n  -staticPaths string slice\n    \tPaths served from static FS ${SIMPLE_STATIC_PATHS}, as a string slice, environment variable separated by \",\" (default [/robots.txt, /sitemap.xml, /favicon.ico])\n  -title string\n    \tApplication title ${SIMPLE_TITLE} (default \"App\")\n",
 		},
 	}
 
@@ -121,7 +121,7 @@ func TestHandler(t *testing.T) {
 	configuredService, err := New(context.Background(), &Config{
 		PublicURL: "http://127.0.0.1",
 		Title:     "Golang Test",
-		Extension: "tmpl",
+		Extension: "gotmpl",
 		Minify:    true,
 	}, content, template.FuncMap{}, nil, nil)
 	if err != nil {
@@ -219,7 +219,7 @@ func TestHandleStatic(t *testing.T) {
 	configuredService, err := New(context.Background(), &Config{
 		PublicURL: "http://127.0.0.1",
 		Title:     "Golang Test",
-		Extension: "tmpl",
+		Extension: "gotmpl",
 		Minify:    true,
 	}, content, template.FuncMap{}, nil, nil)
 	if err != nil {
@@ -270,7 +270,7 @@ func TestHandleSVG(t *testing.T) {
 	configuredService, err := New(context.Background(), &Config{
 		PublicURL: "http://127.0.0.1",
 		Title:     "Golang Test",
-		Extension: "tmpl",
+		Extension: "gotmpl",
 		Minify:    true,
 	}, content, template.FuncMap{}, nil, nil)
 	if err != nil {
@@ -281,7 +281,7 @@ func TestHandleSVG(t *testing.T) {
 		PublicURL:  "http://127.0.0.1",
 		PathPrefix: "/app",
 		Title:      "Golang Test",
-		Extension:  "tmpl",
+		Extension:  "gotmpl",
 		Minify:     true,
 	}, content, template.FuncMap{}, nil, nil)
 	if err != nil {

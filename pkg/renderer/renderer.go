@@ -54,7 +54,7 @@ func Flags(flagSet *flag.FlagSet, prefix string, overrides ...flags.Override) *C
 	flags.New("PublicURL", "Public URL").Prefix(prefix).DocPrefix("").FlagVar(flagSet, &config.PublicURL, "http://127.0.0.1:1080", overrides)
 	flags.New("PathPrefix", "Root Path Prefix").Prefix(prefix).DocPrefix("").FlagVar(flagSet, &config.PathPrefix, "", overrides)
 	flags.New("Title", "Application title").Prefix(prefix).DocPrefix("").FlagVar(flagSet, &config.Title, "App", overrides)
-	flags.New("Extension", "Go Template Extension").Prefix(prefix).DocPrefix("").FlagVar(flagSet, &config.Extension, "tmpl", overrides)
+	flags.New("Extension", "Go Template Extension").Prefix(prefix).DocPrefix("").FlagVar(flagSet, &config.Extension, "gotmpl", overrides)
 	flags.New("Minify", "Minify HTML").Prefix(prefix).DocPrefix("").FlagVar(flagSet, &config.Minify, true, overrides)
 	flags.New("StaticPaths", "Paths served from static FS").Prefix(prefix).DocPrefix("").FlagVar(flagSet, &config.StaticPaths, []string{"/robots.txt", "/sitemap.xml", "/favicon.ico"}, overrides)
 
