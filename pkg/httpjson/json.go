@@ -29,25 +29,25 @@ type items struct {
 	Items any `json:"items"`
 }
 
-func RawWrite(w io.Writer, obj any) error {
-	if err := json.MarshalWrite(w, obj); err != nil {
+func RawWrite(w io.Writer, obj any, opts ...json.Options) error {
+	if err := json.MarshalWrite(w, obj, opts...); err != nil {
 		return errors.Join(err, ErrCannotMarshal)
 	}
 
 	return nil
 }
 
-func Write(ctx context.Context, w http.ResponseWriter, status int, obj any) {
+func Write(ctx context.Context, w http.ResponseWriter, status int, obj any, opts ...json.Options) {
 	maps.Copy(w.Header(), headers)
 	w.WriteHeader(status)
 
-	if err := RawWrite(w, obj); err != nil {
+	if err := RawWrite(w, obj, opts...); err != nil {
 		httperror.InternalServerError(ctx, w, err)
 	}
 }
 
-func WriteArray(ctx context.Context, w http.ResponseWriter, status int, array any) {
-	Write(ctx, w, status, items{array})
+func WriteArray(ctx context.Context, w http.ResponseWriter, status int, array any, opts ...json.Options) {
+	Write(ctx, w, status, items{array}, opts...)
 }
 
 func Parse[T any](req *http.Request, maxSize int64) (T, error) {
